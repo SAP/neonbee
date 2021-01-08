@@ -1,0 +1,13 @@
+<package>
+
+import io.vertx.core.AbstractVerticle;
+
+public class <VerticleClassName> extends AbstractVerticle {
+    @Override
+    public void start() throws Exception {
+        String address = "<address>";
+        vertx.eventBus().<String>localConsumer(address, ms -> {
+            ms.reply("Hello from: " + address);
+        });
+    }
+}

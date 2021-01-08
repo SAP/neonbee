@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
+    <edmx:Include Alias="Common" Namespace="com.sap.vocabularies.Common.v1"/>
+  </edmx:Reference>
+  <edmx:DataServices>
+    <Schema Namespace="io.neonbee.reference.ReferenceService" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityContainer Name="EntityContainer">
+        <EntitySet Name="TestProducts" EntityType="io.neonbee.reference.ReferenceService.TestProducts"/>
+      </EntityContainer>
+
+      <EntityType Name="TestProducts">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.String" Nullable="false"/>
+        <Property Name="name" Type="Edm.String" Nullable="false"/>
+        <Property Name="description" Type="Edm.String"/>
+      </EntityType>
+        <Annotations Target="ReferenceService.TestProducts">
+          <Annotation Term="Common.customEntityTerm">
+            <Record>
+              <PropertyValue Property="customEntityProperty" String="customValue"/>
+            </Record>
+          </Annotation>
+        </Annotations>
+          <Annotations Target="ReferenceService.TestProducts/name">
+            <Annotation Term="Common.customPropertyTerm">
+              <Record>
+                <PropertyValue Property="customPropertyValueString" String="StringValue"/>
+              </Record>
+            </Annotation>
+          </Annotations>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

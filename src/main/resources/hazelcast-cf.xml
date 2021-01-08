@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ~ Copyright (c) 2008-2018, Hazelcast, Inc. All Rights Reserved. ~ ~
+    Licensed under the Apache License, Version 2.0 (the "License"); ~ you may
+    not use this file except in compliance with the License. ~ You may obtain
+    a copy of the License at ~ ~ http://www.apache.org/licenses/LICENSE-2.0 ~
+    ~ Unless required by applicable law or agreed to in writing, software ~ distributed
+    under the License is distributed on an "AS IS" BASIS, ~ WITHOUT WARRANTIES
+    OR CONDITIONS OF ANY KIND, either express or implied. ~ See the License for
+    the specific language governing permissions and ~ limitations under the License. -->
+
+<!-- The default Hazelcast configuration. This is used when no hazelcast.xml
+    is present. Please see the schema for how to configure Hazelcast at https://hazelcast.com/schema/config/hazelcast-config-3.10.xsd
+    or the documentation at https://hazelcast.org/documentation/ -->
+<!--suppress XmlDefaultAttributeValue -->
+<hazelcast xmlns="http://www.hazelcast.com/schema/config"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.hazelcast.com/schema/config
+         http://www.hazelcast.com/schema/config/hazelcast-config-4.2.xsd">
+    <properties>
+        <property name="hazelcast.discovery.enabled">true</property>
+    </properties>
+    <management-center scripting-enabled="false"/>
+    </management-center>
+    <network>
+        <port auto-increment="true" port-count="100">50000</port>
+        <outbound-ports>
+            <!-- Allowed port range when connecting to other nodes. 0 or * means use system provided port. -->
+            <ports>0</ports>
+        </outbound-ports>
+        <join>
+            <multicast enabled="false"></multicast>
+                <tcp-ip enabled="false"></tcp-ip>
+                <discovery-strategies>
+                    <discovery-strategy class="io.neonbee.internal.cluster.discovery.DomainNameServiceDiscoveryStrategy" enabled="true">
+                        <properties>
+                           <property name="DNS_NAME">neonbee.apps.internal</property>
+                        </properties>
+                    </discovery-strategy>
+                </discovery-strategies>
+        </join>
+        <ssl enabled="false" />
+    </network>
+    <partition-group enabled="false" />
+
+    <multimap name="__vertx.subs">
+        <backup-count>1</backup-count>
+        <value-collection-type>SET</value-collection-type>
+    </multimap>
+
+    <map name="__vertx.haInfo">
+        <backup-count>1</backup-count>
+    </map>
+
+    <map name="__vertx.nodeInfo">
+        <backup-count>1</backup-count>
+    </map>
+
+    <cp-subsystem>
+        <cp-member-count>0</cp-member-count>
+        <semaphores>
+            <semaphore>
+                <name>__vertx.*</name>
+                <jdk-compatible>false</jdk-compatible>
+                <initial-permits>1</initial-permits>
+            </semaphore>
+        </semaphores>
+    </cp-subsystem>
+
+</hazelcast>

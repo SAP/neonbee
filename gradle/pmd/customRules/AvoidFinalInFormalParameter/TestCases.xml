@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<test-data xmlns="http://pmd.sourceforge.net/rule-tests"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://pmd.sourceforge.net/rule-tests http://pmd.sourceforge.net/rule-tests_1_0_0.xsd">
+   <test-code>
+      <description>FormalParameter</description>
+      <expected-problems>0</expected-problems>
+      <code><![CDATA[
+public class Foo {
+
+  public static final int a = 1;
+
+
+  public void bar(final String param) {
+    for (final String s : List.of("sdf")) {
+    }
+  }
+
+  public void lol() {
+    try {
+      final int b = 1;
+    }
+    catch (final IOException e) {}
+  }
+}
+        ]]></code>
+   </test-code>
+
+</test-data>

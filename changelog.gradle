@@ -1,0 +1,17 @@
+changelog {
+    toRef = 'HEAD'
+    isUnstable = true
+    strategy = 'slow'
+    lastVersion = version
+
+    jsonFile = file("${project.rootDir}/CHANGELOG.json")
+    fileSets = [
+        {
+            template = file("${project.rootDir}/gradle/gitlog/CHANGELOG.mustache")
+            target = file("${project.rootDir}/CHANGELOG.md")
+        }
+    ]
+    issueUrlTemplate = 'https://github.com/SAP/neonbee/issues/:issueId'
+    commitUrlTemplate = 'https://github.com/SAP/neonbee/commit/:commitId'
+    mentionUrlTemplate = 'https://github.com/:username'
+}

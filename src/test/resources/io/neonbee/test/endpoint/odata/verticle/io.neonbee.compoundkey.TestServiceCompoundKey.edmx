@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="io.neonbee.compoundkey.TestServiceCompoundKey" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityContainer Name="EntityContainer">
+        <EntitySet Name="TestCars" EntityType="io.neonbee.compoundkey.TestServiceCompoundKey.TestCars"/>
+      </EntityContainer>
+      <EntityType Name="TestCars">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="date"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="date" Type="Edm.Date" Nullable="false"/>
+        <Property Name="name" Type="Edm.String" Nullable="false"/>
+        <Property Name="description" Type="Edm.String"/>
+      </EntityType>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

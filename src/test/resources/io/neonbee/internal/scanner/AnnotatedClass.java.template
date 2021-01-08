@@ -1,0 +1,14 @@
+<package>
+
+<imports>
+
+<TypeAnnotation>
+public class <ClassName> {
+
+    <FieldAnnotation>
+    private String hodor = "hodor";
+
+    <MethodAnnotation>
+    public void doNothing() {
+    }
+}

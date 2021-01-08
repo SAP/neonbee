@@ -1,0 +1,14 @@
+<package>
+
+import io.neonbee.NeonBee;
+import io.neonbee.hook.HookContext;
+import io.vertx.core.Promise;
+
+<imports>
+
+public class <ClassName> {
+
+    <MethodAnnotation>
+    public void doNothing(NeonBee neonbee, HookContext hookContext, Promise<Void> promise) {
+    }
+}

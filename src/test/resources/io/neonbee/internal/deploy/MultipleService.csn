@@ -1,0 +1,47 @@
+{
+  "namespace": "io.neonbee.deploymultiple",
+  "definitions": {
+    "io.neonbee.deploymultiple.CarService": {
+      "kind": "service"
+    },
+    "io.neonbee.deploymultiple.CarService.Carss": {
+      "kind": "entity",
+      "elements": {
+        "ID": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "make": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "year": {
+          "type": "cds.Integer"
+        }
+      }
+    },
+    "io.neonbee.deploymultiple.UserService": {
+      "kind": "service"
+    },
+    "io.neonbee.deploymultiple.UserService.Users": {
+      "kind": "entity",
+      "elements": {
+        "ID": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "name": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "description": {
+          "type": "cds.String"
+        }
+      }
+    }
+  },
+  "meta": {
+    "creator": "CDS Compiler v1.26.2"
+  },
+  "$version": "1.0"
+}

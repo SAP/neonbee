@@ -1,0 +1,32 @@
+{
+  "namespace": "io.neonbee.compoundkey",
+  "definitions": {
+    "io.neonbee.compoundkey.TestServiceCompoundKey": {
+      "kind": "service"
+    },
+    "io.neonbee.compoundkey.TestServiceCompoundKey.TestCars": {
+      "kind": "entity",
+      "elements": {
+        "ID": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "date": {
+          "key": true,
+          "type": "cds.Date"
+        },
+        "name": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "description": {
+          "type": "cds.String"
+        }
+      }
+    }
+  },
+  "meta": {
+    "creator": "CDS Compiler v1.26.2"
+  },
+  "$version": "1.0"
+}

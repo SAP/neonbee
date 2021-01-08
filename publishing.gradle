@@ -1,0 +1,64 @@
+apply plugin: 'maven-publish'
+
+publishing {
+    repositories {
+        mavenLocal()
+    }
+
+    publications {
+        // NeonBee Core Jar
+        core(MavenPublication) {
+            artifactId = project.archivesBaseName
+            artifact source: coreJar
+            artifact source: shadowJar
+            artifact source: sourcesJar
+            artifact source: javadocJar
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+                // Iterate over the implementation dependencies and add them to the pom.xml
+                configurations.implementation.allDependencies.each {
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', it.group)
+                    dependencyNode.appendNode('artifactId', it.name)
+                    dependencyNode.appendNode('version', it.version)
+                }
+            }
+        }
+
+        // NeonBee Dist Tar Gz Archive
+        dist(MavenPublication) {
+            artifactId = 'neonbee-dist'
+            artifact source: distTar
+        }
+
+        // NeonBee Test Jar
+        test(MavenPublication) {
+            artifactId = "${project.archivesBaseName}-test"
+            artifact source: testJar
+            artifact source: testSourcesJar
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+                // Iterate over the implementation dependencies and add them to the pom.xml
+                configurations.implementation.allDependencies.each {
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', it.group)
+                    dependencyNode.appendNode('artifactId', it.name)
+                    dependencyNode.appendNode('version', it.version)
+                }
+                // Iterate over the testImplementation dependencies and add them to the pom.xml
+                configurations.testImplementation.allDependencies.each {
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', it.group)
+                    dependencyNode.appendNode('artifactId', it.name)
+                    dependencyNode.appendNode('version', it.version)
+                }
+
+                // At NeonBee core as dependency
+                def dependencyNode = dependenciesNode.appendNode('dependency')
+                dependencyNode.appendNode('groupId', project.group)
+                dependencyNode.appendNode('artifactId', project.archivesBaseName)
+                dependencyNode.appendNode('version', project.version)
+            }
+        }
+    }
+}

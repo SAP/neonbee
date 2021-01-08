@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="AnnotatedService.Service" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityContainer Name="EntityContainer">
+        <EntitySet Name="Hodor" EntityType="AnnotatedService.Service.Hodor"/>
+        <EntitySet Name="LordCitrange" EntityType="AnnotatedService.Service.LordCitrange"/>
+      </EntityContainer>
+      <EntityType Name="Hodor">
+        <Key>
+          <PropertyRef Name="hodor"/>
+        </Key>
+        <Property Name="hodor" Type="Edm.String" MaxLength="10" Nullable="false"/>
+      </EntityType>
+      <EntityType Name="LordCitrange">
+        <Key>
+          <PropertyRef Name="name"/>
+        </Key>
+        <Property Name="name" Type="Edm.String" MaxLength="10" Nullable="false"/>
+        <Property Name="dkp" Type="Edm.Int32"/>
+      </EntityType>
+      <Annotations Target="AnnotatedService.Service.Hodor/hodor">
+        <Annotation Term="Common.customPropertyTerm">
+          <Record>
+            <PropertyValue Property="customPropertyValue1" String="Value1"/>
+            <PropertyValue Property="customPropertyValue2" String="Value2"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="AnnotatedService.Service.LordCitrange">
+        <Annotation Term="Common.customEntityTerm">
+          <Record>
+            <PropertyValue Property="customEntityProperty" String="customValue"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="AnnotatedService.Service.LordCitrange/name">
+        <Annotation Term="Common.customPropertyTerm">
+          <Record>
+            <PropertyValue Property="customPropertyValueString" String="StringValue"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="AnnotatedService.Service.LordCitrange/dkp">
+        <Annotation Term="Common.customPropertyTerm">
+          <Record>
+            <PropertyValue Property="customPropertyValueInteger" Int="3"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

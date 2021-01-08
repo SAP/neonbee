@@ -1,0 +1,24 @@
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+import io.vertx.core.AbstractVerticle;
+
+public class <VerticleClassName> extends AbstractVerticle {
+    @Override
+    public void start() throws Exception {
+        String address = "<address>";
+        vertx.eventBus().<String>localConsumer(address.concat("/ping"), ms -> {
+            ms.reply("Pong from: " + address);
+        });
+
+        vertx.eventBus().<String>localConsumer(address.concat("/resources"), ms -> {
+            try {
+                String content = new String(getClass().getClassLoader().getResourceAsStream(ms.body()).readAllBytes(),
+                        StandardCharsets.UTF_8);
+                ms.reply(content);
+            } catch (IOException e) {
+                ms.fail(0, e.getMessage());
+            }
+        });
+    }
+}

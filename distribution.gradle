@@ -1,0 +1,187 @@
+// ##################### Source for Artifact neonbee-core
+
+/*
+ * Builds and packages NeonBee as neonbee-core.jar and put it into the build folder.
+ * This build/neonbee-core.jar does not contain any dependent jars as it is not a
+ * uber jar.
+ */
+task coreJar(type: Jar) {
+    def mainClass = "${mainClassName}"
+
+    destinationDirectory = file("${buildDir}")
+
+    manifest {
+        attributes(
+            'Main-Class': "${mainClass}"
+        )
+    }
+
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/NOTICE', 'META-INF/LICENSE'
+    archiveExtension = 'jar'
+    with jar
+}
+
+/*
+ * The Shadow plugin will also configure distribution tasks when in the presence of the application plugin.
+ * The plugin will create shadowDistZip and shadowDistTar which creates Zip and Tar distributions respectively.
+ * Each distribution will contain the shadowed JAR file along with the necessary start scripts to launch the application.
+ * By removing the shadowDistZip and shadowDistTar tasks we ensure that our own (standard) dist jar build is used.
+ */
+project.configurations.archives.with {
+    artifacts.findAll {
+        if (it.hasProperty('provider')) {
+            it.provider.get().is(project.tasks.shadowDistZip) ||
+            it.provider.get().is(project.tasks.shadowDistTar)
+        }
+    }.each {
+        artifacts.remove it
+    }
+}
+
+shadowJar {
+    archiveClassifier = 'shadow'
+    def mainClass = "${mainClassName}"
+    destinationDirectory = file("${buildDir}")
+    manifest {
+        attributes 'Main-Class': "${mainClass}"
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/NOTICE', 'META-INF/LICENSE', 'META-INF/DEPENDENCIES'
+    archiveExtension = 'jar'
+
+    mergeServiceFiles()
+}
+
+/** Builds the sources JAR */
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allJava
+
+    destinationDirectory = file("${buildDir}")
+
+    archiveClassifier = 'sources'
+}
+
+/** Builds the JavaDoc JAR */
+task javadocJar(type: Jar) {
+    from javadoc
+
+    destinationDirectory = file("${buildDir}")
+
+    archiveClassifier = 'javadoc'
+}
+
+// ##################### Source for Artifact neonbee-core-test
+
+task testJar(type: Jar) {
+    from sourceSets.test.output
+
+    destinationDirectory = file("${buildDir}")
+
+    archiveAppendix = 'test'
+    archiveExtension = 'jar'
+}
+
+/** Builds the sources JAR */
+task testSourcesJar(type: Jar) {
+    from sourceSets.test.allJava
+
+    destinationDirectory = file("${buildDir}")
+
+    archiveAppendix = 'test'
+    archiveClassifier = 'sources'
+}
+
+// ##################### Source for Artifact neonbee-dist
+
+/*
+ * Copy the content of the working directory folder into the distributionDir folder
+ */
+task createWorkingDirectory(type: Copy) {
+    def workingDir = project.hasProperty('destination') ? file(destination) : distributionDir
+    workingDir.mkdirs()
+
+    from({ new File(workingDir, 'logs').mkdirs(); workingDir })
+    from({ new File(workingDir, 'models').mkdirs(); workingDir })
+    from({ new File(workingDir, 'verticles').mkdirs(); workingDir })
+    from({ new File(workingDir, 'working_dir/logs').mkdirs(); workingDir })
+
+    into workingDir
+
+    into('.') {
+        from 'resources/start.sh'
+        from 'resources/start.bat'
+    }
+
+    into('config') {
+        from 'resources/config/logback.xml'
+        from 'resources/config/io.neonbee.NeonBee.yaml'
+        from 'resources/config/io.neonbee.internal.verticle.ServerVerticle.example.yaml'
+    }
+}
+
+/*
+ * Add the NeonBee's dependent jars to the libsDir folder.
+ */
+task copyDependendLibsToDistLibsDir(type: Copy) {
+    distributionLibsDir.mkdirs()
+
+    from configurations.runtimeClasspath
+    into "${distributionLibsDir}"
+}
+
+/*
+ * Copy the NeonBee Core JAR file into the libsDir folder
+ */
+task copyCoreJarToDistLibsDir(type: Copy) {
+    distributionLibsDir.mkdirs()
+
+    from coreJar
+    into "${distributionLibsDir}"
+}
+
+task cleanDistributionDir(type: Delete) {
+    delete "${distributionDir}"
+}
+
+/*
+ * Commonalities used by distTar.
+ */
+task buildDistributionDir() {
+    dependsOn('cleanDistributionDir')
+
+    dependsOn('createWorkingDirectory')
+    dependsOn('copyDependendLibsToDistLibsDir')
+    dependsOn('copyCoreJarToDistLibsDir')
+
+    tasks.findByName('createWorkingDirectory').mustRunAfter('cleanDistributionDir')
+    tasks.findByName('copyDependendLibsToDistLibsDir').mustRunAfter('createWorkingDirectory')
+    tasks.findByName('copyCoreJarToDistLibsDir').mustRunAfter('copyDependendLibsToDistLibsDir')
+}
+
+/*
+ * Build and package a complete NeonBee distribution as NeonBee Dist Tar Gz Archive incl. folder structure,
+ * start scripts etc. in the build folder.
+ */
+distTar {
+    dependsOn('buildDistributionDir')
+
+    from distributionDir
+    include '**/*'
+    exclude '**/.DS_Store', '**/.vertx'
+    archiveBaseName = 'neonbee-dist'
+    archiveExtension = 'tar.gz'
+    destinationDirectory = file("${buildDir}")
+    compression = Compression.GZIP
+}
+
+/*
+ * Overwrites the build task
+ */
+build {
+    dependsOn('coreJar')
+    dependsOn('shadowJar')
+    dependsOn('sourcesJar')
+    dependsOn('javadocJar')
+    dependsOn('testJar')
+    dependsOn('testSourcesJar')
+    dependsOn('distTar')
+}

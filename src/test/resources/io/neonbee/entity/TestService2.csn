@@ -1,0 +1,47 @@
+{
+  "namespace": "io.neonbee.test2",
+  "definitions": {
+    "io.neonbee.test2.TestService2Cars": {
+      "kind": "service"
+    },
+    "io.neonbee.test2.TestService2Cars.TestCars": {
+      "kind": "entity",
+      "elements": {
+        "ID": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "make": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "year": {
+          "type": "cds.Integer"
+        }
+      }
+    },
+    "io.neonbee.test2.TestService2Users": {
+      "kind": "service"
+    },
+    "io.neonbee.test2.TestService2Users.TestUsers": {
+      "kind": "entity",
+      "elements": {
+        "ID": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "name": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "description": {
+          "type": "cds.String"
+        }
+      }
+    }
+  },
+  "meta": {
+    "creator": "CDS Compiler v1.26.2"
+  },
+  "$version": "1.0"
+}

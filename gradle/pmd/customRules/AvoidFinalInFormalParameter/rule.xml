@@ -1,0 +1,20 @@
+<rule name="AvoidFinalInFormalParameter"
+      language="java"
+      minimumLanguageVersion="1.8"
+      message="Avoid final in formal Parameters"
+      class="net.sourceforge.pmd.lang.rule.XPathRule">
+    <description>
+        Avoid final in formal Parameters
+    </description>
+    <priority>1</priority>
+    <properties>
+        <property name="version" value="2.0"/>
+        <property name="xpath">
+            <value>
+                <![CDATA[
+                //FormalParameter//VariableDeclaratorId[@Final = true()]
+                ]]>
+            </value>
+         </property>
+     </properties>
+</rule>

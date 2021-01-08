@@ -1,0 +1,52 @@
+// remove the "-SNAPSHOT" extension to prepare the release
+task updateVersion {
+    doLast {
+        def releaseVersion = project.version.replace('-SNAPSHOT', '')
+        println 'New release version ' + releaseVersion
+
+        buildFile.setText(buildFile.getText().replace("version = '${project.version}'", "version = '${releaseVersion}'"))
+    }
+}
+
+// commits and pushes the build.gradle with the updated version
+task prepareRelease {
+    doLast {
+        def releaseVersion = project.version.replace('-SNAPSHOT', '')
+        println 'New release version ' + releaseVersion
+
+        try {
+            def grgit = org.ajoberstar.grgit.Grgit.open(dir: project.projectDir.toString())
+            grgit.add(patterns: ['build.gradle'])
+
+            def myCommit = grgit.commit(message: "Prepare release ${releaseVersion}")
+            println grgit.show(commit: myCommit)
+
+            grgit.push()
+            grgit.close()
+        } catch (Exception e) {
+            if (!e.getMessage().equals('No changes')) {
+                throw e
+            }
+        }
+    }
+}
+prepareRelease.dependsOn updateVersion
+
+task finishRelease {
+    doLast {
+        if (!nextVersion.endsWith('-SNAPSHOT')) {
+            nextVersion = nextVersion + '-SNAPSHOT'
+        }
+        println 'Next version ' + nextVersion
+
+        println 'Bump to new version ' + nextVersion
+        buildFile.setText(buildFile.getText().replaceFirst("version = '${project.version}'", "version = '${nextVersion}'"))
+
+        def grgit = org.ajoberstar.grgit.Grgit.open(dir: project.projectDir.toString())
+        grgit.add(patterns: ['build.gradle'])
+        def myCommit = grgit.commit(message: "Finish release for next snapshot ${nextVersion}")
+        println grgit.show(commit: myCommit)
+        grgit.push()
+        grgit.close()
+    }
+}

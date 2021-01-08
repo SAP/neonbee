@@ -1,0 +1,28 @@
+{
+  "namespace": "io.neonbee.deploy",
+  "definitions": {
+    "io.neonbee.deploy.ProductService": {
+      "kind": "service"
+    },
+    "io.neonbee.deploy.ProductService.Products": {
+      "kind": "entity",
+      "elements": {
+        "ID": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "name": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "description": {
+          "type": "cds.String"
+        }
+      }
+    }
+  },
+  "meta": {
+    "creator": "CDS Compiler v1.26.2"
+  },
+  "$version": "1.0"
+}

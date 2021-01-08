@@ -1,0 +1,74 @@
+---
+# the number of instances of server verticles to start, defaults to 16
+instances: 16
+
+# the configuration for the NeonBee server verticle
+config:
+    # the port number to use for the HTTP server, defaults to 8080
+    port: 8080
+
+    # sets whether to use application-layer protocol negotiation or not, defaults to true
+    useAlpn: true
+    # one of: none, local or clustered, defaults to none
+    sessionHandling: none
+    # the name of the session cookie, defaults to neonbee-web.session
+    sessionCookieName: neonbee-web.session
+
+    # sets whether the server should decompress request bodies, defaults to true
+    decompressionSupported: true
+    # sets whether the server supports compression, defaults to true
+    compressionSupported: true
+    # if compression is supported, sets the level of compression, defaults to 1
+    compressionLevel: 1
+
+    # one of: request_header, generate_uuid, defaults to request_header
+    correlationStrategy: request_header
+
+    # the number of seconds before the router timeout applies, defaults to 30
+    timeout: 30
+    # the error code for the default timeout, defaults to 504
+    timeoutErrorCode: 504
+
+    # the maximum length of all HTTP headers, defaults to 8192 bytes
+    maxHeaderSize: 8192
+    # the maximum initial line length of the HTTP header (e.g. "GET / HTTP/1.0"), defaults to 4096 bytes
+    maxInitialLineLength: 4096
+
+    # specific endpoint configuration, defaults to the object seen below
+    endpoints:
+        # provides a OData V4 compliant endpoint, for accessing entity verticle data
+        odata:
+            # enable the OData endpoint, defaults to true
+            enabled: true
+            # the base path to map this endpoint to, defaults to /odata/
+            basePath: /odata/
+            # namespace and service name URI mapping (strict, or loose based on CDS)
+            uriConversion: strict
+
+        # provides a REST endpoint (JSON, text, binary), for accessing data verticles
+        raw:
+            # enable the raw endpoint, defaults to true
+            enabled: true
+            # the base path to map this endpoint to, defaults to /raw/
+            basePath: /raw/
+            # whether or not to expose hidden verticles, defaults to false
+            exposeHiddenVerticles: false
+
+        # provides an Prometheus scraping endpoint for Micrometer.io metrics
+        metrics:
+            # enable the metrics endpoint, defaults to true
+            enabled: true
+            # the base path to map this endpoint to, defaults to /metrics/
+            basePath: /metrics/
+
+    # authentication chain, defaults to an empty array (no authentication), use:
+    authenticationChain:
+        # any of: basic, digest, jwt, oauth2, redirect, mandatory attribute
+      - type: string
+        # ... more authentication handler options (see the specific handler implementations)
+
+        # the authentication provider to be set for this handler
+        provider:
+            # the authentication provider to be set for this handler# any of: htdigest, htpasswd, jdbc, jwt, mongo, oauth2, shiro, mandatory attribute
+            type: string
+            # ... more authentication provider options (see the specific provider implementations)

@@ -1,0 +1,24 @@
+{
+  "namespace": "io.neonbee.test",
+  "definitions": {
+    "io.neonbee.reference.ReferenceService": {
+      "kind": "service"
+    },
+    "io.neonbee.reference.ReferenceService.TestProducts": {
+      "kind": "entity",
+      "@Common.customEntityTerm.customEntityProperty": "customValue",
+      "elements": {
+        "name": {
+          "@Common.customPropertyTerm.customPropertyValueString": "StringValue",
+          "key": true,
+          "type": "cds.String",
+          "length": 10
+        }
+      }
+    }
+  },
+  "meta": {
+    "creator": "CDS Compiler v1.26.2"
+  },
+  "$version": "1.0"
+}

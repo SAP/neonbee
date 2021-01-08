@@ -1,0 +1,28 @@
+{
+  "namespace": "io.neonbee.test3",
+  "definitions": {
+    "io.neonbee.test3.TestService3": {
+      "kind": "service"
+    },
+    "io.neonbee.test3.TestService3.TestCars": {
+      "kind": "entity",
+      "elements": {
+        "ID": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "name": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "description": {
+          "type": "cds.String"
+        }
+      }
+    }
+  },
+  "meta": {
+    "creator": "CDS Compiler v1.26.2"
+  },
+  "$version": "1.0"
+}

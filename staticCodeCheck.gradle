@@ -1,0 +1,115 @@
+apply plugin: 'checkstyle'
+
+// ############ Spotless
+spotless {
+    java {
+        encoding 'UTF8'
+        trimTrailingWhitespace()
+        removeUnusedImports()
+        endWithNewline()
+        importOrderFile("${rootDir}/gradle/spotless/neonbee.importorder")
+        eclipse('4.17.0').configFile "${rootDir}/gradle/spotless/eclipse-formatter.xml"
+        custom 'Lambda fix', { it.replace('} )', '})').replace('} ,', '},') }
+    }
+}
+
+// ############ Errorprone
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone.allErrorsAsWarnings = true
+    options.errorprone.disableWarningsInGeneratedCode = true
+    options.failOnError = true
+    options.compilerArgs << '-Xlint:deprecation'
+}
+
+import org.gradle.internal.logging.events.OutputEvent
+import org.gradle.internal.logging.events.OutputEventListener
+import org.gradle.internal.logging.LoggingOutputInternal
+
+tasks.withType(JavaCompile) {
+    def exceptions = []
+    doFirst {
+        gradle.services.get(LoggingOutputInternal).addOutputEventListener(new OutputEventListener() {
+            void onOutput(OutputEvent event) {
+                if (event.toString() =~ ': warning:') {
+                    exceptions << "Errorprone warning: ${event.toString()}"
+                }
+            }
+        })
+    }
+    doLast {
+        if (exceptions.size() > 0) {
+            throw new GradleException(String.join('\n', exceptions))
+        }
+    }
+}
+
+// ############ Spotbugs
+spotbugs {
+    // Ignore the issues during SpotBugs run, because the violations plugin
+    // will display the issues and let the build fail later.
+    ignoreFailures = true
+    toolVersion = '4.1.1'
+    effort = 'max'
+    reportLevel = 'medium'
+}
+
+spotbugsTest.enabled = false
+
+spotbugsMain {
+    // Only one report can be configured at a time.
+    reports {
+        xml.enabled = true
+        html.enabled = false
+    }
+}
+compileJava.finalizedBy spotbugsMain // Checks src/main/java
+
+spotbugsTest {
+    // Only one report can be configured at a time.
+    reports {
+        xml.enabled = true
+        html.enabled = false
+    }
+}
+compileTestJava.finalizedBy spotbugsTest // Checks src/test/java
+
+// ############ PMD
+pmd {
+    // Ignore the issues during PMD run, because the violations plugin
+    // will display the issues and let the build fail later.
+    ignoreFailures = true
+    sourceSets = [sourceSets.main, sourceSets.test]
+    ruleSets = []
+    toolVersion = '6.21.0'
+}
+
+pmdMain {
+    ruleSetFiles = files("${rootDir}/gradle/pmd/rulesetMain.xml", "${rootDir}/gradle/pmd/customRuleset.xml")
+}
+compileJava.finalizedBy pmdMain
+
+pmdTest {
+    ruleSetFiles = files("${rootDir}/gradle/pmd/rulesetTest.xml", "${rootDir}/gradle/pmd/customRuleset.xml")
+}
+compileTestJava.finalizedBy pmdTest
+
+// ############ CheckStyle
+checkstyle {
+    ignoreFailures = true
+    toolVersion = '8.38'
+    sourceSets = [sourceSets.main, sourceSets.test]
+    configDirectory = file("${rootDir}/gradle/checkstyle")
+}
+
+
+checkstyleMain {
+    config = resources.text.fromFile("${rootDir}/gradle/checkstyle/main.xml")
+}
+
+compileJava.finalizedBy checkstyleMain
+
+checkstyleTest {
+   config = resources.text.fromFile("${rootDir}/gradle/checkstyle/test.xml")
+}
+
+compileTestJava.finalizedBy checkstyleTest

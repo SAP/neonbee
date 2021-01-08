@@ -1,0 +1,38 @@
+/.gradle/
+/build/
+/.vertx/
+/.bin/
+/bin/
+/out/
+.project
+/.vscode/launch.json
+*.hprof
+.pmd
+.idea
+.iml
+
+# XMake              #
+######################
+/.xmake/
+/gen/
+/import/
+
+# Log files          #
+######################
+*.log
+*.log.[0-9]*
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+/manifest.yml
+/.settings/
+.classpath
+VCAP_SERVICES.json
+/.checkstyle
+/.eclipse-pmd

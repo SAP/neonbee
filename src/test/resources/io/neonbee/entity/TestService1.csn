@@ -1,0 +1,93 @@
+{
+  "namespace": "io.neonbee.test1",
+  "definitions": {
+    "io.neonbee.test1.TestService1": {
+      "kind": "service"
+    },
+    "io.neonbee.test1.TestService1.AllPropertiesNullable": {
+      "kind": "entity",
+      "elements": {
+        "KeyPropertyString": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "PropertyString": {
+          "type": "cds.String"
+        },
+        "PropertyString100": {
+          "type": "cds.String",
+          "length": 100
+        },
+        "PropertyLargeString": {
+          "type": "cds.LargeString"
+        },
+        "PropertyBinary": {
+          "type": "cds.Binary"
+        },
+        "PropertyBinary100": {
+          "type": "cds.Binary",
+          "length": 100
+        },
+        "PropertyLargeBinary": {
+          "type": "cds.LargeBinary"
+        },
+        "PropertyBoolean": {
+          "type": "cds.Boolean"
+        },
+        "PropertyDate": {
+          "type": "cds.Date"
+        },
+        "PropertyTime": {
+          "type": "cds.Time"
+        },
+        "PropertyDateTime": {
+          "type": "cds.DateTime"
+        },
+        "PropertyTimestamp": {
+          "type": "cds.Timestamp"
+        },
+        "PropertyDecimal": {
+          "type": "cds.Decimal",
+          "precision": 11,
+          "scale": 5
+        },
+        "PropertyDecimalFloat": {
+          "type": "cds.DecimalFloat"
+        },
+        "PropertyDouble": {
+          "type": "cds.Double"
+        },
+        "PropertyUuid": {
+          "type": "cds.UUID"
+        },
+        "PropertyInt32": {
+          "type": "cds.Integer"
+        },
+        "PropertyInt64": {
+          "type": "cds.Integer64"
+        }
+      }
+    },
+    "io.neonbee.test.TestService1.TestProducts": {
+      "kind": "entity",
+      "elements": {
+        "ID": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "name": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "description": {
+          "type": "cds.String"
+        }
+      }
+    }
+  },
+  "meta": {
+    "flavor": "inferred",
+    "creator": "CDS Compiler v1.43.0"
+  },
+  "$version": "1.0"
+}

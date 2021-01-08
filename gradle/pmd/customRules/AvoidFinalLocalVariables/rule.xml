@@ -1,0 +1,21 @@
+<rule name="AvoidFinalLocalVariables"
+      language="java"
+      minimumLanguageVersion="1.8"
+      message="Avoid final when declaring local variables"
+      class="net.sourceforge.pmd.lang.rule.XPathRule">
+    <description>
+       Avoid final when declare local variables. There is no benefit.
+       See NeonBee community conventions.
+    </description>
+    <priority>1</priority>
+    <properties>
+       <property name="version" value="2.0"/>
+       <property name="xpath">
+          <value>
+              <![CDATA[
+              //LocalVariableDeclaration[@Final = true()]
+              ]]>
+          </value>
+       </property>
+    </properties>
+</rule>

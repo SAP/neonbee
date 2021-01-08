@@ -1,0 +1,244 @@
+{
+  "namespace": "io.neonbee.processor",
+  "definitions": {
+    "io.neonbee.processor.ProcessorService": {
+      "kind": "service"
+    },
+    "io.neonbee.processor.ProcessorService.AllPropertiesNotNullable": {
+      "kind": "entity",
+      "elements": {
+        "KeyPropertyString": {
+          "key": true,
+          "type": "cds.String",
+          "notNull": true
+        },
+        "PropertyString": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "PropertyChar": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "PropertyString100": {
+          "type": "cds.String",
+          "length": 100,
+          "notNull": true
+        },
+        "PropertyLargeString": {
+          "type": "cds.LargeString"
+        },
+        "PropertyBinary": {
+          "type": "cds.Binary",
+          "notNull": true
+        },
+        "PropertyBinary100": {
+          "type": "cds.Binary",
+          "length": 100,
+          "notNull": true
+        },
+        "PropertyLargeBinary": {
+          "type": "cds.LargeBinary"
+        },
+        "PropertyBoolean": {
+          "type": "cds.Boolean",
+          "notNull": true
+        },
+        "PropertyDate": {
+          "type": "cds.Date",
+          "notNull": true
+        },
+        "PropertyTime": {
+          "type": "cds.Time",
+          "notNull": true
+        },
+        "PropertyDateTime": {
+          "type": "cds.DateTime"
+        },
+        "PropertyTimestamp": {
+          "type": "cds.Timestamp",
+          "notNull": true
+        },
+        "PropertyDecimal": {
+          "type": "cds.Decimal",
+          "precision": 11,
+          "scale": 5,
+          "notNull": true
+        },
+        "PropertyDecimalFloat": {
+          "type": "cds.DecimalFloat"
+        },
+        "PropertyDouble": {
+          "type": "cds.Double",
+          "notNull": true
+        },
+        "PropertyUuid": {
+          "type": "cds.UUID",
+          "notNull": true
+        },
+        "PropertyInt32": {
+          "type": "cds.Integer",
+          "notNull": true
+        },
+        "PropertyInt64": {
+          "type": "cds.Integer64",
+          "notNull": true
+        }
+      }
+    },
+    "io.neonbee.processor.ProcessorService.AllPropertiesNullable": {
+      "kind": "entity",
+      "elements": {
+        "KeyPropertyString": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "PropertyString": {
+          "type": "cds.String"
+        },
+        "PropertyChar": {
+          "type": "cds.String"
+        },
+        "PropertyString100": {
+          "type": "cds.String",
+          "length": 100
+        },
+        "PropertyLargeString": {
+          "type": "cds.LargeString"
+        },
+        "PropertyBinary": {
+          "type": "cds.Binary"
+        },
+        "PropertyBinary100": {
+          "type": "cds.Binary",
+          "length": 100
+        },
+        "PropertyLargeBinary": {
+          "type": "cds.LargeBinary"
+        },
+        "PropertyBoolean": {
+          "type": "cds.Boolean"
+        },
+        "PropertyDate": {
+          "type": "cds.Date"
+        },
+        "PropertyTime": {
+          "type": "cds.Time"
+        },
+        "PropertyDateTime": {
+          "type": "cds.DateTime"
+        },
+        "PropertyTimestamp": {
+          "type": "cds.Timestamp"
+        },
+        "PropertyDecimal": {
+          "type": "cds.Decimal",
+          "precision": 11,
+          "scale": 5
+        },
+        "PropertyDecimalFloat": {
+          "type": "cds.DecimalFloat"
+        },
+        "PropertyDouble": {
+          "type": "cds.Double"
+        },
+        "PropertyUuid": {
+          "type": "cds.UUID"
+        },
+        "PropertyInt32": {
+          "type": "cds.Integer"
+        },
+        "PropertyInt64": {
+          "type": "cds.Integer64"
+        }
+      }
+    },
+    "io.neonbee.processor.ProcessorService.MultipleKeyProperties": {
+      "kind": "entity",
+      "elements": {
+        "KeyPropertyString": {
+          "key": true,
+          "type": "cds.String",
+          "notNull": true
+        },
+        "KeyPropertyInt32": {
+          "key": true,
+          "type": "cds.Integer",
+          "notNull": true
+        },
+        "KeyPropertyBoolean": {
+          "key": true,
+          "type": "cds.Boolean"
+        }
+      }
+    },
+    "io.neonbee.processor.ProcessorService.TestCategories": {
+      "kind": "entity",
+      "elements": {
+        "ID": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "name": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "description": {
+          "type": "cds.String"
+        },
+        "testProducts": {
+          "type": "cds.Association",
+          "cardinality": {
+            "max": "*"
+          },
+          "target": "io.neonbee.processor.ProcessorService.TestProducts",
+          "on": [
+            {
+              "ref": [
+                "testProducts",
+                "testCategory"
+              ]
+            },
+            "=",
+            {
+              "ref": [
+                "$self"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "io.neonbee.processor.ProcessorService.TestProducts": {
+      "kind": "entity",
+      "elements": {
+        "ID": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "name": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "description": {
+          "type": "cds.String"
+        },
+        "testCategory": {
+          "type": "cds.Association",
+          "target": "io.neonbee.processor.ProcessorService.TestCategories",
+          "keys": [
+            {
+              "ref": [
+                "ID"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "meta": {
+    "creator": "CDS Compiler v1.26.2"
+  },
+  "$version": "1.0"
+}
