@@ -6,7 +6,7 @@ repositories {
 
 dependencies {
     def vertx_version = '4.0.0'
-    def jackson_version = '2.12.0'
+    def jackson_version = '2.11.3'
     def jupiter_version = '5.7.0'
     def junit_platform_version = '1.7.0'
     def errorprone_version = '2.3.3'
@@ -41,7 +41,7 @@ dependencies {
     implementation(group: 'org.apache.olingo', name: 'odata-server-core', version: olingo_version) {
         exclude group: 'io.netty'
     }
-    implementation group: 'org.apache.olingo', name: 'odata-server-core-ext', version: olingo_version 
+    implementation group: 'org.apache.olingo', name: 'odata-server-core-ext', version: olingo_version
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4j_version
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: logback_version
