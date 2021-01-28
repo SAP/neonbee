@@ -7,7 +7,9 @@ import static io.neonbee.entity.EntityModelManager.getBufferedModels;
 import static io.neonbee.entity.EntityModelManager.getBufferedOData;
 import static io.neonbee.entity.EntityModelManager.getSharedModel;
 import static io.neonbee.entity.EntityModelManager.getSharedModels;
+import static io.neonbee.entity.EntityModelManager.registerModels;
 import static io.neonbee.entity.EntityModelManager.reloadModels;
+import static io.neonbee.entity.EntityModelManager.unregisterModels;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -275,12 +277,51 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
         Map.Entry<String, byte[]> referenceExtModel = buildModelEntry("io.neonbee.reference.ReferenceService.edmx");
         Map<String, byte[]> extendedModels = Map.ofEntries(referenceExtModel);
 
-        EntityModelManager.registerModels(vertx, "referencemodule", models, extendedModels)
+        registerModels(vertx, "referencemodule", models, extendedModels)
                 .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
                     assertThat(getBufferedModel(vertx, "io.neonbee.reference").getEdmx().getEdm().getEntityContainer()
                             .getNamespace()).isEqualTo("io.neonbee.reference.ReferenceService");
-                    EntityModelManager.unregisterModels(vertx, "referencemodule");
+                    unregisterModels(vertx, "referencemodule");
                     assertThat(getBufferedModel(vertx, "io.neonbee.reference")).isNull();
+                    testContext.completeNow();
+                })));
+    }
+
+    @Test
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("register / unregister multiple modules to verify that changing the unmodifiable BUFFERED_MODELS is working correctly.")
+    public void registerMultipleModuleModels(Vertx vertx, VertxTestContext testContext) throws IOException {
+        Path workingDirectory = getNeonBee().getOptions().getWorkingDirectory();
+        NeonBeeMockHelper.registerNeonBeeMock(vertx,
+                new NeonBeeOptions.Mutable().setIgnoreClassPath(true).setWorkingDirectory(workingDirectory));
+
+        // Create 1st models
+        Map.Entry<String, byte[]> referenceModel = buildModelEntry("ReferenceService.csn");
+        Map<String, byte[]> referenceModels = Map.ofEntries(referenceModel);
+
+        // Create 1st extension models
+        Map.Entry<String, byte[]> referenceExtModel = buildModelEntry("io.neonbee.reference.ReferenceService.edmx");
+        Map<String, byte[]> referenceExtendedModels = Map.ofEntries(referenceExtModel);
+
+        // Create 2nd models
+        Map.Entry<String, byte[]> testModel = buildModelEntry("TestService1.csn");
+        Map<String, byte[]> testModels = Map.ofEntries(testModel);
+
+        // Create 2nd extension models
+        Map.Entry<String, byte[]> testExtModel = buildModelEntry("io.neonbee.test1.TestService1.edmx");
+        Map<String, byte[]> testExtendedModels = Map.ofEntries(testExtModel);
+
+        registerModels(vertx, "referencemodule", referenceModels, referenceExtendedModels)
+                .compose(result -> registerModels(vertx, "testmodule", testModels, testExtendedModels))
+                .onComplete(testContext.succeeding(res -> testContext.verify(() -> {
+                    assertThat(getBufferedModel(vertx, "io.neonbee.reference").getEdmx().getEdm().getEntityContainer()
+                            .getNamespace()).isEqualTo("io.neonbee.reference.ReferenceService");
+                    assertThat(getBufferedModel(vertx, "io.neonbee.test1").getEdmx().getEdm().getEntityContainer()
+                            .getNamespace()).isEqualTo("io.neonbee.test1.TestService1");
+                    unregisterModels(vertx, "referencemodule");
+                    assertThat(getBufferedModel(vertx, "io.neonbee.reference")).isNull();
+                    unregisterModels(vertx, "testmodule");
+                    assertThat(getBufferedModel(vertx, "AnnotatedService")).isNull();
                     testContext.completeNow();
                 })));
     }

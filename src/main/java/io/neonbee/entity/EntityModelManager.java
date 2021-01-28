@@ -4,6 +4,8 @@ import static io.neonbee.internal.Helper.LOCAL_DELIVERY;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.unmodifiableMap;
+import static java.util.Optional.ofNullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -19,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -112,7 +113,6 @@ public final class EntityModelManager {
      * definition needs to be received synchronously and without the involvement of futures. Whenever possible, use
      * {@link #getSharedModel(Vertx, String)} instead.
      *
-     * @see #getBufferedModels(Vertx)
      * @param vertx           An instance of {@link Vertx}
      * @param schemaNamespace the namespace of the service
      * @return the buffered model for a specific schema namespace or null in case no models have been loaded so far, or
@@ -120,7 +120,7 @@ public final class EntityModelManager {
      * @see #getBufferedModels(Vertx)
      */
     public static EntityModel getBufferedModel(Vertx vertx, String schemaNamespace) {
-        return Optional.ofNullable(BUFFERED_MODELS.get(vertx)).map(models -> models.get(schemaNamespace)).orElse(null);
+        return ofNullable(BUFFERED_MODELS.get(vertx)).map(models -> models.get(schemaNamespace)).orElse(null);
     }
 
     /**
@@ -169,7 +169,7 @@ public final class EntityModelManager {
      *         case no models could be loaded or no model matching the schema namespace could be found
      */
     public static Future<EntityModel> getSharedModel(Vertx vertx, String schemaNamespace) {
-        return getSharedModels(vertx).compose(models -> Optional.ofNullable(models.get(schemaNamespace))
+        return getSharedModels(vertx).compose(models -> ofNullable(models.get(schemaNamespace))
                 .map(Future::succeededFuture).orElseGet(() -> failedFuture(
                         new NoSuchElementException("Cannot find data model for schema namespace " + schemaNamespace))));
     }
@@ -205,8 +205,12 @@ public final class EntityModelManager {
         return Loader.loadModuleModels(vertx, models, extensionModels).map(modelMap -> {
             BUFFERED_MODULE_MODELS.putIfAbsent(vertx, new ConcurrentHashMap<>());
             BUFFERED_MODULE_MODELS.get(vertx).put(module, modelMap);
-            BUFFERED_MODELS.putIfAbsent(vertx, new HashMap<>());
-            BUFFERED_MODELS.get(vertx).putAll(modelMap);
+            Map<String, EntityModel> currentModels = BUFFERED_MODELS.get(vertx);
+            BUFFERED_MODELS.put(vertx, ofNullable(currentModels).map(currentModelMap -> {
+                Map<String, EntityModel> workingMap = new HashMap<>(currentModels);
+                workingMap.putAll(modelMap);
+                return unmodifiableMap(workingMap);
+            }).orElse(unmodifiableMap(modelMap)));
             // publish the event local only! models must be present locally on every instance in a cluster!
             vertx.eventBus().publish(EVENT_BUS_MODELS_LOADED_ADDRESS, null, LOCAL_DELIVERY);
             return modelMap;
@@ -220,9 +224,12 @@ public final class EntityModelManager {
      * @param module unique identifier of a NeonBee module
      */
     public static void unregisterModels(Vertx vertx, String module) {
-        Optional.ofNullable(BUFFERED_MODULE_MODELS.get(vertx)).flatMap(map -> Optional.ofNullable(map.get(module)))
-                .ifPresent(moduleModels -> Optional.ofNullable(BUFFERED_MODELS.get(vertx))
-                        .ifPresent(currentModels -> moduleModels.keySet().forEach(currentModels::remove)));
+        ofNullable(BUFFERED_MODULE_MODELS.get(vertx)).flatMap(map -> ofNullable(map.get(module)))
+                .ifPresent(moduleModels -> ofNullable(BUFFERED_MODELS.get(vertx)).ifPresent(currentModels -> {
+                    Map<String, EntityModel> workingMap = new HashMap<>(currentModels);
+                    moduleModels.keySet().forEach(workingMap::remove);
+                    BUFFERED_MODELS.put(vertx, unmodifiableMap(workingMap));
+                }));
     }
 
     @VisibleForTesting
