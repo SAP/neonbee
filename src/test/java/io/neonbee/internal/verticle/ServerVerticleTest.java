@@ -1,12 +1,15 @@
 package io.neonbee.internal.verticle;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.internal.verticle.ServerVerticle.BEGIN_PUBLIC_KEY;
+import static io.neonbee.internal.verticle.ServerVerticle.END_PUBLIC_KEY;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
@@ -17,7 +20,9 @@ import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
@@ -126,6 +131,19 @@ public class ServerVerticleTest extends NeonBeeTestBase {
                     assertThat(response.statusCode()).isEqualTo(404);
                     checkpoint.flag();
                 })));
+    }
+
+    @Test
+    void testExtractPubSecKeys() {
+        String algorithm = "RS256";
+        String pubKey = "Hodor";
+        JsonArray pubKeys = new JsonArray().add(new JsonObject().put("algorithm", "RS256").put("publicKey", pubKey));
+
+        String expectedBuffer = BEGIN_PUBLIC_KEY + "\n" + pubKey + "\n" + END_PUBLIC_KEY;
+        List<PubSecKeyOptions> keys = ServerVerticle.extractPubSecKeys(pubKeys);
+        assertThat(keys).hasSize(1);
+        assertThat(keys.get(0).getAlgorithm()).isEqualTo(algorithm);
+        assertThat(keys.get(0).getBuffer()).isEqualTo(expectedBuffer);
     }
 
     @Override

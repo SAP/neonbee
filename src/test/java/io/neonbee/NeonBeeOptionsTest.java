@@ -83,7 +83,7 @@ public class NeonBeeOptionsTest {
         assertThat((Object) opts.getLogDirectory()).isEqualTo(tempDirPath.resolve("logs"));
         assertThat((Object) opts.getConfigDirectory()).isEqualTo(tempDirPath.resolve("config"));
         assertThat((Object) opts.getModelsDirectory()).isEqualTo(tempDirPath.resolve("models"));
-        assertThat((Object) opts.getVerticlesDirectory()).isEqualTo(tempDirPath.resolve("verticle"));
+        assertThat((Object) opts.getVerticlesDirectory()).isEqualTo(tempDirPath.resolve("verticles"));
         FileSystemHelper.deleteRecursiveBlocking(tempDirPath);
     }
 

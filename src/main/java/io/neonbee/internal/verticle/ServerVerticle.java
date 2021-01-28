@@ -40,6 +40,7 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
@@ -129,6 +130,12 @@ public class ServerVerticle extends AbstractVerticle {
     protected static final String CONFIG_PROPERTY_SESSION_HANDLING_LOCAL = "local";
 
     protected static final String CONFIG_PROPERTY_SESSION_HANDLING_NONE = "none";
+
+    @VisibleForTesting
+    static final String BEGIN_PUBLIC_KEY = "-----BEGIN PUBLIC KEY-----";
+
+    @VisibleForTesting
+    static final String END_PUBLIC_KEY = "-----END PUBLIC KEY-----";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -300,7 +307,8 @@ public class ServerVerticle extends AbstractVerticle {
             // TODO return JDBCAuth.create(vertx, client).setAllSettersHere;
             throw new UnsupportedOperationException("JDBC authentication provider is not implemented yet");
         case "jwt":
-            return JWTAuth.create(vertx, new JWTAuthOptions(options));
+            JsonArray pubSecKeys = options.getJsonArray("pubSecKeys");
+            return JWTAuth.create(vertx, new JWTAuthOptions().setPubSecKeys(extractPubSecKeys(pubSecKeys)));
         case "mongo":
             // TODO return MongoAuth.create(mongoClient, jsonConfig);
             throw new UnsupportedOperationException("MongoDB authentication provider is not implemented yet");
@@ -313,6 +321,27 @@ public class ServerVerticle extends AbstractVerticle {
         default:
             throw new IllegalArgumentException("Unknown authentication provider type in server configuration");
         }
+    }
+
+    @VisibleForTesting
+    static List<PubSecKeyOptions> extractPubSecKeys(JsonArray keys) {
+        return keys.stream().map(JsonObject.class::cast).map(pubKeyJson -> {
+            String algorithm = pubKeyJson.getString("algorithm");
+            String pubKey = pubKeyJson.getString("publicKey");
+
+            return new PubSecKeyOptions().setAlgorithm(algorithm).setBuffer(convertToPEM(pubKey));
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * Converts a given public key into a PEM format.
+     *
+     * @param publicKey The public key
+     * @return A String representing a Vert.x compatible PEM format
+     */
+    private static String convertToPEM(String publicKey) {
+        return new StringBuilder(BEGIN_PUBLIC_KEY).append('\n').append(publicKey).append('\n').append(END_PUBLIC_KEY)
+                .toString();
     }
 
     /**

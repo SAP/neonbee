@@ -60,7 +60,7 @@ public interface NeonBeeOptions {
      * @return the verticle directory path
      */
     default Path getVerticlesDirectory() {
-        return getWorkingDirectory().resolve("verticle");
+        return getWorkingDirectory().resolve("verticles");
     }
 
     /**

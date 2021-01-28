@@ -83,8 +83,8 @@ public class Deployable {
     private Handler<AsyncResult<String>> getDeployHandler(String correlationId, Promise<String> deployPromise) {
         return deployResult -> {
             if (deployResult.failed()) {
-                LOGGER.correlateWith(correlationId).error("Deployment of {} failed", deployResult.cause(),
-                        getIdentifier());
+                LOGGER.correlateWith(correlationId).error("Deployment of {} failed", getIdentifier(),
+                        deployResult.cause());
                 deployPromise.fail(deployResult.cause());
             } else {
                 LOGGER.correlateWith(correlationId).info("Deployment of {} succeeded", getIdentifier());
@@ -169,7 +169,7 @@ public class Deployable {
                                 new DeploymentOptions(defaultConfig != null ? defaultConfig : new JsonObject()));
                     } else {
                         LOGGER.correlateWith(correlationId).warn("Could not read deployment options for deployable {}",
-                                throwable, identifier);
+                                identifier, throwable);
                         return failedFuture(throwable);
                     }
                 });
