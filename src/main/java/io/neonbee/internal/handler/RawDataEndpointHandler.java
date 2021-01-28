@@ -21,6 +21,9 @@ import static io.vertx.core.http.HttpMethod.POST;
 import static io.vertx.core.http.HttpMethod.PUT;
 import static io.vertx.ext.web.impl.Utils.pathOffset;
 import static java.lang.Character.isUpperCase;
+import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
+import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -113,6 +116,15 @@ public class RawDataEndpointHandler implements Handler<RoutingContext> {
                                 return;
                             case FAILURE_CODE_TIMEOUT:
                                 routingContext.fail(GATEWAY_TIMEOUT.code());
+                                return;
+                            case HTTP_BAD_REQUEST:
+                                routingContext.fail(HTTP_BAD_REQUEST);
+                                return;
+                            case HTTP_FORBIDDEN:
+                                routingContext.fail(HTTP_FORBIDDEN);
+                                return;
+                            case HTTP_NOT_FOUND:
+                                routingContext.fail(HTTP_NOT_FOUND);
                                 return;
                             default:
                                 /* nothing to do here, fail the routingContext with a 500! */
