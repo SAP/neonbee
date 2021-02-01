@@ -31,7 +31,7 @@ public final class WorkingDirectoryBuilder {
     /**
      * Relative path to the verticle directory
      */
-    public static final Path VERTICLES_DIR = Path.of("verticle");
+    public static final Path VERTICLES_DIR = Path.of("verticles");
 
     /**
      * Relative path to the models directory
