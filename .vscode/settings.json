@@ -1,12 +1,9 @@
 {
     "java.configuration.updateBuildConfiguration": "automatic",
     "java.dependency.packagePresentation": "hierarchical",
-    "java.format.settings.url": "./eclipse-formatter.xml",
+    "java.format.settings.url": "./gradle/spotless/eclipse-formatter.xml",
     "java.saveActions.organizeImports": true,
     "editor.formatOnSave": true,
-    "[xml]": {
-        "editor.formatOnSave": true
-    },
     "html.format.enable": false,
     "cSpell.enabledLanguageIds": [
         "css",
