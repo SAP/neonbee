@@ -35,13 +35,77 @@ project.ext {
     generatedTrustStorePassword = UUID.randomUUID().toString()
 }
 
-apply from: 'dependencies.gradle'
-apply from: 'distribution.gradle'
-apply from: 'publishing.gradle'
-apply from: 'codeCoverage.gradle'
-apply from: 'release.gradle'
-apply from: 'staticCodeCheck.gradle'
-apply from: 'changelog.gradle'
+repositories {
+    mavenLocal()
+    mavenCentral()
+    gradlePluginPortal()
+}
+
+dependencies {
+    // Framework dependencies
+    def vertx_version = '4.0.0'
+    implementation group: 'io.vertx', name: 'vertx-core', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-web-client', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-web', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-config-yaml', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-config', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-micrometer-metrics', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-auth-common', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-auth-jwt', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-hazelcast', version: vertx_version
+
+    def jackson_version = '2.11.3'
+    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jackson_version
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jackson_version
+
+    def olingo_version = '4.8.0'
+    implementation(group: 'org.apache.olingo', name: 'odata-server-core', version: olingo_version) {
+        exclude group: 'io.netty'
+    }
+    implementation group: 'org.apache.olingo', name: 'odata-server-core-ext', version: olingo_version
+
+    implementation group: 'com.sap.cds', name: 'cds-services-impl', version: '1.9.0'
+    implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.3.1'
+    implementation group: 'org.ow2.asm', name: 'asm', version: '7.2'
+
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.29'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+    implementation group: 'com.google.guava', name: 'guava', version: '30.1-jre'
+    implementation group: 'com.google.code.findbugs', name: 'annotations', version: '3.0.1'
+
+    // Framework test dependencies
+    testImplementation group: 'io.vertx', name: 'vertx-junit5', version: vertx_version
+
+    def truth_version = '1.1'
+    testImplementation group: 'com.google.truth', name: 'truth', version: truth_version
+    testImplementation group: 'com.google.truth.extensions', name: 'truth-java8-extension', version: truth_version
+
+    def mockito_version = '3.7.7'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: mockito_version
+    testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: mockito_version
+
+    def jupiter_version = '5.7.0'
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: jupiter_version
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: jupiter_version
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: jupiter_version
+
+    testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: '1.5.0'
+
+    // Required for Eclipse to run Unit tests.
+    testImplementation group: 'org.junit.platform', name: 'junit-platform-commons', version: '1.7.0'
+
+    // Gradle plugin dependencies
+    errorprone group: 'com.google.errorprone', name: 'error_prone_core', version: '2.3.3'
+    checkstyle group: 'com.puppycrawl.tools', name: 'checkstyle', version: '8.38'
+}
+
+apply from: 'gradle/distribution.gradle'
+apply from: 'gradle/publishing.gradle'
+apply from: 'gradle/codeCoverage.gradle'
+apply from: 'gradle/release.gradle'
+apply from: 'gradle/staticCodeCheck.gradle'
+apply from: 'gradle/changelog.gradle'
 
 task initWrapper(type: Wrapper) {
     gradleVersion = '6.7.1'
