@@ -76,78 +76,49 @@ import io.vertx.micrometer.VertxPrometheusOptions;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 public class NeonBee {
-
-    /**
-     * Welcome to NeonBee.
+    /** // @formatter:off
      *
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMXkdddxxxxxOXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWXOxxdxxdddxKW
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMXddOKXNNXX0xdx0WMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWKkdxOXXXKKXKkokN
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWkl0NKKNNNNNNKkoxXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMXkoxKNNXKKXNNNNOok
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNdoXNKKXNNNNNNNKdoOWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMW0od0NNNXKXNNNNNNXdo
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNddXNXKKNNNNNNNNKxlkNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMXxoOXNNXKKXNNNNNNNNkl
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNdoXNNXKXNNNNNNNKKOoxXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMW0odKNNNNKKXNNNNNNNNNOl
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWkoKNNNXKXNNNNNNKKX0oxNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNOokXNNNNXKXNNNNNNNNNNkl
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWOoONNNNXKXNNNNNKKXNOokWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNxoONNNNNXKXNNNNNNNNXXKxl
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMXoxNNNNNKKXNNNNKKXNXxo0WMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWXdl0NNNNNXKKNNNNNNNXKKKKdd
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWxoKNNNNNKKNNXK00KXNKddXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWKoo0XNNNNNKKNNNNNNNXKKXNOoO
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMOlONNNNNXKXXKXX0KKKXKdoKWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMW0oxKKXNNNNXKXNNNNNXKKXNNKodN
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMXoo0XXNNNXKKKNXKXNXKK0odXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWOokXNXKXXNXKXXXXXXKKXNNNXxoKM
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWkcxKXXXXK00KXKKXNNK0X0oxXNNNNXXXXNNNWWWMMMMMMMMMMMMMMMMWOlxKNNNXKKKKKKXXK0KXNNNNXko0WM
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMXooXNNNXXK0KK0KXNNXKXXkclooooooooooodddxkkOKXNWMMMMMMMWOokKXNNNNX0OKXXXKKKKXNNNN0okWMM
-     * MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWkl0NNNNNX00KXKXNNXKKN0doxxxxxxxxxxddddoollloodkOKNWMWOokXNNNNNX00KKKKKXNXKXNNXKdoXMMM
-     * MMMMMMMMMMMMMMMMMMMMMMWWWMMMMMMMMMXoxXNNNNNK0XXKXNNNKKNKxoxxxxxxxxxxxxxxxxxxxdddollodkxokXXNNNXK0KKKKKXNNNK0KXKXklkWMMM
-     * MMMMMMMMMMMMMMMMMMMN0xxddkXMMMMMMMWxlOXXNNXK00kxxxkKKKNXxoxxxxxxxxxxxxxxxxxxxxxxxxxdolcxKXNXXXXXXXKKXNNNXKKKXXNKodXMMMM
-     * MMMMMMMMMMMMMMMMMN0dodxkdcdXMMMMWKxlcd0KXX0xddddxxoxKKXXxoxxxxxxxxxxxxxxxxxxxxxxxxxxdokKKKKKXXNXKKXXNNNXKKXNNNKddXMMMMM
-     * MMMMMMMMMMMMMMMWKdoooddldocxWWNOdllddokOkxodkOOOxxdd0KXXkoxxxxxxxxxxxxxxxxxxxxxxxxxdoxKKXXKKXXXKXNNNNXKKXNNNXOoxXMMMMMM
-     * MMMMMMMMMMMMMWXxllloOXNklollkkolodxxdooodxk0XNXKkxddOKXXkoxxxxxxxxxxxxxxxxxxxxxxxxxoxKXXNNX00KKXNNNXXKXNNNN0ddONMMMMMMM
-     * MMMMMMMMMMMMNkolloONMMMNdldc:coxxxxxdoldOOkkO0OOxddokKKKxoxxxxxxxxxxxxxxxxxxxxxxxxox0XXNNXKKXXXKXNXKKXNNNKxokXMMMMMMMMM
-     * MMMMMMMMMMMWx:coONMMMMMWOcoocoxxxddolc::::;;;;;;;cdod0XKxoxxxxxxxxxxxxxxxxxxxxxxxdd0KXNXXKXNNNKKKKKXNNNKkdxXWMMMMMMMMMM
-     * MMMMMMMMMMMWXO0NWMMMMMWKdcldoldol:;,,,,'''''''''';do;ckKxoxxxxxxxxxxxxxxxxxxxxxxddOK0KXKXNNNXKK00XNNNKkoxKWMMMMMMMMMMMM
-     * MMMMMMMMMMMMMMMMMMMMMNOlldoodlc;,,,,''''''''''''';dd;'cOxoxxxxxxxxxxxddollodxxxdoOKKK0KXNNXKKXNXKXNKOd:oKWMMMMMMMMMMMMM
-     * MMMMMMMMMMMMMMMMMMMMXxcoxxdldo:,''''''''',,;;;::::ox:;xKxoxxxxxxxxxdoc:;;;:oxxdokKKXKKXNXKKXNNNNX0kddddcoKWMMMMMMMMMMMM
-     * MMMMMMMMMMMMMMMMMMMXdcdxdol:clllc,'''';:lddxxxxxdloxlcdkdoxxxxxxdoc:;;;;;;;lxdox0KXNXKKKKXNNNNNKOdodxxxdll0WMMMMMMMMMMM
-     * MMMMMMMMMMMMMMMMMMXocoolc:;;:dO0kocccoxOO0000000Oxoddddlcoxxxdlc:;;;;:cc;,;oxox0KXNNX00XNNNNNXOdddxxxxxxdll0WMMMMMMMMMM
-     * MMMMMMMMMMMMMMMMWXo:cc:;;;;lkK0000O0O000000000000OkkOOOkocclc:;;;;:cloxo:,:odd0KXNNNXKXNNNNKOdddxxxxxxxxxdll0WMMMMMMMMM
-     * MMMMMMMMMMMMMMWKkl;;;;;;::o0K0000000000000000000000000kdc;;;;;;;:lodxxxdlcoodOKXNNNNXKXNNKOdodxxxxxxxxxxxxdcoKMMMMMMMMM
-     * MMMMMMMMMMMWKko:;;;;;:coodKNK00000000000000OOOOOOOOkxoc;;;;;;:codxxxxxxxxxdoOKKNNNNNKKXKOdddxxdxxxxxxxxxxxxdcdNMMMMMMMM
-     * MMMMMMMMWXko:;,;;;;;:lllcoxxxxxdoooollllllllllcllll:;,;;;::;cdxxxxxxxxxxxdokKKXNNNNXK0OdddxxxxxxxxxxxxxxxxxxlcOWMMMMMMM
-     * MMMMMMMXdc;;::::::::ccc:::ccccc::::::::::ccccc::cloc;;;:clc:oxxxxxxxxxxxdox0KXNNNNN0xdddxxxxxxxxxxxxxxxxxxxxdcoXMMMMMMM
-     * MMMMMMMKl:ll::::::::::::;cooool:;;,,,,,,,,,;;;,,,cl::cloooccoxxxxxxxxxxxod0KXNNNNXOdodxxxxxxxxxxxxxxxxxxxxxxxocOWMMMMMM
-     * MMMMMMMNkc::,'''''''',;,';loolc;,'''''''''',;,'',c:;cooool::coooddxxxxxodOKXNNNXOdddxxxxxxxxxxxxxxxxxxxxxxxxxdcxNMMMMMM
-     * MMMMMMMMWKl;;,',,,,,,;,'':cdkdc:;,',,,,,,,,;,,'';c;:looooc;,;lllllllooooOKKNNX0xodxxxxxxxxxxxxxxxxxxxxxxxxxxxxcoXMMMMMM
-     * MMMMMMMMMWOc;;,,,,,,,,,',:lk0Oxc:;,,,,,,,,,,''';c;;looooo:,';loooooolclkKKXNKxodxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxllKMMMMMM
-     * MMMMMMMMMMWOc;;,,'''''',;:oO00Oxl:;,,'''''''',;:;:loooooc,'';looooooolx0KXXOddxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxll0MMMMMM
-     * MMMMMMMMMMMWKd:;,,,'',,;;cx00000kdl:;,,'''',,;;:cloooool;''';loooooold0KXXklcldddxxxxxxxxxxxxxxxxxxxxxxxxxxxxxlc0MMMMMM
-     * MMMMMMMMMMMMMXo:lcc:::ldodO0000000Oxdolccccclodxddooool;'',,:oooooolok0KKxloolllodxxxxxxxxxxxxxxxxddxxxxxxxxxxll0MMMMMM
-     * MMMMMMMMMMMMMNdcdxxxdok0OO0000000000000OOOOO0000Oxdooc;''';:loooollccldkdllooooccldxxxxxxxxxxxxxxxxxxxxxxxxxxxclKMMMMMM
-     * MMMMMMMMMMMMMWkcoxxxddk00000000000000000000000000kdl:,''',clooooolllcclooooooooolcldxxxxxxxxxxxxxxxxxxxxxxxxxdcdNMMMMMM
-     * MMMMMMMMMMMMMM0llxxxdoxkO00000000000000000000000Odc;'''',:ooooooooooooooooollooooolloxxdxxxxxxxxxxxxxxxxxxxxxockWMMMMMM
-     * MMMMMMMMMMMMMMNdcddddxxddOOO00000000000000000Okdc;''''',coddoooooooooooooooccoooooolloxxxxxxxxxxxxxxxxdxxxxxdllKMMMMMMM
-     * MMMMMMMMMMMMMMWOclxkkxoloodk000000000000OOkdoc;,''''',:dkOOOkkkxddooooooooolcclooooolloxxxxxxxxxxxxxxxxxxxxxocxNMMMMMMM
-     * MMMMMMMMMMMMWXkddkOxooddoooddxxxxxxddollc:;,'''''',;cdO000000000Okkdoooooooolc:cloooolcoxxxxxxddddxxxxxxxxxdcoKMMMMMMMM
-     * MMMMMMMMMMMMKdd0kocoxxxxxxxxdddoodolodoc:;;;;;::codkO00000000000000Okxdooooool;,;clooolcodxxxxxxxxxxxxxxxxxlcOWMMMMMMMM
-     * MMMMMMMMMMMWko0OllcldxxxxxxxxddxxxdokXNKOkkkkkOO000000000000000000000Okdooooc,'''';coooolldxxxxxxxxxxxxxxdockNMMMMMMMMM
-     * MMMMMMMMMMMXddKooKOlldxxxxxxxxxxxxxoxXNK0000000000000000000000000000000kdol:,'''''',:looolldxxxxxxxxxxxxxocxNMMMMMMMMMM
-     * MMWNK0000KKklk0lxNWOlldxxxxxxxxdxxxdd0NK0000000000000000000000000000000Oxc,'''''''',cooxdollddxxxxxdxxxxocxNMMMMMMMMMMM
-     * MWOlccccccc:l0k:lk0KklldxxxxxxxxxxxxoxXK00000000000000000000000000000Oxo;,''''''''',cdookkdlldxxxxxxxxxlckNMMMMMMMMMMMM
-     * W0c:ccccccccdOo::::cc:,:oxxxxxxxxxxxllOX00000000000000000000000000Okdc;''''''''''';;ldxookOxlldxxxxxxdllOWMMMMMMMMMMMMM
-     * MKlcdl:::::::c::cccc:;,,;ldxxxxxxxxdlldOK0000000000000000000000Oxdc;,''''''''''',:lcldxxookOxlldxxxdocdKWMMMMMMMMMMMMMM
-     * MXoxNKOxdolcc::::::;;;;,;ccoxxxxxxxooxdoxkOO000000000000OOkxxol:,''''''''''''';:loocldxxdodOOxlldxdllONMMMMMMMMMMMMMMMM
-     * M0oOWMMWWNK0kxddooollc:lOXOoloxxxxxodOxl:;:clooddddddoolc:;,,'''''''''''''',:clooooclxxxxdodOOxlcllxXWMMMMMMMMMMMMMMMMM
-     * 0ooKWNKXXNNWWXOkkkkkxloXMMWXkolodxdokOxlc:;''''',,'''''''''''''''''''''',:clloooooolldoddddox0Od:c0WMMMMMMMMMMMMMMMMMMM
-     * ooxXWkcclldkkkddxkkkol0WMMMMMNOollloOOdlldo:,''''''''''''''''''',;:cloddxkkkOOOOOOOOkkkxxxdloO0klcOWMMMMMMMMMMMMMMMMMMM
-     * dxkNXxoddddddl::lkkdcxWMMMMMMMMN0o:d0klldxxdl:,''''''''''',;;codxkOOOOkkxxddddddddodxxkkOOxodk0Od:xWMMMMMMMMMMMMMMMMMMM
-     * dokWk:;:ddlodoccdkxclKMMMMMMMMMMNdlkOdccoxxxxdl:,''''',:ldxkOOOkxxxxxxkkkdooooool:;lolcclooooldxl:xWMMMMMMMMMMMMMMMMMMM
-     * xd0Xo;;:c::do,;lxko:cdKWMMMMMMMMKooOOo:ldollodxdoc;,coxkOkxxxxxkkOO00000kdooool:;,;cloxOKX0OxdoooxXWMMMMMMMMMMMMMMMMMMM
-     * dxkXKkkkxooxl,:dkdlllclkXWMMMMMWOlx0kclKWX0kdolllodxkxddxxkOO0000000000Odolc:;;;coxOKNMMMMMMMMWWWWMMMMMMMMMMMMMMMMMMMMM
-     * ldxkXWMMMWWNOddxxc:loddoox0NWMMNdlkOd:dNMMMMWXxcoxdolcccoddddddxddddddollllodkOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-     * ookddOXMMMMN0kkklldlclxOkdodx0X0loOOo:kWMMMMNklodox0XXK00OOOkkkkkkkOO00KXNWWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-     * oONX0OKWMMWKOkkdlOWXOocokOOkxoolcdOOlc0MMMMWkccokXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-     * o0MMMMMMMMN0kkdcxNMMMN0dlldk00OxdoxxllKMMMMNkoxXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-     * lkXWWMMMMN0kkkloKMMMMMMWXkolodkO0Okd:oNMMMMMWWWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-     * 0kkkkkOO0kdddllOWMMMMMMMMMWKkdoooooccOWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-     * MMWX0kdolcccclkNMMMMMMMMMMMMMWXOxood0NMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-     */
+     *                             ,"`  ´\,                                     -" ,+´\
+     *                            ` \     ",                                  /   '    \
+     *                           /        ´\                                /   ,       |
+     *                           ,  ´     ´ '                             ,"   ,        '
+     *                           |   ´    ´  \                           /     `     , /
+     *                           ´    ´  /",  |                         /`    `    ,'  /
+     *                           |     \.    \|                        \`´,  ` ,,,'   /
+     *                            \ ´´"| "   ,/                     ,\`   \/" ,"    ,
+     *                             \,   |`    |                     ,``   /- /`  ` ,-`
+     *                    ,-,      ´´   | .-- |                    ,`` ,'  /`   '   /
+     *                  /,-+ ,      \´,+"-"" |´                   ,`"`"  -    /    /
+     *                /,"   \´      /|"      |                   , "  ,"",  /    /`
+     *               \`       \    ,,//////// , "               ,`/  '   ,,`   /`
+     *                       ' \,///////////\ /\                `'\/  ,'     /
+     *                        \ /\/////"""``\ /,       .,-`    `/   ,"    ,"
+     *                    ,+|"," ´"""       ´,' ", ,+/" /"|   `/   "    ,'
+     *                 ,//",+/                  ,/+" -"   \" "/       ,"
+     *              ,//`,-` /     ,,,,,,,,....//` /"        ',    / /`
+     *            /---"""""""""""```          ,+" /        /,     /
+     *            \           -,             \    ,,      / `   /
+     *             '         /  ,           /"   ,|    "-/ `  /
+     *              ",      ,    \        ,|"    ||     , " /
+     *                ´"--/"/      ´"--++"`     ||/     `' /  \
+     *                    /                   ,|||    ´.""`   ´"\
+     *                    \+                ,||||`          \    "
+     *                 ," /\+"          ,+/||||"             \    ´,
+     *               /`,'      ´`""|""\|||+""`                /\    ,
+     *                ,            |                        ,||||\,  \
+     *         ,,,  / `            ´                      ,/|||||| \  '
+     *        "-,   `,´" -,         \                  ,/||||||||"  \  ´
+     *        /` -.,"" ----\         \,            ,,/||||||||/"     \  ´
+     *                 ´´`|        /  ||/\++++///||||||||||/"         \  ´
+     *      ,"           ,            ` \|||||||||||||/""""``      `" -/  \
+     *      `/   NEON     `        |  /    "|||||/""  ,.- ""``   ´"""-.,   ,
+     *       \    BEE   /',       `         ´/" ,-"`            ´        ´
+     *      ',\        /,  ".    ,  |      ',-"´\
+     *        ´"-     ,  ´\   "-,/  /    ,,`
+     *      |         `     ".    \ `
+     *        " -..,,'         ´"--/
+     *
+     */ // @formatter:on
 
     @VisibleForTesting
     static final String CORRELATION_ID = "Initializing-NeonBee";
