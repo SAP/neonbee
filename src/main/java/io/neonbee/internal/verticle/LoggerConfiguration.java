@@ -1,108 +1,112 @@
 package io.neonbee.internal.verticle;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
+import org.slf4j.impl.StaticLoggerBinder;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 
 import com.google.common.annotations.VisibleForTesting;
+
+import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.json.JsonObject;
 
 /**
- * A data structure for reading and setting log level for a specific logger. This data structure supports following
- * attributes: name:name of the logger configuredLevel: current log level in configuration. effectiveLevel: currently
- * effective log level. This can be different than the configured log level: e.g. for a specific logger, there might be
- * no explicit configuration, so that the configuredLevel is null. Nevertheless, the logger will inherit the setting
- * from parent logger, so that it has a different effective level.
- *
+ * Management object for reading and setting log levels for a specific logger. The name of the logger and the
+ * configuredLevel determine the configuration. effectiveLevel being a volatile attribute, determined by the underlying
+ * logger instance. For a specific logger the configuredLevel might be null, while the effective level is always
+ * retrieved either from the logger or one of its parents.
  */
 public class LoggerConfiguration implements Comparable<LoggerConfiguration> {
     @VisibleForTesting
-    static final String EFFECTIVE_LEVEL = "effectiveLevel";
+    static final String NAME = "name";
 
     @VisibleForTesting
     static final String CONFIGURED_LEVEL = "configuredLevel";
 
-    @VisibleForTesting
-    static final String NAME = "name";
+    private static final LoggingFacade LOGGER = LoggingFacade.create();
+
+    private static final LoggerContext LOGGER_CONTEXT =
+            (LoggerContext) StaticLoggerBinder.getSingleton().getLoggerFactory();
 
     private String name;
 
-    private String configuredLevel;
+    private Level configuredLevel;
 
-    private String effectiveLevel;
+    /**
+     * Retrieve all logger configurations.
+     *
+     * @return A list of all loggers as {@link LoggerConfiguration}
+     */
+    public static List<LoggerConfiguration> getLoggerConfigurations() {
+        return LOGGER_CONTEXT.getLoggerList().stream().map(LoggerConfiguration::getLoggerConfiguration).sorted()
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Retrieve a logger configuration for a logger with a given name.
+     *
+     * @param loggerName the name of the logger as string
+     * @return the logging configuration as {@link LoggerConfiguration}
+     */
+    public static LoggerConfiguration getLoggerConfiguration(String loggerName) {
+        return getLoggerConfiguration(LOGGER_CONTEXT.getLogger(loggerName));
+    }
+
+    /**
+     * Retrieves the logger configuration for a given logger.
+     *
+     * @param logger logger, whose configuration should be returned.
+     * @return the logging configuration as {@link LoggerConfiguration}
+     */
+    public static LoggerConfiguration getLoggerConfiguration(Logger logger) {
+        return new LoggerConfiguration(logger.getName(), logger.getLevel());
+    }
 
     /**
      * Creates a new empty LoggerConfiguration.
      */
-    public LoggerConfiguration() {}
+    public LoggerConfiguration() {
+        this(null);
+    }
 
     /**
-     * Creates a new LoggerConfiguration.
+     * Creates a new LoggerConfiguration for a logger of a given name.
+     *
+     * @param name the name of a logger
+     */
+    public LoggerConfiguration(String name) {
+        this(name, (Level) null);
+    }
+
+    /**
+     * Creates a new LoggerConfiguration with a level to configure a specific logger.
+     *
+     * @param name            the name of a logger
+     * @param configuredLevel a string representing the configured level
+     */
+    public LoggerConfiguration(String name, String configuredLevel) {
+        this(name, configuredLevel != null ? Level.toLevel(configuredLevel) : null);
+    }
+
+    /**
+     * Creates a new LoggerConfiguration with a level to configure a specific logger.
      *
      * @param name            the name
      * @param configuredLevel the configured level
      */
     public LoggerConfiguration(String name, Level configuredLevel) {
-        this(name, configuredLevel, null);
-    }
-
-    /**
-     * Creates a new LoggerConfiguration.
-     *
-     * @param name            the name
-     * @param configuredLevel a string representing the configured level
-     */
-    public LoggerConfiguration(String name, String configuredLevel) {
-        this(name, configuredLevel, null);
-    }
-
-    /**
-     * Creates a new LoggerConfiguration.
-     *
-     * @param name            the name
-     * @param configuredLevel the configured level
-     * @param effectiveLevel  the effectiveLevel level
-     */
-    public LoggerConfiguration(String name, Level configuredLevel, Level effectiveLevel) {
-        this(name, configuredLevel != null ? configuredLevel.levelStr : null,
-                effectiveLevel != null ? effectiveLevel.levelStr : null);
-    }
-
-    /**
-     * Creates a new LoggerConfiguration.
-     *
-     * @param name            the name
-     * @param configuredLevel a string representing the configured level
-     * @param effectiveLevel  a string representing the effectiveLevel level
-     */
-    public LoggerConfiguration(String name, String configuredLevel, String effectiveLevel) {
         this.name = name;
         this.configuredLevel = configuredLevel;
-        this.effectiveLevel = effectiveLevel;
     }
 
     /**
-     * Returns the configured level of the logger configuration.
-     *
-     * @return the configured level
-     */
-    public String getConfiguredLevel() {
-        return this.configuredLevel;
-    }
-
-    /**
-     * Returns the effective level of the logger configuration.
-     *
-     * @return the effective level
-     */
-    public String getEffectiveLevel() {
-        return this.effectiveLevel;
-    }
-
-    /**
-     * Returns the name of the logger configuration.
+     * Returns the name of the logger in this configuration.
      *
      * @return the name
      */
@@ -122,24 +126,83 @@ public class LoggerConfiguration implements Comparable<LoggerConfiguration> {
     }
 
     /**
-     * Sets the configuredLevel of the logger configuration.
+     * Returns the underlying logger instance for this configuration.
+     *
+     * @return the logger for this configuration or null, in case there is no such logger
+     */
+    public Logger getLogger() {
+        return LOGGER_CONTEXT.getLogger(name);
+    }
+
+    /**
+     * Returns the configured level of this logger configuration.
+     *
+     * @return the configured level
+     */
+    public Level getConfiguredLevel() {
+        return this.configuredLevel;
+    }
+
+    /**
+     * Sets the configured level of this logger configuration.
      *
      * @param configuredLevel a string representing the configured level
      * @return the LoggerConfiguration for chaining
      */
     public LoggerConfiguration setConfiguredLevel(String configuredLevel) {
+        return setConfiguredLevel(configuredLevel != null ? Level.toLevel(configuredLevel) : null);
+    }
+
+    /**
+     * Sets the configured level of this logger configuration.
+     *
+     * @param configuredLevel the configured level
+     * @return the LoggerConfiguration for chaining
+     */
+    public LoggerConfiguration setConfiguredLevel(Level configuredLevel) {
         this.configuredLevel = configuredLevel;
         return this;
     }
 
     /**
-     * Sets the effectiveLevel of the logger configuration.
+     * Applies the configured level of the logger configuration to the associated logger instance. Equivalent to
+     * {@code loggerConfiguration.setEffectiveLevel(loggerConfiguration.getConfiguredLevel())}.
+     *
+     * @return the LoggerConfiguration for chaining
+     */
+    public LoggerConfiguration applyConfiguredLevel() {
+        this.setEffectiveLevel(getConfiguredLevel());
+        return this;
+    }
+
+    /**
+     * Returns the effective level of the logger specified in this logger configuration.
+     *
+     * @return the effective level or null, in case there is no such logger
+     */
+    public Level getEffectiveLevel() {
+        return Optional.ofNullable(getLogger()).map(Logger::getEffectiveLevel).orElse(null);
+    }
+
+    /**
+     * Sets the effective level of the logger specified in this logger configuration.
      *
      * @param effectiveLevel a string representing the effectiveLevel level
      * @return the LoggerConfiguration for chaining
      */
     public LoggerConfiguration setEffectiveLevel(String effectiveLevel) {
-        this.effectiveLevel = effectiveLevel;
+        return this.setEffectiveLevel(effectiveLevel != null ? Level.toLevel(effectiveLevel) : null);
+    }
+
+    /**
+     * Sets the effective level of the logger specified in this logger configuration.
+     *
+     * @param effectiveLevel the effectiveLevel level
+     * @return the LoggerConfiguration for chaining
+     */
+    public LoggerConfiguration setEffectiveLevel(Level effectiveLevel) {
+        LOGGER.info("Changing log level for {} from {} to {}.", getName(), getEffectiveLevel(), effectiveLevel);
+        Optional.ofNullable(getLogger()).ifPresent(logger -> logger.setLevel(effectiveLevel));
         return this;
     }
 
@@ -149,7 +212,7 @@ public class LoggerConfiguration implements Comparable<LoggerConfiguration> {
      * @return A new object of type {@link LoggerConfiguration}
      */
     public LoggerConfiguration copy() {
-        return new LoggerConfiguration(name, configuredLevel, effectiveLevel);
+        return new LoggerConfiguration(name, configuredLevel);
     }
 
     @Override
@@ -162,32 +225,30 @@ public class LoggerConfiguration implements Comparable<LoggerConfiguration> {
         }
         if (obj instanceof LoggerConfiguration) {
             LoggerConfiguration other = (LoggerConfiguration) obj;
-            return Objects.equals(this.name, other.name) && Objects.equals(this.configuredLevel, other.configuredLevel)
-                    && Objects.equals(this.effectiveLevel, other.effectiveLevel);
+            return Objects.equals(this.name, other.name) && Objects.equals(this.configuredLevel, other.configuredLevel);
         }
         return super.equals(obj);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.name, this.configuredLevel, this.effectiveLevel);
+        return Objects.hash(this.name, this.configuredLevel);
     }
 
     @Override
     public String toString() {
-        return "LoggerConfig [name=" + this.name + ", configuredLevel=" + this.configuredLevel + ", effectiveLevel="
-                + this.effectiveLevel + "]";
+        return "LoggerConfiguration [name=" + this.name + ", configuredLevel=" + this.configuredLevel + "]";
     }
 
     @Override
-    public int compareTo(LoggerConfiguration o) {
+    public int compareTo(LoggerConfiguration other) {
         if (Logger.ROOT_LOGGER_NAME.equals(this.getName())) {
             return -1;
         }
-        if (Logger.ROOT_LOGGER_NAME.equals(o.getName())) {
+        if (Logger.ROOT_LOGGER_NAME.equals(other.getName()) || this.getName() == null) {
             return 1;
         }
-        return this.getName().compareTo(o.getName());
+        return this.getName().compareTo(other.getName());
     }
 
     /**
@@ -196,9 +257,8 @@ public class LoggerConfiguration implements Comparable<LoggerConfiguration> {
      * @return A {@link JsonObject} which contains the log level information
      */
     public JsonObject toJson() {
-        return new JsonObject().put(NAME, this.name)
-                .put(CONFIGURED_LEVEL, this.configuredLevel != null ? this.configuredLevel : null)
-                .put(EFFECTIVE_LEVEL, this.effectiveLevel != null ? this.effectiveLevel : null);
+        return new JsonObject().put(NAME, this.name).put(CONFIGURED_LEVEL,
+                this.configuredLevel != null ? this.configuredLevel.levelStr : null);
     }
 
     /**
@@ -208,7 +268,6 @@ public class LoggerConfiguration implements Comparable<LoggerConfiguration> {
      * @return A new {@link LoggerConfiguration} which contains the log level information from a passed object.
      */
     public static LoggerConfiguration fromJson(JsonObject json) {
-        return new LoggerConfiguration(json.getString(NAME), json.getString(CONFIGURED_LEVEL),
-                json.getString(EFFECTIVE_LEVEL));
+        return new LoggerConfiguration(json.getString(NAME), json.getString(CONFIGURED_LEVEL));
     }
 }

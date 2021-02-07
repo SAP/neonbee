@@ -293,36 +293,28 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
              */
             LOGGER.correlateWith(context).debug("Sending message via the event bus to {}", qualifiedName);
             String address = getAddress(qualifiedName);
-            if (request.isBroadcasting()) {
-                LOGGER.correlateWith(context).debug("Braodcasting messages to {}.", address);
-                vertx.eventBus().publish(address, request.getQuery(),
-                        requestDeliveryOptions(vertx, request, context, address, true));
-                return succeededFuture();
-            } else {
-                return Future.future(doneHandler -> {
-                    vertx.eventBus().<U>request(address, request.getQuery(),
-                            requestDeliveryOptions(vertx, request, context, address, false), asyncReply -> {
-                                LOGGER.correlateWith(context).debug("Received event bus reply");
+            return Future.future(doneHandler -> {
+                vertx.eventBus().<U>request(address, request.getQuery(),
+                        requestDeliveryOptions(vertx, request, context, address), asyncReply -> {
+                            LOGGER.correlateWith(context).debug("Received event bus reply");
 
-                                if (asyncReply.succeeded()) {
-                                    context.setData(Optional
-                                            .ofNullable(decodeContextFromString(
-                                                    asyncReply.result().headers().get(CONTEXT_HEADER)))
-                                            .map(DataContext::data).orElse(null));
-                                    doneHandler.complete(asyncReply.result().body());
-                                } else {
-                                    Throwable cause = asyncReply.cause();
-                                    if (LOGGER.isWarnEnabled()) {
-                                        LOGGER.correlateWith(context).warn(
-                                                "Failed to receive event bus reply from {} {}", qualifiedName,
-                                                cause.toString());
-                                    }
-
-                                    doneHandler.fail(mapException(cause));
+                            if (asyncReply.succeeded()) {
+                                context.setData(Optional
+                                        .ofNullable(decodeContextFromString(
+                                                asyncReply.result().headers().get(CONTEXT_HEADER)))
+                                        .map(DataContext::data).orElse(null));
+                                doneHandler.complete(asyncReply.result().body());
+                            } else {
+                                Throwable cause = asyncReply.cause();
+                                if (LOGGER.isWarnEnabled()) {
+                                    LOGGER.correlateWith(context).warn("Failed to receive event bus reply from {} {}",
+                                            qualifiedName, cause.toString());
                                 }
-                            });
-                });
-            }
+
+                                doneHandler.fail(mapException(cause));
+                            }
+                        });
+            });
         }
 
         FullQualifiedName entityTypeName = request.getEntityTypeName();
@@ -379,15 +371,14 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
     /**
      * Creates a new delivery options object for any given data request and context.
      *
-     * @param vertx        the vertx instance
-     * @param request      the data request
-     * @param context      the data context
-     * @param address      request address
-     * @param broadcasting whether the {@link DeliveryOptions} should be applied for a broadcasting invocation
+     * @param vertx   the vertx instance
+     * @param request the data request
+     * @param context the data context
+     * @param address request address
      * @return a new DeliveryOptions
      */
     private static DeliveryOptions requestDeliveryOptions(Vertx vertx, DataRequest request, DataContext context,
-            String address, boolean broadcasting) {
+            String address) {
         if (context instanceof DataContextImpl) { // will also perform a null check!
             // before encoding the context header, add the current qualified name of the verticle to the path stack
             ((DataContextImpl) context).pushVerticleToPath(request.getQualifiedName());
@@ -399,13 +390,9 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
         }
 
         // adapt further delivery options based on the request
-
-        if (!broadcasting) {
-            boolean localOnly = request.isLocalOnly()
-                    || (request.isLocalPreferred() && NeonBee.instance(vertx).isLocalConsumerAvailable(address));
-            deliveryOptions.setLocalOnly(localOnly);
-        }
-
+        boolean localOnly = request.isLocalOnly()
+                || (request.isLocalPreferred() && NeonBee.instance(vertx).isLocalConsumerAvailable(address));
+        deliveryOptions.setLocalOnly(localOnly);
         if (request.getSendTimeout() > 0) {
             deliveryOptions.setSendTimeout(request.getSendTimeout());
         }

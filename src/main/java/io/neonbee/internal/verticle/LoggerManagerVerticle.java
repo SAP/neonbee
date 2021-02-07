@@ -1,55 +1,57 @@
 package io.neonbee.internal.verticle;
 
+import static io.neonbee.internal.verticle.LoggerConfiguration.getLoggerConfigurations;
+import static io.vertx.core.Future.succeededFuture;
+
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import org.slf4j.impl.StaticLoggerBinder;
-
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
+import java.util.stream.Stream;
 
 import com.google.common.base.Strings;
 
 import io.neonbee.NeonBeeDeployable;
-import io.neonbee.data.DataAction;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataMap;
 import io.neonbee.data.DataQuery;
-import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
-import io.neonbee.internal.codec.LoggerConfigurationsMessageCodec;
-import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.eventbus.MessageCodec;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 /**
- * This is a system verticle, which will be deployed on each NeonBee. instance.
+ * This is a system verticle, which will be deployed on each NeonBee instance.
  *
- * This verticle is responsible for returning and updating the current logging settings of the current NeonBee.
- *
- * This verticle will be called by the broadcast verticle.
+ * This verticle is responsible for returning the logging settings of the current NeonBee instance, or setting a new
+ * logger value to all instances
  */
 @SuppressWarnings({ "PMD.MoreThanOneLogger", "PMD.AvoidInstantiatingObjectsInLoops" })
 @NeonBeeDeployable(namespace = NeonBeeDeployable.NEONBEE_NAMESPACE)
-public class LoggerManagerVerticle extends DataVerticle<LoggerConfigurations> {
+public class LoggerManagerVerticle extends DataVerticle<JsonArray> {
     public static final String QUALIFIED_NAME =
             DataVerticle.createQualifiedName(NeonBeeDeployable.NEONBEE_NAMESPACE, LoggerManagerVerticle.NAME);
 
-    private static final String NAME = "_LoggerManager";
+    /**
+     * Query parameter to only read the configuration of certain the logger names, separated by comma, semicolon or
+     * space.
+     */
+    public static final String QUERY_PARAMETER_LOGGERS = "loggers";
 
-    private static final String LOGGER_DELIMITER = ",";
+    /**
+     * Query parameter to limit setting the log level to the current cluster node, without distributing it via the
+     * cluster manager.
+     */
+    public static final String QUERY_PARAMETER_LOCAL = "local";
 
-    private static final String LOGGERS = "loggers";
+    private static final String NAME = "LogLevel";
 
-    private static final LoggerContext LOGGER_CONTEXT =
-            (LoggerContext) StaticLoggerBinder.getSingleton().getLoggerFactory();
+    private static final String EVENT_BUS_CHANGE_LOG_LEVEL_ADDRESS =
+            LoggerManagerVerticle.class.getSimpleName() + "ChangeLogLevel";
 
-    private static final LoggingFacade LOGGER = LoggingFacade.create();
+    private static final String PARAMETER_DELIMITERS = "[,; ]";
 
     @Override
     public String getName() {
@@ -57,78 +59,42 @@ public class LoggerManagerVerticle extends DataVerticle<LoggerConfigurations> {
     }
 
     @Override
-    public MessageCodec<LoggerConfigurations, LoggerConfigurations> getMessageCodec() {
-        return new LoggerConfigurationsMessageCodec();
+    public void start(Promise<Void> promise) {
+        Promise<Void> superPromise = Promise.promise();
+        super.start(superPromise);
+
+        superPromise.future().compose(nothing -> {
+            vertx.eventBus().consumer(EVENT_BUS_CHANGE_LOG_LEVEL_ADDRESS, message -> {
+                ((JsonArray) message.body()).stream().map(JsonObject.class::cast).map(LoggerConfiguration::fromJson)
+                        .forEach(LoggerConfiguration::applyConfiguredLevel);
+            });
+
+            return succeededFuture();
+        }).<Void>mapEmpty().onComplete(promise);
     }
 
     @Override
-    public Future<LoggerConfigurations> retrieveData(DataQuery query, DataMap require, DataContext context) {
-        String loggersParameter = query.getParameter(LOGGERS);
+    public Future<JsonArray> retrieveData(DataQuery query, DataMap require, DataContext context) {
+        Stream<LoggerConfiguration> loggerConfigurationStream;
+
+        String loggersParameter = query.getParameter(QUERY_PARAMETER_LOGGERS);
         if (!Strings.isNullOrEmpty(loggersParameter)) {
-            String[] loggers = loggersParameter.split(LOGGER_DELIMITER);
-            return Future.succeededFuture(new LoggerConfigurations(Arrays.stream(loggers)
-                    .map(LoggerManagerVerticle::getLoggerConfiguration).collect(Collectors.toList())));
+            String[] loggers = loggersParameter.split(PARAMETER_DELIMITERS);
+            loggerConfigurationStream = Arrays.stream(loggers).map(LoggerConfiguration::getLoggerConfiguration);
         } else {
-            return Future.succeededFuture(new LoggerConfigurations(getLoggerConfigs()));
+            loggerConfigurationStream = getLoggerConfigurations().stream();
         }
+
+        return succeededFuture(
+                new JsonArray(loggerConfigurationStream.map(LoggerConfiguration::toJson).collect(Collectors.toList())));
     }
 
     @Override
-    public Future<LoggerConfigurations> updateData(DataQuery query, DataContext context) {
-        LoggerConfigurations entries = LoggerConfigurations
-                .fromJson(Optional.ofNullable(query.getBody()).map(Buffer::toJsonArray).orElse(new JsonArray()));
-        entries.getConfigurations().stream().forEach(entry -> {
-            LOGGER.correlateWith(context).debug("Change log level for {} to {}.", entry.getName(),
-                    entry.getConfiguredLevel());
-            Optional.ofNullable(getLogger(entry.getName()))
-                    .ifPresent(logger -> logger.setLevel(Level.valueOf(entry.getConfiguredLevel())));
-        });
-        return Future.succeededFuture();
-    }
-
-    /**
-     * Retrieve a single logger by name.
-     */
-    private static Logger getLogger(String name) {
-        return LOGGER_CONTEXT.getLogger(name);
-    }
-
-    /**
-     * Retrieve complete logger configuration.
-     */
-    private static List<LoggerConfiguration> getLoggerConfigs() {
-        return LOGGER_CONTEXT.getLoggerList().stream().map(LoggerManagerVerticle::getLoggerConfiguration).sorted()
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Retrieve a single logger configuration.
-     *
-     * @param logger logger, whose configuration should be returned.
-     * @return the logging configuration as {@link LoggerConfiguration}
-     */
-    public static LoggerConfiguration getLoggerConfiguration(Logger logger) {
-        return new LoggerConfiguration(logger.getName(), logger.getLevel(), logger.getEffectiveLevel());
-    }
-
-    /**
-     * Retrieve a single logger configuration.
-     *
-     * @param loggerName the name of the logger as string
-     * @return the logging configuration as {@link LoggerConfiguration}
-     */
-    public static LoggerConfiguration getLoggerConfiguration(String loggerName) {
-        return getLoggerConfiguration(LOGGER_CONTEXT.getLogger(loggerName));
-    }
-
-    /**
-     * this is a convenience method to build a log level update {@link DataRequest}, which is broadcasting request.
-     *
-     * @param configs new logger configurations
-     * @return a pre-built {@link DataRequest}
-     */
-    public static DataRequest buildChangeLoggerConfigurationRequest(LoggerConfigurations configs) {
-        DataQuery query = new DataQuery(DataAction.UPDATE, configs.toJson().toBuffer());
-        return new DataRequest(QUALIFIED_NAME, query).setBroadcasting(true);
+    public Future<JsonArray> updateData(DataQuery query, DataContext context) {
+        vertx.eventBus().publish(EVENT_BUS_CHANGE_LOG_LEVEL_ADDRESS,
+                Optional.ofNullable(query.getBody()).map(Buffer::toJsonArray).orElse(new JsonArray()),
+                new DeliveryOptions()
+                        .setLocalOnly(Boolean.toString(true).equals(query.getParameter(QUERY_PARAMETER_LOCAL))));
+        return succeededFuture();
     }
 }

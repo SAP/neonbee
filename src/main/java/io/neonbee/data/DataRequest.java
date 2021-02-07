@@ -72,8 +72,6 @@ public class DataRequest {
 
     private boolean localOnly;
 
-    private boolean broadcasting;
-
     private boolean localPreferred = true;
 
     /**
@@ -281,29 +279,6 @@ public class DataRequest {
      */
     public DataRequest setLocalPreferred(boolean localPreferred) {
         this.localPreferred = localPreferred;
-        return this;
-    }
-
-    /**
-     * Will be removed. See Issue #18
-     *
-     * @return the broadcasting
-     */
-    public boolean isBroadcasting() {
-        return broadcasting;
-    }
-
-    /**
-     * Broadcasting indicates, that this request will be published to all consumers within the cluster, which have
-     * registered as consumer under a target address.
-     *
-     * In normal cases, where broadcasting is set to false, the request will only be sent to one consumer.
-     *
-     * @param broadcasting the broadcasting to set
-     * @return this DataRequest for chaining
-     */
-    public DataRequest setBroadcasting(boolean broadcasting) {
-        this.broadcasting = broadcasting;
         return this;
     }
 
