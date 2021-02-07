@@ -1,4 +1,4 @@
-## 🐝 NeonBee Server
+## 🐝 NeonBee Core
 
 [![Discord](https://img.shields.io/discord/786526477922336778.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/Fc3JWAHWFm)
 

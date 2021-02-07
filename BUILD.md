@@ -1,4 +1,4 @@
-## 🐾 NeonBee Server Build
+## 🐝 NeonBee Core Build
 
 **Create the neonbee-shadow.jar Shadow JAR**
 

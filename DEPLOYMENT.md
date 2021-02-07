@@ -1,4 +1,4 @@
-## 🐾 NeonBee Server Deployment
+## 🐝 NeonBee Core Deployment
 
 **Run NeonBee in cluster mode in local environment**
 

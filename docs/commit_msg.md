@@ -71,4 +71,4 @@ Always ask yourself, which information would another developer consider helpful 
 
 ## Examples
 
-Add examples as soon as there are good ones in the neonbee-core repo.
+Add examples as soon as there are good ones in the NeonBee repository.
