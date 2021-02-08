@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -186,8 +185,8 @@ public class WatchVerticle extends AbstractVerticle {
     /**
      * Process all existing files to be monitored. After the registration of the WatchKey, all elements in the passed
      * directory will be mapped into a list of {@link Path}'s. Then these paths are passed into
-     * {@link #handleFileEvents(Path, List)} which returns a {@link Future} which is resolved when all elements in the
-     * passed directory are processed. For each element which gets processed by {@link #handleFileEvents(Path, List)}, a
+     * {@link #handleFileEvents(List, List)} which returns a {@link Future} which is resolved when all elements in the
+     * passed directory are processed. For each element which gets processed by {@link #handleFileEvents(List, List)}, a
      * Future, which is resolved when the related action is finished, is added to the List futuresToResolve.
      *
      * @param dir The {@link Path} to monitor
@@ -209,7 +208,7 @@ public class WatchVerticle extends AbstractVerticle {
      * @param futuresToResolve List of from the triggered processEvent()
      */
     private Future<List<Future<Void>>> handleFileEvents(List<Path> dirContent, List<Future<Void>> futuresToResolve) {
-        List<Future<Void>> fileEventFutures =
+        return Future.succeededFuture(
                 dirContent.stream().map(path -> FileSystemHelper.isDirectory(vertx, path).compose(isDirectory -> {
                     futuresToResolve.add(processEvent(path, ENTRY_CREATE));
                     futuresToResolve.add(processEvent(path, ENTRY_MODIFY));
@@ -218,8 +217,7 @@ public class WatchVerticle extends AbstractVerticle {
                         futuresToResolve.add(handleExistingFiles(path));
                     }
                     return Future.succeededFuture((Void) null);
-                })).collect(Collectors.toList());
-        return Future.succeededFuture(fileEventFutures);
+                })).collect(Collectors.toList()));
     }
 
     private Future<Void> handleWatchKeyEvents(Path watchKeyPath, WatchKey watchKey) {
@@ -243,7 +241,7 @@ public class WatchVerticle extends AbstractVerticle {
         // created.
         Map<Path, WatchKey> tempWatchKeys = Map.copyOf(watchKeys);
         List<Future<Void>> watchKeyFutures = new ArrayList<>(tempWatchKeys.size());
-        for (Entry<Path, WatchKey> entry : tempWatchKeys.entrySet()) {
+        for (Map.Entry<Path, WatchKey> entry : tempWatchKeys.entrySet()) {
             watchKeyFutures.add(handleWatchKeyEvents(entry.getKey(), entry.getValue()));
         }
 
@@ -265,7 +263,7 @@ public class WatchVerticle extends AbstractVerticle {
         }
 
         Promise<Void> promise = Promise.promise();
-        if (kind == ENTRY_CREATE) {
+        if (ENTRY_CREATE.equals(kind)) {
             FileSystemHelper.isDirectory(vertx, affectedPath).compose(isDirectory -> {
                 if (isDirectory) {
                     return registerWatchKey(affectedPath);
@@ -279,12 +277,12 @@ public class WatchVerticle extends AbstractVerticle {
                     observedCreate(affectedPath, promise);
                 }
             });
-        } else if (kind == ENTRY_DELETE) {
+        } else if (ENTRY_DELETE.equals(kind)) {
             Optional.ofNullable(watchKeys.remove(affectedPath)).ifPresent(WatchKey::cancel);
             observedDelete(affectedPath, promise);
-        } else if (kind == ENTRY_MODIFY) {
+        } else if (ENTRY_MODIFY.equals(kind)) {
             observedModify(affectedPath, promise);
-        } else if (kind == OVERFLOW) {
+        } else if (OVERFLOW.equals(kind)) {
             promise.complete();
         } else {
             LOGGER.warn("Unknown WatchEvent kind '{}' for Path '{}'", kind, affectedPath);

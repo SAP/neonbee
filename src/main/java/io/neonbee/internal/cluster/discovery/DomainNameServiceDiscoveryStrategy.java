@@ -73,7 +73,7 @@ public class DomainNameServiceDiscoveryStrategy extends AbstractDiscoveryStrateg
                 }
             }).filter(Objects::nonNull).collect(Collectors.toSet());
         } catch (UnknownHostException e) {
-            LOGGER.error("Error while resolving DNS name {}.", e, dnsName);
+            LOGGER.error("Error while resolving DNS name {}.", dnsName, e);
             return Collections.<DiscoveryNode>emptyList();
         }
     }

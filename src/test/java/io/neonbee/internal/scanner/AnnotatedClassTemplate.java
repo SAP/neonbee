@@ -41,7 +41,7 @@ public class AnnotatedClassTemplate implements ClassTemplate {
      * Creates a dummy annotated class
      *
      * @param simpleClassName The simple class name of the new class
-     * @throws IOException
+     * @throws IOException Template file could not be read
      */
     public AnnotatedClassTemplate(String simpleClassName) throws IOException {
         this(simpleClassName, null);
@@ -52,7 +52,7 @@ public class AnnotatedClassTemplate implements ClassTemplate {
      *
      * @param simpleClassName The simple class name of the new class
      * @param packageName     The package name of the class. Pass null for default package
-     * @throws IOException
+     * @throws IOException Template file could not be read
      */
     public AnnotatedClassTemplate(String simpleClassName, String packageName) throws IOException {
         this.packageName = packageName;
@@ -87,7 +87,7 @@ public class AnnotatedClassTemplate implements ClassTemplate {
 
     private String buildImportString() {
         StringBuilder sb = new StringBuilder();
-        imports.forEach(i -> sb.append("import " + i + ";\n"));
+        imports.forEach(i -> sb.append("import ").append(i).append(";\n"));
         return sb.toString();
     }
 

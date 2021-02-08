@@ -80,7 +80,7 @@ public class EntityWrapperMessageCodec implements MessageCodec<EntityWrapper, En
             buffer.appendString(json.toString());
         } catch (SerializerException | IOException e) {
             LOGGER.warn("Error while serializing entity wrapper.", e);
-            throw new RuntimeException(e); // NOPMD
+            throw new RuntimeException(e);
         }
     }
 
@@ -106,7 +106,7 @@ public class EntityWrapperMessageCodec implements MessageCodec<EntityWrapper, En
             return new EntityWrapper(entityTypeName, odataDeserializerResult.getEntityCollection().getEntities());
         } catch (DeserializerException e) {
             LOGGER.warn("Error while deserializing entity wrapper.", e);
-            throw new RuntimeException(e); // NOPMD
+            throw new RuntimeException(e);
         }
     }
 

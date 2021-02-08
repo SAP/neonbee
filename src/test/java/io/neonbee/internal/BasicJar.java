@@ -6,7 +6,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.jar.Attributes;
@@ -38,7 +37,7 @@ public class BasicJar {
      */
     public BasicJar(Map<String, String> manifestAttributes, Map<String, byte[]> content) {
         this(createManifest(manifestAttributes), content.entrySet().stream()
-                .collect(Collectors.toMap(entry -> new ZipEntry(entry.getKey()), Entry::getValue)));
+                .collect(Collectors.toMap(entry -> new ZipEntry(entry.getKey()), Map.Entry::getValue)));
     }
 
     /**
@@ -56,7 +55,7 @@ public class BasicJar {
      * Writes the jar to the passed destination
      *
      * @param destination The destination to which the jar will be written
-     * @throws IOException
+     * @throws IOException Writing to file failed
      */
     public void writeToFile(Path destination) throws IOException {
         Files.write(destination, createJarFile());
@@ -66,7 +65,7 @@ public class BasicJar {
      * Writes the jar to a file created in the temp directory of the system.
      *
      * @return The path to the jar file
-     * @throws IOException
+     * @throws IOException Writing to file failed
      */
     public Path writeToTempPath() throws IOException {
         Path jarPath = FileSystemHelper.createTempDirectory().resolve(UUID.randomUUID().toString());
@@ -79,7 +78,7 @@ public class BasicJar {
      * consume an URL array more easily then a path.
      *
      * @return The path to the jar file
-     * @throws IOException
+     * @throws IOException Writing to file failed
      */
     public URL[] writeToTempURL() throws IOException {
         return new URL[] { writeToTempPath().toUri().toURL() };
@@ -89,7 +88,7 @@ public class BasicJar {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             try (JarOutputStream jos =
                     Objects.isNull(manifest) ? new JarOutputStream(baos) : new JarOutputStream(baos, manifest)) {
-                for (Entry<ZipEntry, byte[]> entry : content.entrySet()) {
+                for (Map.Entry<ZipEntry, byte[]> entry : content.entrySet()) {
                     jos.putNextEntry(entry.getKey());
                     jos.write(entry.getValue());
                     jos.closeEntry();

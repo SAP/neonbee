@@ -78,15 +78,15 @@ public class NeonBeeTestBase {
         }
 
         // make required NeonBee method accessible, because TestBase is not in same package
-        Promise<NeonBee> neonbeeStartedPromise = Promise.promise();
+        Promise<NeonBee> startPromise = Promise.promise();
         Method m = NeonBee.class.getDeclaredMethod("instance", Supplier.class, NeonBeeOptions.class, Handler.class);
         m.setAccessible(true);
-        m.invoke(null, (Supplier<Future<Vertx>>) () -> succeededFuture(vertx), opts, neonbeeStartedPromise);
+        m.invoke(null, (Supplier<Future<Vertx>>) () -> succeededFuture(vertx), opts, startPromise);
 
         // For some reason the BeforeEach method in the subclass is called before testContext of this class
         // is completed. Therefore this CountDownLatch is needed.
         CountDownLatch latch = new CountDownLatch(1);
-        neonbeeStartedPromise.future().onComplete(asyncNeonBee -> {
+        startPromise.future().onComplete(asyncNeonBee -> {
             if (asyncNeonBee.failed()) {
                 testContext.failNow(asyncNeonBee.cause());
                 latch.countDown();
@@ -219,7 +219,7 @@ public class NeonBeeTestBase {
      * Returns a pre-configured HTTP request which points to the NeonBee HTTP interface.
      *
      * <pre>
-     * path: /raw/Hodor -> result: <host>:<port>/raw/Hodor
+     * path: /raw/Hodor -&gt; result: <host>:<port>/raw/Hodor
      * </pre>
      *
      * @param method The HTTP method of the request

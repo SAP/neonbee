@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -52,7 +51,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.Shareable;
 
 @SuppressWarnings({ "PMD.ExcessivePublicCount", "checkstyle:MissingJavadocMethod", "checkstyle:JavadocVariable" })
-public class Helper {
+public class Helper { // NOPMD not a "god class"
 
     public static final String EMPTY = "";
 
@@ -141,7 +140,7 @@ public class Helper {
 
     public static Map<String, List<String>> multiMapToMap(MultiMap multiMap) {
         return multiMap.entries().stream()
-                .collect(Collectors.<Entry<String, String>, String, List<String>>toMap(Entry::getKey,
+                .collect(Collectors.<Map.Entry<String, String>, String, List<String>>toMap(Map.Entry::getKey,
                         entry -> Collections.singletonList(entry.getValue()),
                         (listA, listB) -> Stream.concat(listA.stream(), listB.stream()).collect(Collectors.toList())));
     }
@@ -206,16 +205,12 @@ public class Helper {
         return classLoader == null ? Helper.class.getClassLoader() : classLoader;
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE",
+            justification = "False positive in Spotbugs, see https://github.com/spotbugs/spotbugs/issues/1338")
     public static Buffer readResourceToBuffer(String resource) {
         ClassLoader classLoader = getClassLoader();
-        try {
-            try (InputStream input = classLoader.getResourceAsStream(resource)) {
-                if (input == null) {
-                    return null;
-                }
-
-                return inputStreamToBuffer(input);
-            }
+        try (InputStream input = classLoader.getResourceAsStream(resource)) {
+            return input != null ? inputStreamToBuffer(input) : null;
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }

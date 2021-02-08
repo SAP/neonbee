@@ -209,6 +209,7 @@ public class OrderExpressionExecutorTest {
 
     @Test
     @DisplayName("OrderExpressionExecutor must also work with null values")
+    @SuppressWarnings("JavaUtilDate")
     void orderByShouldHandleNullValuesTest() throws ParseException {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
 
@@ -469,7 +470,7 @@ public class OrderExpressionExecutorTest {
 
     @Test
     @DisplayName("OrderExpressionExecutor should throw meaningful errors")
-    @SuppressWarnings("JavaInstantGetSecondsGetNano")
+    @SuppressWarnings({ "JavaInstantGetSecondsGetNano", "JavaUtilDate" })
     void orderByShouldThrowMeaningfulErrorTest() throws ParseException {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
 

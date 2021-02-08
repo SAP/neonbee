@@ -26,7 +26,7 @@ public class DummyVerticleTemplate implements ClassTemplate {
      *
      * @param simpleClassName The simple class name of the new verticle
      * @param ebAddress       The address on which the verticle is listening
-     * @throws IOException
+     * @throws IOException Template file could not be read
      */
     public DummyVerticleTemplate(String simpleClassName, String ebAddress) throws IOException {
         this(simpleClassName, ebAddress, null);
@@ -38,7 +38,7 @@ public class DummyVerticleTemplate implements ClassTemplate {
      * @param simpleClassName The simple class name of the new verticle
      * @param ebAddress       The address on which the verticle is listening
      * @param packageName     The package name of the verticle. Pass null for default package
-     * @throws IOException
+     * @throws IOException Template file could not be read
      */
     public DummyVerticleTemplate(String simpleClassName, String ebAddress, String packageName) throws IOException {
         this.simpleClassName = simpleClassName;

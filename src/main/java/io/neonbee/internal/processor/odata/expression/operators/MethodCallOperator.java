@@ -12,7 +12,7 @@ import io.vertx.ext.web.RoutingContext;
  *
  * @see io.neonbee.internal.processor.odata.expression.operators.StringFunctionMethodCallOperator
  */
-abstract class MethodCallOperator {
+abstract class MethodCallOperator { // NOPMD abstract class w/o abstract methods as it should not be directly used
     protected final RoutingContext routingContext;
 
     protected final List<ExpressionVisitorOperand> parameters;

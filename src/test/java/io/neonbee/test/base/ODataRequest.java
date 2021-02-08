@@ -124,8 +124,8 @@ public class ODataRequest {
      * <strong>Example:</strong> Given a {@link FullQualifiedName fqn} {@code FullQualifiedName("my-namespace")}:
      *
      * <pre>
-     * oDataRequest.setMetadata() --> "my-namespace/$metadata"
-     * oDataRequest.setMetadata().setKey(1).setProperty("nope") --> "my-namespace/$metadata"
+     * oDataRequest.setMetadata() -&gt; "my-namespace/$metadata"
+     * oDataRequest.setMetadata().setKey(1).setProperty("nope") -&gt; "my-namespace/$metadata"
      * </pre>
      *
      * @return An {@link ODataRequest} which considers the {@code $metadata} suffix when building the request
@@ -145,7 +145,7 @@ public class ODataRequest {
      * {@code FullQualifiedName("my-namespace/my-entity")}:
      *
      * <pre>
-     * oDataRequest.setCount() --> "my-namespace/my-entity/$count"
+     * oDataRequest.setCount() -&gt; "my-namespace/my-entity/$count"
      * </pre>
      *
      * @return An {@link ODataRequest} which considers the {@code /$count} suffix when building the request
@@ -166,7 +166,7 @@ public class ODataRequest {
      * {@code FullQualifiedName("my-namespace/my-entity")}:
      *
      * <pre>
-     * oDataRequest.setKey("3") --> "my-namespace/my-entity('3')"
+     * oDataRequest.setKey("3") -&gt; "my-namespace/my-entity('3')"
      * </pre>
      *
      * @param id The entity key which specifies a single-part key of type {@link String}
@@ -186,7 +186,7 @@ public class ODataRequest {
      * {@code FullQualifiedName("my-namespace/my-entity")}:
      *
      * <pre>
-     * oDataRequest.setKey(3L) --> "my-namespace/my-entity(3)"
+     * oDataRequest.setKey(3L) -&gt; "my-namespace/my-entity(3)"
      * </pre>
      *
      * @param id The entity key which specifies a single-part key of type {@link Long}
@@ -206,7 +206,7 @@ public class ODataRequest {
      * {@code FullQualifiedName("my-namespace/my-entity")}:
      *
      * <pre>
-     * oDataRequest.setKey(LocalDate.of(2020, 2, 22)) --> "my-namespace/my-entity(2020-02-22)"
+     * oDataRequest.setKey(LocalDate.of(2020, 2, 22)) -&gt; "my-namespace/my-entity(2020-02-22)"
      * </pre>
      *
      * @param id The entity key which specifies a single-part key of type {@link LocalDate}
@@ -227,8 +227,8 @@ public class ODataRequest {
      * {@code FullQualifiedName("my-namespace/my-entity")}:
      *
      * <pre>
-     * oDataRequest.setKey(Map.of("ID", 3)) --> "my-namespace/my-entity(ID=3)"
-     * oDataRequest.setKey(Map.of("ID", 3, "Name", "Hodor")) --> "my-namespace/my-entity(ID=3,Name='Hodor')"
+     * oDataRequest.setKey(Map.of("ID", 3)) -&gt; "my-namespace/my-entity(ID=3)"
+     * oDataRequest.setKey(Map.of("ID", 3, "Name", "Hodor")) -&gt; "my-namespace/my-entity(ID=3,Name='Hodor')"
      * </pre>
      *
      * @param compositeKey A map which contains the name of a key and its value
@@ -262,8 +262,8 @@ public class ODataRequest {
      * {@code FullQualifiedName("my-namespace/my-entity")}:
      *
      * <pre>
-     * oDataRequest.setKey(1).setProperty("my-property") --> "my-namespace/my-entity(1)/my-property"
-     * oDataRequest.setProperty("my-property") --> "my-namespace/my-entity"  // will be ignored.
+     * oDataRequest.setKey(1).setProperty("my-property") -&gt; "my-namespace/my-entity(1)/my-property"
+     * oDataRequest.setProperty("my-property") -&gt; "my-namespace/my-entity"  // will be ignored.
      * </pre>
      *
      * @param propertyName The name of the property
@@ -350,7 +350,7 @@ public class ODataRequest {
      * Allows to modify the HTTP request. This can only be done once and is typically done at the end of building the
      * request. If this method is called multiple times, the passed interceptor of the last call will be used.
      *
-     * @param rawRequest The passed interceptor
+     * @param interceptor The passed interceptor
      * @return An {@link ODataRequest} with the raw request
      */
     public ODataRequest interceptRequest(Consumer<HttpRequest<Buffer>> interceptor) {

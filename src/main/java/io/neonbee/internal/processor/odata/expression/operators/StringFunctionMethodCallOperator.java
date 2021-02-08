@@ -56,8 +56,7 @@ public class StringFunctionMethodCallOperator extends MethodCallOperator {
             return new ExpressionVisitorOperand(routingContext, null, PRIMITIVE_STRING);
         } else if (valueOperand.is(PRIMITIVE_STRING)) {
             String value = valueOperand.getTypedValue(String.class);
-            int start = Math.min(startOperand.getTypedValue(BigInteger.class).intValue(), value.length());
-            start = start < 0 ? 0 : start;
+            int start = Math.max(0, Math.min(startOperand.getTypedValue(BigInteger.class).intValue(), value.length()));
             int end = value.length();
 
             if (parameters.size() == 3) {
@@ -65,8 +64,8 @@ public class StringFunctionMethodCallOperator extends MethodCallOperator {
                 if (lengthOperand.isNull()) {
                     return new ExpressionVisitorOperand(routingContext, null, PRIMITIVE_STRING);
                 } else if (lengthOperand.isIntegerType()) {
-                    end = Math.min(start + lengthOperand.getTypedValue(BigInteger.class).intValue(), value.length());
-                    end = end < 0 ? 0 : end;
+                    end = Math.max(0,
+                            Math.min(start + lengthOperand.getTypedValue(BigInteger.class).intValue(), value.length()));
                 } else {
                     String message = "Third substring parameter should be Edm.Int32";
                     LOGGER.correlateWith(routingContext).error(message);

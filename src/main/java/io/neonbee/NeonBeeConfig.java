@@ -4,7 +4,6 @@ import static io.neonbee.internal.Helper.readConfigBlocking;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -55,7 +54,7 @@ public class NeonBeeConfig {
     NeonBeeConfig(JsonObject json) {
         this.eventBusTimeout = json.getInteger("eventBusTimeout", DEFAULT_EVENT_BUS_TIMEOUT);
         this.eventBusCodecs = json.getJsonObject("eventBusCodecs", new JsonObject()).stream()
-                .collect(Collectors.toMap(Entry::getKey, entry -> (String) entry.getValue()));
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> (String) entry.getValue()));
         this.trackingDataHandlingStrategy =
                 json.getString("trackingDataHandlingStrategy", DEFAULT_TRACKING_DATA_HANDLING_STRATEGY);
         this.platformClasses = Optional.ofNullable(json.getJsonArray(PLATFORM_CLASSES_KEY))

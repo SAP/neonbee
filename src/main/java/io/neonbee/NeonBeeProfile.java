@@ -1,8 +1,11 @@
 package io.neonbee;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Strings;
@@ -27,23 +30,18 @@ public enum NeonBeeProfile {
     /**
      * Parses a comma separated string of profile values.
      *
-     * @param profileValues string with profile values
+     * @param values string with profile values
      * @return a List with the parsed {@link NeonBeeProfile}s
      */
-    public static List<NeonBeeProfile> parseProfiles(String profileValues) {
-        List<NeonBeeProfile> profiles = null;
-        if (!Strings.isNullOrEmpty(profileValues)) {
-            profiles = Arrays.stream(profileValues.split(",")).map(value -> {
-                try {
-                    return NeonBeeProfile.valueOf(value);
-                } catch (Exception e) {
-                    return null;
-                }
-            }).filter(Objects::nonNull).collect(Collectors.toList());
-        }
-        if ((profiles == null) || profiles.isEmpty()) {
-            profiles = List.<NeonBeeProfile>of(ALL);
-        }
-        return profiles;
+    public static List<NeonBeeProfile> parseProfiles(String values) {
+        return Optional.ofNullable(values).map(Strings::emptyToNull)
+                .map(nonEmptyValues -> Arrays.stream(nonEmptyValues.split(",")).map(value -> {
+                    try {
+                        return NeonBeeProfile.valueOf(value);
+                    } catch (Exception e) {
+                        return null;
+                    }
+                }).filter(Objects::nonNull).collect(Collectors.toList())).filter(Predicate.not(Collection::isEmpty))
+                .orElse(List.of(ALL));
     }
 }

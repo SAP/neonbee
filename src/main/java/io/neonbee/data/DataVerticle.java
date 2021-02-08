@@ -56,6 +56,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
+    @SuppressWarnings("UnnecessaryLambda") // overridden in DummyVerticleHelper, as getNamespace is final
     private final Supplier<String> namespaceSupplier =
             () -> Optional.ofNullable(this.getClass().getAnnotation(NeonBeeDeployable.class))
                     .map(NeonBeeDeployable::namespace).map(Strings::emptyToNull).map(String::toLowerCase).orElse(null);

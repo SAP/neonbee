@@ -52,9 +52,8 @@ public class FilterExpressionVisitor implements ExpressionVisitor<ExpressionVisi
     @Override
     public ExpressionVisitorOperand visitBinaryOperator(BinaryOperatorKind operator, ExpressionVisitorOperand left,
             List<ExpressionVisitorOperand> right) throws ExpressionVisitException, ODataApplicationException {
-        BinaryOperator binaryOperator = new BinaryOperator(routingContext, left, right);
         if (BinaryOperatorKind.IN.equals(operator)) {
-            return binaryOperator.inOperator();
+            return new BinaryOperator(routingContext, left, right).inOperator();
         }
         return throwNotImplementedODataException();
     }
@@ -62,11 +61,11 @@ public class FilterExpressionVisitor implements ExpressionVisitor<ExpressionVisi
     @Override
     public ExpressionVisitorOperand visitBinaryOperator(BinaryOperatorKind operator, ExpressionVisitorOperand left,
             ExpressionVisitorOperand right) throws ExpressionVisitException, ODataApplicationException {
-        BinaryOperator binaryOperator = new BinaryOperator(routingContext, left, right);
         if (LOGGER.isTraceEnabled()) {
             LOGGER.correlateWith(routingContext).trace("Operator: {}", operator);
         }
 
+        BinaryOperator binaryOperator = new BinaryOperator(routingContext, left, right);
         switch (operator) {
         case AND:
             return binaryOperator.andOperator();

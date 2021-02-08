@@ -79,7 +79,6 @@ public final class WorkingDirectoryBuilder {
      * @param verticle The related verticle
      * @param config   The config part of the {@link DeploymentOptions}
      * @return The WorkingDirectoryBuilder
-     * @throws IOException In case that no free port can be found.
      */
     public WorkingDirectoryBuilder setVerticleConfig(Class<? extends Verticle> verticle, JsonObject config) {
         return setDeploymentOptions(verticle, new DeploymentOptions().setConfig(config));

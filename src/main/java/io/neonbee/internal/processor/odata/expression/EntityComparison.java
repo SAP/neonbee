@@ -319,15 +319,15 @@ public interface EntityComparison {
     private void errorLog(RoutingContext routingContext, String message, Exception e) {
         if (message != null) {
             if (routingContext != null) {
-                LOGGER.error(message, e);
-            } else {
                 LOGGER.correlateWith(routingContext).error(message, e);
+            } else {
+                LOGGER.error(message, e);
             }
         } else {
             if (routingContext != null) {
-                LOGGER.error(e.getMessage(), e);
-            } else {
                 LOGGER.correlateWith(routingContext).error(e.getMessage(), e);
+            } else {
+                LOGGER.error(e.getMessage(), e);
             }
         }
     }

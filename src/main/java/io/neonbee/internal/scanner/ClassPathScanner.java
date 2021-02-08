@@ -56,8 +56,6 @@ public class ClassPathScanner {
      */
     public static final Pattern SEPARATOR_PATTERN = Pattern.compile(";");
 
-    private static final Predicate<String> ONLY_CLASS_FILES = name -> name.endsWith(".class");
-
     private final ClassLoader classLoader;
 
     /**
@@ -170,13 +168,13 @@ public class ClassPathScanner {
         List<AnnotationClassVisitor> classVisitors = annotationClasses.stream()
                 .map(annotationClass -> new AnnotationClassVisitor(annotationClass, elementTypes))
                 .collect(Collectors.toList());
-        List<String> classesFromDirectories = scanWithPredicate(ONLY_CLASS_FILES);
-        List<String> classesFromJars = scanJarFilesWithPredicate(ONLY_CLASS_FILES).stream()
+        List<String> classesFromDirectories = scanWithPredicate(ClassPathScanner::isClassFile);
+        List<String> classesFromJars = scanJarFilesWithPredicate(ClassPathScanner::isClassFile).stream()
                 .map(JarHelper::extractFilePath).collect(Collectors.toList());
 
         Streams.concat(classesFromDirectories.stream(), classesFromJars.stream()).forEach(name -> {
             try {
-                String resourceName = name.replace(".", "/").replace("/class", ".class");
+                String resourceName = name.replace(".", "/").replaceFirst("/class$", ".class");
                 for (AnnotationClassVisitor acv : classVisitors) {
                     ClassReader classReader = new ClassReader(classLoader.getResourceAsStream(resourceName));
                     classReader.accept(acv, 0);
@@ -240,7 +238,7 @@ public class ClassPathScanner {
         for (URL manifestResource : getManifestResourceURLs()) {
             URI uri = manifestResource.toURI();
             // filter for manifest files inside of jar files
-            if (uri.getScheme().equals("jar")) {
+            if ("jar".equals(uri.getScheme())) {
                 FileSystem fileSystem = FileSystems.newFileSystem(uri, Map.of());
                 Path rootPath = fileSystem.getPath("/");
                 scanDirectoryWithPredicateRecursive(rootPath, predicate).forEach(path -> resources.add(path.toUri()));
@@ -265,5 +263,9 @@ public class ClassPathScanner {
             return walk.filter(path -> predicate.test(basePath.relativize(path).toString()))
                     .collect(Collectors.toList());
         }
+    }
+
+    private static boolean isClassFile(String name) {
+        return name.endsWith(".class");
     }
 }

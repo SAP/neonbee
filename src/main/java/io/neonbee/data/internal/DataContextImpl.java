@@ -36,7 +36,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
 
-public class DataContextImpl implements DataContext, Cloneable {
+public class DataContextImpl implements DataContext {
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     private static final String USER_PRINCIPAL = "userPrincipal";

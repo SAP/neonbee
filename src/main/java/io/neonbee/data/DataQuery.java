@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -34,7 +33,7 @@ import io.vertx.core.buffer.Buffer;
 /**
  * Note that DataQuery is always mutable, as a copy of it will be created when sent via the event bus.
  */
-public final class DataQuery {
+public final class DataQuery { // NOPMD not a "god class"
     private static final Pattern QUERY_SPLIT_PATTERN = Pattern.compile("&");
 
     private static final Pattern PARAM_SPLIT_PATTERN = Pattern.compile("=");
@@ -345,8 +344,8 @@ public final class DataQuery {
 
         return QUERY_SPLIT_PATTERN.splitAsStream(query).map(paramString -> PARAM_SPLIT_PATTERN.split(paramString, 2))
                 .map(paramArray -> Map.entry(paramArray[0], paramArray.length > 1 ? paramArray[1] : ""))
-                .collect(groupingBy(Entry::getKey, HashMap::new,
-                        mapping(Entry::getValue, toCollection(ArrayList::new))));
+                .collect(groupingBy(Map.Entry::getKey, HashMap::new,
+                        mapping(Map.Entry::getValue, toCollection(ArrayList::new))));
     }
 
     /**
@@ -491,6 +490,6 @@ public final class DataQuery {
                         .map(key -> key + "="
                                 + headers.get(key).stream().map(this::trimContent).collect(Collectors.toList()))
                         .collect(joining(", ", "{", "}")))
-                .append(", body=").append(body).append("]").toString();
+                .append(", body=").append(body).append(']').toString();
     }
 }

@@ -73,7 +73,7 @@ public interface ClassTemplate {
      * Compiles the verticle to byte code
      *
      * @return A byte array which represents the compiled byte code of the verticle.
-     * @throws IOException
+     * @throws IOException Compilation failed
      */
     default byte[] compileToByteCode() throws IOException {
         Path tempDir = createTempDirectory();

@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
@@ -36,11 +35,15 @@ public interface NeonBeeOptions {
     int getWorkerPoolSize();
 
     /**
+     * Returns the name of the NeonBee instance.
+     *
      * @return the name of the NeonBee instance
      */
     String getInstanceName();
 
     /**
+     * Returns the current working directory path.
+     *
      * @return the current working directory path
      */
     Path getWorkingDirectory();
@@ -165,8 +168,6 @@ public interface NeonBeeOptions {
 
         private boolean disableJobScheduling;
 
-        private final Supplier<String> generateName = () -> String.format("NeonBee-%s", UUID.randomUUID().toString());
-
         private Integer serverVerticlePort;
 
         private List<NeonBeeProfile> activeProfiles = List.of(NeonBeeProfile.ALL);
@@ -174,7 +175,7 @@ public interface NeonBeeOptions {
         private String timeZoneId = "UTC";
 
         public Mutable() {
-            instanceName = generateName.get();
+            instanceName = generateName();
         }
 
         @Override
@@ -231,7 +232,7 @@ public interface NeonBeeOptions {
          */
         public Mutable setInstanceName(String instanceName) {
             if (Objects.isNull(instanceName)) {
-                this.instanceName = generateName.get();
+                this.instanceName = generateName();
             } else if (instanceName.isEmpty()) {
                 throw new IllegalArgumentException("instanceName must not be empty");
             } else {
@@ -361,6 +362,10 @@ public interface NeonBeeOptions {
         public Mutable setTimeZoneId(String timeZoneId) {
             this.timeZoneId = timeZoneId;
             return this;
+        }
+
+        private String generateName() {
+            return String.format("%s-%s", NeonBee.class.getSimpleName(), UUID.randomUUID().toString());
         }
     }
 }

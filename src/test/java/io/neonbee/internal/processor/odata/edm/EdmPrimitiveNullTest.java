@@ -26,8 +26,6 @@ public class EdmPrimitiveNullTest {
         assertThat(edmPrimitiveNull).isEqualTo(new EdmPrimitiveNull());
         assertThat(edmPrimitiveNull).isEqualTo(EdmPrimitiveNull.getInstance());
         assertThat(edmPrimitiveNull).isNotEqualTo(null);
-        assertThat(edmPrimitiveNull)
-                .isNotEqualTo(Class.forName("io.neonbee.internal.processor.odata.edm.EdmPrimitiveNull"));
     }
 
     @Test

@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.apache.olingo.commons.api.data.Entity;
 
+@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "SE_COMPARATOR_SHOULD_BE_SERIALIZABLE",
+        justification = "Comparator is not serialized by Olingo and provided entityComparators list is not serializable anyways")
 public class EntityChainedComparator implements Comparator<Entity> {
     private final List<EntityComparator> entityComparators;
 

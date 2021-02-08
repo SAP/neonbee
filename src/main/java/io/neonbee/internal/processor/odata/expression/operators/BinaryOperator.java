@@ -58,8 +58,8 @@ public class BinaryOperator {
     }
 
     public ExpressionVisitorOperand andOperator() throws ODataApplicationException {
-        Boolean result = null;
         if (leftOperand.isBooleanType() && rightOperand.isBooleanType()) {
+            Boolean result = null;
             if (Boolean.TRUE.equals(leftOperand.getValue()) && Boolean.TRUE.equals(rightOperand.getValue())) {
                 result = true;
             } else if (Boolean.FALSE.equals(leftOperand.getValue()) || Boolean.FALSE.equals(rightOperand.getValue())) {
@@ -77,7 +77,7 @@ public class BinaryOperator {
     private boolean binaryComparison(int... expected) {
         int result;
         if (leftOperand.isNull() && rightOperand.isNull()) {
-            result = 0; // null is equal to null
+            result = 0;
         } else {
             if (leftOperand.isIntegerType()) {
                 result = leftOperand.getTypedValue(BigInteger.class)
@@ -139,8 +139,8 @@ public class BinaryOperator {
     }
 
     public ExpressionVisitorOperand orOperator() throws ODataApplicationException {
-        Boolean result = null;
         if (leftOperand.is(PRIMITIVE_BOOLEAN) && rightOperand.is(PRIMITIVE_BOOLEAN)) {
+            Boolean result = null;
             if (Boolean.TRUE.equals(leftOperand.getValue()) || Boolean.TRUE.equals(rightOperand.getValue())) {
                 result = true;
             } else if (Boolean.FALSE.equals(leftOperand.getValue()) && Boolean.FALSE.equals(rightOperand.getValue())) {

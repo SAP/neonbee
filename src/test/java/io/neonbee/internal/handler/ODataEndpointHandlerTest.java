@@ -21,7 +21,6 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.server.api.ODataContent;
@@ -184,22 +183,28 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
         return requestOData(new io.neonbee.test.base.ODataRequest(fqn).setMetadata());
     }
 
-    private static final Consumer<Buffer> ASSERT_HANDLER_TS1 =
-            body -> assertThat(body.toString()).contains("Namespace=\"io.neonbee.handler.TestService\"");
+    private static void assertTS1Handler(Buffer body) {
+        assertThat(body.toString()).contains("Namespace=\"io.neonbee.handler.TestService\"");
+    }
 
-    private static final Consumer<Buffer> ASSERT_HANDLER_TS2 =
-            body -> assertThat(body.toString()).contains("Namespace=\"io.neonbee.handler2.Test2Service\"");
+    private static void assertTS2Handler(Buffer body) {
+        assertThat(body.toString()).contains("Namespace=\"io.neonbee.handler2.Test2Service\"");
+    }
 
-    private static final Consumer<Buffer> ASSERT_HANDLER_TS3 =
-            body -> assertThat(body.toString()).contains("Namespace=\"Service\"");
+    private static void assertTS3Handler(Buffer body) {
+        assertThat(body.toString()).contains("Namespace=\"Service\"");
+    }
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if multiple service endpoints are created with strict URI mapping")
+
     public void testStrictUriConversion(VertxTestContext testContext) {
-        all(assertOData(requestMetadata("io.neonbee.handler.TestService"), ASSERT_HANDLER_TS1, testContext),
-                assertOData(requestMetadata("io.neonbee.handler2.Test2Service"), ASSERT_HANDLER_TS2, testContext),
-                assertOData(requestMetadata("Service"), ASSERT_HANDLER_TS3, testContext))
+        all(assertOData(requestMetadata("io.neonbee.handler.TestService"), ODataEndpointHandlerTest::assertTS1Handler,
+                testContext),
+                assertOData(requestMetadata("io.neonbee.handler2.Test2Service"),
+                        ODataEndpointHandlerTest::assertTS2Handler, testContext),
+                assertOData(requestMetadata("Service"), ODataEndpointHandlerTest::assertTS3Handler, testContext))
                         .onComplete(testContext.succeedingThenComplete());
     }
 
@@ -207,9 +212,11 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if loose URI mapping works")
     public void testLooseUriConversion(VertxTestContext testContext) {
-        all(assertOData(requestMetadata("io-neonbee-handler-test"), ASSERT_HANDLER_TS1, testContext),
-                assertOData(requestMetadata("io-neonbee-handler2-test2"), ASSERT_HANDLER_TS2, testContext),
-                assertOData(requestMetadata("test-service3"), ASSERT_HANDLER_TS3, testContext))
+        all(assertOData(requestMetadata("io-neonbee-handler-test"), ODataEndpointHandlerTest::assertTS1Handler,
+                testContext),
+                assertOData(requestMetadata("io-neonbee-handler2-test2"), ODataEndpointHandlerTest::assertTS2Handler,
+                        testContext),
+                assertOData(requestMetadata("test-service3"), ODataEndpointHandlerTest::assertTS3Handler, testContext))
                         .onComplete(testContext.succeedingThenComplete());
     }
 
@@ -217,9 +224,9 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if CDS URI mapping works")
     public void testCDSUriConversion(VertxTestContext testContext) {
-        all(assertOData(requestMetadata("test"), ASSERT_HANDLER_TS1, testContext),
-                assertOData(requestMetadata("test2"), ASSERT_HANDLER_TS2, testContext),
-                assertOData(requestMetadata(""), ASSERT_HANDLER_TS3, testContext))
+        all(assertOData(requestMetadata("test"), ODataEndpointHandlerTest::assertTS1Handler, testContext),
+                assertOData(requestMetadata("test2"), ODataEndpointHandlerTest::assertTS2Handler, testContext),
+                assertOData(requestMetadata(""), ODataEndpointHandlerTest::assertTS3Handler, testContext))
                         .onComplete(testContext.succeedingThenComplete());
     }
 }

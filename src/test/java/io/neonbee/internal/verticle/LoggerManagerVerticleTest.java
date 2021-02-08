@@ -76,13 +76,13 @@ public class LoggerManagerVerticleTest extends DataVerticleTestBase {
             assertData(readResponse, resp -> {
                 assertThat(resp.getConfigurations()).isNotEmpty();
                 Optional<String> level = resp.getConfigurations().stream()
-                        .filter(config -> config.getName().equals("io.neonbee.internal")).findFirst()
+                        .filter(config -> "io.neonbee.internal".equals(config.getName())).findFirst()
                         .map(config -> config.getConfiguredLevel());
                 assertThat(level.isPresent()).isTrue();
                 assertThat(level.get()).isEqualTo("ERROR");
 
                 level = resp.getConfigurations().stream()
-                        .filter(config -> config.getName().equals("io.vertx.core.file")).findFirst()
+                        .filter(config -> "io.vertx.core.file".equals(config.getName())).findFirst()
                         .map(config -> config.getConfiguredLevel());
                 assertThat(level.isPresent()).isTrue();
                 assertThat(level.get()).isEqualTo("ERROR");

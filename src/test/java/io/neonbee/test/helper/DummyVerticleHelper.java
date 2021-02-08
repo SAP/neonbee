@@ -88,7 +88,6 @@ public class DummyVerticleHelper {
          */
         public DataVerticle<?> withDynamicException(BiFunction<DataQuery, DataContext, Exception> response) {
             return withDataAdapter(new DataAdapter<>() {
-
                 @Override
                 public Future<Object> retrieveData(DataQuery query, DataContext context) {
                     return Future.failedFuture(response.apply(query, context));

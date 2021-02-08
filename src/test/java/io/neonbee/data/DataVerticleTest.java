@@ -157,7 +157,7 @@ public class DataVerticleTest extends DataVerticleTestBase {
 
         @Override
         public Future<String> retrieveData(DataQuery query, DataMap require, DataContext context) {
-            if (query.getParameter("ping").equalsIgnoreCase("true")) {
+            if ("true".equalsIgnoreCase(query.getParameter("ping"))) {
                 return succeededFuture("Pong");
             }
             throw new DataException(400, "Bad Request");

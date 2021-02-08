@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -64,14 +63,14 @@ public class NeonBeeModuleTest extends NeonBeeTestBase {
         // Create models
         String userModelContent = "userCsn";
         String productModelContent = "productCsn";
-        Entry<String, byte[]> userModel = Map.entry("models/User.csn", userModelContent.getBytes(UTF_8));
-        Entry<String, byte[]> productModel = Map.entry("models/Product.csn", productModelContent.getBytes(UTF_8));
+        Map.Entry<String, byte[]> userModel = Map.entry("models/User.csn", userModelContent.getBytes(UTF_8));
+        Map.Entry<String, byte[]> productModel = Map.entry("models/Product.csn", productModelContent.getBytes(UTF_8));
         Map<String, byte[]> models = Map.ofEntries(userModel, productModel);
 
         String userExtModelContent = "userEdmx";
         String productExtModelContent = "productEdmx";
-        Entry<String, byte[]> userExtModel = Map.entry("models/User.edmx", userExtModelContent.getBytes(UTF_8));
-        Entry<String, byte[]> productExtModel =
+        Map.Entry<String, byte[]> userExtModel = Map.entry("models/User.edmx", userExtModelContent.getBytes(UTF_8));
+        Map.Entry<String, byte[]> productExtModel =
                 Map.entry("models/Product.edmx", productExtModelContent.getBytes(UTF_8));
         Map<String, byte[]> extModels = Map.ofEntries(userExtModel, productExtModel);
 
@@ -141,14 +140,14 @@ public class NeonBeeModuleTest extends NeonBeeTestBase {
         List<String> classNames = List.of(classNameA, classNameB);
 
         // Create models
-        Entry<String, byte[]> productModel = buildModelEntry("ProductService.csn");
-        Entry<String, byte[]> multipleModel = buildModelEntry("MultipleService.csn");
+        Map.Entry<String, byte[]> productModel = buildModelEntry("ProductService.csn");
+        Map.Entry<String, byte[]> multipleModel = buildModelEntry("MultipleService.csn");
         Map<String, byte[]> models = Map.ofEntries(productModel, multipleModel);
 
         // Create extension models
-        Entry<String, byte[]> productExtModel = buildModelEntry("io.neonbee.deploy.ProductService.edmx");
-        Entry<String, byte[]> carExtModel = buildModelEntry("io.neonbee.deploymultiple.CarService.edmx");
-        Entry<String, byte[]> userExtModel = buildModelEntry("io.neonbee.deploymultiple.UserService.edmx");
+        Map.Entry<String, byte[]> productExtModel = buildModelEntry("io.neonbee.deploy.ProductService.edmx");
+        Map.Entry<String, byte[]> carExtModel = buildModelEntry("io.neonbee.deploymultiple.CarService.edmx");
+        Map.Entry<String, byte[]> userExtModel = buildModelEntry("io.neonbee.deploymultiple.UserService.edmx");
         Map<String, byte[]> extendedModels = Map.ofEntries(productExtModel, carExtModel, userExtModel);
 
         // Create NeonBeeModuleJar
@@ -201,7 +200,7 @@ public class NeonBeeModuleTest extends NeonBeeTestBase {
         }));
     }
 
-    private Entry<String, byte[]> buildModelEntry(String modelName) throws IOException {
+    private Map.Entry<String, byte[]> buildModelEntry(String modelName) throws IOException {
         return Map.entry("models/" + modelName, TEST_RESOURCES.getRelated(modelName).getBytes());
     }
 }

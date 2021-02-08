@@ -161,7 +161,7 @@ public final class ResourceHelper {
     /**
      * This method behaves like {@link #getRelatedTestResource(Path)}, but accepts a String as file.
      *
-     * @param file The file to resolve
+     * @param filename The file to resolve
      * @return The passed file resolved against the related test resources folder
      */
     @Deprecated(forRemoval = true)
@@ -198,7 +198,7 @@ public final class ResourceHelper {
      *
      * @param path The path to the resource to read in
      * @return A Buffer with the content of the passed resource.
-     * @throws IOException
+     * @throws IOException Resource cannot be read
      */
     @Deprecated(forRemoval = true)
     public static Buffer getResourceAsBuffer(Path path) throws IOException {
@@ -210,7 +210,7 @@ public final class ResourceHelper {
      *
      * @param path The path to the resource to read in
      * @return A String with the UTF-8 encoded content of the passed resource.
-     * @throws IOException
+     * @throws IOException Resource cannot be read
      */
     @Deprecated(forRemoval = true)
     public static String getResourceAsString(Path path) throws IOException {

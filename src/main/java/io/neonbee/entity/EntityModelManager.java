@@ -460,7 +460,7 @@ public final class EntityModelManager {
          * @return a future with loaded model inside
          */
         private Future<ServiceMetadata> loadEdmxModel(Path file) {
-            return FileSystemHelper.readFile(vertx, file).compose(convertPayloadToServiceMetaData());
+            return FileSystemHelper.readFile(vertx, file).compose(this::convertPayloadToServiceMetaData);
         }
 
         /**
@@ -470,11 +470,11 @@ public final class EntityModelManager {
          * @return a future with loaded model inside
          */
         private Future<ServiceMetadata> loadEdmxModel(byte[] payload) {
-            return succeededFuture(Buffer.buffer(payload)).compose(convertPayloadToServiceMetaData());
+            return succeededFuture(Buffer.buffer(payload)).compose(this::convertPayloadToServiceMetaData);
         }
 
-        private Function<Buffer, Future<ServiceMetadata>> convertPayloadToServiceMetaData() {
-            return buffer -> Future.future(handler -> {
+        private Future<ServiceMetadata> convertPayloadToServiceMetaData(Buffer buffer) {
+            return Future.future(handler -> {
                 vertx.executeBlocking(blockingPromise -> {
                     try {
                         // Get the service metadata first w/o the schema namespace, because we have to read it

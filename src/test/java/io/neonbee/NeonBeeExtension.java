@@ -33,6 +33,8 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Strings;
+
 import io.neonbee.test.helper.SystemHelper;
 import io.vertx.core.VertxException;
 import io.vertx.junit5.Timeout;
@@ -113,7 +115,7 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
                     .setEventLoopPoolSize(config.eventLoopPoolSize()).setIgnoreClassPath(config.ignoreClassPath())
                     .setServerVerticlePort(SystemHelper.getFreePort()).setWorkerPoolSize(config.workerPoolSize())
                     .setWorkingDirectory(Paths.get(config.workingDirectoryPath()));
-            if (!config.instanceName().equals("")) {
+            if (!Strings.isNullOrEmpty(config.instanceName())) {
                 options.setInstanceName(config.instanceName());
             }
         }
@@ -250,8 +252,7 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
             if (ar.succeeded()) {
                 neonBeeHolder.set(ar.result());
             } else {
-                ar.cause().printStackTrace();
-                LOGGER.error("Error while initializing NeonBee.", ar.cause());
+                LOGGER.error("Error while initializing NeonBee.", ar.cause()); // NOPMD slf4j
             }
             latch.countDown();
         });

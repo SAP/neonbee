@@ -213,7 +213,7 @@ public class ServerVerticle extends AbstractVerticle {
                 .setMaxHeaderSize(config.getInteger("maxHeaderSize", DEFAULT_MAX_HEADER_SIZE))
                 .setMaxInitialLineLength(config.getInteger("maxInitialLineLength", DEFAULT_MAX_INITIAL_LINE_LENGTH))
                 .setUseAlpn(config.getBoolean("useAlpn", true))).exceptionHandler(throwable -> {
-                    LOGGER.error("HTTP Socket Exception {}", throwable, throwable.getMessage());
+                    LOGGER.error("HTTP Socket Exception", throwable);
                 }).requestHandler(router).listen(port, asyncResult -> {
                     if (asyncResult.succeeded()) {
                         LOGGER.info("HTTP server started on port {}", port);

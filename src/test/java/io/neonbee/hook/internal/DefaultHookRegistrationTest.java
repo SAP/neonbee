@@ -95,7 +95,6 @@ public class DefaultHookRegistrationTest {
         assertThat(defaultHookegistrationClone).isEqualTo(defaultHookegistration);
         assertThat(differentHookegistration).isNotEqualTo(defaultHookegistration);
         assertThat(differentHookegistration).isNotEqualTo(null);
-        assertThat(differentHookegistration).isNotEqualTo(Helper.EMPTY);
     }
 
     @Test

@@ -14,7 +14,6 @@ public final class ReflectionHelper {
      * @param fieldHolder The object which contains the field
      * @param fieldName   The field which is holding the value
      * @return The value of the field
-     * @throws Exception
      */
     public static <T> T getValueOfPrivateField(Object fieldHolder, String fieldName)
             throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
@@ -31,7 +30,6 @@ public final class ReflectionHelper {
      * @param removeFinal Pass true to remove the final modifier of the field, before it is read the first time
      *                    otherwise it is cached with the final value in the FieldAccessor.
      * @return The value of the field
-     * @throws Exception
      */
     @SuppressWarnings("unchecked")
     private static <T> T getValueOfPrivateField(Class<?> clazz, Object fieldHolder, String fieldName,
@@ -53,7 +51,6 @@ public final class ReflectionHelper {
      * @param clazz     The class which contains the field
      * @param fieldName The field which is holding the value
      * @return The value of the field
-     * @throws Exception
      */
     public static <T> T getValueOfPrivateStaticField(Class<?> clazz, String fieldName)
             throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
@@ -68,7 +65,6 @@ public final class ReflectionHelper {
      * @param valueToSet     The value to set
      *
      * @return An ExecutionBlock that resets the field to its value before the modification happened.
-     * @throws Exception if something went wrong
      */
     public static ExecutionBlock setValueOfPrivateField(Object objectToModify, String fieldName, Object valueToSet)
             throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
@@ -87,11 +83,6 @@ public final class ReflectionHelper {
      * @param objectToModify The object which contains the field
      * @param fieldName      The target field
      * @param valueToSet     The value to set
-     * @throws SecurityException
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
-     * @throws IllegalArgumentException
-     * @throws Exception                if something went wrong
      */
     private static void setValueOfPrivateField(Class<?> clazz, Object objectToModify, String fieldName,
             Object valueToSet)
@@ -110,7 +101,6 @@ public final class ReflectionHelper {
      * @param valueToSet The value to set
      *
      * @return An ExecutionBlock that resets the field to its value before the modification happened.
-     * @throws Exception if something went wrong
      */
     public static ExecutionBlock setValueOfPrivateStaticField(Class<?> clazz, String fieldName, Object valueToSet)
             throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {

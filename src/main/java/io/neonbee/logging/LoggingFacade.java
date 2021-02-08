@@ -13,7 +13,6 @@ import io.neonbee.logging.internal.LoggingFacadeImpl;
 import io.vertx.ext.web.RoutingContext;
 
 public interface LoggingFacade {
-
     /**
      * Masquerades any existing logger and adds functionality to. Here is a simple example on how to use the facade:
      *
@@ -102,8 +101,9 @@ public interface LoggingFacade {
             String msg = "routingContext must not be null, otherwise no correlationId can be extracted";
             throw new NullPointerException(msg);
         }
-        String correlationID = Optional.ofNullable(routingContext.get(CORRELATION_ID)).map(Object::toString).get();
-        return correlateWith(correlationID);
+        Optional.ofNullable(routingContext.get(CORRELATION_ID)).map(Object::toString)
+                .ifPresent(correlationId -> correlateWith(correlationId));
+        return this;
     }
 
     /**

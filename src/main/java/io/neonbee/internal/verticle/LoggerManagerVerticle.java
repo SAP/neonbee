@@ -80,8 +80,8 @@ public class LoggerManagerVerticle extends DataVerticle<LoggerConfigurations> {
         entries.getConfigurations().stream().forEach(entry -> {
             LOGGER.correlateWith(context).debug("Change log level for {} to {}.", entry.getName(),
                     entry.getConfiguredLevel());
-            Level level = Level.valueOf(entry.getConfiguredLevel());
-            Optional.ofNullable(getLogger(entry.getName())).ifPresent(logger -> logger.setLevel(level));
+            Optional.ofNullable(getLogger(entry.getName()))
+                    .ifPresent(logger -> logger.setLevel(Level.valueOf(entry.getConfiguredLevel())));
         });
         return Future.succeededFuture();
     }

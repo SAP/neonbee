@@ -40,7 +40,7 @@ public class HookClassTemplate implements ClassTemplate {
      * Creates a dummy hook class.
      *
      * @param simpleClassName The simple class name of the new class
-     * @throws IOException
+     * @throws IOException Hook template could not be read
      */
     public HookClassTemplate(Path hookTemplate, String simpleClassName) throws IOException {
         this(hookTemplate, simpleClassName, null);
@@ -51,7 +51,7 @@ public class HookClassTemplate implements ClassTemplate {
      *
      * @param simpleClassName The simple class name of the new class
      * @param packageName     The package name of the class. Pass null for default package
-     * @throws IOException
+     * @throws IOException Hook template could not be read
      */
     public HookClassTemplate(Path hookTemplate, String simpleClassName, String packageName) throws IOException {
         this.packageName = packageName;
@@ -76,7 +76,7 @@ public class HookClassTemplate implements ClassTemplate {
 
     private String buildImportString() {
         StringBuilder sb = new StringBuilder();
-        imports.forEach(i -> sb.append("import " + i + ";\n"));
+        imports.forEach(i -> sb.append("import ").append(i).append(";\n"));
         return sb.toString();
     }
 

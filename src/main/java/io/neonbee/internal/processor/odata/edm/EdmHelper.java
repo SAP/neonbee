@@ -123,12 +123,11 @@ public final class EdmHelper {
                     || String.valueOf(Boolean.FALSE).equalsIgnoreCase(literal)) {
                 return literal.toLowerCase(Locale.ENGLISH);
             } else {
-                Matcher stringIdMatcher = STRING_KEY_PATTERN.matcher(literal);
-                Matcher numericIdMatcher = NUMBER_KEY_PATTERN.matcher(literal);
-                if (stringIdMatcher.matches()) {
-                    return stringIdMatcher.group(1);
-                } else if (numericIdMatcher.matches()) {
-                    return numericIdMatcher.group(1);
+                Matcher matcher;
+                if ((matcher = STRING_KEY_PATTERN.matcher(literal)).matches()) {
+                    return matcher.group(1);
+                } else if ((matcher = NUMBER_KEY_PATTERN.matcher(literal)).matches()) {
+                    return matcher.group(1);
                 }
             }
         } catch (Exception e) {

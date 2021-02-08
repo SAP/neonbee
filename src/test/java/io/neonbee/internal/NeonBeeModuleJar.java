@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -66,10 +65,10 @@ public class NeonBeeModuleJar extends BasicJar {
             content.put(new ZipEntry(getJarEntryName(verticleTemplate.getClassName())),
                     verticleTemplate.compileToByteCode());
         }
-        for (Entry<String, byte[]> entry : models.entrySet()) {
+        for (Map.Entry<String, byte[]> entry : models.entrySet()) {
             content.put(new ZipEntry(entry.getKey()), entry.getValue());
         }
-        for (Entry<String, byte[]> entry : extensionModels.entrySet()) {
+        for (Map.Entry<String, byte[]> entry : extensionModels.entrySet()) {
             content.put(new ZipEntry(entry.getKey()), entry.getValue());
         }
 

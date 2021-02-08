@@ -10,9 +10,31 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 
 public final class FileSystemHelper {
+    /**
+     * This method behaves like {@link #deleteRecursive(Vertx, Path)}, but instantiate it's own Vert.x instance.
+     *
+     * @param path The path to delete
+     * @return A future to resolve when the delete operation finishes
+     */
+    public static Future<Void> deleteRecursive(Path path) {
+        return deleteRecursive(Vertx.vertx(), path);
+    }
+
+    /**
+     * This method deletes the file represented by the specified path, synchronously. If the path represents a directory
+     * then the directory and its contents will be deleted recursively.
+     *
+     * @param vertx The related Vert.x instance
+     * @param path  The path to delete
+     * @return A future to resolve when the delete operation finishes
+     */
+    public static Future<Void> deleteRecursive(Vertx vertx, Path path) {
+        return vertx.fileSystem().deleteRecursive(path.toString(), true);
+    }
 
     /**
      * This method behaves like {@link #deleteRecursiveBlocking(Vertx, Path)}, but instantiate it's own Vert.x instance.

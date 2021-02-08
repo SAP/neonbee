@@ -23,7 +23,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -183,7 +182,7 @@ public final class ODataEndpointHandler implements Handler<RoutingContext> {
     public static Router router(Vertx vertx, String basePath, UriConversion uriConversion) {
         Router router = Router.router(vertx);
         AtomicBoolean initialized = new AtomicBoolean(); // true if the router was initialized already
-        AtomicReference<Map<String, EntityModel>> models = new AtomicReference<>(); // current set of routed models
+        AtomicReference<Map<String, EntityModel>> models = new AtomicReference<>();
 
         // Register the event bus consumer first, otherwise it could happen that during initialization we are missing an
         // update to the data model, a refresh of the router will only be triggered in case it is already initialized.
@@ -245,7 +244,7 @@ public final class ODataEndpointHandler implements Handler<RoutingContext> {
             models.values().stream().flatMap(entityModel -> entityModel.getEdmxes().entrySet().stream())
                     .map(entryFunction(
                             (schemaNamespace, edmxModel) -> Map.entry(uriConversion.apply(schemaNamespace), edmxModel)))
-                    .sorted(Entry.comparingByKey(Comparator.comparingInt(String::length).reversed()))
+                    .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(String::length).reversed()))
                     .forEach(entryConsumer((uriPath, edmxModel) -> {
                         router.route((uriPath.isEmpty() ? EMPTY : ("/" + uriPath)) + "/*").handler(create(edmxModel));
                         LOGGER.info("Serving OData service endpoint for {} at {}{} ({} URI mapping)",
@@ -477,7 +476,7 @@ public final class ODataEndpointHandler implements Handler<RoutingContext> {
     static void mapODataResponse(ODataResponse odataResponse, HttpServerResponse response) throws IOException {
         // status code and headers
         response.setStatusCode(odataResponse.getStatusCode());
-        for (Entry<String, List<String>> entry : odataResponse.getAllHeaders().entrySet()) {
+        for (Map.Entry<String, List<String>> entry : odataResponse.getAllHeaders().entrySet()) {
             for (String headerValue : entry.getValue()) {
                 response.putHeader(entry.getKey(), headerValue);
             }

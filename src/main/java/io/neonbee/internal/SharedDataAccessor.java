@@ -42,6 +42,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns an async. map to be used storing shared data for the associated class.
+     *
      * @see #getAsyncMap(String, Handler)
      * @param resultHandler The handler which returns the map asynchronously
      * @param <K>           The type of the key of the async map entries
@@ -57,6 +59,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns the future of an async. local map to be used storing shared data for the associated class.
+     *
      * @see #getLocalAsyncMap(String, Handler)
      * @param <K> The type of the key of the async map entries
      * @param <V> The type of the value of the async map entries
@@ -72,6 +76,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns an async. local map to be used storing shared data for the associated class.
+     *
      * @see #getLocalAsyncMap(String, Handler)
      * @param resultHandler The handler which returns the map asynchronously
      * @param <K>           The type of the key of the async map entries
@@ -87,6 +93,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns the future of a cluster wide shared map to be used storing shared data for the associated class.
+     *
      * @see #getClusterWideMap(String, Handler)
      * @param <K> The type of the key of the async map entries
      * @param <V> The type of the value of the async map entries
@@ -102,6 +110,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns a cluster wide shared map to be used storing shared data for the associated class.
+     *
      * @see #getClusterWideMap(String, Handler)
      * @param resultHandler The handler which returns the map asynchronously
      * @param <K>           The type of the key of the async map entries
@@ -117,6 +127,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns the future to a counter associated to the given class.
+     *
      * @see #getCounter(String, Handler)
      * @return a {@link Future} of {@link Counter} which is shared in the cluster
      */
@@ -130,6 +142,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns a counter associated to the given class.
+     *
      * @see #getCounter(String, Handler)
      * @param resultHandler The handler
      */
@@ -143,6 +157,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns the future to a local counter associated to the given class.
+     *
      * @see #getLocalCounter(String, Handler)
      * @return a {@link Future} of {@link Counter} which is only available locally
      */
@@ -156,6 +172,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns a local counter associated to the given class.
+     *
      * @see #getLocalCounter(String, Handler)
      * @param resultHandler The handler
      */
@@ -169,6 +187,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns the future to a counter associated to the given class.
+     *
      * @see #getLock(String, Handler)
      * @return a {@link Future} of {@link Lock} which is shared in the cluster
      */
@@ -182,6 +202,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns a lock associated to the given class.
+     *
      * @see #getLock(String, Handler)
      * @param resultHandler The handler
      */
@@ -195,6 +217,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns the future of a local lock associated to the given class.
+     *
      * @see #getLocalLock(String, Handler)
      * @return a {@link Future} of {@link Lock} which is only available locally
      */
@@ -208,6 +232,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns a local lock associated to the given class.
+     *
      * @see #getLocalLock(String, Handler)
      * @param resultHandler The handler
      */
@@ -221,6 +247,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns the future of a lock with a timeout associated to the given class.
+     *
      * @see #getLockWithTimeout(String, long, Handler)
      * @param timeout The timeout in ms
      * @return a {@link Future} of {@link Lock} which is only available locally
@@ -235,6 +263,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns a lock with a timeout associated to the given class.
+     *
      * @see #getLockWithTimeout(String, long, Handler)
      * @param timeout       The timeout in ms
      * @param resultHandler The handler
@@ -249,6 +279,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns the future of a local lock with a timeout associated to the given class.
+     *
      * @see #getLocalLockWithTimeout(String, long, Handler)
      * @param timeout The timeout in ms
      * @return a {@link Future} of {@link Lock} which is only available locally
@@ -263,6 +295,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns a local lock with a timeout associated to the given class.
+     *
      * @see #getLocalLockWithTimeout(String, long, Handler)
      * @param timeout       The timeout in ms
      * @param resultHandler The handler
@@ -277,6 +311,8 @@ public class SharedDataAccessor implements SharedData {
     }
 
     /**
+     * Returns a local map to be used storing shared data for the associated class.
+     *
      * @see #getLocalMap(String)
      * @param <K> The type of the keys of the {@link LocalMap}
      * @param <V> The type of the values of the {@link LocalMap}

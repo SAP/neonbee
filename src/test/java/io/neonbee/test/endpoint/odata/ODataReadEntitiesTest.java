@@ -125,8 +125,7 @@ public class ODataReadEntitiesTest extends ODataEndpointTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 and the correct count of entities with filter query when loose URL mapping work is used")
-    // NOPMD as the implementation is the same but the test method name contains "LooseUri" and therefore the behaviour
-    // is different.
+    // Please note that the test method name contains "LooseUri" and therefore the behaviour is different.
     void existingEntitiesCountWithFilterCDSUriConversionTest(VertxTestContext testContext) {
         Map<String, String> filterQuery = Map.of("$filter", "KeyPropertyString in ('id.3', 'id-1')");
         FullQualifiedName looseFQN = new FullQualifiedName("test-service1", "AllPropertiesNullable");
@@ -137,7 +136,7 @@ public class ODataReadEntitiesTest extends ODataEndpointTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 and the correct count of entities without filter query when loose URL mapping work is used")
-    // Please note that the test method name contains "LooseUri" and therefore the behaviour is different.
+    // Please note that the test method name contains "LooseUri" and therefore the behavior is different.
     void existingEntitiesCountWithoutFilterLooseUriConversionTest(VertxTestContext testContext) {
         FullQualifiedName looseFQN = new FullQualifiedName("io-neonbee-test-test-service1", "AllPropertiesNullable");
         assertOData(requestOData(new ODataRequest(looseFQN).setCount()), "5", testContext)

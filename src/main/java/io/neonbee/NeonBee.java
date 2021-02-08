@@ -303,8 +303,8 @@ public class NeonBee {
             strategy = (TrackingDataHandlingStrategy) Class
                     .forName(neonBee.getConfig().getTrackingDataHandlingStrategy()).getConstructor().newInstance();
         } catch (Exception e) {
-            logger.warn("Failed to load configured tracking handling strategy {}. Use default.", e,
-                    neonBee.getConfig().getTrackingDataHandlingStrategy());
+            logger.warn("Failed to load configured tracking handling strategy {}. Use default.",
+                    neonBee.getConfig().getTrackingDataHandlingStrategy(), e);
             strategy = new TrackingDataLoggingStrategy();
         }
         neonBee.getVertx().eventBus().addInboundInterceptor(new TrackingInterceptor(MessageDirection.INBOUND, strategy))
@@ -344,7 +344,7 @@ public class NeonBee {
             vertx.eventBus().registerDefaultCodec(Class.forName(className),
                     (MessageCodec) Class.forName(codecClassName).getConstructor().newInstance());
         } catch (Exception e) {
-            logger.warn("Failed to register codec {} for class {}", e, codecClassName, className);
+            logger.warn("Failed to register codec {} for class {}", codecClassName, className, e);
         }
     }
 
@@ -362,6 +362,7 @@ public class NeonBee {
         if (NeonBeeProfile.WEB.isActive(activeProfiles)) {
             deployFutures.addAll(deployWebVerticles());
         }
+
         deployFutures.addAll(deployClassPathVerticles());
         return allComposite(deployFutures).map((Void) null);
     }
@@ -373,13 +374,12 @@ public class NeonBee {
      */
     private List<Future<String>> deployWebVerticles() {
         logger.info("Deploy web verticle.");
-        Future<String> deployServerVerticleFuture = Deployable
+
+        return List.of(Deployable
                 .fromClass(vertx, ServerVerticle.class, CORRELATION_ID,
                         new JsonObject().put("instances", NUMBER_DEFAULT_INSTANCES))
                 .compose(deployable -> deployable.deploy(vertx, CORRELATION_ID).future())
-                .map(Deployment::getDeploymentId);
-
-        return List.of(deployServerVerticleFuture);
+                .map(Deployment::getDeploymentId));
     }
 
     /**
@@ -389,17 +389,19 @@ public class NeonBee {
      */
     private List<Future<String>> deploySystemVerticles() {
         logger.info("Deploy system verticle.");
+        List<Future<String>> systemVerticles = new ArrayList<>();
         // put any non-configurable system verticle here
-        Future<String> deployModelRefreshVerticleFuture = Future
+
+        systemVerticles.add(Future
                 .<String>future(asyncDeployment -> vertx
                         .deployVerticle(new ModelRefreshVerticle(options.getModelsDirectory()), asyncDeployment))
                 .otherwise(throwable -> { // non-fatal exception, in case this fails, NeonBee is still able to run!
                     logger.warn("Could not deploy the ModelRefreshVerticle. Models directory is not being watched!",
                             throwable);
                     return null;
-                });
+                }));
 
-        Future<String> deployDeployerVerticleFuture = Deployable
+        systemVerticles.add(Deployable
                 .fromVerticle(vertx, new DeployerVerticle(options.getVerticlesDirectory()), CORRELATION_ID, null)
                 .compose(deployable -> deployable.deploy(vertx, CORRELATION_ID).future())
                 .map(Deployment::getDeploymentId).otherwise(throwable -> {
@@ -407,21 +409,20 @@ public class NeonBee {
                     logger.warn("Could not deploy the DeployerVerticle. Verticles directory is not being watched!",
                             throwable);
                     return null;
-                });
+                }));
 
-        Future<String> deployConsolidationVerticleFuture = Deployable
+        systemVerticles.add(Deployable
                 .fromClass(vertx, ConsolidationVerticle.class, CORRELATION_ID, new JsonObject().put("instances", 1))
                 .compose(deployable -> deployable.deploy(vertx, CORRELATION_ID).future())
-                .map(Deployment::getDeploymentId);
+                .map(Deployment::getDeploymentId));
 
-        Future<String> deployMetricsVerticleFuture = Future.<String>future(
-                asyncDeployment -> vertx.deployVerticle(new MetricsVerticle(1, TimeUnit.SECONDS), asyncDeployment));
+        systemVerticles.add(Future.<String>future(
+                asyncDeployment -> vertx.deployVerticle(new MetricsVerticle(1, TimeUnit.SECONDS), asyncDeployment)));
 
-        Future<String> deployLoggerManagerVerticleFuture =
-                Future.<String>future(promise -> vertx.deployVerticle(new LoggerManagerVerticle(), promise));
+        systemVerticles
+                .add(Future.<String>future(promise -> vertx.deployVerticle(new LoggerManagerVerticle(), promise)));
 
-        return List.of(deployModelRefreshVerticleFuture, deployDeployerVerticleFuture,
-                deployConsolidationVerticleFuture, deployMetricsVerticleFuture, deployLoggerManagerVerticleFuture);
+        return systemVerticles;
     }
 
     /**
@@ -470,6 +471,7 @@ public class NeonBee {
         registerCloseHandler(vertx);
     }
 
+    @SuppressWarnings("rawtypes")
     private void registerCloseHandler(Vertx vertx) {
         try {
             // unfortunately the addCloseHook method is public, but hidden in VertxImpl. As we need to know when the
@@ -478,17 +480,18 @@ public class NeonBee {
                 /*
                  * Called when Vert.x instance is closed, perform shut-down operations here
                  */
-                @SuppressWarnings("rawtypes")
-                Future<Void> shutdownHooksExecutionTasks = getHookRegistry().executeHooks(HookType.BEFORE_SHUTDOWN)
+                handler.handle(getHookRegistry().executeHooks(HookType.BEFORE_SHUTDOWN)
                         .compose(shutdownHooksExecutionOutcomes -> {
                             if (shutdownHooksExecutionOutcomes.failed()) {
-                                shutdownHooksExecutionOutcomes.<Future>list().stream().filter(Future::failed).forEach(
-                                        future -> logger.error("Shutdown hook execution failed.", future.cause()));
+                                shutdownHooksExecutionOutcomes.<Future>list().stream().filter(Future::failed)
+                                        .forEach(future -> {
+                                            logger.error(// NOPMD slf4j
+                                                    "Shutdown hook execution failed.", future.cause());
+                                        });
                             }
                             NEONBEE_INSTANCES.remove(vertx);
                             return succeededFuture();
-                        });
-                handler.handle(shutdownHooksExecutionTasks.mapEmpty());
+                        }).mapEmpty());
             });
         } catch (Exception e) {
             logger.warn("Failed to register NeonBee close hook to Vert.x", e);
@@ -505,6 +508,8 @@ public class NeonBee {
     }
 
     /**
+     * Returns the the (command-line) options.
+     *
      * @return the (command-line) options
      */
     public NeonBeeOptions getOptions() {
@@ -512,6 +517,8 @@ public class NeonBee {
     }
 
     /**
+     * Returns the NeonBee configuration.
+     *
      * @return the NeonBee configuration
      */
     public NeonBeeConfig getConfig() {

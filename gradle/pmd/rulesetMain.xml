@@ -36,8 +36,9 @@
     <rule ref="category/java/bestpractices.xml/MethodReturnsInternalArray" />
     <rule ref="category/java/bestpractices.xml/MissingOverride" />
     <!-- <rule ref="category/java/bestpractices.xml/OneDeclarationPerLine" /> -->
-    <rule ref="category/java/bestpractices.xml/PositionLiteralsFirstInCaseInsensitiveComparisons" />
-    <rule ref="category/java/bestpractices.xml/PositionLiteralsFirstInComparisons" />
+    <!-- <rule ref="category/java/bestpractices.xml/PositionLiteralsFirstInCaseInsensitiveComparisons" /> -->
+    <rule ref="category/java/bestpractices.xml/LiteralsFirstInComparisons" />
+    <!-- <rule ref="category/java/bestpractices.xml/PositionLiteralsFirstInComparisons" /> -->
     <rule ref="category/java/bestpractices.xml/PreserveStackTrace" />
     <rule ref="category/java/bestpractices.xml/ReplaceEnumerationWithIterator" />
     <rule ref="category/java/bestpractices.xml/ReplaceHashtableWithMap" />
@@ -268,15 +269,21 @@
         /> </properties> </rule> -->
     <rule ref="category/java/errorprone.xml/CompareObjectsWithEquals" />
     <rule ref="category/java/errorprone.xml/ConstructorCallsOverridableMethod" />
-    <rule ref="category/java/errorprone.xml/DataflowAnomalyAnalysis">
+    <!--<rule ref="category/java/errorprone.xml/DataflowAnomalyAnalysis">
         <properties>
             <property name="maxPaths" value="1000" />
             <property name="maxViolations" value="100" />
         </properties>
+    </rule>-->
+    <rule ref="category/java/bestpractices.xml/UnusedAssignment">
+        <properties>
+            <property name="checkUnusedPrefixIncrement" value="false" />
+            <property name="reportUnusedVariables" value="false" />
+        </properties>
     </rule>
     <rule ref="category/java/errorprone.xml/DetachedTestCase" />
     <rule ref="category/java/errorprone.xml/DoNotCallGarbageCollectionExplicitly" />
-    <rule ref="category/java/errorprone.xml/DoNotCallSystemExit" />
+    <rule ref="category/java/errorprone.xml/DoNotTerminateVM" />
     <rule ref="category/java/errorprone.xml/DoNotExtendJavaLangThrowable" />
     <rule ref="category/java/errorprone.xml/DoNotHardCodeSDCard" />
     <rule ref="category/java/errorprone.xml/DoNotThrowExceptionInFinally" />
@@ -382,7 +389,7 @@
     <rule ref="category/java/performance.xml/AvoidArrayLoops" />
     <rule ref="category/java/performance.xml/AvoidFileStream" />
     <!-- <rule ref="category/java/performance.xml/AvoidInstantiatingObjectsInLoops" /> -->
-    <rule ref="category/java/performance.xml/AvoidUsingShortType" />
+    <!-- <rule ref="category/java/performance.xml/AvoidUsingShortType" /> -->
     <rule ref="category/java/performance.xml/BigIntegerInstantiation" />
     <rule ref="category/java/performance.xml/BooleanInstantiation" />
     <rule ref="category/java/performance.xml/ByteInstantiation" />
@@ -400,7 +407,7 @@
     <rule ref="category/java/performance.xml/OptimizableToArrayCall" />
     <rule ref="category/java/performance.xml/RedundantFieldInitializer" />
     <rule ref="category/java/performance.xml/ShortInstantiation" />
-    <rule ref="category/java/performance.xml/SimplifyStartsWith" />
+    <!-- <rule ref="category/java/performance.xml/SimplifyStartsWith" /> -->
     <rule ref="category/java/performance.xml/StringInstantiation" />
     <rule ref="category/java/performance.xml/StringToString" />
     <rule ref="category/java/performance.xml/TooFewBranchesForASwitchStatement">

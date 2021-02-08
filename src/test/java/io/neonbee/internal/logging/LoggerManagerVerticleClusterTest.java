@@ -60,14 +60,14 @@ public class LoggerManagerVerticleClusterTest {
                     testContext.verify(() -> {
                         assertThat(node1Response.getConfigurations()).isNotEmpty();
                         Optional<String> level = node1Response.getConfigurations().stream()
-                                .filter(config -> config.getName().equals("io.neonbee.internal")).findFirst()
+                                .filter(config -> "io.neonbee.internal".equals(config.getName())).findFirst()
                                 .map(config -> config.getConfiguredLevel());
                         assertThat(level.isPresent()).isTrue();
                         assertThat(level.get()).isEqualTo("ERROR");
 
                         assertThat(node2Response.getConfigurations()).isNotEmpty();
                         level = node2Response.getConfigurations().stream()
-                                .filter(config -> config.getName().equals("io.neonbee.internal")).findFirst()
+                                .filter(config -> "io.neonbee.internal".equals(config.getName())).findFirst()
                                 .map(config -> config.getConfiguredLevel());
                         assertThat(level.isPresent()).isTrue();
                         assertThat(level.get()).isEqualTo("ERROR");

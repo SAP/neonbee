@@ -34,7 +34,9 @@ public final class OrderExpressionExecutor implements EntityComparison {
      */
     public static List<Entity> executeOrderOption(RoutingContext routingContext, OrderByOption orderByOption,
             List<Entity> entityList) {
-        List<EntityComparator> entityComparators = orderByOption.getOrders().stream()
+
+        // Sorts the list in 'asc' order by default e.g. in the case that nothing is specified
+        Collections.sort(entityList, new EntityChainedComparator(orderByOption.getOrders().stream()
                 .filter(orderByItem -> orderByItem.getExpression() instanceof Member).map(orderByItem -> {
                     /*
                      * See https://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#
@@ -56,10 +58,8 @@ public final class OrderExpressionExecutor implements EntityComparison {
                         }
                     }
                     return null;
-                }).filter(Objects::nonNull).collect(Collectors.toList());
+                }).filter(Objects::nonNull).collect(Collectors.toList())));
 
-        // Sorts the list in 'asc' order by default e.g. in the case that nothing is specified
-        Collections.sort(entityList, new EntityChainedComparator(entityComparators));
         return entityList;
     }
 }

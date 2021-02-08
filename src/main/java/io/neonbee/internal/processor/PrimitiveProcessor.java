@@ -41,6 +41,8 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
 
+@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "NM_SAME_SIMPLE_NAME_AS_INTERFACE",
+        justification = "Common practice in Olingo to name the implementation of the processor same as the interface")
 public class PrimitiveProcessor extends AsynchronousProcessor
         implements org.apache.olingo.server.api.processor.PrimitiveProcessor {
     private OData odata;

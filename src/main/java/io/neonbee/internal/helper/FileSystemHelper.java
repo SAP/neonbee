@@ -78,7 +78,7 @@ public final class FileSystemHelper {
     }
 
     /**
-     * This method creates a file and writes the {@code buffered} {@code model} data to the file, asynchronously.
+     * This method creates a file and writes the {@code buffer} to the file, asynchronously.
      *
      * @param vertx  The related Vert.x instance
      * @param path   The path of the file

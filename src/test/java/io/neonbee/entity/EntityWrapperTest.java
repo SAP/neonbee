@@ -2,9 +2,9 @@ package io.neonbee.entity;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
+import static org.junit.Assert.assertThat;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.Property;
@@ -21,20 +21,20 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 public class EntityWrapperTest extends NeonBeeTestBase {
-    private static final Supplier<Entity> TEST_USER_SUPPLIER = () -> {
+    private static final EntityWrapper TEST_USER_WRAPPER =
+            new EntityWrapper("io.neonbee.test2.TestService2Users.TestUsers", createTestUser());
+
+    private static final Buffer TEST_USER_WRAPPER_SERIALIZED = Buffer
+            .buffer("{\"entityType\":{\"namespace\":\"io.neonbee.test2.TestService2Users\",\"name\":\"TestUsers\"}," //
+                    + "\"entity\":\"{\\\"@odata.context\\\":\\\"$metadata#TestUsers\\\",\\\"@odata.metadataEtag\\\":\\\"\\\\\\\"2f85d83fa1f93164cf4d3252ca72023e\\\\\\\"\\\",\\\"value\\\":[{\\\"ID\\\":\\\"ID\\\",\\\"name\\\":\\\"NAME\\\",\\\"description\\\":\\\"DESCRIPTION\\\"}]}\"}");
+
+    private static Entity createTestUser() {
         Entity testUser = new Entity().addProperty(new Property("Edm.String", "name", ValueType.PRIMITIVE, "NAME"))
                 .addProperty(new Property("Edm.String", "description", ValueType.PRIMITIVE, "DESCRIPTION"))
                 .addProperty(new Property("Edm.String", "ID", ValueType.PRIMITIVE, "ID"));
         testUser.setType("io.neonbee.test2.TestService2Users.TestUsers");
         return testUser;
-    };
-
-    private static final EntityWrapper TEST_USER_WRAPPER =
-            new EntityWrapper("io.neonbee.test2.TestService2Users.TestUsers", TEST_USER_SUPPLIER.get());
-
-    private static final Buffer TEST_USER_WRAPPER_SERIALIZED = Buffer
-            .buffer("{\"entityType\":{\"namespace\":\"io.neonbee.test2.TestService2Users\",\"name\":\"TestUsers\"}," //
-                    + "\"entity\":\"{\\\"@odata.context\\\":\\\"$metadata#TestUsers\\\",\\\"@odata.metadataEtag\\\":\\\"\\\\\\\"2f85d83fa1f93164cf4d3252ca72023e\\\\\\\"\\\",\\\"value\\\":[{\\\"ID\\\":\\\"ID\\\",\\\"name\\\":\\\"NAME\\\",\\\"description\\\":\\\"DESCRIPTION\\\"}]}\"}");
+    }
 
     @Override
     protected WorkingDirectoryBuilder provideWorkingDirectoryBuilder(TestInfo testInfo, VertxTestContext testContext) {
@@ -59,7 +59,7 @@ public class EntityWrapperTest extends NeonBeeTestBase {
 
         assertThat(firstNamesHodor).isNotEqualTo(firstNamesSam);
         assertThat(firstNamesHodor).isEqualTo(new EntityWrapper("First.Name", hodor));
-        assertThat(sam).isNotEqualTo(new EntityWrapper("Hodor.Hodor", sam));
+        assertThat(firstNamesSam).isNotEqualTo(new EntityWrapper("Hodor.Hodor", sam));
     }
 
     @Test

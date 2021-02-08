@@ -13,7 +13,7 @@ public final class MockitoHelper {
      * method will never call the passed handler. To solve this issue it is necessary to capture the passed
      * {@link Handler} and triggers the {@link Handler#handle(Object)} method manually.
      *
-     * @param hanlderPosition The position of the handler in the signature of the mocked method
+     * @param handlerPosition The position of the handler in the signature of the mocked method
      * @param asyncResult     The result with which the {@link Handler} is called.
      * @return A {@link Answer} that triggers the {@link Handler} passed to the mocked method.
      */

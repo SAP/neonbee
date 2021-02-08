@@ -25,7 +25,7 @@ public class LoggingFacadeTest {
 
     private static final Throwable DUMMY_THROWABLE = new Exception("Exception");
 
-    private static final LoggingFacade MOCKED_LOGGING_FACADE = mock(LoggingFacade.class, CALLS_REAL_METHODS);
+    private static final LoggingFacade MOCKED_LOGGING_FACADE = mock(LoggingFacade.class, CALLS_REAL_METHODS); // NOPMD
 
     @BeforeEach
     void setUp() {

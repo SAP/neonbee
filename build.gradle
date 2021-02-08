@@ -108,7 +108,7 @@ apply from: 'gradle/staticCodeCheck.gradle'
 apply from: 'gradle/changelog.gradle'
 
 task initWrapper(type: Wrapper) {
-    gradleVersion = '6.7.1'
+    gradleVersion = '6.8.2'
 }
 
 // ############ Test Phase
@@ -175,17 +175,17 @@ task violations(type: se.bjurr.violations.gradle.plugin.ViolationsTask) {
     maxSeverityColumnWidth = 10
     maxLineColumnWidth = 10
     maxMessageColumnWidth = 200
-    minSeverity = 'WARN' // INFO, WARN or ERROR
+    minSeverity = 'INFO' // INFO, WARN or ERROR
     detailLevel = 'VERBOSE' // PER_FILE_COMPACT, COMPACT or VERBOSE
     maxViolations = 0 // Fail the build if total number of found violations is higher
     printViolations = true
 
     // Formats are listed here: https://github.com/tomasbjerre/violations-lib
     violations = [
-        ['FINDBUGS', '.', ".*/build/reports/spotbugs/.*\\.xml\$",'Spotbugs'],
-        ['JUNIT', '.', ".*/build/reports/junit/xml/.*\\.xml\$",'JUnit'],
-        ['PMD', '.', ".*/build/reports/pmd/.*\\.xml\$", 'PMD'],
-        ['CHECKSTYLE', '.', ".*/build/reports/checkstyle/.*\\.xml\$", 'Checkstyle']
+        ['FINDBUGS', buildDir.path, ".*/build/reports/spotbugs/.*\\.xml\$",'Spotbugs'],
+        ['JUNIT', buildDir.path, ".*/build/reports/junit/xml/.*\\.xml\$",'JUnit'],
+        ['PMD', buildDir.path, ".*/build/reports/pmd/.*\\.xml\$", 'PMD'],
+        ['CHECKSTYLE', buildDir.path, ".*/build/reports/checkstyle/.*\\.xml\$", 'Checkstyle']
     ]
 }
 check.finalizedBy violations

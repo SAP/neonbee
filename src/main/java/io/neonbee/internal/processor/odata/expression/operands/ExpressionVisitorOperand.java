@@ -151,8 +151,8 @@ public class ExpressionVisitorOperand implements EntityComparison {
             return new ExpressionVisitorOperand(routingContext, null, type);
         }
 
-        Exception exception = null;
         Object newValue = null;
+        Exception exception = null;
         if (type.equals(PRIMITIVE_BOOLEAN)) {
             newValue = Boolean.valueOf((String) value);
         } // Use BigInteger for arbitrarily large whole numbers
@@ -273,7 +273,7 @@ public class ExpressionVisitorOperand implements EntityComparison {
     @Override
     public String toString() {
         return new StringBuilder().append("ExpressionVisitorOperand [type=").append(type).append(", edmProperty=")
-                .append(edmProperty).append("]").toString();
+                .append(edmProperty).append(']').toString();
     }
 
     private Object cast(String value, EdmPrimitiveType type) throws EdmPrimitiveTypeException {
@@ -306,7 +306,7 @@ public class ExpressionVisitorOperand implements EntityComparison {
     }
 
     private String getLiteral(Object value) throws EdmPrimitiveTypeException {
-        String uriLiteral = null;
+        String uriLiteral;
         if (getEdmProperty() != null) {
             uriLiteral = ((EdmPrimitiveType) type).valueToString(value, getEdmProperty().isNullable(),
                     getEdmProperty().getMaxLength(), getEdmProperty().getPrecision(), getEdmProperty().getScale(),

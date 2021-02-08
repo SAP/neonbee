@@ -12,7 +12,7 @@ public final class SystemHelper {
      * <b>Attention:</b> It is not guaranteed that the returned port is still free, but the chance is very high.
      *
      * @return A free port on the system
-     * @throws IOException
+     * @throws IOException Socket could not be created
      */
     public static int getFreePort() throws IOException {
         try (ServerSocket socket = new ServerSocket(0)) {
@@ -23,10 +23,10 @@ public final class SystemHelper {
     /**
      * This method replaces the JVM wide copy of the system environment with the passed environment map.
      *
-     * @param newEnvironemnt The new environment map
-     * @throws Exception
+     * @param newEnvironment The new environment map
+     * @throws Exception Could not change environment
      */
-    public static void setEnvironment(Map<String, String> newEnvironemnt) throws Exception {
+    public static void setEnvironment(Map<String, String> newEnvironment) throws Exception {
         Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
         Map<String, String> theUnmodifiableEnvironment =
                 ReflectionHelper.getValueOfPrivateField(processEnvironmentClass, "theUnmodifiableEnvironment");
@@ -34,7 +34,7 @@ public final class SystemHelper {
         Map<String, String> modifiableEnvironment =
                 ReflectionHelper.getValueOfPrivateField(theUnmodifiableEnvironment, "m");
         modifiableEnvironment.clear();
-        modifiableEnvironment.putAll(newEnvironemnt);
+        modifiableEnvironment.putAll(newEnvironment);
     }
 
     private SystemHelper() {
