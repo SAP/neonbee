@@ -19,8 +19,6 @@ import io.vertx.core.eventbus.DeliveryContext;
 import io.vertx.core.json.JsonObject;
 
 public class TrackingInterceptorTest {
-    private final TrackingDataHandlingStrategy strategy = mock(TrackingDataHandlingStrategy.class);
-
     private TestMessage<Object> message;
 
     @BeforeEach
@@ -40,6 +38,7 @@ public class TrackingInterceptorTest {
     @Test
     @DisplayName("test outbound message")
     void testHandleOutBoundMessages() {
+        TrackingDataHandlingStrategy strategy = mock(TrackingDataHandlingStrategy.class);
         TrackingInterceptor interceptor = new TrackingInterceptor(MessageDirection.OUTBOUND, strategy);
         doNothing().when(strategy).handleOutBoundRequest(any(DataContext.class));
         doNothing().when(strategy).handleOutBoundReply(any(DataContext.class));
@@ -59,6 +58,7 @@ public class TrackingInterceptorTest {
     @Test
     @DisplayName("test inbound message")
     void testHandleInBoundMessages() {
+        TrackingDataHandlingStrategy strategy = mock(TrackingDataHandlingStrategy.class);
         TrackingInterceptor interceptor = new TrackingInterceptor(MessageDirection.INBOUND, strategy);
         doNothing().when(strategy).handleInBoundRequest(any(DataContext.class));
         doNothing().when(strategy).handleInBoundReply(any(DataContext.class));

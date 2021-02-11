@@ -176,11 +176,11 @@ class DataContextImplTest {
         DataVerticleCoordinateImpl coordinate = new DataVerticleCoordinateImpl("DataVerticle")
                 .setDeploymentId("deploymentid").setIpAddress("ipAddress");
         assertThat(coordinate.toString())
-                .matches("\\d{2}:\\d{2}:\\d{2}.\\d{6} DataVerticle\\[deploymentid\\]@ipAddress");
+                .matches("\\d{2}:\\d{2}:\\d{2}.\\d{4,} DataVerticle\\[deploymentid\\]@ipAddress");
 
         coordinate.updateResponseTimestamp();
         assertThat(coordinate.toString()).matches(
-                "\\d{2}:\\d{2}:\\d{2}.\\d{6} DataVerticle\\[deploymentid\\]@ipAddress \\d{2}:\\d{2}:\\d{2}.\\d{6}");
+                "\\d{2}:\\d{2}:\\d{2}.\\d{4,} DataVerticle\\[deploymentid\\]@ipAddress \\d{2}:\\d{2}:\\d{2}.\\d{4,}");
     }
 
     @Test

@@ -67,7 +67,7 @@ public class TestService1EntityVerticle extends EntityVerticle {
     public static final JsonObject EXPECTED_ENTITY_DATA_4 = new JsonObject().put("KeyPropertyString", "id.3")
             .put("PropertyString", "c").put("PropertyChar", NULL)
             .put("PropertyString100",
-                    "abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´.")
+                    "abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"{}$%& /() =?* '<> #|; 23~ @`<.")
             .put("PropertyLargeString", NULL).put("PropertyBinary", NULL).put("PropertyBinary100", NULL)
             .put("PropertyLargeBinary", NULL).put("PropertyBoolean", true).put("PropertyDate", "2011-02-21")
             .put("PropertyTime", NULL).put("PropertyDateTime", "2011-02-21T10:45:51.000002Z")
@@ -130,7 +130,7 @@ public class TestService1EntityVerticle extends EntityVerticle {
         Entity entity4 = new Entity() //
                 .addProperty(new Property(null, "KeyPropertyString", ValueType.PRIMITIVE, "id.3"))
                 .addProperty(new Property(null, "PropertyString100", ValueType.PRIMITIVE,
-                        "abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* '<> #|; ²³~ @`´."))
+                        "abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"{}$%& /() =?* '<> #|; 23~ @`<."))
                 .addProperty(new Property(null, "PropertyString", ValueType.PRIMITIVE, "c"))
                 .addProperty(new Property(null, "PropertyInt32", ValueType.PRIMITIVE, 1))
                 .addProperty(new Property(null, "PropertyDate", ValueType.PRIMITIVE, LocalDate.of(2011, 2, 21)))

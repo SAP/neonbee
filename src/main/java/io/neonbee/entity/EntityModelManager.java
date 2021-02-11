@@ -5,9 +5,9 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.unmodifiableMap;
-import static java.util.Optional.ofNullable;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -120,7 +121,7 @@ public final class EntityModelManager {
      * @see #getBufferedModels(Vertx)
      */
     public static EntityModel getBufferedModel(Vertx vertx, String schemaNamespace) {
-        return ofNullable(BUFFERED_MODELS.get(vertx)).map(models -> models.get(schemaNamespace)).orElse(null);
+        return Optional.ofNullable(BUFFERED_MODELS.get(vertx)).map(models -> models.get(schemaNamespace)).orElse(null);
     }
 
     /**
@@ -169,7 +170,7 @@ public final class EntityModelManager {
      *         case no models could be loaded or no model matching the schema namespace could be found
      */
     public static Future<EntityModel> getSharedModel(Vertx vertx, String schemaNamespace) {
-        return getSharedModels(vertx).compose(models -> ofNullable(models.get(schemaNamespace))
+        return getSharedModels(vertx).compose(models -> Optional.ofNullable(models.get(schemaNamespace))
                 .map(Future::succeededFuture).orElseGet(() -> failedFuture(
                         new NoSuchElementException("Cannot find data model for schema namespace " + schemaNamespace))));
     }
@@ -206,7 +207,7 @@ public final class EntityModelManager {
             BUFFERED_MODULE_MODELS.putIfAbsent(vertx, new ConcurrentHashMap<>());
             BUFFERED_MODULE_MODELS.get(vertx).put(module, modelMap);
             Map<String, EntityModel> currentModels = BUFFERED_MODELS.get(vertx);
-            BUFFERED_MODELS.put(vertx, ofNullable(currentModels).map(currentModelMap -> {
+            BUFFERED_MODELS.put(vertx, Optional.ofNullable(currentModels).map(currentModelMap -> {
                 Map<String, EntityModel> workingMap = new HashMap<>(currentModels);
                 workingMap.putAll(modelMap);
                 return unmodifiableMap(workingMap);
@@ -224,8 +225,8 @@ public final class EntityModelManager {
      * @param module unique identifier of a NeonBee module
      */
     public static void unregisterModels(Vertx vertx, String module) {
-        ofNullable(BUFFERED_MODULE_MODELS.get(vertx)).flatMap(map -> ofNullable(map.get(module)))
-                .ifPresent(moduleModels -> ofNullable(BUFFERED_MODELS.get(vertx)).ifPresent(currentModels -> {
+        Optional.ofNullable(BUFFERED_MODULE_MODELS.get(vertx)).flatMap(map -> Optional.ofNullable(map.get(module)))
+                .ifPresent(moduleModels -> Optional.ofNullable(BUFFERED_MODELS.get(vertx)).ifPresent(currentModels -> {
                     Map<String, EntityModel> workingMap = new HashMap<>(currentModels);
                     moduleModels.keySet().forEach(workingMap::remove);
                     BUFFERED_MODELS.put(vertx, unmodifiableMap(workingMap));
@@ -389,36 +390,35 @@ public final class EntityModelManager {
                 return succeededFuture();
             }
 
-            Future<CdsModel> cdsModelFuture = loadCsnModel(csnFile);
-            return cdsModelFuture
-                    .compose(cdsModel -> CompositeFuture.all(ModelDefinitionHelper.resolveEdmxPaths(csnFile, cdsModel)
-                            .stream().map(this::loadEdmxModel).collect(Collectors.toList())))
-                    .map(buildModelMap(cdsModelFuture));
+            return loadCsnModel(csnFile)
+                    .compose(cdsModel -> CompositeFuture
+                            .all(ModelDefinitionHelper.resolveEdmxPaths(csnFile, cdsModel).stream()
+                                    .map(this::loadEdmxModel).collect(Collectors.toList()))
+                            .onSuccess(compositeFuture -> {
+                                buildModelMap(cdsModel, compositeFuture.<ServiceMetadata>list());
+                            }))
+                    .mapEmpty();
         }
 
         Future<Void> loadModel(String csnFile, byte[] csnPayload, Map<String, byte[]> extensionModels) {
-            Future<CdsModel> cdsModelFuture = loadCsnModel(csnPayload);
-            return cdsModelFuture
-                    .compose(cdsModel -> CompositeFuture.all(ModelDefinitionHelper
-                            .resolveEdmxPaths(Path.of(csnFile), cdsModel).stream().map(Path::toString)
-                            .map(extensionModels::get).map(this::loadEdmxModel).collect(Collectors.toList())))
-                    .map(buildModelMap(cdsModelFuture));
+            return loadCsnModel(csnPayload).compose(cdsModel -> CompositeFuture.all(ModelDefinitionHelper
+                    .resolveEdmxPaths(Path.of(csnFile), cdsModel).stream().map(Path::toString).map(path -> {
+                        return Optional.ofNullable(extensionModels.get(path)).orElse(extensionModels
+                                .get(path.replace(File.separatorChar, File.separatorChar == '/' ? '\\' : '/')));
+                    }).map(this::loadEdmxModel).collect(Collectors.toList())).onSuccess(compositeFuture -> {
+                        buildModelMap(cdsModel, compositeFuture.<ServiceMetadata>list());
+                    })).mapEmpty();
         }
 
-        private Function<CompositeFuture, Void> buildModelMap(Future<CdsModel> cdsModelFuture) {
-            return compFuture -> {
-                Map<String, ServiceMetadata> edmxMap = compFuture.<ServiceMetadata>list().stream()
-                        .collect(Collectors.toMap(
-                                serviceMetaData -> serviceMetaData.getEdm().getEntityContainer().getNamespace(),
-                                Function.identity()));
-                CdsModel cdsModel = cdsModelFuture.result();
-                EntityModel entityModel = EntityModel.of(cdsModel, edmxMap);
-                String namespace = ModelDefinitionHelper.getNamespace(cdsModel);
-                models.put(namespace, entityModel);
-                LOGGER.info("Entity model of model with schema namespace {} was added the entity model map.",
-                        namespace);
-                return null;
-            };
+        private void buildModelMap(CdsModel cdsModel, List<ServiceMetadata> edmxModels) {
+            Map<String, ServiceMetadata> edmxMap = edmxModels.stream()
+                    .collect(Collectors.toMap(
+                            serviceMetaData -> serviceMetaData.getEdm().getEntityContainer().getNamespace(),
+                            Function.identity()));
+            EntityModel entityModel = EntityModel.of(cdsModel, edmxMap);
+            String namespace = ModelDefinitionHelper.getNamespace(cdsModel);
+            models.put(namespace, entityModel);
+            LOGGER.info("Entity model of model with schema namespace {} was added the entity model map.", namespace);
         }
 
         /**

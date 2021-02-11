@@ -2,12 +2,14 @@ package io.neonbee.test.base;
 
 import static io.neonbee.internal.Helper.readConfigBlocking;
 import static io.neonbee.internal.verticle.ServerVerticle.CONFIG_PROPERTY_PORT_KEY;
+import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -115,8 +117,17 @@ public class NeonBeeTestBase {
     }
 
     @AfterEach
-    void afterEach() throws IOException {
-        FileSystemHelper.deleteRecursiveBlocking(workingDirPath);
+    void afterEach(Vertx vertx, VertxTestContext testContext) throws IOException {
+        FileSystemHelper.deleteRecursive(vertx, workingDirPath).recover(throwable -> {
+            if (throwable.getCause() instanceof DirectoryNotEmptyException) {
+                // especially on windows machines, open file handles sometimes cause an issue that the directory cannot
+                // be deleted, wait a little and try again afterwards
+                return Future.future(handler -> vertx.setTimer(250, along -> handler.complete()))
+                        .compose(nothing -> FileSystemHelper.deleteRecursive(vertx, workingDirPath));
+            } else {
+                return failedFuture(throwable);
+            }
+        }).onComplete(testContext.succeedingThenComplete());
     }
 
     /**

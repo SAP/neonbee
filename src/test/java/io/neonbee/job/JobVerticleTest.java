@@ -174,10 +174,10 @@ public class JobVerticleTest {
         // continuous job for 2 seconds, repeating every 100 milliseconds => the job should run 20 times and then
         // the verticle should get undeployed
         testJobVerticle = new TestJobVerticle(new JobSchedule(Duration.ofMillis(100),
-                Instant.now().plus(2, ChronoUnit.SECONDS).plus(25, ChronoUnit.MILLIS)), true, true, 100);
-        // It should be exactly 20, but when running from and IDE like Eclipse and if stuff needs to compile first, it
-        // is often the case that we do not reach 20, but 19.
-        assertThat(testJobVerticle.jobExecuted).isAtLeast(19);
+                Instant.now().plus(2, ChronoUnit.SECONDS).plus(95, ChronoUnit.MILLIS)), true, true, 100);
+        // It should be exactly 20, but depending on the workload of the current system or when running from and IDE
+        // like Eclipse and if stuff needs to compile first, it is often the case that we do not reach 20, but less.
+        assertThat(testJobVerticle.jobExecuted).isAtLeast(17);
         verify(testJobVerticle.vertxMock).undeploy(any());
     }
 
