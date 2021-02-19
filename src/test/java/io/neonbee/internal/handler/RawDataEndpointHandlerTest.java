@@ -4,6 +4,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.handler.RawDataEndpointHandler.determineQualifiedName;
 import static io.neonbee.internal.verticle.ServerVerticle.DEFAULT_RAW_BASE_PATH;
 import static io.neonbee.test.helper.DeploymentHelper.NEONBEE_NAMESPACE;
+import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
@@ -12,9 +13,13 @@ import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import io.neonbee.data.DataAdapter;
 import io.neonbee.data.DataContext;
@@ -67,40 +72,31 @@ public class RawDataEndpointHandlerTest extends DataVerticleTestBase {
         assertThat(determineQualifiedName(mockRoutingContext("nsA/nsB/verticle/path"))).isNull();
     }
 
-    @Test
+    static Stream<Arguments> customStatusCodes() {
+        return Stream.of(Arguments.of(HTTP_BAD_REQUEST), Arguments.of(HTTP_FORBIDDEN), Arguments.of(HTTP_NOT_FOUND),
+                Arguments.of(INTERNAL_SERVER_ERROR.code()));
+    }
+
+    @ParameterizedTest(name = "{index}: with status code {0}")
+    @MethodSource("customStatusCodes")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    @DisplayName("RawDataEndpointHandler must forward specific HTTP errors to the client")
-    void testHTTPExceptions(VertxTestContext testContext) {
+    @DisplayName("RawDataEndpointHandler must forward custom status codes from DataExceptions to the client")
+    void testHTTPExceptions(int statusCode, VertxTestContext testContext) {
         String verticleName = "TestVerticle" + UUID.randomUUID().toString();
         Verticle dummyVerticle = createDummyDataVerticle(NEONBEE_NAMESPACE + '/' + verticleName)
                 .withDataAdapter(new DataAdapter<String>() {
 
                     @Override
                     public Future<String> retrieveData(DataQuery query, DataContext context) {
-                        switch (query.getUriPath()) {
-                        case "/400":
-                            return Future.failedFuture(new DataException(HTTP_BAD_REQUEST));
-                        case "/403":
-                            return Future.failedFuture(new DataException(HTTP_FORBIDDEN));
-                        case "/404":
-                            return Future.failedFuture(new DataException(HTTP_NOT_FOUND));
-
-                        default:
-                            return Future.succeededFuture("");
-                        }
+                        return Future.failedFuture(new DataException(statusCode));
                     }
                 });
 
-        deployVerticle(dummyVerticle).compose(v -> sendRequest(verticleName, "400", "")).compose(resp -> {
-            testContext.verify(() -> assertThat(resp.statusCode()).isEqualTo(HTTP_BAD_REQUEST));
-            return sendRequest(verticleName, "403", "");
-        }).compose(resp -> {
-            testContext.verify(() -> assertThat(resp.statusCode()).isEqualTo(HTTP_FORBIDDEN));
-            return sendRequest(verticleName, "404", "");
-        }).onComplete(testContext.succeeding(resp -> {
-            testContext.verify(() -> assertThat(resp.statusCode()).isEqualTo(HTTP_NOT_FOUND));
-            testContext.completeNow();
-        }));
+        deployVerticle(dummyVerticle).compose(v -> sendRequest(verticleName, "", ""))
+                .onComplete(testContext.succeeding(resp -> {
+                    testContext.verify(() -> assertThat(resp.statusCode()).isEqualTo(statusCode));
+                    testContext.completeNow();
+                }));
     }
 
     @Test
