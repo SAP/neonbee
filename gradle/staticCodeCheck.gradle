@@ -19,6 +19,7 @@ tasks.withType(JavaCompile).configureEach {
     options.errorprone.disableWarningsInGeneratedCode = true
     options.failOnError = true
     options.compilerArgs << '-Xlint:deprecation'
+    options.errorprone.errorproneArgs.add('-Xep:TypeParameterUnusedInFormals:OFF')
 }
 
 import org.gradle.internal.logging.events.OutputEvent
