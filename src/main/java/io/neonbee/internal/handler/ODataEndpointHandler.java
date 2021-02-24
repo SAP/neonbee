@@ -306,7 +306,7 @@ public final class ODataEndpointHandler implements Handler<RoutingContext> {
         }, asyncODataResponse -> {
             // failed to map / process OData request, so fail the web request
             if (asyncODataResponse.failed()) {
-                routingContext.fail(asyncODataResponse.cause());
+                routingContext.fail(-1, asyncODataResponse.cause());
                 return;
             }
 
@@ -316,7 +316,7 @@ public final class ODataEndpointHandler implements Handler<RoutingContext> {
             processPromise.future().onComplete(asyncResult -> {
                 // (asynchronously) retrieving the odata response failed, so fail the web request
                 if (asyncResult.failed()) {
-                    routingContext.fail(asyncResult.cause());
+                    routingContext.fail(-1, asyncResult.cause());
                     return;
                 }
 

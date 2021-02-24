@@ -7,7 +7,11 @@ import static io.neonbee.internal.handler.ODataEndpointHandler.UriConversion.LOO
 import static io.neonbee.internal.handler.ODataEndpointHandler.UriConversion.STRICT;
 import static io.neonbee.internal.handler.ODataEndpointHandler.mapODataResponse;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
+import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.vertx.core.CompositeFuture.all;
+import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
+import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -21,26 +25,36 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.server.api.ODataContent;
-import org.apache.olingo.server.api.ODataRequest;
 import org.apache.olingo.server.api.ODataResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 
 import com.google.common.base.Charsets;
 
+import io.neonbee.data.DataAdapter;
+import io.neonbee.data.DataContext;
+import io.neonbee.data.DataException;
+import io.neonbee.data.DataQuery;
+import io.neonbee.entity.EntityWrapper;
 import io.neonbee.internal.handler.ODataEndpointHandler.UriConversion;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.neonbee.test.base.ODataEndpointTestBase;
+import io.neonbee.test.base.ODataRequest;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
+import io.vertx.core.Verticle;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
@@ -147,7 +161,8 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
         when(routingContext.currentRoute()).thenReturn(null);
         when(routingContext.get(CorrelationIdHandler.CORRELATION_ID)).thenReturn("correlId");
 
-        ODataRequest odataReq = ODataEndpointHandler.mapToODataRequest(routingContext, expectedNamespace);
+        org.apache.olingo.server.api.ODataRequest odataReq =
+                ODataEndpointHandler.mapToODataRequest(routingContext, expectedNamespace);
         assertThat(odataReq.getRawRequestUri()).isEqualTo("/" + expectedNamespace + expectedPath + "?" + expectedQuery);
         assertThat(odataReq.getRawODataPath()).isEqualTo(expectedPath);
         assertThat(odataReq.getRawQueryPath()).isEqualTo(expectedQuery);
@@ -180,7 +195,7 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
 
     private Future<HttpResponse<Buffer>> requestMetadata(String namespace) {
         FullQualifiedName fqn = new FullQualifiedName(namespace, "WillBeIgnored");
-        return requestOData(new io.neonbee.test.base.ODataRequest(fqn).setMetadata());
+        return requestOData(new ODataRequest(fqn).setMetadata());
     }
 
     private static void assertTS1Handler(Buffer body) {
@@ -198,7 +213,6 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if multiple service endpoints are created with strict URI mapping")
-
     public void testStrictUriConversion(VertxTestContext testContext) {
         all(assertOData(requestMetadata("io.neonbee.handler.TestService"), ODataEndpointHandlerTest::assertTS1Handler,
                 testContext),
@@ -228,5 +242,32 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
                 assertOData(requestMetadata("test2"), ODataEndpointHandlerTest::assertTS2Handler, testContext),
                 assertOData(requestMetadata(""), ODataEndpointHandlerTest::assertTS3Handler, testContext))
                         .onComplete(testContext.succeedingThenComplete());
+    }
+
+    static Stream<Arguments> customStatusCodes() {
+        return Stream.of(Arguments.of(HTTP_BAD_REQUEST), Arguments.of(HTTP_FORBIDDEN), Arguments.of(HTTP_NOT_FOUND),
+                Arguments.of(INTERNAL_SERVER_ERROR.code()));
+    }
+
+    @ParameterizedTest(name = "{index}: with status code {0}")
+    @MethodSource("customStatusCodes")
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("ODataEndpointHandler must forward custom status codes from DataExceptions to the client")
+    void testHTTPExceptions(int statusCode, VertxTestContext testContext) {
+        FullQualifiedName testUsersFQN = new FullQualifiedName("Service", "TestUsers");
+        Verticle dummyVerticle =
+                createDummyEntityVerticle(testUsersFQN).withDataAdapter(new DataAdapter<EntityWrapper>() {
+
+                    @Override
+                    public Future<EntityWrapper> retrieveData(DataQuery query, DataContext context) {
+                        return Future.failedFuture(new DataException(statusCode));
+                    }
+                });
+
+        deployVerticle(dummyVerticle).compose(v -> new ODataRequest(testUsersFQN).send(getNeonBee()))
+                .onComplete(testContext.succeeding(resp -> {
+                    testContext.verify(() -> assertThat(resp.statusCode()).isEqualTo(statusCode));
+                    testContext.completeNow();
+                }));
     }
 }
