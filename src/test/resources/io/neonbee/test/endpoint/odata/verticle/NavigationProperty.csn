@@ -1,0 +1,70 @@
+{
+  "namespace": "io.neonbee.test",
+  "definitions": {
+    "io.neonbee.test.NavProbs": {
+      "@source": "NavigationProperty.cds",
+      "kind": "service"
+    },
+    "io.neonbee.test.NavProbs.Categories": {
+      "kind": "entity",
+      "elements": {
+        "ID": {
+          "key": true,
+          "type": "cds.Integer"
+        },
+        "name": {
+          "type": "cds.String"
+        },
+        "products": {
+          "type": "cds.Association",
+          "cardinality": {
+            "max": "*"
+          },
+          "target": "io.neonbee.test.NavProbs.Products",
+          "on": [
+            {
+              "ref": [
+                "products",
+                "category"
+              ]
+            },
+            "=",
+            {
+              "ref": [
+                "$self"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "io.neonbee.test.NavProbs.Products": {
+      "kind": "entity",
+      "elements": {
+        "ID": {
+          "key": true,
+          "type": "cds.Integer"
+        },
+        "name": {
+          "type": "cds.String"
+        },
+        "category": {
+          "type": "cds.Association",
+          "target": "io.neonbee.test.NavProbs.Categories",
+          "keys": [
+            {
+              "ref": [
+                "ID"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "meta": {
+    "flavor": "inferred",
+    "creator": "CDS Compiler v1.49.0"
+  },
+  "$version": "1.0"
+}

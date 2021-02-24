@@ -57,6 +57,8 @@ public class ODataRequest {
 
     private String property;
 
+    private String systemQueryExpand;
+
     private Buffer body;
 
     /**
@@ -359,6 +361,18 @@ public class ODataRequest {
     }
 
     /**
+     * Configure the system query expand with the passed value. The expandValue "Products" would result into
+     * "expand=Products".
+     *
+     * @param expandValue the value for the expand query
+     * @return An {@link ODataRequest} with the passed expand query
+     */
+    public ODataRequest setExpandQuery(String expandValue) {
+        systemQueryExpand = "expand=" + expandValue;
+        return this;
+    }
+
+    /**
      * Builds and returns the OData URL of the {@link ODataRequest} based on namespace, entity name, key predicates,
      * properties, and OData suffixes {@code $metadata}, {@code $count}.
      *
@@ -374,7 +388,8 @@ public class ODataRequest {
         if (count) {
             return entitySet + "/$count";
         }
-        return entitySet + getPredicate(keys) + (Strings.isNullOrEmpty(property) ? EMPTY : '/' + property);
+        return entitySet + getPredicate(keys) + (Strings.isNullOrEmpty(property) ? EMPTY : '/' + property)
+                + (Strings.isNullOrEmpty(systemQueryExpand) ? EMPTY : "?$" + systemQueryExpand);
     }
 
     private String getPredicate(Map<String, String> keyMap) throws IllegalArgumentException {
