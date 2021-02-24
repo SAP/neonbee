@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Locale;
 
 import org.apache.olingo.commons.api.data.ContextURL;
+import org.apache.olingo.commons.api.data.ContextURL.Suffix;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.edm.EdmEntitySet;
@@ -37,9 +38,11 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.entity.EntityWrapper;
+import io.neonbee.internal.processor.odata.EntityExpander;
 import io.neonbee.internal.processor.odata.expression.FilterExpressionVisitor;
 import io.neonbee.internal.processor.odata.expression.OrderExpressionExecutor;
 import io.neonbee.logging.LoggingFacade;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -89,21 +92,32 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
         // Fetch the data from backend
         fetchEntities(request, edmEntityType, ew -> {
             try {
-                List<Entity> resultEntityList = applyFilterQueryOption(uriInfo.getFilterOption(), ew.getEntities());
+                Promise<List<Entity>> applyQueryOptionsPromise = Promise.promise();
 
+                List<Entity> resultEntityList = applyFilterQueryOption(uriInfo.getFilterOption(), ew.getEntities());
                 if (!resultEntityList.isEmpty()) {
                     applyOrderByQueryOption(uriInfo.getOrderByOption(), resultEntityList);
                     resultEntityList = applySkipQueryOption(uriInfo.getSkipOption(), resultEntityList);
                     resultEntityList = applyTopQueryOption(uriInfo.getTopOption(), resultEntityList);
-                    entityCollection.getEntities().addAll(resultEntityList);
+                    applyExpandQueryOptions(uriInfo, resultEntityList).onComplete(applyQueryOptionsPromise);
+                } else {
+                    applyQueryOptionsPromise.complete(resultEntityList);
                 }
 
-                EntityCollectionSerializerOptions opts = createSerializerOptions(request, uriInfo, edmEntitySet);
-                response.setContent(odata.createSerializer(responseFormat)
-                        .entityCollection(serviceMetadata, edmEntityType, entityCollection, opts).getContent());
-                response.setStatusCode(HttpStatusCode.OK.getStatusCode());
-                response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
-                processPromise.complete();
+                applyQueryOptionsPromise.future().onSuccess(finalResultEntities -> {
+                    entityCollection.getEntities().addAll(finalResultEntities);
+                    EntityCollectionSerializerOptions opts;
+                    try {
+                        opts = createSerializerOptions(request, uriInfo, edmEntitySet);
+                        response.setContent(odata.createSerializer(responseFormat)
+                                .entityCollection(serviceMetadata, edmEntityType, entityCollection, opts).getContent());
+                        response.setStatusCode(HttpStatusCode.OK.getStatusCode());
+                        response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+                        processPromise.complete();
+                    } catch (ODataException e) {
+                        processPromise.fail(e);
+                    }
+                }).onFailure(e -> processPromise.fail(e));
             } catch (ODataException e) {
                 processPromise.fail(e);
             }
@@ -207,15 +221,25 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
         return topList;
     }
 
+    private Future<List<Entity>> applyExpandQueryOptions(UriInfo uriInfo, List<Entity> resultEntityList) {
+        return EntityExpander.create(vertx, uriInfo.getExpandOption(), routingContext).map(expander -> {
+            for (Entity requestedEntity : resultEntityList) {
+                expander.expand(requestedEntity);
+            }
+            return resultEntityList;
+        });
+    }
+
     private EntityCollectionSerializerOptions createSerializerOptions(ODataRequest request, UriInfo uriInfo,
             EdmEntitySet edmEntitySet) throws SerializerException {
         String collectionId = request.getRawRequestUri().replaceFirst(request.getRawBaseUri(), EMPTY);
-        String selectList = odata.createUriHelper().buildContextURLSelectList(edmEntitySet.getEntityType(), null,
-                uriInfo.getSelectOption());
-        ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).selectList(selectList).build();
+        String selectList = odata.createUriHelper().buildContextURLSelectList(edmEntitySet.getEntityType(),
+                uriInfo.getExpandOption(), uriInfo.getSelectOption());
+        ContextURL contextUrl =
+                ContextURL.with().entitySet(edmEntitySet).selectList(selectList).suffix(Suffix.ENTITY).build();
 
         return EntityCollectionSerializerOptions.with().id(collectionId).contextURL(contextUrl)
-                .select(uriInfo.getSelectOption()).build();
+                .select(uriInfo.getSelectOption()).expand(uriInfo.getExpandOption()).build();
     }
 
     @Override

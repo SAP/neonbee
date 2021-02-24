@@ -129,4 +129,11 @@ public class ODataRequestTest {
         odataRequest.setProperty("my-property");
         assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity/my-property");
     }
+
+    @Test
+    @DisplayName("with expand single attribute")
+    public void testExpand() {
+        odataRequest.setKey("0123").setExpandQuery("ExpandItem");
+        assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity('0123')?$expand=ExpandItem");
+    }
 }
