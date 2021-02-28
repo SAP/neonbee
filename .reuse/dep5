@@ -21,7 +21,7 @@ License: EPL-2.0
 
 #### NeonBee Build
 
-Files: Dockerfile  gradle.properties  *.gradle  gradle/spotless/* gradle/pmd/* gradle/checkstyle/* gradle/gitlog/* gradle/release.sh
+Files: Dockerfile  gradle.properties  *.gradle  gradle/spotless/* gradle/pmd/* gradle/checkstyle/* gradle/gitlog/* gradle/release.sh .github/*
 Copyright: 2019 SAP SE or an SAP affiliate company and NeonBee contributors
 License: EPL-2.0
 
