@@ -18,7 +18,7 @@ git tag "${NEXT_VERSION}"  # hack: creating a temporary local tag which is neede
 ./gradlew changelog
 git tag -d "${NEXT_VERSION}"
 
-sed -i.bak "s/version = \'[^\']*\'/version = \'${NEXT_VERSION}\'/g" build.gradle
+sed -i.bak "s/^version = \'[^\']*\'/version = \'${NEXT_VERSION}\'/g" build.gradle
 rm -f build.gradle.bak
 
 git add build.gradle CHANGELOG.*
