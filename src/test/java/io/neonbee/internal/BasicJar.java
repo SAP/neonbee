@@ -31,9 +31,10 @@ public class BasicJar {
     }
 
     /**
-     * Creates a jar file with the passed content and an default manifest which only contains the manifest version
+     * Creates a jar file with the passed content and manifest.
      *
-     * @param content The content of the jar file
+     * @param content            The content of the jar file
+     * @param manifestAttributes The manifest of the jar file
      */
     public BasicJar(Map<String, String> manifestAttributes, Map<String, byte[]> content) {
         this(createManifest(manifestAttributes), content.entrySet().stream()

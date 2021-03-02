@@ -31,6 +31,10 @@ public class NeonBeeModuleJar extends BasicJar {
 
     /**
      * @see NeonBeeModuleJar#createManifest(String, Collection, Collection, Collection, Collection)
+     *
+     * @param name        The module name / identifier
+     * @param deployables The deployables
+     * @return A Manifest with the passed deployables
      */
     public static Manifest createManifest(String name, Collection<String> deployables) {
         return createManifest(name, deployables, List.of(), List.of(), List.of());
@@ -40,9 +44,11 @@ public class NeonBeeModuleJar extends BasicJar {
      * Generates a Manifest file with the attribute NeonBee-Deployables which contains the passed verticle deployables
      * and the attribute NeonBee-Models which contains the passed model paths.
      *
-     * @param deployables         The deployables
+     * @param name                The module name / identifier
+     * @param deployables         The FQN of the deployables
      * @param modelPaths          The paths to the model files (*.csn) inside of the JAR
      * @param extensionModelPaths The paths to the extension model files (*.edmx) inside of the JAR
+     * @param hooks               The FQN of the hooks
      * @return A Manifest with the passed deployables
      */
     public static Manifest createManifest(String name, Collection<String> deployables, Collection<String> modelPaths,

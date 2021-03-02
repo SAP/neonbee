@@ -15,6 +15,7 @@ public final class MockitoHelper {
      *
      * @param handlerPosition The position of the handler in the signature of the mocked method
      * @param asyncResult     The result with which the {@link Handler} is called.
+     * @param <T>             The type of the result to handle
      * @return A {@link Answer} that triggers the {@link Handler} passed to the mocked method.
      */
     public static <T> Answer<Void> callHandlerAnswer(int handlerPosition, AsyncResult<T> asyncResult) {

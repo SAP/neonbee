@@ -22,8 +22,7 @@ plugins {
 }
 
 group = 'io.neonbee'
-// have to use single quotes for XMake, change as soon as new version Gradle build plugin is merged
-version = '0.0.8'
+version = '0.2.2'
 mainClassName = 'io.neonbee.Launcher'
 archivesBaseName = 'neonbee-core'
 sourceCompatibility = 11

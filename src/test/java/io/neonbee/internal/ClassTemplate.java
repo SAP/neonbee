@@ -46,7 +46,7 @@ public interface ClassTemplate {
     String getPackageName();
 
     /**
-     * @see Class#getName();
+     * @see Class#getName()
      *
      * @return The full qualified class name of the verticle
      */

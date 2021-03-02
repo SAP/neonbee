@@ -145,7 +145,8 @@ public class NeonBeeTestBase {
      * Override this method to provide a non {@link WorkingDirectoryBuilder#standard() standard}
      * {@link WorkingDirectoryBuilder}.
      *
-     * @param testInfo The test information to be able to provide a test related WorkingDirectoryBuilder
+     * @param testInfo    The test information to be able to provide a test related WorkingDirectoryBuilder
+     * @param testContext The Vert.x test context of the current test run.
      * @return the WorkingDirectoryBuilder
      */
     @SuppressWarnings("PMD.UnusedFormalParameter")
@@ -230,7 +231,7 @@ public class NeonBeeTestBase {
      * Returns a pre-configured HTTP request which points to the NeonBee HTTP interface.
      *
      * <pre>
-     * path: /raw/Hodor -&gt; result: <host>:<port>/raw/Hodor
+     * path: /raw/Hodor -&gt; result: &lt;host&gt;:&lt;port&gt;/raw/Hodor
      * </pre>
      *
      * @param method The HTTP method of the request

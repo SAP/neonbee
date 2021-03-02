@@ -124,9 +124,9 @@ public final class WorkingDirectoryBuilder {
      *
      * @param workingDirRoot The {@link Path} to the root of the working directory, the directory don't need to exist
      *                       already.
-     * @throws Exception In case that something went wrong.
+     * @throws IOException In case that something went wrong.
      */
-    public void build(Path workingDirRoot) throws Exception {
+    public void build(Path workingDirRoot) throws IOException {
         switch (dirType) {
         case NONE:
             break;
@@ -209,6 +209,7 @@ public final class WorkingDirectoryBuilder {
     }
 
     /**
+     * @param sourcePath The path from where the working directory should be copied from.
      * @return a WorkingDirectoryBuilder that creates a working directory with the content of a passed source
      *         {@link Path}. The source could be a directory or a zip file.
      */

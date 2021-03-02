@@ -15,8 +15,18 @@ public final class ReflectionHelper {
      * @param fieldName   The field which is holding the value
      * @return The value of the field
      */
+
+    /**
+     *
+     * @param <T>         The expected type of the value
+     * @param fieldHolder The object which contains the field
+     * @param fieldName   The field which is holding the value
+     * @return The value of the field
+     * @throws NoSuchFieldException   If no such field exists in the fieldHolder
+     * @throws IllegalAccessException If JVM doesn't grant access to the field
+     */
     public static <T> T getValueOfPrivateField(Object fieldHolder, String fieldName)
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException {
         return getValueOfPrivateField(resolveClass(fieldHolder), fieldHolder, fieldName, false);
     }
 
@@ -30,11 +40,12 @@ public final class ReflectionHelper {
      * @param removeFinal Pass true to remove the final modifier of the field, before it is read the first time
      *                    otherwise it is cached with the final value in the FieldAccessor.
      * @return The value of the field
+     * @throws NoSuchFieldException   If no such field exists in the fieldHolder
+     * @throws IllegalAccessException If JVM doesn't grant access to the field
      */
     @SuppressWarnings("unchecked")
     private static <T> T getValueOfPrivateField(Class<?> clazz, Object fieldHolder, String fieldName,
-            boolean removeFinal)
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+            boolean removeFinal) throws NoSuchFieldException, IllegalAccessException {
         Field fieldToModify = clazz.getDeclaredField(fieldName);
         fieldToModify.setAccessible(true);
         if (removeFinal) {
@@ -48,12 +59,15 @@ public final class ReflectionHelper {
      * Returns the value of a private field. This method should be used, when the object which holds the field is not
      * directly the class which declares the field. E.g. in case of extensions.
      *
+     * @param <T>       The expected type of the value
      * @param clazz     The class which contains the field
      * @param fieldName The field which is holding the value
      * @return The value of the field
+     * @throws NoSuchFieldException   If no such field exists in the fieldHolder
+     * @throws IllegalAccessException If JVM doesn't grant access to the field
      */
     public static <T> T getValueOfPrivateStaticField(Class<?> clazz, String fieldName)
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException {
         return getValueOfPrivateField(clazz, null, fieldName, false);
     }
 
@@ -65,9 +79,11 @@ public final class ReflectionHelper {
      * @param valueToSet     The value to set
      *
      * @return An ExecutionBlock that resets the field to its value before the modification happened.
+     * @throws NoSuchFieldException   If no such field exists in the fieldHolder
+     * @throws IllegalAccessException If JVM doesn't grant access to the field
      */
     public static ExecutionBlock setValueOfPrivateField(Object objectToModify, String fieldName, Object valueToSet)
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException {
         Object oldValue = getValueOfPrivateField(resolveClass(objectToModify), objectToModify, fieldName, true);
         setValueOfPrivateField(resolveClass(objectToModify), objectToModify, fieldName, valueToSet);
 
@@ -83,10 +99,11 @@ public final class ReflectionHelper {
      * @param objectToModify The object which contains the field
      * @param fieldName      The target field
      * @param valueToSet     The value to set
+     * @throws NoSuchFieldException   If no such field exists in the fieldHolder
+     * @throws IllegalAccessException If JVM doesn't grant access to the field
      */
     private static void setValueOfPrivateField(Class<?> clazz, Object objectToModify, String fieldName,
-            Object valueToSet)
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+            Object valueToSet) throws NoSuchFieldException, IllegalAccessException {
         Field fieldToModify = clazz.getDeclaredField(fieldName);
         fieldToModify.setAccessible(true);
         removeFinalModifier(fieldToModify);
@@ -101,9 +118,11 @@ public final class ReflectionHelper {
      * @param valueToSet The value to set
      *
      * @return An ExecutionBlock that resets the field to its value before the modification happened.
+     * @throws NoSuchFieldException   If no such field exists in the fieldHolder
+     * @throws IllegalAccessException If JVM doesn't grant access to the field
      */
     public static ExecutionBlock setValueOfPrivateStaticField(Class<?> clazz, String fieldName, Object valueToSet)
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException {
         Object oldValue = getValueOfPrivateField(clazz, null, fieldName, true);
 
         setValueOfPrivateField(clazz, null, fieldName, valueToSet);
@@ -115,8 +134,7 @@ public final class ReflectionHelper {
         return c.isAnonymousClass() ? resolveClass(c.getSuperclass()) : c;
     }
 
-    private static void removeFinalModifier(Field field)
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    private static void removeFinalModifier(Field field) throws NoSuchFieldException, IllegalAccessException {
         Field modifiersField = Field.class.getDeclaredField("modifiers");
         modifiersField.setAccessible(true);
         modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);

@@ -80,7 +80,7 @@ task testJar(type: Jar) {
     archiveExtension = 'jar'
 }
 
-/** Builds the sources JAR */
+/** Builds the test sources JAR */
 task testSourcesJar(type: Jar) {
     from sourceSets.test.allJava
 
@@ -88,6 +88,22 @@ task testSourcesJar(type: Jar) {
 
     archiveAppendix = 'test'
     archiveClassifier = 'sources'
+}
+
+task testJavadoc(type: Javadoc) {
+  classpath += sourceSets.test.compileClasspath
+  classpath += sourceSets.main.compileClasspath
+  source = sourceSets.test.allJava
+}
+
+/** Builds the test JavaDoc JAR */
+task testJavadocJar(type: Jar) {
+    from testJavadoc
+
+    destinationDirectory = file("${buildDir}")
+
+    archiveAppendix = 'test'
+    archiveClassifier = 'javadoc'
 }
 
 // ##################### Source for Artifact neonbee-dist
@@ -183,5 +199,6 @@ build {
     dependsOn('javadocJar')
     dependsOn('testJar')
     dependsOn('testSourcesJar')
+    dependsOn('testJavadocJar')
     dependsOn('distTar')
 }
