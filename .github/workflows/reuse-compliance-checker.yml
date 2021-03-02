@@ -1,0 +1,21 @@
+# This workflow runs the `reuse lint` command to check the following information:
+# - Is copyright and licensing information available for every single file?
+# - Do license texts exist for all found license identifiers?
+# - Are there any other problems with detecting copyright and licensing information?
+# See https://github.com/marketplace/actions/reuse-compliance-check for more information
+
+name: Reuse Compliance Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  reuse-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: REUSE Compliance Check
+      uses: fsfe/reuse-action@v1.1
