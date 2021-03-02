@@ -1,9 +1,21 @@
+# This workflow will lint the commit messages enforcing the conventional commit format
+# See [1], [2] and [3] for more information
+# [1] https://github.com/wagoid/commitlint-github-action
+# [2] https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional
+# [3] https://www.conventionalcommits.org/
+
 name: Lint Commit Messages
-on: [pull_request]
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   commitlint:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v2
         with:
