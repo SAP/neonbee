@@ -1,10 +1,7 @@
 apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
 publishing {
-    repositories {
-        mavenLocal()
-    }
-
     publications {
         // NeonBee Core Jar
         core(MavenPublication) {
@@ -13,6 +10,49 @@ publishing {
             artifact source: shadowJar
             artifact source: sourcesJar
             artifact source: javadocJar
+
+            pom {
+                name = 'NeonBee Core'
+                description = 'NeonBee is an open source reactive dataflow engine, a data stream processing framework using Vert.x.'
+                url = 'https://neonbee.io/'
+
+                licenses {
+                    license {
+                        name = 'Eclipse Public License version 2.0'
+                        url = 'https://opensource.org/licenses/EPL-2.0'
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git:https://github.com/SAP/neonbee.git'
+                    developerConnection = 'scm:git:git@github.com:SAP/neonbee.git'
+                    url = 'https://github.com/sap/neonbee'
+                }
+
+                developers {
+                    developer {
+                        id = 'pascal'
+                        name = 'Pascal'
+                        email = 'pascal@neonbee.io'
+                    }
+                    developer {
+                        id = 'kristian'
+                        name = 'Kristian'
+                        email = 'kristian@neonbee.io'
+                    }
+                    developer {
+                        id = 'sebastian'
+                        name = 'Sebastian'
+                        email = 'sebastian@neonbee.io'
+                    }
+                    developer {
+                        id = 'danilo'
+                        name = 'Danilo'
+                        email = 'danilo@neonbee.io'
+                    }
+                }
+            }
+
             pom.withXml {
                 def dependenciesNode = asNode().appendNode('dependencies')
                 // Iterate over the implementation dependencies and add them to the pom.xml
@@ -29,6 +69,48 @@ publishing {
         dist(MavenPublication) {
             artifactId = 'neonbee-dist'
             artifact source: distTar
+
+            pom {
+                name = 'NeonBee Core Distribution'
+                description = 'NeonBee is an open source reactive dataflow engine, a data stream processing framework using Vert.x.'
+                url = 'https://neonbee.io/'
+
+                licenses {
+                    license {
+                        name = 'Eclipse Public License version 2.0'
+                        url = 'https://opensource.org/licenses/EPL-2.0'
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git:https://github.com/SAP/neonbee.git'
+                    developerConnection = 'scm:git:git@github.com:SAP/neonbee.git'
+                    url = 'https://github.com/sap/neonbee'
+                }
+
+                developers {
+                    developer {
+                        id = 'pascal'
+                        name = 'Pascal'
+                        email = 'pascal@neonbee.io'
+                    }
+                    developer {
+                        id = 'kristian'
+                        name = 'Kristian'
+                        email = 'kristian@neonbee.io'
+                    }
+                    developer {
+                        id = 'sebastian'
+                        name = 'Sebastian'
+                        email = 'sebastian@neonbee.io'
+                    }
+                    developer {
+                        id = 'danilo'
+                        name = 'Danilo'
+                        email = 'danilo@neonbee.io'
+                    }
+                }
+            }
         }
 
         // NeonBee Test Jar
@@ -36,6 +118,50 @@ publishing {
             artifactId = "${project.archivesBaseName}-test"
             artifact source: testJar
             artifact source: testSourcesJar
+            artifact source: testJavadocJar
+
+            pom {
+                name = 'NeonBee Core Test'
+                description = 'NeonBee is an open source reactive dataflow engine, a data stream processing framework using Vert.x.'
+                url = 'https://neonbee.io/'
+
+                licenses {
+                    license {
+                        name = 'Eclipse Public License version 2.0'
+                        url = 'https://opensource.org/licenses/EPL-2.0'
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git:https://github.com/SAP/neonbee.git'
+                    developerConnection = 'scm:git:git@github.com:SAP/neonbee.git'
+                    url = 'https://github.com/sap/neonbee'
+                }
+
+                developers {
+                    developer {
+                        id = 'pascal'
+                        name = 'Pascal'
+                        email = 'pascal@neonbee.io'
+                    }
+                    developer {
+                        id = 'kristian'
+                        name = 'Kristian'
+                        email = 'kristian@neonbee.io'
+                    }
+                    developer {
+                        id = 'sebastian'
+                        name = 'Sebastian'
+                        email = 'sebastian@neonbee.io'
+                    }
+                    developer {
+                        id = 'danilo'
+                        name = 'Danilo'
+                        email = 'danilo@neonbee.io'
+                    }
+                }
+            }
+
             pom.withXml {
                 def dependenciesNode = asNode().appendNode('dependencies')
                 // Iterate over the implementation dependencies and add them to the pom.xml
@@ -60,5 +186,27 @@ publishing {
                 dependencyNode.appendNode('version', project.version)
             }
         }
+    }
+
+    repositories {
+        maven {
+            name = 'mavenCentral'
+            credentials(PasswordCredentials)
+            def releasesRepoUrl = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
+            def snapshotsRepoUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+        }
+    }
+}
+
+signing {
+    def signingKey = findProperty("signingKey")
+    def signingPassword = findProperty("signingPassword")
+
+    if (signingKey != null && signingPassword != null) {
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign publishing.publications.core
+        sign publishing.publications.dist
+        sign publishing.publications.test
     }
 }

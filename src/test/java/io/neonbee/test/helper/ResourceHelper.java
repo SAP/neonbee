@@ -32,7 +32,7 @@ public final class ResourceHelper {
      * resolved against the related resource folder. This path construct is called <i>related resources path</i>,
      * because the path is related to the parent class which is calling this method.
      * <p>
-     * Related Resources Path: <resources folder>/<package as path>
+     * Related Resources Path: &gt;resources folder&lt;/&gt;package as path&lt;
      *
      * The passed filename gets resolved against the related resources path.
      *
@@ -175,7 +175,7 @@ public final class ResourceHelper {
      * construct is the so called related test resource path. Because the path is related to the test class which is
      * calling this method.
      * <p>
-     * Related Test Resources Path: <test resources folder>/<package as path>
+     * Related Test Resources Path: &gt;test resources folder&lt;/&gt;package as path&lt;
      *
      * The passed file path gets resolved against the related test resources path.
      *

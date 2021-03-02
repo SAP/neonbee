@@ -39,6 +39,7 @@ public class HookClassTemplate implements ClassTemplate {
     /**
      * Creates a dummy hook class.
      *
+     * @param hookTemplate    The path to the template file for the hook.
      * @param simpleClassName The simple class name of the new class
      * @throws IOException Hook template could not be read
      */
@@ -49,6 +50,7 @@ public class HookClassTemplate implements ClassTemplate {
     /**
      * Creates a dummy hook class.
      *
+     * @param hookTemplate    The path to the template file for the hook.
      * @param simpleClassName The simple class name of the new class
      * @param packageName     The package name of the class. Pass null for default package
      * @throws IOException Hook template could not be read

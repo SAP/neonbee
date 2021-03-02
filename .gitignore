@@ -11,9 +11,7 @@
 .idea
 .iml
 
-# XMake              #
 ######################
-/.xmake/
 /gen/
 /import/
 
