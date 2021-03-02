@@ -3,11 +3,11 @@
 [![Discord](https://img.shields.io/discord/786526477922336778.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/Fc3JWAHWFm)
 [![REUSE status](https://api.reuse.software/badge/github.com/sap/neonbee)](https://api.reuse.software/info/github.com/sap/neonbee)
 
-This is the core repository of NeonBee, a data processing framework built with [Vert.x](https://github.com/eclipse/vert.x).
+NeonBee is an open source reactive dataflow engine, a data stream processing framework using [Vert.x](https://github.com/eclipse/vert.x).
 
 ## Description
 
-NeonBee abstracts most of Vert.x's low-level functionality by adding an application layer for data processing and consolidation. Imagine NeonBee to be a full-blown application server with [all the core capabilities](https://vertx.io/docs/vertx-core/java/) of Vert.x at hand but without you having to care about things like a boot sequence, command line parsing, configuration, monitoring, clustering, deployment, scaling, logging / log handling and much more. Additionally, we put a rich convenience layer for data handling on top, simplifying technical data exchange.
+NeonBee abstracts most of Vert.x's low-level functionality by adding an application layer for modeling a dataflow, [data stream processing](https://en.wikipedia.org/wiki/Stream_processing) and consolidation. Imagine NeonBee to be a full-blown application server with [all the core capabilities](https://vertx.io/docs/vertx-core/java/) of Vert.x at hand but without you having to care about things like a boot sequence, command line parsing, configuration, monitoring, clustering, deployment, scaling, logging / log handling and much more. Additionally, we put a rich convenience layer for data handling on top, simplifying technical data exchange.
 
 To achieve this simplification, NeonBee reduces the scope of Vert.x by choosing and picking the most appropriate core and extensions components of Vert.x and providing them in a pre-configured / application server like fashion. For example, NeonBee comes with a default configuration of the [SLF4J](https://www.slf4j.org/) logging facade and [Logback](https://logback.qos.ch) logging backend, so you won't have to deal with choosing and configuring the logging environment in the first place. However, in case you decide to go with the logging setup NeonBee provides, you are still free to change.
 
