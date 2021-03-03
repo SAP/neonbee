@@ -7,13 +7,15 @@ NeonBee is an open source reactive dataflow engine, a data stream processing fra
 
 ## Description
 
-NeonBee abstracts most of Vert.x's low-level functionality by adding an application layer for modeling a dataflow, [data stream processing](https://en.wikipedia.org/wiki/Stream_processing) and consolidation. Imagine NeonBee to be a full-blown application server with [all the core capabilities](https://vertx.io/docs/vertx-core/java/) of Vert.x at hand but without you having to care about things like a boot sequence, command line parsing, configuration, monitoring, clustering, deployment, scaling, logging / log handling and much more. Additionally, we put a rich convenience layer for data handling on top, simplifying technical data exchange.
+NeonBee abstracts most of Vert.x's low-level functionality by adding an application layer for modeling a dataflow, [data stream processing](https://en.wikipedia.org/wiki/Stream_processing) and for doing data consolidation, exposing everything via standardized APIs in form of interfaces called endpoints.
+
+Additionally NeonBee takes care of all the execution and comes bundled with a full-blown application server with [all the core capabilities](https://vertx.io/docs/vertx-core/java/) of Vert.x at hand but without you having to care about things like a boot sequence, command line parsing, configuration, monitoring, clustering, deployment, scaling, logging / log handling and much more. Additionally, we put a rich convenience layer for data handling on top, simplifying technical data exchange.
 
 To achieve this simplification, NeonBee reduces the scope of Vert.x by choosing and picking the most appropriate core and extensions components of Vert.x and providing them in a pre-configured / application server like fashion. For example, NeonBee comes with a default configuration of the [SLF4J](https://www.slf4j.org/) logging facade and [Logback](https://logback.qos.ch) logging backend, so you won't have to deal with choosing and configuring the logging environment in the first place. However, in case you decide to go with the logging setup NeonBee provides, you are still free to change.
 
 ### Core Components
 
-NeonBee features a certain set of core components, abstracting and thus simplifying the naturally broad spectrum of the underlying Vert.x framework components:
+To facilitate the true nature of NeonBee, it features a certain set of core components, abstracting and thus simplifying the naturally broad spectrum of the underlying Vert.x framework components:
 
 - **Server:** boot sequence (read config, deploy verticles & data models, start instance), master / slave handling, etc.
 - **Command Line:** CLI argument parsing, using [Vert.x CLI API](https://vertx.io/docs/vertx-core/java/#_vert_x_command_line_interface_api)
@@ -25,19 +27,20 @@ NeonBee features a certain set of core components, abstracting and thus simplify
 - **Logging:** Using the [Vert.x Logging](https://vertx.io/docs/vertx-core/java/#_logging) and [SLF4J](https://www.slf4j.org/) facades and [Logback](https://logback.qos.ch/) as a back end
 - **Authentication:** Configurable authentication chain using [Vert.x Auth](https://vertx.io/docs/vertx-auth-common/java/)
 
-### Data Processing
+### Dataflow Processing
 
-While you can just use the NeonBee core components to consume functionalities of Vert.x more easily, the main focus of NeonBee lies on data processing. Thus, NeonBee adds a sophisticated high-performance data processing interface you can easily extend plug-and-play.
+While you may just use the NeonBee core components to consume functionalities of Vert.x more easily, the main focus of NeonBee lies on data processing via its stream design. Thus, NeonBee adds a sophisticated high-performance data processing interface you can easily extend plug-and-play. The upcoming sections describe how to use NeonBees data processing capabilities hands-on. In case you would like to understand the concept of NeonBees dataflow processing more in detail, for instance on how different resolution strategies can be utilized, for a highly optimized traversal of the data tree, please have a look at [this document](./docs/dataflow_processing.md) explaining the theory behind NeonBees data processing.
 
 #### Data Verticles / Sources
 
-The main component for data processing is more or less a specialization of the verticle concept of Vert.x. NeonBee introduces a new `AbstractVerticle` implementation called `DataVerticle`. These types of verticles implement a very simple data processing interface and communicate between each other out of the box using the Vert.x [Event Bus](https://vertx.io/docs/vertx-core/java/#event_bus). Processing data using the `DataVerticle` becomes a piece of cake. For example, reading was split in three simple phases / tasks:
+The main component for data processing is more or less a specialization of the verticle concept of Vert.x. NeonBee introduces a new `AbstractVerticle` implementation called `DataVerticle`. These types of verticles implement a very simple data processing interface and communicate between each other using the Vert.x [Event Bus](https://vertx.io/docs/vertx-core/java/#event_bus). Processing data using the `DataVerticle` becomes a piece of cake. Data retrieval was split in two phases or tasks:
 
-1. **Require:** Each verticle might denote data it requires before the actual data retrieval is invoked. Requests are sent to other data verticles in parallel to obtain all data required.
-2. **Retrieve:** In the retrieval phase, the verticle can process the data request it received. The results of all data required are handed over to the verticle. So, it can also just process data it has already got.
-3. **Request:** During any of the previous phases, you can request data from other verticles or arbitrary data sources. These kind of requests cannot be optimized, so it's best to stick with the require / retrieve phases if you can.
+1. **Require:** Each verticle first announces the data it requires from other even multiple `DataVerticle` for processing the request. NeonBee will, depending on the resolution strategy (see below), attempt to pre-fetch all required data, before invoking the next phase of data processing.
+2. **Retrieve:** In the retrieval phase, the verticle either processes all the data it requested in the previous require processing phase, or it perform arbitrary actions, such as doing a database calls, or plain data processing, mapping, etc.
 
-Conveniently, the method signatures of `DataVerticles` are named exactly like that. So, it is very easy to request / consolidate / process data from many different sources in a highly efficient manner.
+Conveniently, the method signatures of `DataVerticle` are named exactly like that. So, it is very easy to request / consolidate / process data from many different sources in a highly efficient manner.
+
+During either phase, data can be requested from other verticles or arbitrary data sources, however, it is to note that those kinds of requests start spanning a new three, thus they can only again be optimized according to the chosen resolution strategy in their sub-tree. It is best to stick with one require / retrieval phase for one request / data stream, however it could become necessary mixing different strategies to achieve the optimal result, depending on the use case.
 
 #### Entity Verticles & Data Model
 
@@ -49,9 +52,9 @@ For processing entities, NeonBee uses the [Apache Olingo™](https://olingo.apac
 
 #### Data Endpoints
 
-Given the default configuration, NeonBee will expose two simplified HTTP endpoints:
+Endpoints are standardized interfaces provided by NeonBee. Endpoints call entry verticles (see [dataflow processing](./docs/dataflow_processing.md)) to fetch / write back data. Depending on the type of endpoint, different APIs like REST, OData, etc. will be provided and a different set of verticles gets exposed. Given the default configuration, NeonBee will expose two simplified HTTP endpoints:
 
-- A **/raw** HTTP endpoint that returns the data of any data verticle and
+- A **/raw** HTTP REST endpoint that returns the data of any data verticle, preferably in a JSON  format and
 - a standardized **/odata** HTTP endpoint to get a valid OData response from entity verticles.
 
 ## Getting Started
@@ -112,13 +115,15 @@ public class ProcessingVerticle extends DataVerticle<JsonArray> {
 }
 ```
 
-And that's it. Deploy your verticles by simply putting a JAR file of them into your NeonBee's `/verticles` directory. Please have a look in the `/samples/templates` directory of this repository. You'll find verticle template projects there, which will build you compliant JAR file out of the box. Start-up the server and call the raw endpoint to fetch your data via `/raw/CustomerData/`. Wasn't that easy? And the cool thing is: NeonBee can scale your verticle up, so it can run in a highly scalable cluster out of the box!
+And that's it. Deploy your verticles by simply putting a JAR file of them into NeonBees `/verticles` directory. We will soon release a sample repository on how to build a compliant JAR file. Compliant JAR files refer to so called "modules". A module JAR is a fat / ueber JAR, which comes with any dependencies of the verticle, excluding NeonBee / Vert.x dependencies which are provided by the framework.
+
+Start-up the server, on its default port you can fetch the data of your verticle via the raw endpoint at http://localhost:8080/raw/CustomerData/. NeonBee can easily run this verticle in a highly scalable cluster setup out of the box.
 
 ### Advancing to Entity Verticles
 
-Dealing with plain data verticles is great if you control who consumes your data and own all interfaces. In case you want to provide a public interface or simply need more control over your data, dealing with raw JSON, strings or even binary, gets a bit more troublesome.
+Dealing with plain data verticles is great if you control who consumes the data and own all interfaces. The downside of data verticles is that they do not provide a structured and obliging interface, but if e.g. announcing to expose `JsonObject` the given JSON object could have any structure. In case you want to provide a public interface or simply need more control over the data returned, dealing with raw JSON, strings or even binary, gets a bit more troublesome.
 
-But don't worry, NeonBee got you covered! Let's define a very simple data model using the CDS Definition Language first:
+NeonBee covers that with the concept of `EntityVerticle` an extension to the `DataVerticle` concept. Let's define a very simple data model using the CDS Definition Language first:
 
 ```
 namespace MyModel;
@@ -129,9 +134,9 @@ entity Customers {
 }
 ```
 
-Compile the CDS definition to YAML.
+Compile the CDS definition to EDMX.
 
-Put the resulting `.yaml` file in the `/models` directory of NeonBee. The OData endpoint now already knows about the Customers entity. The last thing to do is to actually define an `EntityVerticle` which returns the entity data on request:
+Put the `.cds` and the resulting `.edmx` file in the `/models` directory of NeonBee. The OData endpoint now already knows about the Customers entity. The last thing to do is to actually define an `EntityVerticle` which returns the entity data on request:
 
 ```java
 public class CustomerEntityVerticle extends EntityVerticle {
@@ -163,24 +168,25 @@ public class CustomerEntityVerticle extends EntityVerticle {
 }
 ```
 
-And that's it! You have created your first valid OData 4.0 endpoint in NeonBee! Just feel free to access customer data from `/odata/Customers`. Look how easy it was to actually build a highly scalable OData endpoint!
+And that's it. You have created your first valid OData 4.0 endpoint in NeonBee. With the default configuration access the entity at http://localhost:8080/odata/Customers/. Similarly to data verticles the OData endpoint and your entity is now available and is highly scalable by NeonBee.
 
-### For Your Convenience …
+### For Your Convenience
 
-… NeonBee provides you with further simplifications when dealing with verticle development.
+NeonBee provides further simplifications when dealing with verticle development.
 
-Especially in large-scale distributed systems, correlating log messages become crucial to reproduce what is actually going on. Conveniently, NeonBee offers you a simple `LoggingFacade` you can mask any Vert.x logger with:
+Especially in large-scale distributed systems, correlating log messages become crucial to reproduce what is actually going on. Conveniently, NeonBee offers a simple `LoggingFacade` which masks the logging interface with:
 
 ```java
-LoggingFacade logger = LoggingFacade.masqueradeLogger(
-LoggerFactory.getLogger(MethodHandles.lookup().lookupClass()));
+// alternatively you can use the masqueradeLogger method,
+// to use the facade on an existing SF4J logger
+LoggingFacade logger = LoggingFacade.create();
 
 logger.correlateWith(context).info("Hello NeonBee");
 ```
 
-The logger gets correlated with a correlated ID passed through the routing context. The correlation ID will be logged alongside the actual message as a so-called [marker](https://www.slf4j.org/faq.html#marker_interface) and can easily be used to trace a certain log message, even in distributed clusters. Note that the `correlateWith` method does not actually correlate the whole logging facade, but only the next message you log. This means you have to invoke the `correlateWith` method once again you log the next message.
+The logger gets correlated with a correlated ID passed through the routing context. In the default implementation of NeonBees logging facade, the correlation ID will be logged alongside the actual message as a so-called [marker](https://www.slf4j.org/faq.html#marker_interface) and can easily be used to trace a certain log message, even in distributed clusters. Note that the `correlateWith` method does not actually correlate the whole logging facade, but only the next message logged. This means you have to invoke the `correlateWith` method once again when the next message is logged.
 
-Similar to Vert.x's shared instance, NeonBee provides its own shared instance holding some additional properties, such as the NeonBee options and configuration objects, as well as general purpose local and cluster-wide shared map for you to use. Each NeonBee instance has a one to one relation to a given Vert.x instance. To retrieve the NeonBee instance anywhere you need it, just use the static `NeonBee.neonbee` method of the NeonBee main class:
+Similar to Vert.x's shared instance, NeonBee provides its own shared instance holding some additional properties, such as the NeonBee options and configuration objects, as well as general purpose local and cluster-wide shared map for you to use. Each NeonBee instance has a one to one relation to a given Vert.x instance. To retrieve the NeonBee instance from anywhere, just use the static `NeonBee.neonbee` method of the NeonBee main class:
 
 ```java
 NeonBee neonbee = NeonBee.neonbee(vertx);
@@ -195,7 +201,7 @@ AsyncMap<String, Object> sharedAsyncMap = neonbee.getAsyncMap();
 
 ## Our Road Ahead
 
-We would like to even simplify the creation and retrieval of entities. So, what you see right now in the the conversion from data from data verticles to actual entities is a manual mapping between data from data verticles to entities. We would like to simplify this step to an degree where you could even utilize customizing to do this conversion step.
+We have ambitious plans for NeonBee and would like to extend it to be able to provide a whole platform for dataflow / data stream processing. Generalizing endpoints, so further interfaces like OpenAPI can be provided or extending the data verticle concept by more optimized / non-deterministic resolution strategies are only two of them. Please have a look at our [roadmap](./docs/roadmap.md) for an idea on what we are planning to do next.
 
 ## Contributing
 

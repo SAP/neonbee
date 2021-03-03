@@ -40,7 +40,7 @@ When you are ready, report your issue here: https://github.com/sap/neonbee/issue
 
 We take security issues in our projects seriously. We appreciate your efforts to responsibly disclose your findings.
 
-Please do not report security issues directly on GitHub but reach out to us via [mailto:security@neonbee.io](security@neonbee.io). This allows us to provide a fix before an issue can be exploited.
+Please do not report security issues directly on GitHub but reach out to us via [security@neonbee.io](mailto:security@neonbee.io). This allows us to provide a fix before an issue can be exploited.
 
 ### Use of Labels
 
