@@ -21,3 +21,5 @@ jobs:
         with:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v2
+        with:
+          configFile: '.github/workflows/.commitlintrc.json'
