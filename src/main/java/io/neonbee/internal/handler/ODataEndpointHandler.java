@@ -46,7 +46,7 @@ import io.neonbee.entity.EntityModel;
 import io.neonbee.internal.Helper.BufferInputStream;
 import io.neonbee.internal.SharedDataAccessor;
 import io.neonbee.internal.processor.BatchProcessor;
-import io.neonbee.internal.processor.EntityCollectionProcessor;
+import io.neonbee.internal.processor.CountEntityCollectionProcessor;
 import io.neonbee.internal.processor.EntityProcessor;
 import io.neonbee.internal.processor.PrimitiveProcessor;
 import io.neonbee.logging.LoggingFacade;
@@ -286,7 +286,7 @@ public final class ODataEndpointHandler implements Handler<RoutingContext> {
             ODataHandler odataHandler = odata.createRawHandler(serviceMetadata);
 
             // add further build-in processors for NeonBee here (every processor must handle the processPromise)
-            odataHandler.register(new EntityCollectionProcessor(vertx, routingContext, processPromise));
+            odataHandler.register(new CountEntityCollectionProcessor(vertx, routingContext, processPromise));
             odataHandler.register(new EntityProcessor(vertx, routingContext, processPromise));
             odataHandler.register(new BatchProcessor(vertx, routingContext, processPromise));
             odataHandler.register(new PrimitiveProcessor(vertx, routingContext, processPromise));

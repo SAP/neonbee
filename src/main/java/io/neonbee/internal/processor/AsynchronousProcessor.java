@@ -36,6 +36,8 @@ public abstract class AsynchronousProcessor implements Processor {
      * case this request is called in batch processing, it'll return a new sub-processPromise and store the future on
      * the processingStack.
      *
+     * <b>Important:</b> Should be called directly when entering the Olingo method once and stored in a reference.
+     *
      * @return the processPromise
      */
     public Promise<Void> getProcessPromise() {
