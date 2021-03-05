@@ -26,6 +26,7 @@ This milestone should be used to strengthen the whole entity handling in NeonBee
 
 - POJO / builder concept for dealing with entities
 - Clear interface to exchange and parse entity queries (similar to DataQuery with an EntityQuery)
+- Pass OData query options in an easy consumable fashion to the DataSource so that these DataSources only return required data and make network communication more efficient.
 - Reduce the usage of Olingo to the OData endpoint
 - Improved and more efficient Entity/EntityWrapper, specialized for NeonBee and the serialization to the event bus
 - Stop sending Olingo entities via the event bus
