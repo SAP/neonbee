@@ -223,8 +223,8 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
         vertx.eventBus().consumer(EVENT_BUS_MODELS_LOADED_ADDRESS, message -> {
             announceEntityVerticle(vertx, asyncResult -> {
                 if (asyncResult.failed()) {
-                    LOGGER.error("Updating announcements of entity verticle {} failed", asyncResult.cause(),
-                            getQualifiedName());
+                    LOGGER.error("Updating announcements of entity verticle {} failed", getQualifiedName(),
+                            asyncResult.cause());
                 }
             });
         });

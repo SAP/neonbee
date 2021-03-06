@@ -169,7 +169,7 @@ public class NeonBee {
             }
             Vertx.clusteredVertx(vertxOptions, result -> {
                 if (result.failed()) {
-                    logger.error("Failed to start Vertx cluster '{}'", result.cause().getMessage());
+                    logger.error("Failed to start Vertx cluster", result.cause()); // NOPMD slf4j
                     promise.fail(result.cause());
                 } else {
                     promise.complete(result.result());
@@ -483,11 +483,8 @@ public class NeonBee {
                 handler.handle(getHookRegistry().executeHooks(HookType.BEFORE_SHUTDOWN)
                         .compose(shutdownHooksExecutionOutcomes -> {
                             if (shutdownHooksExecutionOutcomes.failed()) {
-                                shutdownHooksExecutionOutcomes.<Future>list().stream().filter(Future::failed)
-                                        .forEach(future -> {
-                                            logger.error(// NOPMD slf4j
-                                                    "Shutdown hook execution failed.", future.cause());
-                                        });
+                                shutdownHooksExecutionOutcomes.<Future>list().stream().filter(Future::failed).forEach(
+                                        future -> logger.error("Shutdown hook execution failed", future.cause())); // NOPMD
                             }
                             NEONBEE_INSTANCES.remove(vertx);
                             return succeededFuture();

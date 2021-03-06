@@ -256,7 +256,7 @@ public class DataContextImpl implements DataContext {
         if (!pathStack.isEmpty()) {
             DataVerticleCoordinate topVerticle = pathStack.peek();
             if (name.equalsIgnoreCase(topVerticle.getQualifiedName())) {
-                LOGGER.error("A DataVerticle {} is sending message to itself, which could lead to a dead loop.", name);
+                LOGGER.error("A DataVerticle {} is sending message to itself, which could lead to a dead loop", name);
                 throw new DataException(String.format("DataVerticle %s is sending message to itself.", name));
             }
         }

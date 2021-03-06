@@ -48,8 +48,8 @@ public abstract class Deployment {
             LOGGER.correlateWith(correlationId).info("Start to undeploy: {}", identifier);
             vertx.undeploy(getDeploymentId(), asyncUndeploy -> {
                 if (asyncUndeploy.failed()) {
-                    LOGGER.correlateWith(correlationId).error("Undeployment of {} failed", asyncUndeploy.cause(),
-                            identifier);
+                    LOGGER.correlateWith(correlationId).error("Undeployment of {} failed", identifier,
+                            asyncUndeploy.cause());
                     promise.fail(asyncUndeploy.cause());
                 } else {
                     LOGGER.correlateWith(correlationId).info("Undeployment of {} succeeded", identifier);

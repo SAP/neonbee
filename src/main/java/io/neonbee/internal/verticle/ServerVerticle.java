@@ -223,7 +223,7 @@ public class ServerVerticle extends AbstractVerticle {
                         }
                         startPromise.complete();
                     } else {
-                        LOGGER.error("HTTP server could not be started on port {}", port);
+                        LOGGER.error("HTTP server could not be started on port {}", port, asyncResult.cause()); // NOPMD
                         startPromise.fail(asyncResult.cause());
                     }
                 });

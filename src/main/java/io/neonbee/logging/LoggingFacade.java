@@ -7,14 +7,38 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
 
 import io.neonbee.data.DataContext;
 import io.neonbee.logging.internal.LoggingFacadeImpl;
 import io.vertx.ext.web.RoutingContext;
 
-public interface LoggingFacade {
+/**
+ * This class puts a facade on an existing SLF4J {@link Logger}. All methods of this facade propagate directly to the
+ * underlying SLF4J logger. Calling a method with a given signature, will directly invoke the underlying method with the
+ * same signature, thus this facade acts like a transparent proxy. This allows you to treat the facade with similar
+ * rules as for any other SLF4J logger, with the added functionality this class provides. Depending on the underlying
+ * implementations and due to the support for most logging backends as well as the asynchronous nature of Vert.x, some
+ * limitations may apply.
+ *
+ * The default implementation of this {@link LoggingFacade}, retrieved via the {@linkplain #masqueradeLogger(Logger)} or
+ * any of the {@linkplain #create()}, {@linkplain #create(Class)} or {@linkplain #create(String)} methods, is currently
+ * using {@link Marker} to propagate any given correlation id to the underlying logging backends, thus masquerading the
+ * logger will loose you the ability to be working with makers when using the methods this facade exposes. Any attempts
+ * to be invoking a method with a marker in its interface will result in a {@link UnsupportedOperationException}.
+ * NeonBee will be supporting to provide an own LoggingFacade implementation in future and making the actual to be
+ * created via this interface configurable when a NeonBee instance starts, which will allow you to change the behavior
+ * of how the correlation id is propagated.
+ *
+ * To keep this LoggingFacade thread-safe, after the log message was written, the correlation id will be removed from
+ * the facade by the log delegate. This guarantees that subsequent log messages will not mix up correlation ids, even if
+ * they are executed on a different thread. This means the {@link #correlateWith(String)} method has to be called each
+ * time a log message should be printed with a correlation id associated.
+ */
+public interface LoggingFacade extends Logger {
     /**
-     * Masquerades any existing logger and adds functionality to. Here is a simple example on how to use the facade:
+     * Masquerades an existing SLF4J logger and adds functionality to correlate given log messages with a correlation
+     * id. Here is a simple example on how to use the facade:
      *
      * <code>
      * private static final LoggingFacade LOGGER = LoggingFacade.masqueradeLogger(
@@ -26,11 +50,6 @@ public interface LoggingFacade {
      * <code>
      * LOGGER.correlateWith("any correlation id").debug("Hello World");
      * </code>
-     *
-     * Note: After the log message was written, the correlation id will be removed from the facade by the log delegate.
-     * This guarantees that subsequent log messages will not mix up correlation ids, even if they are executed on a
-     * different thread. This means the {@link #correlateWith(String)} method has to be called each time a log message
-     * should be printed with a correlation id associated.
      *
      * @param logger an instance of {@link Logger}
      * @return a logging facade, offering ways to correlate the logged messages
@@ -117,193 +136,4 @@ public interface LoggingFacade {
     default LoggingFacade correlateWith(DataContext context) {
         return correlateWith(context.correlationId());
     }
-
-    /**
-     * Returns the name of the underlying logger instance.
-     *
-     * @return the name
-     */
-    String getName();
-
-    /**
-     * Check if the logger instance is enabled for the TRACE level.
-     *
-     * @return true if this Logger is enabled for the TRACE level, false otherwise.
-     */
-    boolean isTraceEnabled();
-
-    /**
-     * Log a message at the TRACE level.
-     *
-     * @param msg the message accompanying the exception
-     */
-    default void trace(String msg) {
-        trace(msg, new Object[0]);
-    }
-
-    /**
-     * Log a throwable at the TRACE level with an accompanying message.
-     *
-     * @param msg the message accompanying the exception
-     * @param t   the throwable to log
-     */
-    default void trace(String msg, Throwable t) {
-        trace(msg, new Object[] { t });
-    }
-
-    /**
-     * Log a message at the TRACE level according to the specified format and arguments. If a stack trace should be
-     * attached to the log message, the related throwable must be passed as the last value in the arguments array.
-     * <p>
-     * The placeholder in the passed format String must be marked with "{}".
-     *
-     * <pre>
-     * logger.trace("Call to system {} failed.", "CoolSystem");
-     * </pre>
-     * <p>
-     *
-     * @param format    the format string
-     * @param arguments The arguments to fill the format String.
-     */
-    void trace(String format, Object... arguments);
-
-    /**
-     * Check if the logger instance is enabled for the DEBUG level.
-     *
-     * @return True if this Logger is enabled for the DEBUG level, false otherwise.
-     */
-    boolean isDebugEnabled();
-
-    /**
-     * Log a message at the DEBUG level.
-     *
-     * @param msg the message accompanying the exception
-     */
-    default void debug(String msg) {
-        debug(msg, new Object[0]);
-    }
-
-    /**
-     * Log a throwable at the DEBUG level with an accompanying message.
-     *
-     * @param msg the message accompanying the exception
-     * @param t   the throwable to log
-     */
-    default void debug(String msg, Throwable t) {
-        debug(msg, new Object[] { t });
-    }
-
-    /**
-     * Log a message at the DEBUG level according to the specified format and arguments. Check
-     * {@link #trace(String, Object...)} for a more detailed description.
-     *
-     * @param format    the format string
-     * @param arguments The arguments to fill the format String.
-     */
-    void debug(String format, Object... arguments);
-
-    /**
-     * Check if the logger instance is enabled for the INFO level.
-     *
-     * @return True if this Logger is enabled for the INFO level, false otherwise.
-     */
-    boolean isInfoEnabled();
-
-    /**
-     * Log a message at the INFO level.
-     *
-     * @param msg the message accompanying the exception
-     */
-    default void info(String msg) {
-        info(msg, new Object[0]);
-    }
-
-    /**
-     * Log a throwable at the INFO level with an accompanying message.
-     *
-     * @param msg the message accompanying the exception
-     * @param t   the throwable to log
-     */
-    default void info(String msg, Throwable t) {
-        info(msg, new Object[] { t });
-    }
-
-    /**
-     * Log a message at the INFO level according to the specified format and arguments. Check
-     * {@link #trace(String, Object...)} for a more detailed description.
-     *
-     * @param format    the format string
-     * @param arguments The arguments to fill the format String.
-     */
-    void info(String format, Object... arguments);
-
-    /**
-     * Check if the logger instance is enabled for the WARN level.
-     *
-     * @return True if this Logger is enabled for the WARN level, false otherwise.
-     */
-    boolean isWarnEnabled();
-
-    /**
-     * Log a message at the WARN level.
-     *
-     * @param msg the message accompanying the exception
-     */
-    default void warn(String msg) {
-        warn(msg, new Object[0]);
-    }
-
-    /**
-     * Log a throwable at the WARN level with an accompanying message.
-     *
-     * @param msg the message accompanying the exception
-     * @param t   the throwable to log
-     */
-    default void warn(String msg, Throwable t) {
-        warn(msg, new Object[] { t });
-    }
-
-    /**
-     * Log a message at the WARN level according to the specified format and arguments. Check
-     * {@link #trace(String, Object...)} for a more detailed description.
-     *
-     * @param format    the format string
-     * @param arguments The arguments to fill the format String.
-     */
-    void warn(String format, Object... arguments);
-
-    /**
-     * Check if the logger instance is enabled for the ERROR level.
-     *
-     * @return True if this Logger is enabled for the ERROR level, false otherwise.
-     */
-    boolean isErrorEnabled();
-
-    /**
-     * Log a message at the ERROR level.
-     *
-     * @param msg the message accompanying the exception
-     */
-    default void error(String msg) {
-        error(msg, new Object[0]);
-    }
-
-    /**
-     * Log a throwable at the ERROR level with an accompanying message.
-     *
-     * @param msg the message accompanying the exception
-     * @param t   the throwable to log
-     */
-    default void error(String msg, Throwable t) {
-        error(msg, new Object[] { t });
-    }
-
-    /**
-     * Log a message at the ERROR level according to the specified format and arguments. Check
-     * {@link #trace(String, Object...)} for a more detailed description.
-     *
-     * @param format    the format string
-     * @param arguments The arguments to fill the format String.
-     */
-    void error(String format, Object... arguments);
 }
