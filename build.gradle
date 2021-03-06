@@ -36,9 +36,7 @@ project.ext {
 }
 
 repositories {
-    mavenLocal()
     mavenCentral()
-    gradlePluginPortal()
 }
 
 dependencies {
@@ -108,7 +106,7 @@ apply from: 'gradle/staticCodeCheck.gradle'
 apply from: 'gradle/changelog.gradle'
 
 task initWrapper(type: Wrapper) {
-    gradleVersion = '6.8.2'
+    gradleVersion = '6.8.3'
 }
 
 // ############ Test Phase
