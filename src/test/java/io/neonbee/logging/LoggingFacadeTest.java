@@ -2,6 +2,7 @@ package io.neonbee.logging;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.handler.CorrelationIdHandler.CORRELATION_ID;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
@@ -15,11 +16,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 import io.neonbee.data.DataContext;
 import io.neonbee.data.internal.DataContextImpl;
 import io.vertx.ext.web.RoutingContext;
 
+@SuppressWarnings("PMD.MoreThanOneLogger")
 public class LoggingFacadeTest {
     private static final String DUMMY_LOG_MSG = "HODOR";
 
@@ -103,5 +107,47 @@ public class LoggingFacadeTest {
 
         verify(MOCKED_LOGGING_FACADE, times(1)).error(eq(DUMMY_LOG_MSG));
         verify(MOCKED_LOGGING_FACADE, times(1)).error(eq(DUMMY_LOG_MSG), eq(DUMMY_THROWABLE));
+    }
+
+    @Test
+    void testUnsupportedOperations() {
+        Logger logger = LoggingFacade.masqueradeLogger(LoggerFactory.getLogger("wololo"));
+        Marker marker = MarkerFactory.getDetachedMarker("anymarker");
+
+        assertThrows(UnsupportedOperationException.class, () -> logger.info(marker, "test"));
+        assertThrows(UnsupportedOperationException.class, () -> logger.error(marker, "test"));
+        assertThrows(UnsupportedOperationException.class, () -> logger.warn(marker, "test"));
+        assertThrows(UnsupportedOperationException.class, () -> logger.debug(marker, "test"));
+        assertThrows(UnsupportedOperationException.class, () -> logger.trace(marker, "test"));
+
+        assertThrows(UnsupportedOperationException.class, () -> logger.info(marker, "test1 {}", "test2"));
+        assertThrows(UnsupportedOperationException.class, () -> logger.error(marker, "test1 {}", "test2"));
+        assertThrows(UnsupportedOperationException.class, () -> logger.warn(marker, "test1 {}", "test2"));
+        assertThrows(UnsupportedOperationException.class, () -> logger.debug(marker, "test1 {}", "test2"));
+        assertThrows(UnsupportedOperationException.class, () -> logger.trace(marker, "test1 {}", "test2"));
+
+        assertThrows(UnsupportedOperationException.class, () -> logger.info(marker, "test1 {} {}", "test2", "test3"));
+        assertThrows(UnsupportedOperationException.class, () -> logger.error(marker, "test1 {} {}", "test2", "test3"));
+        assertThrows(UnsupportedOperationException.class, () -> logger.warn(marker, "test1 {} {}", "test2", "test3"));
+        assertThrows(UnsupportedOperationException.class, () -> logger.debug(marker, "test1 {} {}", "test2", "test3"));
+        assertThrows(UnsupportedOperationException.class, () -> logger.trace(marker, "test1 {} {}", "test2", "test3"));
+
+        assertThrows(UnsupportedOperationException.class,
+                () -> logger.info(marker, "test1 {} {} {}", "test2", "test3", "test4"));
+        assertThrows(UnsupportedOperationException.class,
+                () -> logger.error(marker, "test1 {} {} {}", "test2", "test3", "test4"));
+        assertThrows(UnsupportedOperationException.class,
+                () -> logger.warn(marker, "test1 {} {} {}", "test2", "test3", "test4"));
+        assertThrows(UnsupportedOperationException.class,
+                () -> logger.debug(marker, "test1 {} {} {}", "test2", "test3", "test4"));
+        assertThrows(UnsupportedOperationException.class,
+                () -> logger.trace(marker, "test1 {} {} {}", "test2", "test3", "test4"));
+
+        Exception anyException = new Exception();
+        assertThrows(UnsupportedOperationException.class, () -> logger.info(marker, "test1", anyException));
+        assertThrows(UnsupportedOperationException.class, () -> logger.error(marker, "test1", anyException));
+        assertThrows(UnsupportedOperationException.class, () -> logger.warn(marker, "test1", anyException));
+        assertThrows(UnsupportedOperationException.class, () -> logger.debug(marker, "test1", anyException));
+        assertThrows(UnsupportedOperationException.class, () -> logger.trace(marker, "test1", anyException));
     }
 }

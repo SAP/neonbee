@@ -129,8 +129,8 @@ public abstract class JobVerticle extends AbstractVerticle {
                 if (result.succeeded()) {
                     LOGGER.correlateWith(context).info("Job execution of {} ended successfully", getName());
                 } else {
-                    LOGGER.correlateWith(context).warn("Job execution of {} ended with failure", result.cause(),
-                            getName());
+                    LOGGER.correlateWith(context).warn("Job execution of {} ended with failure", getName(),
+                            result.cause());
                 }
 
                 // if it is a periodic schedule, schedule the next job run, otherwise finalize and end the execution

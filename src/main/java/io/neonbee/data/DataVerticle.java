@@ -170,9 +170,9 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                         } else {
                             Throwable cause = asyncResult.cause();
                             if (LOGGER.isWarnEnabled()) {
-                                LOGGER.correlateWith(context).warn("Data verticle {} routine execution failed {}",
+                                LOGGER.correlateWith(context).warn("Data verticle {} routine execution failed",
                                         getQualifiedName(), cause instanceof DataException ? cause.toString() : EMPTY,
-                                        cause.getStackTrace().length != 0 ? cause : null);
+                                        cause);
                             }
 
                             if (cause instanceof DataException) {
@@ -183,7 +183,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                             }
                         }
                     } catch (Exception e) {
-                        LOGGER.correlateWith(context).error(e.getMessage(), e);
+                        LOGGER.correlateWith(context).error("Processing of message failed", e);
                         message.fail(FAILURE_CODE_PROCESSING_FAILED, e.getMessage());
                     }
                 });
@@ -193,7 +193,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                 return;
             } catch (DataException e) {
                 // the routine can either fail the future, or throw the DataException, if so propagate the failure
-                LOGGER.correlateWith(context).error(e.getMessage(), e);
+                LOGGER.correlateWith(context).error("Processing of message failed", e);
                 message.fail(e.failureCode(), e.getMessage());
             }
         }).completionHandler(registerDataVerticlePromise);
@@ -307,8 +307,8 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                             } else {
                                 Throwable cause = asyncReply.cause();
                                 if (LOGGER.isWarnEnabled()) {
-                                    LOGGER.correlateWith(context).warn("Failed to receive event bus reply from {} {}",
-                                            qualifiedName, cause.toString());
+                                    LOGGER.correlateWith(context).warn("Failed to receive event bus reply from {}",
+                                            qualifiedName, cause);
                                 }
 
                                 doneHandler.fail(mapException(cause));
