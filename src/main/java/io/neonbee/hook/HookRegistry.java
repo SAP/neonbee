@@ -26,7 +26,7 @@ public interface HookRegistry {
             return registerInstanceHooks(hookClass.getConstructor().newInstance(), correlationId);
         } catch (Exception e) {
             LoggingFacade.create().correlateWith(correlationId)
-                    .error("Could not initialize object for class {} containing hook.", e, hookClass.getName());
+                    .error("Could not initialize object for class {} containing hook.", hookClass.getName(), e);
             return Future.failedFuture(e);
         }
     }

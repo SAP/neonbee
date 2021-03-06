@@ -60,8 +60,8 @@ public class DeployerVerticle extends WatchVerticle {
                 affectedPath.toAbsolutePath());
         NeonBeeModule.fromJar(vertx, affectedPath, correlationId).recover(t -> {
             // Log errors from inside of method Deployable.fromJarFile
-            LOGGER.correlateWith(correlationId).error("An error occurred while parsing jar file {}", t,
-                    affectedPath.toAbsolutePath());
+            LOGGER.correlateWith(correlationId).error("An error occurred while parsing jar file {}",
+                    affectedPath.toAbsolutePath(), t);
             return Future.failedFuture(t);
         }).compose(neonBeeModule ->
         // The deploy method automatically cleans up in case of failure.

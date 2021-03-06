@@ -35,7 +35,7 @@ public final class HooksHandler implements Handler<RoutingContext> {
                 .onComplete(asyncResult -> {
                     if (asyncResult.failed()) {
                         Throwable cause = asyncResult.cause();
-                        LOGGER.error("An error has occurred while executing the request hook.", cause);
+                        LOGGER.error("An error has occurred while executing the request hook", cause);
                         if (cause instanceof DataException) {
                             routingContext.fail(((DataException) cause).failureCode());
                         } else {

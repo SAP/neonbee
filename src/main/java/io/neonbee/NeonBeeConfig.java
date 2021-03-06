@@ -62,9 +62,9 @@ public class NeonBeeConfig {
                     if (o instanceof String) {
                         return (String) o;
                     } else {
-                        String msg =
-                                "The attribute \"platformClasses\" of the NeonBee config must only contain Strings. Because of this value {} will be ignored.";
-                        LOGGER.warn(msg, String.valueOf(o));
+                        LOGGER.warn(
+                                "The attribute \"platformClasses\" of the NeonBee config must only contain Strings. Because of this value {} will be ignored.",
+                                String.valueOf(o));
                         return null;
                     }
                 }).filter(Objects::nonNull).collect(Collectors.toList())).orElse(List.of());

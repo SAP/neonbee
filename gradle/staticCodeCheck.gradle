@@ -80,7 +80,7 @@ pmd {
     ignoreFailures = true
     sourceSets = [sourceSets.main, sourceSets.test]
     ruleSets = []
-    toolVersion = '6.31.0'
+    toolVersion = '6.32.0'
 }
 
 pmdMain {

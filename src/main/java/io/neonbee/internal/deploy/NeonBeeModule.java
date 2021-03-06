@@ -185,7 +185,7 @@ public class NeonBeeModule {
                     .collect(Collectors.toList());
             if (compositedDeployments.failed()) {
                 // Some Verticles weren't deployed successfully. -> Undeploy all successfully deployed Verticles
-                getCorrelatedLogger().error("Not all deployables of jar file ({}) deployed successfully. \n",
+                getCorrelatedLogger().error("Not all deployables of jar file ({}) deployed successfully",
                         jarPath.toAbsolutePath());
                 return failedFuture(compositedDeployments.cause());
             } else {
