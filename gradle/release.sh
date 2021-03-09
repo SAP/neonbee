@@ -25,4 +25,3 @@ git add build.gradle CHANGELOG.*
 git --no-pager diff --cached -- build.gradle
 
 git commit -m "release: ${NEXT_VERSION}"
-git tag "${NEXT_VERSION}"

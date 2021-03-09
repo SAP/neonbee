@@ -2,7 +2,6 @@ changelog {
     toRef = 'HEAD'
     isUnstable = true
     strategy = 'slow'
-    lastVersion = version
 
     jsonFile = file("${project.rootDir}/CHANGELOG.json")
     fileSets = [
