@@ -210,3 +210,10 @@ signing {
         sign publishing.publications.test
     }
 }
+
+task setNewVersion {
+    if (project.hasProperty('newVersion')) {
+        println "Set Project version from $version to $newVersion"
+        buildFile.setText(buildFile.getText().replaceFirst("version = '$version'", "version = '$newVersion'"))
+    }
+}

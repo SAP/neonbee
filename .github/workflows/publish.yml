@@ -1,0 +1,181 @@
+name: Publish
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  publishToMavenCentral:
+    runs-on: ubuntu-latest
+
+    outputs:
+      releaseVersion: ${{ steps.getVersion.outputs.releaseVersion }}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: "11.0.2"
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Get new version
+        id: getVersion
+        run: |
+          set -euo pipefail
+          version="$(./gradlew properties -q | grep -w "version:" | awk '{print $2}')"
+          echo ::set-output name=releaseVersion::"${version}"
+          echo "New release version: ${version}"
+
+      - name: Publish to maven central
+        env:
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY_ARMOR }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USER }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: |
+          ./gradlew clean publishAllPublicationsToMavenCentralRepository
+
+  publishRelease:
+    runs-on: ubuntu-latest
+    needs: [publishToMavenCentral]
+
+    if: startsWith(github.event.head_commit.message, 'release:') && (endsWith(needs.publishToMavenCentral.outputs.releaseVersion, '-SNAPSHOT') == false)
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: "11.0.2"
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Tag release commit
+        run: |
+          git tag "${{ needs.publishToMavenCentral.outputs.releaseVersion }}"
+
+      - name: Set snapshot version
+        id: snapshot
+        run: |
+          tagVersion="${{ needs.publishToMavenCentral.outputs.releaseVersion }}"
+          rv="${tagVersion%-*}"
+          snapshotVersion="${rv:0:-1}$(bc <<< "${rv: -1}+1")-SNAPSHOT"
+          echo ::set-output name=snapshotVersion::"${snapshotVersion}"
+          ./gradlew setNewVersion -P newVersion=${snapshotVersion}
+
+          if git diff --no-ext-diff --quiet --exit-code; then
+            >&2 echo "No diff detected in git." ; exit 1
+          fi
+
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A build.gradle
+          git commit -m "release(snapshot): ${snapshotVersion}"
+
+      - name: Install chevron
+        run: |
+          pip install chevron
+
+      - name: Get changelog
+        shell: python
+        run: |
+          import os
+          import json
+          import chevron
+
+          file = "CHANGELOG.json"
+          if not os.path.isfile(file):
+              raise "file {} not found".format(file)
+          with open(file, "r") as stream:
+              changelog_json = json.load(stream)
+
+          version = "${{ needs.publishToMavenCentral.outputs.releaseVersion }}"
+          target_version = version.split("-")[0].split(".")
+          current_tag = None
+          for tag in changelog_json["tags"]:
+              if (
+                  tag["version"]["major"] == int(target_version[0])
+                  and tag["version"]["minor"] == int(target_version[1])
+                  and tag["version"]["patch"] == int(target_version[2])
+              ):
+                  current_tag = tag
+                  break
+
+          tmpl = """
+          ## Changelog
+          {{#sections}}
+
+          ### {{title}}
+
+          {{#commits}}
+          - {{#commitScope}}**{{commitPackage}}{{commitScope}}**: {{/commitScope}}{{& commitSubject}}{{#subjectIssues}} ([#{{id}}]({{url}})){{/subjectIssues}} ([{{hash8}}]({{commitUrl}})){{#hasCloseIssues}}, closes{{#closeIssues}} [#{{id}}]({{url}}){{/closeIssues}}{{/hasCloseIssues}}
+          {{/commits}}
+          {{/sections}}
+          """
+          args = {
+              "template": tmpl,
+              "data": current_tag,
+          }
+          rendered=chevron.render(**args)
+          print(rendered)
+          with open('release_changelog.md', 'w') as f:
+            f.write(rendered)
+
+      - name: Set Changelog
+        id: setChangelog
+        run: |
+          echo ::set-output name=releaseBody::"$( jq -rRs 'gsub("\r";"%0D")|gsub("\n";"%0A")' < ./release_changelog.md )"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          tags: true
+
+      - name: Publish snapshot to maven central
+        env:
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY_ARMOR }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USER }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: |
+          ./gradlew clean publishAllPublicationsToMavenCentralRepository
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.publishToMavenCentral.outputs.releaseVersion }}
+          release_name: Release ${{ needs.publishToMavenCentral.outputs.releaseVersion }}
+          body: ${{ steps.setChangelog.outputs.releaseBody }}
+          draft: true
+          prerelease: false
