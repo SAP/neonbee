@@ -1,16 +1,33 @@
 # Release new versions on GitHub
 
-The following process requires at least two contributors, as there is no CI or review process for verification.
+1. Checkout a new branch
 
-1. Merge all commits to master that should be part of the next release
-2. Check out origin master
-3. Execute the release task
+    ```console
+    git checkout -b release-<nextVersion> origin/main
+    ```
+
+2. Execute the gradle release task
 
     ```console
     ./gradlew release -PnextVersion=<nextVersion>
     ```
 
-    This updates the version in the build.gradle and updates the CHANGELOG. It generates a commit with the changed files and creates a tag `nextVersion`.
+    This task updates the version in the `build.gradle` to `<nextVersion>` and updates `CHANGELOG.*`.
+    It also generates a commit with the changed files.
 
-4. Push to master `git push -u origin HEAD:master --tags` (Note: pull request workflow not possible because this would generate a new commit, which would not be referenced by the tag)
-5. Push to the related release branch `git push -u origin HEAD:0.x`, where 0.x refers to the related major version
+3. Push the branch
+
+    ```console
+    `git push -u origin HEAD:refs/heads/release-<nextVersion>
+    ```
+
+4. Open a new pull request against the `main` branch
+5. Get approval from at least one committer. Once the pull request has been merged, a GitHub Action workflow will be triggered. The workflow publishes the version to maven central and creates a Github Draft Release with the corresponding changelog.
+6. Once the workflow in step 5. has finished fetch and push the newly created release tag to the related release branch. Example:
+
+    ```console
+    git fetch
+    git push origin <nextVersion>:/refs/heads/0.x
+    ```
+
+    where `0.x` refers to the related major version
