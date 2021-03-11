@@ -33,6 +33,7 @@ import org.apache.olingo.commons.api.ex.ODataRuntimeException;
 import org.apache.olingo.commons.api.http.HttpHeader;
 import org.apache.olingo.commons.api.http.HttpMethod;
 import org.apache.olingo.server.api.OData;
+import org.apache.olingo.server.api.ODataApplicationException;
 import org.apache.olingo.server.api.ODataHandler;
 import org.apache.olingo.server.api.ODataLibraryException;
 import org.apache.olingo.server.api.ODataRequest;
@@ -306,7 +307,8 @@ public final class ODataEndpointHandler implements Handler<RoutingContext> {
         }, asyncODataResponse -> {
             // failed to map / process OData request, so fail the web request
             if (asyncODataResponse.failed()) {
-                routingContext.fail(-1, asyncODataResponse.cause());
+                Throwable cause = asyncODataResponse.cause();
+                routingContext.fail(evaluateStatusCode(cause), cause);
                 return;
             }
 
@@ -316,7 +318,8 @@ public final class ODataEndpointHandler implements Handler<RoutingContext> {
             processPromise.future().onComplete(asyncResult -> {
                 // (asynchronously) retrieving the odata response failed, so fail the web request
                 if (asyncResult.failed()) {
-                    routingContext.fail(-1, asyncResult.cause());
+                    Throwable cause = asyncResult.cause();
+                    routingContext.fail(evaluateStatusCode(cause), cause);
                     return;
                 }
 
@@ -324,10 +327,14 @@ public final class ODataEndpointHandler implements Handler<RoutingContext> {
                     // map the odataResponse to the routingContext.response
                     mapODataResponse(odataResponse, routingContext.response());
                 } catch (IOException | ODataRuntimeException e) {
-                    routingContext.fail(e);
+                    routingContext.fail(-1, e);
                 }
             });
         });
+    }
+
+    private static int evaluateStatusCode(Throwable t) {
+        return t instanceof ODataApplicationException ? ((ODataApplicationException) t).getStatusCode() : -1;
     }
 
     /**

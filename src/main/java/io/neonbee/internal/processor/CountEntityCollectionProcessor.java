@@ -117,7 +117,7 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
                     } catch (ODataException e) {
                         processPromise.fail(e);
                     }
-                }).onFailure(e -> processPromise.fail(e));
+                }).onFailure(processPromise::fail);
             } catch (ODataException e) {
                 processPromise.fail(e);
             }
