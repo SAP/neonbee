@@ -17,7 +17,7 @@ plugins {
     id 'pmd'
     id 'checkstyle'
     id 'com.github.johnrengelman.shadow' version '6.1.0'
-    id 'org.sonarqube' version '3.0'
+    id 'org.sonarqube' version '3.1.1'
     id 'team.yi.semantic-gitlog' version '0.5.13'
 }
 
@@ -162,6 +162,11 @@ docker {
 sonarqube {
     properties {
         property 'sonar.sourceEncoding', 'UTF-8'
+        property "sonar.projectKey", "neonbee_key"
+        property "sonar.organization", "neonbee"
+        property "sonar.host.url", "https://sonarcloud.io"
+        property 'sonar.coverage.jacoco.xmlReportPaths', "${buildDir}/reports/jacoco/xml/jacoco.xml"
+        property 'sonar.junit.reportPaths', "${buildDir}/reports/junit/xml"
     }
 }
 
