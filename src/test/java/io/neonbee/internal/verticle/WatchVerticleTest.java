@@ -279,13 +279,11 @@ public class WatchVerticleTest {
 
     private static Future<Void> verifyFileEvent(Vertx vertx, VertxTestContext testCtx, WatchVerticle watchVerticleSpy,
             ExecutionBlock checks) {
-        // on windows, same as deletion handles, all modification handles can take a bit of time
+        // on windows or some CI platforms, same as deletion handles, all modification handles can take a bit of time
         // any may not be reported to the file watcher verticle, immediately after the write / delete
         // operation finishes, thus add a small delay to account for this
-        Future<Void> waitFuture = OS.WINDOWS.isCurrentOs() ? waitFor(vertx, 100) : succeededFuture();
-        return waitFuture.compose(nothing -> watchVerticleSpy.checkForChanges()).onComplete(s -> {
-            testCtx.verify(checks);
-        });
+        return waitFor(vertx, 100).compose(nothing -> watchVerticleSpy.checkForChanges())
+                .onComplete(s -> testCtx.verify(checks));
     }
 
     private static void verifyCreateModifyFile(WatchVerticle watchVerticleSpy, Path watchedFile) {
