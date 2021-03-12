@@ -44,6 +44,7 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.entity.EntityWrapper;
+import io.neonbee.internal.processor.odata.EntityExpander;
 import io.neonbee.internal.processor.odata.edm.EdmHelper;
 import io.neonbee.internal.processor.odata.expression.EntityComparison;
 import io.neonbee.logging.LoggingFacade;
@@ -158,10 +159,8 @@ public class EntityProcessor extends AsynchronousProcessor
     private Future<EntityWrapper> forwardRequest(ODataRequest request, UriResourceEntitySet uriResourceEntitySet,
             Entity entity, DataAction action, Promise<Void> processPromise) {
         EdmEntityType entityType = uriResourceEntitySet.getEntitySet().getEntityType();
-        String uriPath = request.getRawRequestUri().replaceFirst(request.getRawBaseUri(), EMPTY);
         Buffer body = new EntityWrapper(entityType.getFullQualifiedName(), entity).toBuffer(vertx);
-        DataQuery query = new DataQuery(action, uriPath, request.getRawQueryPath(), request.getAllHeaders(), body)
-                .addHeader("X-HTTP-Method", request.getMethod().name());
+        DataQuery query = odataRequestToQuery(request, action, body);
 
         return requestEntity(vertx, new DataRequest(entityType.getFullQualifiedName(), query),
                 new DataContextImpl(routingContext)).onFailure(processPromise::fail);
@@ -175,21 +174,31 @@ public class EntityProcessor extends AsynchronousProcessor
                 // Return the OData response
                 if (foundEntity == null) { // No entity with provided key predicates found
                     response.setStatusCode(NOT_FOUND.getStatusCode());
+                    processPromise.complete();
                 } else { // Return the found entity
-                    EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
-                    String selectList = odata.createUriHelper().buildContextURLSelectList(edmEntitySet.getEntityType(),
-                            null, uriInfo.getSelectOption());
-                    ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).selectList(selectList).build();
-                    EntitySerializerOptions opts = EntitySerializerOptions.with().contextURL(contextUrl)
-                            .select(uriInfo.getSelectOption()).expand(uriInfo.getExpandOption()).build();
+                    EntityExpander.create(vertx, uriInfo.getExpandOption(), routingContext).onSuccess(expander -> {
+                        try {
+                            EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
+                            String selectList = odata.createUriHelper().buildContextURLSelectList(
+                                    edmEntitySet.getEntityType(), uriInfo.getExpandOption(), uriInfo.getSelectOption());
+                            ContextURL contextUrl =
+                                    ContextURL.with().entitySet(edmEntitySet).selectList(selectList).build();
+                            EntitySerializerOptions opts = EntitySerializerOptions.with().contextURL(contextUrl)
+                                    .select(uriInfo.getSelectOption()).expand(uriInfo.getExpandOption()).build();
 
-                    response.setContent(odata.createSerializer(responseFormat)
-                            .entity(serviceMetadata, edmEntitySet.getEntityType(), foundEntity, opts).getContent());
-                    response.setStatusCode(OK.getStatusCode());
-                    response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+                            expander.expand(foundEntity);
+                            response.setContent(odata.createSerializer(responseFormat)
+                                    .entity(serviceMetadata, edmEntitySet.getEntityType(), foundEntity, opts)
+                                    .getContent());
+                            response.setStatusCode(OK.getStatusCode());
+                            response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+                            processPromise.complete();
+                        } catch (SerializerException e) {
+                            processPromise.fail(e);
+                        }
+                    }).onFailure(processPromise::fail);
                 }
-                processPromise.complete();
-            } catch (SerializerException | ODataApplicationException e) {
+            } catch (ODataApplicationException e) {
                 processPromise.fail(e);
             }
         };
@@ -260,5 +269,15 @@ public class EntityProcessor extends AsynchronousProcessor
                     INTERNAL_SERVER_ERROR.getStatusCode(), Locale.ENGLISH);
         }
         return null;
+    }
+
+    private DataQuery odataRequestToQuery(ODataRequest request, DataAction action, Buffer body) {
+        // the uriPath without /odata root path and without query path
+        String uriPath =
+                request.getRawRequestUri().replaceFirst(request.getRawBaseUri(), EMPTY).replaceFirst("\\?.*$", EMPTY);
+        // the raw query path
+        String rawQueryPath = request.getRawQueryPath();
+        return new DataQuery(action, uriPath, rawQueryPath, request.getAllHeaders(), body).addHeader("X-HTTP-Method",
+                request.getMethod().name());
     }
 }
