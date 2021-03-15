@@ -6,6 +6,8 @@ import static io.neonbee.data.DataAction.READ;
 import static io.neonbee.data.DataAction.UPDATE;
 import static io.neonbee.entity.EntityVerticle.requestEntity;
 import static io.neonbee.internal.Helper.EMPTY;
+import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.chooseEntitySet;
+import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.fetchNavigationTargetEntity;
 import static org.apache.olingo.commons.api.http.HttpStatusCode.INTERNAL_SERVER_ERROR;
 import static org.apache.olingo.commons.api.http.HttpStatusCode.NOT_FOUND;
 import static org.apache.olingo.commons.api.http.HttpStatusCode.NO_CONTENT;
@@ -37,7 +39,10 @@ import org.apache.olingo.server.api.serializer.EntitySerializerOptions;
 import org.apache.olingo.server.api.serializer.SerializerException;
 import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.api.uri.UriParameter;
+import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import io.neonbee.data.DataAction;
 import io.neonbee.data.DataQuery;
@@ -63,6 +68,10 @@ import io.vertx.ext.web.RoutingContext;
         justification = "Common practice in Olingo to name the implementation of the processor same as the interface")
 public class EntityProcessor extends AsynchronousProcessor
         implements org.apache.olingo.server.api.processor.EntityProcessor {
+    @VisibleForTesting
+    static final UnsupportedOperationException TOO_MANY_PARTS_EXCEPTION =
+            new UnsupportedOperationException("Read requests with more than two resource parts are not supported.");
+
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     private static final EntityComparison ENTITY_COMPARISON = new EntityComparison() {};
@@ -90,6 +99,10 @@ public class EntityProcessor extends AsynchronousProcessor
 
     @Override
     public void readEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat) {
+        if (uriInfo.getUriResourceParts().size() > 2) {
+            throw TOO_MANY_PARTS_EXCEPTION;
+        }
+
         Promise<Void> processPromise = getProcessPromise();
         UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0);
 
@@ -175,10 +188,24 @@ public class EntityProcessor extends AsynchronousProcessor
                 if (foundEntity == null) { // No entity with provided key predicates found
                     response.setStatusCode(NOT_FOUND.getStatusCode());
                     processPromise.complete();
-                } else { // Return the found entity
-                    EntityExpander.create(vertx, uriInfo.getExpandOption(), routingContext).onSuccess(expander -> {
+                } else {
+                    List<UriResource> resourceParts = uriInfo.getUriResourceParts();
+                    Promise<Entity> responsePromise = Promise.promise();
+
+                    if (resourceParts.size() == 1) {
+                        EntityExpander.create(vertx, uriInfo.getExpandOption(), routingContext).map(expander -> {
+                            expander.expand(foundEntity);
+                            return foundEntity;
+                        }).onComplete(responsePromise);
+                    } else {
+                        fetchNavigationTargetEntity(resourceParts.get(1), foundEntity, vertx, routingContext)
+                                .onComplete(responsePromise);
+                    }
+
+                    responsePromise.future().onSuccess(entityToReturn -> {
                         try {
-                            EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
+                            EdmEntitySet edmEntitySet =
+                                    chooseEntitySet(resourceParts, uriResourceEntitySet.getEntitySet(), routingContext);
                             String selectList = odata.createUriHelper().buildContextURLSelectList(
                                     edmEntitySet.getEntityType(), uriInfo.getExpandOption(), uriInfo.getSelectOption());
                             ContextURL contextUrl =
@@ -186,14 +213,13 @@ public class EntityProcessor extends AsynchronousProcessor
                             EntitySerializerOptions opts = EntitySerializerOptions.with().contextURL(contextUrl)
                                     .select(uriInfo.getSelectOption()).expand(uriInfo.getExpandOption()).build();
 
-                            expander.expand(foundEntity);
                             response.setContent(odata.createSerializer(responseFormat)
-                                    .entity(serviceMetadata, edmEntitySet.getEntityType(), foundEntity, opts)
+                                    .entity(serviceMetadata, edmEntitySet.getEntityType(), entityToReturn, opts)
                                     .getContent());
                             response.setStatusCode(OK.getStatusCode());
                             response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
                             processPromise.complete();
-                        } catch (SerializerException e) {
+                        } catch (SerializerException | ODataApplicationException e) {
                             processPromise.fail(e);
                         }
                     }).onFailure(processPromise::fail);

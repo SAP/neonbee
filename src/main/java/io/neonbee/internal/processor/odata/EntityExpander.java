@@ -1,11 +1,11 @@
 package io.neonbee.internal.processor.odata;
 
-import static io.neonbee.entity.EntityVerticle.requestEntity;
 import static io.neonbee.internal.Helper.allComposite;
+import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.fetchReferencedEntities;
+import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.getRelatedEntities;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.stream.Collectors.toList;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,14 +15,10 @@ import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.data.Link;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
 import org.apache.olingo.commons.api.edm.EdmNavigationProperty;
-import org.apache.olingo.commons.api.edm.EdmReferentialConstraint;
 import org.apache.olingo.commons.api.edm.constants.EdmTypeKind;
 import org.apache.olingo.server.api.uri.UriResourceNavigation;
 import org.apache.olingo.server.api.uri.queryoption.ExpandOption;
 
-import io.neonbee.data.DataQuery;
-import io.neonbee.data.DataRequest;
-import io.neonbee.data.internal.DataContextImpl;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
@@ -53,12 +49,10 @@ public final class EntityExpander {
             List<EdmNavigationProperty> navigationProperties = getNavigationProperties(expandOption);
             Map<EdmEntityType, List<Entity>> fetchedEntities = new HashMap<>();
 
-            List<Future<?>> fetchFutures =
-                    navigationProperties.stream().map(EdmNavigationProperty::getType).distinct().map(type -> {
-                        DataRequest req = new DataRequest(type.getFullQualifiedName(), new DataQuery());
-                        return requestEntity(vertx, req, new DataContextImpl(routingContext))
-                                .map(ew -> fetchedEntities.put(type, ew.getEntities()));
-                    }).collect(toList());
+            List<Future<?>> fetchFutures = navigationProperties.stream().distinct().map(navProb -> {
+                return fetchReferencedEntities(navProb, vertx, routingContext)
+                        .map(entities -> fetchedEntities.put(navProb.getType(), entities));
+            }).collect(toList());
             return allComposite(fetchFutures).map(v -> new EntityExpander(navigationProperties, fetchedEntities));
         } else {
             return succeededFuture(new EntityExpander(List.of(), Map.of()));
@@ -82,7 +76,8 @@ public final class EntityExpander {
                 throw new UnsupportedOperationException("At the moment only type Entity can be expanded");
             }
 
-            List<Entity> entitiesToLink = getRelatedEntities(entityToExpand, navigationProperty);
+            List<Entity> entitiesToLink = getRelatedEntities(navigationProperty, entityToExpand,
+                    fetchedEntities.get(navigationProperty.getType()));
             linkEntities(entityToExpand, navigationProperty, entitiesToLink);
         }
     }
@@ -99,32 +94,5 @@ public final class EntityExpander {
             link.setInlineEntity(entitiesToLink.get(0));
         }
         entity.getNavigationLinks().add(link);
-    }
-
-    private List<Entity> getRelatedEntities(Entity entityToExpand, EdmNavigationProperty navigationProperty) {
-        boolean isCollection = navigationProperty.isCollection();
-
-        List<Entity> filteredEntities = new ArrayList<>(fetchedEntities.get(navigationProperty.getType()));
-
-        List<EdmReferentialConstraint> constraints =
-                isCollection ? navigationProperty.getPartner().getReferentialConstraints()
-                        : navigationProperty.getReferentialConstraints();
-
-        for (EdmReferentialConstraint constraint : constraints) {
-            String propertyName = isCollection ? constraint.getReferencedPropertyName() : constraint.getPropertyName();
-            String referencePropertyName =
-                    isCollection ? constraint.getPropertyName() : constraint.getReferencedPropertyName();
-
-            Object propertyValue = entityToExpand.getProperty(propertyName).getValue();
-            List<Entity> remainingEntities = List.copyOf(filteredEntities);
-            filteredEntities.clear();
-            for (Entity referenceEntity : remainingEntities) {
-                Object referencePropertyValue = referenceEntity.getProperty(referencePropertyName).getValue();
-                if (propertyValue.equals(referencePropertyValue)) {
-                    filteredEntities.add(referenceEntity);
-                }
-            }
-        }
-        return filteredEntities;
     }
 }
