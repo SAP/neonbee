@@ -45,7 +45,7 @@ import io.vertx.junit5.VertxTestContext;
  * </pre>
  *
  */
-public class ODataNavigationPropertiesTest extends ODataEndpointTestBase {
+class ODataNavigationPropertiesTest extends ODataEndpointTestBase {
     @Override
     protected List<Path> provideEntityModels() {
         return List.of(getDeclaredEntityModel());

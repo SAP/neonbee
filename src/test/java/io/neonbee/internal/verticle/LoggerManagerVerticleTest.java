@@ -21,7 +21,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class LoggerManagerVerticleTest extends DataVerticleTestBase {
+class LoggerManagerVerticleTest extends DataVerticleTestBase {
 
     @BeforeEach
     void setUp(VertxTestContext testContext) {
@@ -30,7 +30,7 @@ public class LoggerManagerVerticleTest extends DataVerticleTestBase {
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    public void testRetrieveData(VertxTestContext testContext) {
+    void testRetrieveData(VertxTestContext testContext) {
         DataRequest req = new DataRequest(LoggerManagerVerticle.QUALIFIED_NAME, new DataQuery());
         Future<JsonArray> response = requestData(req);
 
@@ -40,7 +40,7 @@ public class LoggerManagerVerticleTest extends DataVerticleTestBase {
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    public void testRetrieveDataWithQuery(VertxTestContext testContext) {
+    void testRetrieveDataWithQuery(VertxTestContext testContext) {
         DataRequest req = new DataRequest(LoggerManagerVerticle.QUALIFIED_NAME,
                 new DataQuery().setParameter("loggers", "io.neonbee.internal"));
         Future<JsonArray> response = requestData(req);
@@ -55,7 +55,7 @@ public class LoggerManagerVerticleTest extends DataVerticleTestBase {
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    public void testRetrieveDataWithMultipleQueryValues(VertxTestContext testContext) {
+    void testRetrieveDataWithMultipleQueryValues(VertxTestContext testContext) {
         DataRequest req = new DataRequest(LoggerManagerVerticle.QUALIFIED_NAME,
                 new DataQuery().setParameter("loggers", "io.neonbee.internal,io.vertx.core.file"));
         Future<JsonArray> response = requestData(req);
@@ -66,7 +66,7 @@ public class LoggerManagerVerticleTest extends DataVerticleTestBase {
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    public void testUpdateData(VertxTestContext testContext) {
+    void testUpdateData(VertxTestContext testContext) {
         List<LoggerConfiguration> configList = List.of(new LoggerConfiguration("io.neonbee.internal", ERROR),
                 new LoggerConfiguration("io.vertx.core.file", ERROR));
         DataRequest updateReq = new DataRequest(LoggerManagerVerticle.QUALIFIED_NAME,

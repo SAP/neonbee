@@ -34,7 +34,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
-public class FileSystemHelperTest {
+class FileSystemHelperTest {
     private Path tempDir;
 
     @BeforeEach

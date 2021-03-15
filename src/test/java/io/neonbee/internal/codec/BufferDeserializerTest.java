@@ -4,7 +4,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import java.io.IOException;
 
-import org.json.JSONException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +13,7 @@ class BufferDeserializerTest {
 
     @Test
     @DisplayName("deserialization of a stream to buffer.")
-    public void testDeserialization() throws IOException, JSONException {
+    void testDeserialization() throws IOException {
         String json = "{\"type\":\"file\",\"content\":\"body\"}";
         ObjectMapper mapper = new ObjectMapper();
         BufferWrapper wrapper = mapper.readValue(json, BufferWrapper.class);

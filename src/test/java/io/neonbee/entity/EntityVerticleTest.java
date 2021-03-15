@@ -45,7 +45,7 @@ import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class EntityVerticleTest extends EntityVerticleTestBase {
+class EntityVerticleTest extends EntityVerticleTestBase {
     private EntityVerticle entityVerticleImpl1;
 
     private EntityVerticle entityVerticleImpl2;

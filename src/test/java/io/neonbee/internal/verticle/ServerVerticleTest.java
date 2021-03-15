@@ -27,7 +27,7 @@ import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class ServerVerticleTest extends NeonBeeTestBase {
+class ServerVerticleTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testDetermineSessionHandling() throws InterruptedException {

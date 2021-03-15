@@ -120,8 +120,7 @@ public interface LoggingFacade extends Logger {
             String msg = "routingContext must not be null, otherwise no correlationId can be extracted";
             throw new NullPointerException(msg);
         }
-        Optional.ofNullable(routingContext.get(CORRELATION_ID)).map(Object::toString)
-                .ifPresent(correlationId -> correlateWith(correlationId));
+        Optional.ofNullable(routingContext.get(CORRELATION_ID)).map(Object::toString).ifPresent(this::correlateWith);
         return this;
     }
 

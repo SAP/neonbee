@@ -32,7 +32,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
-public class SelfFirstClassLoaderTest {
+class SelfFirstClassLoaderTest {
     private static final String CLASS_NAME = "CoolTestClassWithUniqueName";
 
     private static final String RESOURCE_NAME = "CoolResourceWithUniqueName";
@@ -44,18 +44,18 @@ public class SelfFirstClassLoaderTest {
     private ClassLoader originalContextClassLoader;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         originalContextClassLoader = Thread.currentThread().getContextClassLoader();
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         Thread.currentThread().setContextClassLoader(originalContextClassLoader);
     }
 
     @Test
     @DisplayName("Test if the decision logic which class should be loaded from parent works correct")
-    public void testLoadFromParent() throws IOException {
+    void testLoadFromParent() throws IOException {
         SelfFirstClassLoader sfcl = new SelfFirstClassLoader(new URL[] {}, null,
                 List.of("io.neonbee.*", "io.Hod*", "com.example.LordCitrange"));
         assertThat(sfcl.loadFromParent("io.neonbee.DataVerticle")).isTrue();
@@ -71,7 +71,7 @@ public class SelfFirstClassLoaderTest {
 
     @Test
     @DisplayName("Test if the decision logic which class should be loaded from parent works correct if only a wildcard is passed")
-    public void testLoadFromParentWithOnlyWildcard() throws IOException {
+    void testLoadFromParentWithOnlyWildcard() throws IOException {
         SelfFirstClassLoader sfcl = new SelfFirstClassLoader(new URL[] {}, null, List.of("*"));
         assertThat(sfcl.loadFromParent("io.neonbee.DataVerticle")).isTrue();
         assertThat(sfcl.loadFromParent("com.example.LordCitrange")).isTrue();
@@ -81,7 +81,7 @@ public class SelfFirstClassLoaderTest {
 
     @Test
     @DisplayName("Test if empty or null strings are filtered out from passed parentPreferred strings")
-    public void testLoadFromParentWithEmptyOrNullStrings() throws IOException {
+    void testLoadFromParentWithEmptyOrNullStrings() throws IOException {
         List<String> expected = List.of("io.hodor.Hodor", "lord.Citrange");
         List<String> parentPreferred = new ArrayList<>(expected);
         parentPreferred.add("");
@@ -95,7 +95,7 @@ public class SelfFirstClassLoaderTest {
     @SuppressWarnings("unchecked")
     @Test
     @DisplayName("Test if parent preferred classes are loaded from parent class loader")
-    public void testParentPreferred() throws IOException, ClassNotFoundException {
+    void testParentPreferred() throws IOException, ClassNotFoundException {
         String otherClass = "OtherUniqueClassName";
         ClassLoader parentClassLoader = createClassLoaderWithJars(
                 List.of(new NeonBeeModuleJar("testmodule1", new IsoVerticleTemplate(CLASS_NAME, "parentAddress")),
@@ -121,8 +121,7 @@ public class SelfFirstClassLoaderTest {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Deployments must be able to load a different versions of a class, even if platform already uses this class")
-    public void loadClassesIsolatedTest(Vertx vertx, VertxTestContext testContext)
-            throws ClassNotFoundException, IOException {
+    void loadClassesIsolatedTest(Vertx vertx, VertxTestContext testContext) throws ClassNotFoundException, IOException {
         Checkpoint cp = testContext.checkpoint(2);
 
         // Create fake system classLoader which represents the class inside the platform

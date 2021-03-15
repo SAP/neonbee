@@ -8,10 +8,10 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.ext.web.RoutingContext;
 
-public class NotFoundHandlerTest {
+class NotFoundHandlerTest {
     @Test
     @DisplayName("test not found handler")
-    public void testNotFound() {
+    void testNotFound() {
         RoutingContext routingContextMock = mock(RoutingContext.class);
         NotFoundHandler.create().handle(routingContextMock);
         verify(routingContextMock).fail(404);

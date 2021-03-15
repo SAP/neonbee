@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.Marker;
 
 @SuppressWarnings("PMD.MoreThanOneLogger")
-public class LoggingFacadeImplTest {
+class LoggingFacadeImplTest {
     private static final String DUMMY_LOG_MSG = "HODOR {}";
 
     private static final Object DUMMY_ARGUMENT = new Object();

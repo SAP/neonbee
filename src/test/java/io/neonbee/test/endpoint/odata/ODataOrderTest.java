@@ -24,7 +24,7 @@ import io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class ODataOrderTest extends ODataEndpointTestBase {
+class ODataOrderTest extends ODataEndpointTestBase {
     private ODataRequest request;
 
     @Override

@@ -37,7 +37,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class RawDataEndpointHandlerTest extends DataVerticleTestBase {
+class RawDataEndpointHandlerTest extends DataVerticleTestBase {
     private static RoutingContext mockRoutingContext(String routingPath) {
         RoutingContext routingContextMock = mock(RoutingContext.class);
         Route routeMock = mock(Route.class);
@@ -52,7 +52,7 @@ public class RawDataEndpointHandlerTest extends DataVerticleTestBase {
 
     @Test
     @DisplayName("check qualified name")
-    public void checkQualifiedName() {
+    void checkQualifiedName() {
         assertThat(determineQualifiedName(mockRoutingContext("Verticle"))).isEqualTo("Verticle");
         assertThat(determineQualifiedName(mockRoutingContext("_verticle"))).isEqualTo("_verticle");
         assertThat(determineQualifiedName(mockRoutingContext("namespace/Verticle"))).isEqualTo("namespace/Verticle");

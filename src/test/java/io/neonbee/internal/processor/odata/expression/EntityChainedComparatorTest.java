@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.ext.web.RoutingContext;
 
-public class EntityChainedComparatorTest {
+class EntityChainedComparatorTest {
     @Test
     void compareTest() throws ODataApplicationException {
 

@@ -19,11 +19,11 @@ import org.apache.olingo.server.api.ODataApplicationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-public class EdmHelperTest {
+class EdmHelperTest {
 
     @Test
     @DisplayName("Test getEdmPrimitiveTypeKindByPropertyType method")
-    public void getEdmPrimitiveTypeKindByPropertyTypeTest() throws ODataApplicationException {
+    void getEdmPrimitiveTypeKindByPropertyTypeTest() throws ODataApplicationException {
         assertThat(EdmHelper.getEdmPrimitiveTypeKindByPropertyType("String")).isEqualTo(EdmPrimitiveTypeKind.String);
         assertThat(EdmHelper.getEdmPrimitiveTypeKindByPropertyType("Boolean")).isEqualTo(EdmPrimitiveTypeKind.Boolean);
         assertThat(EdmHelper.getEdmPrimitiveTypeKindByPropertyType("Int32")).isEqualTo(EdmPrimitiveTypeKind.Int32);
@@ -32,7 +32,7 @@ public class EdmHelperTest {
 
     @Test
     @DisplayName("Test extractValueFromLiteral method")
-    public void extractValueFromLiteralTest() {
+    void extractValueFromLiteralTest() {
         // String IDs
         assertThat(EdmHelper.extractValueFromLiteral("'ID5'")).isEqualTo("ID5");
         assertThat(EdmHelper.extractValueFromLiteral("'10815'")).isEqualTo("10815");
@@ -46,7 +46,7 @@ public class EdmHelperTest {
 
     @Test
     @DisplayName("Test isLocalDate")
-    public void isLocalDateTest() {
+    void isLocalDateTest() {
         assertThat(EdmHelper.isLocalDate("2010-01-01")).isTrue();
         assertThat(EdmHelper.isLocalDate("2010-12-31")).isTrue();
         assertThat(EdmHelper.isLocalDate("2010-2-31")).isFalse();
@@ -54,7 +54,7 @@ public class EdmHelperTest {
 
     @Test
     @DisplayName("Test isLocalDateTime")
-    public void isLocalDateTimeTest() {
+    void isLocalDateTimeTest() {
         assertThat(EdmHelper.isLocalDateTime("2010-01-01T05:32:09")).isTrue();
         assertThat(EdmHelper.isLocalDateTime("2010-01-01T05:32:09Z")).isFalse();
         assertThat(EdmHelper.isLocalDateTime("2010-2-31")).isFalse();
@@ -62,7 +62,7 @@ public class EdmHelperTest {
 
     @Test
     @DisplayName("Test convert string to edm property")
-    public void convertStringValueToEdmStringProperty() throws EdmPrimitiveTypeException {
+    void convertStringValueToEdmStringProperty() throws EdmPrimitiveTypeException {
         EdmProperty edmProperty = buildProperty("account", EdmPrimitiveTypeKind.String);
         Property property = EdmHelper.convertStringValueToEdmProperty("SAP-Account", edmProperty);
         assertThat(property.getValue()).isEqualTo("SAP-Account");
@@ -70,7 +70,7 @@ public class EdmHelperTest {
 
     @Test
     @DisplayName("Test convert string to edm int property")
-    public void convertStringValueToEdmInt32Property() throws EdmPrimitiveTypeException {
+    void convertStringValueToEdmInt32Property() throws EdmPrimitiveTypeException {
         EdmProperty edmProperty = buildProperty("age", EdmPrimitiveTypeKind.Int32);
         Property property = EdmHelper.convertStringValueToEdmProperty("12", edmProperty);
         assertThat(property.getValue()).isEqualTo(12);
@@ -78,7 +78,7 @@ public class EdmHelperTest {
 
     @Test
     @DisplayName("Test convert string to edm boolean property")
-    public void convertStringValueToEdmBooleanProperty() throws EdmPrimitiveTypeException {
+    void convertStringValueToEdmBooleanProperty() throws EdmPrimitiveTypeException {
         EdmProperty edmProperty = buildProperty("male", EdmPrimitiveTypeKind.Boolean);
         Property property = EdmHelper.convertStringValueToEdmProperty("true", edmProperty);
         assertThat(property.getValue()).isEqualTo(Boolean.TRUE);
@@ -86,7 +86,7 @@ public class EdmHelperTest {
 
     @Test
     @DisplayName("Test convert string to edm double property")
-    public void convertStringValueToEdmDoubleProperty() throws EdmPrimitiveTypeException {
+    void convertStringValueToEdmDoubleProperty() throws EdmPrimitiveTypeException {
         EdmProperty edmProperty = buildProperty("salary", EdmPrimitiveTypeKind.Double);
         Property property = EdmHelper.convertStringValueToEdmProperty("12.58", edmProperty);
         assertThat(property.getValue()).isEqualTo(12.58);
@@ -94,7 +94,7 @@ public class EdmHelperTest {
 
     @Test
     @DisplayName("Test convert string to edm decimal property")
-    public void convertStringValueToEdmDecimalProperty() throws EdmPrimitiveTypeException {
+    void convertStringValueToEdmDecimalProperty() throws EdmPrimitiveTypeException {
         CsdlProperty csdlProperty = new CsdlProperty();
         csdlProperty.setName("salary");
         csdlProperty.setType(EdmPrimitiveTypeKind.Decimal.getFullQualifiedName());
@@ -107,7 +107,7 @@ public class EdmHelperTest {
 
     @Test
     @DisplayName("Test convert string to edm date property")
-    public void convertStringValueToEdmDateProperty() throws EdmPrimitiveTypeException {
+    void convertStringValueToEdmDateProperty() throws EdmPrimitiveTypeException {
         EdmProperty edmProperty = buildProperty("birthdate", EdmPrimitiveTypeKind.Date);
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.YEAR, 1970);
@@ -122,7 +122,7 @@ public class EdmHelperTest {
 
     @Test
     @DisplayName("Test convert string to edm time property")
-    public void convertStringValueToEdmTimeOfDayProperty() throws EdmPrimitiveTypeException {
+    void convertStringValueToEdmTimeOfDayProperty() throws EdmPrimitiveTypeException {
         EdmProperty edmProperty = buildProperty("birthtime", EdmPrimitiveTypeKind.TimeOfDay);
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.YEAR, 1970);
@@ -141,7 +141,7 @@ public class EdmHelperTest {
 
     @Test
     @DisplayName("Test convert string to edm date time property")
-    public void convertStringValueToEdmDateTimeOffsetProperty() throws EdmPrimitiveTypeException {
+    void convertStringValueToEdmDateTimeOffsetProperty() throws EdmPrimitiveTypeException {
         EdmProperty edmProperty = buildProperty("birthtime", EdmPrimitiveTypeKind.DateTimeOffset);
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
         cal.set(Calendar.YEAR, 1970);

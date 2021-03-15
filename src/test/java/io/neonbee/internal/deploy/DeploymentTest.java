@@ -31,7 +31,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
-public class DeploymentTest {
+class DeploymentTest {
     private static final String CORRELATION_ID = "correlId";
 
     @Test
@@ -62,18 +62,16 @@ public class DeploymentTest {
 
         Mockito.reset(vertxMock);
         Mockito.doAnswer(answerFailed).when(vertxMock).undeploy(Mockito.any(), Mockito.any());
-        deployment.undeploy().onComplete(testContext.failing(t -> {
-            testContext.verify(() -> {
-                assertThat(t).hasMessageThat().isEqualTo(expectedErrorMessage);
-                failedCheck.flag();
-            });
-        }));
+        deployment.undeploy().onComplete(testContext.failing(t -> testContext.verify(() -> {
+            assertThat(t).hasMessageThat().isEqualTo(expectedErrorMessage);
+            failedCheck.flag();
+        })));
     }
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("undeploy should undeploy a Deployment correct")
-    void undeployTestComponent(Vertx vertx, VertxTestContext testContext) throws IOException, ClassNotFoundException {
+    void undeployTestComponent(Vertx vertx, VertxTestContext testContext) throws IOException {
         String identifierVerticleA = "AVerticle";
         String addressA = "addressA";
         String identifierVerticleB = "BVerticle";
@@ -109,57 +107,46 @@ public class DeploymentTest {
         }).compose(pendingDeployment -> {
             deployments.addAll(pendingDeployment.result().<Deployment>list());
 
-            return Future.<Message<String>>future(fut -> {
-                vertx.eventBus().<String>request(addressA, "", fut);
-            });
+            return Future.<Message<String>>future(fut -> vertx.eventBus().request(addressA, "", fut));
         }).compose(response -> {
             testContext.verify(() -> {
                 assertThat(response.body()).isEqualTo(dummyVerticleA.getExpectedResponse());
                 responseA.flag();
             });
-            return Future.<Message<String>>future(fut -> {
-                vertx.eventBus().<String>request(addressB, "", fut);
-            });
+            return Future.<Message<String>>future(fut -> vertx.eventBus().request(addressB, "", fut));
         }).compose(response -> {
             testContext.verify(() -> {
                 assertThat(response.body()).isEqualTo(dummyVerticleB.getExpectedResponse());
                 responseB.flag();
             });
             return deployments.get(0).undeploy();
-        }).compose(v -> {
-            return Future.<Message<String>>future(fut -> {
-                vertx.eventBus().<String>request(addressA, "", fut);
-            }).otherwise(t -> {
-                testContext.verify(() -> {
-                    assertThat(t).isInstanceOf(ReplyException.class);
-                    assertThat(t).hasMessageThat().contains(addressA);
-                    undeployedA.flag();
-                });
-                return null;
-            }).compose(nothing -> {
-                return Future.<Message<String>>future(fut -> {
-                    vertx.eventBus().<String>request(addressB, "", fut);
-                });
-            }).compose(response -> {
-                // Only "AVerticle is undeployed, BVerticle should still respond"
-                testContext.verify(() -> {
-                    assertThat(response.body()).isEqualTo(dummyVerticleB.getExpectedResponse());
-                    responseB.flag();
-                });
-                return deployments.get(1).undeploy();
-            });
-        }).compose(nothing -> {
-            return Future.<Message<String>>future(fut -> {
-                vertx.eventBus().<String>request(addressB, "", fut);
-            }).recover(t -> {
-                testContext.verify(() -> {
-                    assertThat(t).isInstanceOf(ReplyException.class);
-                    assertThat(t).hasMessageThat().contains(addressB);
-                    undeployedB.flag();
-                });
-                return Future.succeededFuture();
-            });
-        }).onComplete(testContext.succeeding(v -> {}));
+        }).compose(
+                v -> Future.<Message<String>>future(fut -> vertx.eventBus().request(addressA, "", fut)).otherwise(t -> {
+                    testContext.verify(() -> {
+                        assertThat(t).isInstanceOf(ReplyException.class);
+                        assertThat(t).hasMessageThat().contains(addressA);
+                        undeployedA.flag();
+                    });
+                    return null;
+                }).compose(nothing -> {
+                    return Future.<Message<String>>future(fut -> vertx.eventBus().request(addressB, "", fut));
+                }).compose(response -> {
+                    // Only "AVerticle is undeployed, BVerticle should still respond"
+                    testContext.verify(() -> {
+                        assertThat(response.body()).isEqualTo(dummyVerticleB.getExpectedResponse());
+                        responseB.flag();
+                    });
+                    return deployments.get(1).undeploy();
+                })).compose(nothing -> Future
+                        .<Message<String>>future(fut -> vertx.eventBus().request(addressB, "", fut)).recover(t -> {
+                            testContext.verify(() -> {
+                                assertThat(t).isInstanceOf(ReplyException.class);
+                                assertThat(t).hasMessageThat().contains(addressB);
+                                undeployedB.flag();
+                            });
+                            return Future.succeededFuture();
+                        }))
+                .onComplete(testContext.succeeding(v -> {}));
     }
 
     private static class TestDeployment extends Deployment {

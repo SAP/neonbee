@@ -23,12 +23,12 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(NeonBeeExtension.class)
-public class NeonBeeExtensionBasedTest {
+class NeonBeeExtensionBasedTest {
 
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with default options / default working directory")
-    public void testNeonBeeDefault(@NeonBeeInstanceConfiguration(activeProfiles = NeonBeeProfile.ALL) NeonBee neonBee) {
+    void testNeonBeeDefault(@NeonBeeInstanceConfiguration(activeProfiles = NeonBeeProfile.ALL) NeonBee neonBee) {
         assertThat(neonBee).isNotNull();
         assertThat(isClustered(neonBee)).isFalse();
     }
@@ -36,7 +36,7 @@ public class NeonBeeExtensionBasedTest {
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with NONE profile. Only system verticle should be deployed")
-    public void testNeonBeeWithNoneProfile(NeonBee neonBee) {
+    void testNeonBeeWithNoneProfile(NeonBee neonBee) {
         assertThat(neonBee).isNotNull();
         assertThat(neonBee.getOptions().getActiveProfiles()).isEmpty();
         assertThat(isClustered(neonBee)).isFalse();
@@ -45,7 +45,7 @@ public class NeonBeeExtensionBasedTest {
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Instances with the same name should return the same NeonBee instance")
-    public void testSameNeonBeeInstance(@NeonBeeInstanceConfiguration(instanceName = "node1") NeonBee instance1,
+    void testSameNeonBeeInstance(@NeonBeeInstanceConfiguration(instanceName = "node1") NeonBee instance1,
             @NeonBeeInstanceConfiguration(instanceName = "node1") NeonBee instance2) {
         assertThat(instance1).isSameInstanceAs(instance2);
     }
@@ -53,7 +53,7 @@ public class NeonBeeExtensionBasedTest {
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with CORE profile and deploy CoreDataVerticle")
-    public void testNeonBeeWithCoreDeployment(
+    void testNeonBeeWithCoreDeployment(
             @NeonBeeInstanceConfiguration(activeProfiles = NeonBeeProfile.CORE) NeonBee neonBee,
             VertxTestContext testContext) {
         assertThat(neonBee).isNotNull();
@@ -68,7 +68,7 @@ public class NeonBeeExtensionBasedTest {
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with NONE profile and deploy CoreDataVerticle manually")
-    public void testNeonBeeWithNoneDeploymentAndManualDeployment(@NeonBeeInstanceConfiguration() NeonBee neonBee,
+    void testNeonBeeWithNoneDeploymentAndManualDeployment(@NeonBeeInstanceConfiguration() NeonBee neonBee,
             VertxTestContext testContext) {
         assertThat(neonBee).isNotNull();
         assertThat(neonBee.getOptions().getActiveProfiles()).isEmpty();
@@ -83,7 +83,7 @@ public class NeonBeeExtensionBasedTest {
     @Test
     @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
     @DisplayName("3 NeonBee instances with WEB, CORE and STABLE profiles should be started and join one cluster.")
-    public void testNeonBeeWithClusters(
+    void testNeonBeeWithClusters(
             @NeonBeeInstanceConfiguration(activeProfiles = NeonBeeProfile.WEB, clustered = true) NeonBee web,
             @NeonBeeInstanceConfiguration(activeProfiles = NeonBeeProfile.CORE, clustered = true) NeonBee core,
             @NeonBeeInstanceConfiguration(activeProfiles = NeonBeeProfile.STABLE, clustered = true) NeonBee stable) {

@@ -17,7 +17,7 @@ import com.sap.cds.reflect.CdsModel;
 import com.sap.cds.reflect.impl.CdsModelBuilder;
 import com.sap.cds.reflect.impl.CdsServiceBuilder;
 
-public class ModelDefinitionHelperTest {
+class ModelDefinitionHelperTest {
 
     @Test
     @DisplayName("Checks if namespace can be extracted")

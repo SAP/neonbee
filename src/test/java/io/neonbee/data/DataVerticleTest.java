@@ -17,7 +17,7 @@ import io.vertx.core.Future;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class DataVerticleTest extends DataVerticleTestBase {
+class DataVerticleTest extends DataVerticleTestBase {
     // Data Verticle that has NOT the @NeonBeeDeployable annotation
     private DataVerticleImpl0 dataVerticleImpl0;
 

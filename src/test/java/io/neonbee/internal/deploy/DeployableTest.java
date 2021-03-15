@@ -41,7 +41,7 @@ import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class DeployableTest extends NeonBeeTestBase {
+class DeployableTest extends NeonBeeTestBase {
     private static final String IDENTIFIER_COMPANY_1 = "io.verticle.Company1Verticle";
 
     private static final String IDENTIFIER_COMPANY_2 = "io.verticle.Company2Verticle";
@@ -53,7 +53,7 @@ public class DeployableTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("readVerticleConfig should return DeploymentOptions correct")
-    public void testReadVerticleConfig(Vertx vertx, VertxTestContext testContext) throws IOException {
+    void testReadVerticleConfig(Vertx vertx, VertxTestContext testContext) throws IOException {
         Checkpoint notExistingCheckpoint = testContext.checkpoint();
         Checkpoint existingYAMLCheckpoint = testContext.checkpoint();
         Checkpoint existingJSONCheckpoint = testContext.checkpoint();
@@ -100,7 +100,7 @@ public class DeployableTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("readVerticleConfig should add default options to DeploymentOptions")
-    public void testReadVerticleDefaultConfig(Vertx vertx, VertxTestContext testContext) throws IOException {
+    void testReadVerticleDefaultConfig(Vertx vertx, VertxTestContext testContext) {
         Path configPath = getNeonBee().getOptions().getConfigDirectory().resolve(IDENTIFIER_COMPANY_1 + ".json");
 
         JsonObject defaultOptions = new JsonObject().put("instances", 42).put("maxWorkerExecuteTime", 9001)// over 9000!
@@ -128,7 +128,7 @@ public class DeployableTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("deploy should fail if deployment failed")
-    void deployTestUnit(VertxTestContext testContext) throws IOException {
+    void deployTestUnit(VertxTestContext testContext) {
         Checkpoint failedCheck = testContext.checkpoint();
 
         Vertx vertxMock = Mockito.mock(Vertx.class);
@@ -139,20 +139,18 @@ public class DeployableTest extends NeonBeeTestBase {
 
         Mockito.doAnswer(answerFailed).when(vertxMock).deployVerticle(ArgumentMatchers.<Class<? extends Verticle>>any(),
                 Mockito.any(), Mockito.any());
-        deployable.deploy(vertxMock, CORRELATION_ID).future().onComplete(testContext.failing(t -> {
-            testContext.verify(() -> {
-                assertThat(t).hasMessageThat().isEqualTo(expectedErrorMessage);
-                failedCheck.flag();
-            });
-        }));
+        deployable.deploy(vertxMock, CORRELATION_ID).future()
+                .onComplete(testContext.failing(t -> testContext.verify(() -> {
+                    assertThat(t).hasMessageThat().isEqualTo(expectedErrorMessage);
+                    failedCheck.flag();
+                })));
     }
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("deploy should deploy all verticle in a Deployable correct")
     @DisabledOnOs(WINDOWS)
-    public void deployTestComponent(Vertx vertx, VertxTestContext testContext)
-            throws IOException, ClassNotFoundException {
+    void deployTestComponent(Vertx vertx, VertxTestContext testContext) throws IOException {
         String identifierVerticleA = "AVerticle";
         String addressA = "addressA";
         String identifierVerticleB = "BVerticle";
@@ -175,28 +173,23 @@ public class DeployableTest extends NeonBeeTestBase {
 
         // Deploy Deployables
         CompositeFuture.all(deployableAFuture, deployableBFuture).compose(compFuture -> {
-            List<Deployable> deployables = compFuture.result().<Deployable>list();
+            List<Deployable> deployables = compFuture.result().list();
             return CompositeFuture.all(deployables.stream().map(d -> d.deploy(vertx, CORRELATION_ID).future())
                     .collect(Collectors.toList()));
-        }).compose(pendingDeployments -> {
-            return Future.<Message<String>>future(fut -> {
-                vertx.eventBus().<String>request(addressA, "", fut);
-            });
-        }).compose(response -> {
-            testContext.verify(() -> {
-                assertThat(response.body()).isEqualTo(dummyVerticleA.getExpectedResponse());
-                responseA.flag();
-            });
-            return Future.<Message<String>>future(fut -> {
-                vertx.eventBus().<String>request(addressB, "", fut);
-            });
-        }).compose(response -> {
-            testContext.verify(() -> {
-                assertThat(response.body()).isEqualTo(dummyVerticleB.getExpectedResponse());
-                responseB.flag();
-            });
-            return Future.succeededFuture();
-        }).onComplete(testContext.succeeding(v -> {}));
+        }).compose(pendingDeployments -> Future
+                .<Message<String>>future(fut -> vertx.eventBus().request(addressA, "", fut))).compose(response -> {
+                    testContext.verify(() -> {
+                        assertThat(response.body()).isEqualTo(dummyVerticleA.getExpectedResponse());
+                        responseA.flag();
+                    });
+                    return Future.<Message<String>>future(fut -> vertx.eventBus().request(addressB, "", fut));
+                }).compose(response -> {
+                    testContext.verify(() -> {
+                        assertThat(response.body()).isEqualTo(dummyVerticleB.getExpectedResponse());
+                        responseB.flag();
+                    });
+                    return Future.succeededFuture();
+                }).onComplete(testContext.succeeding(v -> {}));
     }
 
     @Test
@@ -220,7 +213,7 @@ public class DeployableTest extends NeonBeeTestBase {
         class DummyVerticle extends AbstractVerticle {
 
             @Override
-            public void start(Promise<Void> startFuture) throws Exception {
+            public void start(Promise<Void> startFuture) {
                 deployed.flag();
             }
         }

@@ -37,7 +37,7 @@ import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class ODataReadEntityTest extends ODataEndpointTestBase {
+class ODataReadEntityTest extends ODataEndpointTestBase {
     private ODataRequestMod oDataRequest;
 
     @Override

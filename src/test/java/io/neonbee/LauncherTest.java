@@ -21,24 +21,24 @@ import io.neonbee.test.helper.FileSystemHelper;
 import io.vertx.core.cli.InvalidValueException;
 import io.vertx.core.cli.MissingValueException;
 
-public class LauncherTest {
+class LauncherTest {
     private static Path tempDirPath;
 
     private String[] args;
 
     @BeforeAll
-    public static void setUp() throws IOException {
+    static void setUp() throws IOException {
         tempDirPath = createTempDirectory();
     }
 
     @AfterAll
-    public static void tearDown() throws IOException {
+    static void tearDown() {
         FileSystemHelper.deleteRecursiveBlocking(tempDirPath);
     }
 
     @Test
     @DisplayName("should throw error, if working directory value is not passed")
-    public void throwErrorIfWorkingDirValueIsEmpty() {
+    void throwErrorIfWorkingDirValueIsEmpty() {
         args = new String[] { "-cwd" };
         MissingValueException exception =
                 assertThrows(MissingValueException.class, () -> parseOptions(INTERFACE.parse(List.of(args))));
@@ -47,7 +47,7 @@ public class LauncherTest {
 
     @Test
     @DisplayName("should throw error, if instance-name is empty")
-    public void throwErrorIfInstanceNameIsEmpty() {
+    void throwErrorIfInstanceNameIsEmpty() {
         args = new String[] { "-cwd", tempDirPath.toAbsolutePath().toString(), "-name", "" };
         IllegalArgumentException exception =
                 assertThrows(IllegalArgumentException.class, () -> parseOptions(INTERFACE.parse(List.of(args))));
@@ -56,7 +56,7 @@ public class LauncherTest {
 
     @Test
     @DisplayName("should use passed instance-name")
-    public void usePassedInstanceName() {
+    void usePassedInstanceName() {
         args = new String[] { "-cwd", tempDirPath.toAbsolutePath().toString(), "-name", "Hodor" };
         NeonBeeOptions neonBeeOptions = parseOptions(INTERFACE.parse(List.of(args)));
         assertThat(neonBeeOptions.getInstanceName()).isEqualTo("Hodor");
@@ -64,7 +64,7 @@ public class LauncherTest {
 
     @Test
     @DisplayName("should throw error, if the passed value is other than integer for worker pool size")
-    public void validateWorkerPoolSizeValue() {
+    void validateWorkerPoolSizeValue() {
         args = new String[] { "-cwd", tempDirPath.toAbsolutePath().toString(), "-name", "Hodor", "-wps", "hodor" };
         InvalidValueException exception =
                 assertThrows(InvalidValueException.class, () -> parseOptions(INTERFACE.parse(List.of(args))));
@@ -73,7 +73,7 @@ public class LauncherTest {
 
     @Test
     @DisplayName("should throw error, if the passed value is other than integer for event loop pool size")
-    public void validateEventLoopPoolSizeValue() {
+    void validateEventLoopPoolSizeValue() {
         args = new String[] { "-cwd", tempDirPath.toAbsolutePath().toString(), "-name", "Hodor", "-elps", "hodor" };
         InvalidValueException exception =
                 assertThrows(InvalidValueException.class, () -> parseOptions(INTERFACE.parse(List.of(args))));
@@ -82,7 +82,7 @@ public class LauncherTest {
 
     @Test
     @DisplayName("should generate expected neonbee options")
-    public void testExpectedNeonBeeOptions() {
+    void testExpectedNeonBeeOptions() {
         args = new String[] { "-cwd", tempDirPath.toAbsolutePath().toString(), "-name", "Hodor", "-wps", "2", "-elps",
                 "2", "-no-cp", "-no-jobs", "-svp", "9000" };
         NeonBeeOptions neonBeeOptions = parseOptions(INTERFACE.parse(List.of(args)));
@@ -99,7 +99,7 @@ public class LauncherTest {
 
     @Test
     @DisplayName("should generate expected clustered neonbee options")
-    public void testExpectedClusterNeonBeeOptions() {
+    void testExpectedClusterNeonBeeOptions() {
         args = new String[] { "-cwd", tempDirPath.toAbsolutePath().toString(), "-cl", "-cc", "hazelcast-local.xml",
                 "-clp", "10000" };
         NeonBeeOptions neonBeeOptions = parseOptions(INTERFACE.parse(List.of(args)));
@@ -112,7 +112,7 @@ public class LauncherTest {
 
     @Test
     @DisplayName("should execute list of preprocessors.")
-    public void testExecutePreProcessors() {
+    void testExecutePreProcessors() {
         TestPreProcessor processor = new TestPreProcessor();
         List<LauncherPreProcessor> preProcessors = List.of(processor);
         Launcher.executePreProcessors(preProcessors, new NeonBeeOptions.Mutable());

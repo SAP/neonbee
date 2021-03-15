@@ -36,7 +36,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class NeonBeeTest extends NeonBeeTestBase {
+class NeonBeeTest extends NeonBeeTestBase {
 
     @Override
     protected WorkingDirectoryBuilder provideWorkingDirectoryBuilder(TestInfo testInfo, VertxTestContext testContext) {
@@ -53,7 +53,7 @@ public class NeonBeeTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with default options / default working directory")
-    public void testStart(Vertx vertx) {
+    void testStart(Vertx vertx) {
         assertThat(getNeonBee()).isNotNull();
         assertThat(NeonBee.instance(vertx)).isNotNull();
     }
@@ -62,7 +62,7 @@ public class NeonBeeTest extends NeonBeeTestBase {
     @Disabled("If the working dir is deleted, it's not possible to override the HttpServerDefaultPort ...")
     @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with no working directory and create the working directory")
-    public void testStartWithNoWorkingDirectory() {
+    void testStartWithNoWorkingDirectory() {
         assertThat(Files.isDirectory(getNeonBee().getOptions().getWorkingDirectory())).isTrue();
     }
 
@@ -70,14 +70,14 @@ public class NeonBeeTest extends NeonBeeTestBase {
     @Disabled("If the working dir is empty, it's not possible to override the HttpServerDefaultPort ...")
     @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with an empty working directory and create the logs directory")
-    public void testStartWithEmptyWorkingDirectory() {
+    void testStartWithEmptyWorkingDirectory() {
         assertThat(Files.isDirectory(getNeonBee().getOptions().getLogDirectory())).isTrue();
     }
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Vert.x should start in non-clustered mode. ")
-    public void testStandaloneInitialization(VertxTestContext testContext) {
+    void testStandaloneInitialization(VertxTestContext testContext) {
         NeonBee.initVertx(new NeonBeeOptions.Mutable()).onComplete(testContext.succeeding(vertx -> {
             assertThat(vertx.isClustered()).isFalse();
             testContext.completeNow();
@@ -87,7 +87,7 @@ public class NeonBeeTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Vert.x should start in clustered mode.")
-    public void testClusterInitialization(VertxTestContext testContext) {
+    void testClusterInitialization(VertxTestContext testContext) {
         NeonBee.initVertx(
                 new NeonBeeOptions.Mutable().setClustered(true).setClusterConfigResource("hazelcast-local.xml"))
                 .onComplete(testContext.succeeding(vertx -> {
@@ -98,7 +98,7 @@ public class NeonBeeTest extends NeonBeeTestBase {
 
     @Test
     @DisplayName("NeonBee should register and unregister local consumer correct.")
-    public void testRegisterAndUnregisterLocalConsumer() {
+    void testRegisterAndUnregisterLocalConsumer() {
         String address = "DataVerticle1";
         assertThat(getNeonBee().isLocalConsumerAvailable(address)).isFalse();
         getNeonBee().registerLocalConsumer(address);
@@ -110,7 +110,7 @@ public class NeonBeeTest extends NeonBeeTestBase {
     @SuppressWarnings("unchecked")
     @Test
     @DisplayName("Vert.x should add eventbus interceptors.")
-    public void testDecorateEventbus() throws Exception {
+    void testDecorateEventbus() throws Exception {
         Vertx vertx = NeonBeeMockHelper.defaultVertxMock();
         NeonBee neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, new NeonBeeOptions.Mutable(),
                 new NeonBeeConfig(new JsonObject().put("trackingDataHandlingStrategy", "wrongvalue")));
@@ -132,7 +132,7 @@ public class NeonBeeTest extends NeonBeeTestBase {
     }
 
     @Test
-    public void testFilterByProfile() {
+    void testFilterByProfile() {
         assertThat(NeonBee.filterByAutoDeployAndProfiles(CoreVerticle.class, List.<NeonBeeProfile>of(CORE))).isTrue();
         assertThat(NeonBee.filterByAutoDeployAndProfiles(CoreVerticle.class, List.<NeonBeeProfile>of(CORE, STABLE)))
                 .isTrue();

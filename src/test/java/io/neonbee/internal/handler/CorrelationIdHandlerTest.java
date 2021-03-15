@@ -16,10 +16,10 @@ import org.junit.jupiter.api.Test;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.RoutingContext;
 
-public class CorrelationIdHandlerTest {
+class CorrelationIdHandlerTest {
     @Test
     @DisplayName("test GENERATE_UUID correlation strategy")
-    public void generateUuidStrategy() {
+    void generateUuidStrategy() {
         RoutingContext routingContextMock = mock(RoutingContext.class);
         CorrelationIdHandler.create(GENERATE_UUID).handle(routingContextMock);
         verifyUuidCorrelationId(routingContextMock);
@@ -27,7 +27,7 @@ public class CorrelationIdHandlerTest {
 
     @Test
     @DisplayName("test REQUEST_HEADER correlation strategy fallback to UUID_STRATEGY")
-    public void requestHeaderStrategyFallback() {
+    void requestHeaderStrategyFallback() {
         RoutingContext routingContextMock = mock(RoutingContext.class);
         when(routingContextMock.request()).then(RETURNS_MOCKS);
         CorrelationIdHandler.create(REQUEST_HEADER).handle(routingContextMock);
@@ -36,7 +36,7 @@ public class CorrelationIdHandlerTest {
 
     @Test
     @DisplayName("test REQUEST_HEADER correlation strategy x-vcap-request-id header")
-    public void requestHeaderStrategyHeaders() {
+    void requestHeaderStrategyHeaders() {
         String expectedCorrelationId = "expectedCorrelationId";
 
         for (String header : new String[] { "X-CorrelationID", "x-vcap-request-id" }) {

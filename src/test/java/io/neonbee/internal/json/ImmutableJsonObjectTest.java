@@ -8,20 +8,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class ImmutableJsonObjectTest {
+class ImmutableJsonObjectTest {
     @Test
-    public void testImmutableClass() {
+    void testImmutableClass() {
         assertThat(new ImmutableJsonObject().getMap().getClass()).isEqualTo(unmodifiableMap(emptyMap()).getClass());
     }
 
     @Test
-    public void testImmutable() {
+    void testImmutable() {
         ImmutableJsonObject jsonObject = new ImmutableJsonObject();
 
         assertThrows(UnsupportedOperationException.class, () -> jsonObject.put("keyX", true));
@@ -43,7 +43,7 @@ public class ImmutableJsonObjectTest {
     }
 
     @Test
-    public void testImmutableConstruction() {
+    void testImmutableConstruction() {
         assertThrows(UnsupportedOperationException.class, () -> new ImmutableJsonObject().put("keyX", true));
         assertThrows(UnsupportedOperationException.class, () -> new ImmutableJsonObject("{}").put("keyX", true));
         assertThrows(UnsupportedOperationException.class,
@@ -55,7 +55,7 @@ public class ImmutableJsonObjectTest {
     }
 
     @Test
-    public void testGetPrimitives() {
+    void testGetPrimitives() {
         ImmutableJsonObject jsonObject = new ImmutableJsonObject(
                 new JsonObject().put("key1", 1).put("key2", true).put("key3", "String").putNull("key4"));
         assertThat(jsonObject.getInteger("key1")).isEqualTo(1);
@@ -70,7 +70,7 @@ public class ImmutableJsonObjectTest {
     }
 
     @Test
-    public void testGetComplexValues() {
+    void testGetComplexValues() {
         ImmutableJsonObject jsonObject = new ImmutableJsonObject(new JsonObject()
                 .put("object", new JsonObject().put("key1", 1).put("key2", true).put("key3", "String").putNull("key4"))
                 .put("array", new JsonArray().add(1).add(2).add(3)));
@@ -89,7 +89,7 @@ public class ImmutableJsonObjectTest {
     }
 
     @Test
-    public void testCopyIsMutable() {
+    void testCopyIsMutable() {
         assertDoesNotThrow(() -> new ImmutableJsonObject().copy().put("keyX", true));
     }
 }

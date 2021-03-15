@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import com.google.common.collect.Streams;
 import io.neonbee.internal.BasicJar;
 
-public class ClassPathScannerTest {
+class ClassPathScannerTest {
 
     @Test
     @DisplayName("Should find passed attribute in all Manifest files")

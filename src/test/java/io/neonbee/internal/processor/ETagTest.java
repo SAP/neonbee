@@ -19,7 +19,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class ETagTest extends ODataEndpointTestBase {
+class ETagTest extends ODataEndpointTestBase {
 
     @Override
     protected List<Path> provideEntityModels() {

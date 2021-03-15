@@ -9,10 +9,10 @@ import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-public class JobScheduleTest {
+class JobScheduleTest {
     @Test
     @DisplayName("Initialize JobSchedule")
-    public void testJobSchedule() {
+    void testJobSchedule() {
         Instant now = Instant.now();
 
         JobSchedule schedule = new JobSchedule();
@@ -39,9 +39,7 @@ public class JobScheduleTest {
         assertThat(schedule.isPeriodic()).isTrue();
         assertThat(now.until(schedule.adjustInto(now), ChronoUnit.MINUTES)).isEqualTo(1337);
 
-        schedule = new JobSchedule(now, temporal -> {
-            return temporal.plus(20, ChronoUnit.SECONDS);
-        }, now);
+        schedule = new JobSchedule(now, temporal -> temporal.plus(20, ChronoUnit.SECONDS), now);
         assertThat(now.until(schedule.adjustInto(now), ChronoUnit.SECONDS)).isEqualTo(20);
     }
 }

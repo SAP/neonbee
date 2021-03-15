@@ -19,7 +19,7 @@ import ch.qos.logback.classic.Logger;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.json.JsonObject;
 
-public class LoggerConfigurationTest {
+class LoggerConfigurationTest {
     public static final LoggerConfiguration ROOT = new LoggerConfiguration(Logger.ROOT_LOGGER_NAME, INFO);
 
     private static int logInstanceCount;
@@ -29,7 +29,7 @@ public class LoggerConfigurationTest {
     private final LoggerConfiguration logger2 = new LoggerConfiguration(null, DEBUG);
 
     @BeforeEach
-    public void setUpLoggers() {
+    void setUpLoggers() {
         // there is no way to "delete" log instances, thus create new log instances for each run
 
         String name1 = LoggerConfigurationTest.class.getSimpleName() + ++logInstanceCount;
@@ -42,7 +42,7 @@ public class LoggerConfigurationTest {
     }
 
     @Test
-    public void testBasics() {
+    void testBasics() {
         ROOT.hashCode();
         assertThat(ROOT.toString()).isEqualTo("LoggerConfiguration [name=ROOT, configuredLevel=INFO]");
         assertThat(ROOT.getName()).isEqualTo(Logger.ROOT_LOGGER_NAME);
@@ -50,37 +50,37 @@ public class LoggerConfigurationTest {
     }
 
     @Test
-    public void testToJson() {
+    void testToJson() {
         JsonObject json = ROOT.toJson();
         assertThat(json).isEqualTo(new JsonObject().put(NAME, "ROOT").put(CONFIGURED_LEVEL, "INFO"));
     }
 
     @Test
-    public void testFromJson() {
+    void testFromJson() {
         JsonObject json = new JsonObject().put(NAME, "logger1").put(CONFIGURED_LEVEL, ERROR.levelStr);
         LoggerConfiguration configuration = LoggerConfiguration.fromJson(json);
         assertThat(configuration).isEqualTo(new LoggerConfiguration("logger1", ERROR));
     }
 
     @Test
-    public void testCompare() {
+    void testCompare() {
         assertThat(ROOT.compareTo(logger1)).isEqualTo(-1);
         assertThat(logger2.compareTo(logger1)).isEqualTo(1);
     }
 
     @Test
-    public void testCopy() {
+    void testCopy() {
         assertThat(ROOT.copy()).isEqualTo(ROOT);
         assertThat(ROOT.copy()).isNotSameInstanceAs(ROOT);
     }
 
     @Test
-    public void testToAndFromJson() {
+    void testToAndFromJson() {
         assertThat(LoggerConfiguration.fromJson(logger1.toJson())).isEqualTo(logger1);
     }
 
     @Test
-    public void testApplyingEffectiveLogLevels() {
+    void testApplyingEffectiveLogLevels() {
         logger1.setEffectiveLevel(INFO);
         assertThat(logger1.getEffectiveLevel()).isEqualTo(INFO);
 

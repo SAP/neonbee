@@ -26,7 +26,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
 
-public class NavigationPropertyHelper {
+public final class NavigationPropertyHelper {
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     /**
@@ -158,5 +158,9 @@ public class NavigationPropertyHelper {
             EdmNavigationProperty navProb = ((UriResourceNavigation) resourceParts.get(1)).getProperty();
             return getNavigationTargetEntitySet(resourceEntitySet, navProb, routingContext);
         }
+    }
+
+    private NavigationPropertyHelper() {
+
     }
 }

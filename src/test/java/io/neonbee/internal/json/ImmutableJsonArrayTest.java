@@ -8,21 +8,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class ImmutableJsonArrayTest {
+class ImmutableJsonArrayTest {
     @Test
-    public void testImmutableClass() {
+    void testImmutableClass() {
         assertThat(new ImmutableJsonArray().getList().getClass()).isEqualTo(unmodifiableList(emptyList()).getClass());
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testImmutable() {
+    void testImmutable() {
         ImmutableJsonArray jsonArray = new ImmutableJsonArray();
 
         assertThrows(UnsupportedOperationException.class, () -> jsonArray.add(true));
@@ -44,7 +44,7 @@ public class ImmutableJsonArrayTest {
     }
 
     @Test
-    public void testImmutableConstruction() {
+    void testImmutableConstruction() {
         assertThrows(UnsupportedOperationException.class, () -> new ImmutableJsonArray().add(true));
         assertThrows(UnsupportedOperationException.class, () -> new ImmutableJsonArray("[]").add(true));
         assertThrows(UnsupportedOperationException.class, () -> new ImmutableJsonArray(List.of(1, 2, 3)).add(true));
@@ -53,7 +53,7 @@ public class ImmutableJsonArrayTest {
     }
 
     @Test
-    public void testGetPrimitives() {
+    void testGetPrimitives() {
         ImmutableJsonArray jsonArray = new ImmutableJsonArray(new JsonArray().add(1).add(true).add("String").addNull());
         assertThat(jsonArray.getInteger(0)).isEqualTo(1);
         assertThat(jsonArray.getBoolean(1)).isEqualTo(true);
@@ -67,7 +67,7 @@ public class ImmutableJsonArrayTest {
     }
 
     @Test
-    public void testGetComplexValues() {
+    void testGetComplexValues() {
         ImmutableJsonArray jsonArray = new ImmutableJsonArray(new JsonArray()
                 .add(new JsonObject().put("key1", 1).put("key2", true).put("key3", "String").putNull("key4"))
                 .add(new JsonArray().add(1).add(2).add(3)));
@@ -85,7 +85,7 @@ public class ImmutableJsonArrayTest {
     }
 
     @Test
-    public void testCopyIsMutable() {
+    void testCopyIsMutable() {
         assertDoesNotThrow(() -> new ImmutableJsonArray().copy().add(true));
     }
 }

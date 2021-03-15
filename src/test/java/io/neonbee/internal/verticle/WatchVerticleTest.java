@@ -40,7 +40,7 @@ import io.vertx.junit5.VertxTestContext;
 import io.vertx.junit5.VertxTestContext.ExecutionBlock;
 
 @ExtendWith(VertxExtension.class)
-public class WatchVerticleTest {
+class WatchVerticleTest {
     private Path watchDir;
 
     @BeforeEach

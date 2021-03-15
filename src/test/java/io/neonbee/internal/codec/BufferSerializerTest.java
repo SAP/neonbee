@@ -15,7 +15,7 @@ class BufferSerializerTest {
 
     @Test
     @DisplayName("serialization of a buffer should produce the right JSON representation.")
-    public void testSerialization() throws IOException, JSONException {
+    void testSerialization() throws IOException, JSONException {
         BufferWrapper wrapper = new BufferWrapper("file", Buffer.buffer("body"));
         ObjectMapper mapper = new ObjectMapper();
         String json = mapper.writeValueAsString(wrapper);

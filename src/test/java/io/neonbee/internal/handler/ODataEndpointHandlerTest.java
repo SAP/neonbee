@@ -65,7 +65,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
+class ODataEndpointHandlerTest extends ODataEndpointTestBase {
 
     @Override
     protected List<Path> provideEntityModels() {
@@ -94,7 +94,7 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
 
     @Test
     @DisplayName("map generic response")
-    public void checkGenericResponseMapping() {
+    void checkGenericResponseMapping() {
         ODataResponse odataResponse = new ODataResponse();
         odataResponse.setStatusCode(200);
         odataResponse.setHeader("expected1", "value1");
@@ -115,7 +115,7 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
 
     @Test
     @DisplayName("map OData response")
-    public void checkODataResponseMapping() {
+    void checkODataResponseMapping() {
         ODataResponse odataResponse = new ODataResponse();
         ODataContent odataContentMock = mock(ODataContent.class);
         doAnswer((Answer<ODataContent>) invocation -> {
@@ -135,7 +135,7 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if (lazy) loading OData models on first request to ODataEndpoint works")
-    public void testODataEndpointLazyLoading(VertxTestContext testContext) {
+    void testODataEndpointLazyLoading(VertxTestContext testContext) {
         assertOData(requestMetadata("io.neonbee.handler.TestService"),
                 body -> assertThat(body.toString()).contains("<edmx:Edmx"), testContext)
                         .onComplete(testContext.succeedingThenComplete());
@@ -143,7 +143,7 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
 
     @Test
     @DisplayName("test mapToODataRequest")
-    public void testMapToODataRequest() throws Exception {
+    void testMapToODataRequest() throws Exception {
         String expectedQuery = "$filter=foo eq 'bar'&$limit=42";
         String expectedPath = "/path";
         String expectedNamespace = "namespace";
@@ -169,7 +169,7 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
     }
 
     @Test
-    public void testUriConversionRules() {
+    void testUriConversionRules() {
         // strict should not convert anything!
         assertThat(STRICT.apply("any-string")).isEqualTo("any-string");
         assertThat(STRICT.apply("anyOtherString")).isEqualTo("anyOtherString");
@@ -213,7 +213,7 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if multiple service endpoints are created with strict URI mapping")
-    public void testStrictUriConversion(VertxTestContext testContext) {
+    void testStrictUriConversion(VertxTestContext testContext) {
         all(assertOData(requestMetadata("io.neonbee.handler.TestService"), ODataEndpointHandlerTest::assertTS1Handler,
                 testContext),
                 assertOData(requestMetadata("io.neonbee.handler2.Test2Service"),
@@ -225,7 +225,7 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if loose URI mapping works")
-    public void testLooseUriConversion(VertxTestContext testContext) {
+    void testLooseUriConversion(VertxTestContext testContext) {
         all(assertOData(requestMetadata("io-neonbee-handler-test"), ODataEndpointHandlerTest::assertTS1Handler,
                 testContext),
                 assertOData(requestMetadata("io-neonbee-handler2-test2"), ODataEndpointHandlerTest::assertTS2Handler,
@@ -237,7 +237,7 @@ public class ODataEndpointHandlerTest extends ODataEndpointTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if CDS URI mapping works")
-    public void testCDSUriConversion(VertxTestContext testContext) {
+    void testCDSUriConversion(VertxTestContext testContext) {
         all(assertOData(requestMetadata("test"), ODataEndpointHandlerTest::assertTS1Handler, testContext),
                 assertOData(requestMetadata("test2"), ODataEndpointHandlerTest::assertTS2Handler, testContext),
                 assertOData(requestMetadata(""), ODataEndpointHandlerTest::assertTS3Handler, testContext))

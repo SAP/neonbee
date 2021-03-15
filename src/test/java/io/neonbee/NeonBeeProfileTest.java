@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 /**
  * NeonBee deployment profile.
  */
-public class NeonBeeProfileTest {
+class NeonBeeProfileTest {
 
     @Test
     @DisplayName("is profile active")

@@ -33,7 +33,7 @@ public final class EdmConstants {
 
     public static final BigInteger EDM_BYTE_MIN = BigInteger.ZERO;
 
-    public static final BigInteger EDM_BYTE_MAX = BigInteger.valueOf((Byte.MAX_VALUE * 2) + 1);
+    public static final BigInteger EDM_BYTE_MAX = BigInteger.valueOf((Byte.MAX_VALUE * 2L) + 1);
 
     public static final BigInteger EDM_INT16_MIN = BigInteger.valueOf(Short.MIN_VALUE);
 

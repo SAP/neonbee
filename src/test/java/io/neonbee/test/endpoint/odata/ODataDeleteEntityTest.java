@@ -17,7 +17,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class ODataDeleteEntityTest extends ODataEndpointTestBase {
+class ODataDeleteEntityTest extends ODataEndpointTestBase {
     private ODataRequest oDataRequest;
 
     @Override

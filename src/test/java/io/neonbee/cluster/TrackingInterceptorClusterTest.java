@@ -34,7 +34,7 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith({ NeonBeeExtension.class, MockitoExtension.class })
-public class TrackingInterceptorClusterTest {
+class TrackingInterceptorClusterTest {
 
     @Mock
     private TrackingDataHandlingStrategy strategy;
@@ -50,7 +50,7 @@ public class TrackingInterceptorClusterTest {
     @Test
     @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Body of messages over distributed eventbus should be non-empty.")
-    public void testNeonBeeWithClusters(@NeonBeeInstanceConfiguration(clustered = true) NeonBee core,
+    void testNeonBeeWithClusters(@NeonBeeInstanceConfiguration(clustered = true) NeonBee core,
             @NeonBeeInstanceConfiguration(clustered = true) NeonBee stable, VertxTestContext testContext) {
 
         stable.getVertx().eventBus().addInboundInterceptor(new TrackingInterceptor(MessageDirection.INBOUND, strategy))

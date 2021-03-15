@@ -37,7 +37,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class ODataReadEntitiesTest extends ODataEndpointTestBase {
+class ODataReadEntitiesTest extends ODataEndpointTestBase {
 
     @Override
     protected List<Path> provideEntityModels() {

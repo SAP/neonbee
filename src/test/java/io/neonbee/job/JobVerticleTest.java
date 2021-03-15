@@ -24,7 +24,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 
-public class JobVerticleTest {
+class JobVerticleTest {
     private static class TestJobVerticle extends JobVerticle {
         public final Vertx vertxMock;
 
@@ -91,7 +91,7 @@ public class JobVerticleTest {
 
     @Test
     @DisplayName("Verify that jobs are scheduled at the expected times")
-    public void verifyJobSchedule() {
+    void verifyJobSchedule() {
         TestJobVerticle testJobVerticle = new TestJobVerticle(new JobSchedule());
         // when a job is scheduled (once) the next time it is executed should be in approximately 100 ms (or less)
         verify(testJobVerticle.vertxMock).setTimer(longThat(isApproximately(100)), any());
@@ -153,7 +153,7 @@ public class JobVerticleTest {
 
     @Test
     @DisplayName("Verify that jobs executed when scheduled")
-    public void verifyJobExecuted() {
+    void verifyJobExecuted() {
         // if a one time job was scheduled, handler should be called once and undeploay should be called
         TestJobVerticle testJobVerticle = new TestJobVerticle(new JobSchedule(), true, false, 100);
         assertThat(testJobVerticle.jobExecuted).isEqualTo(1);
@@ -183,7 +183,7 @@ public class JobVerticleTest {
 
     @Test
     @DisplayName("Verify that jobs are disabled when flag is set")
-    public void verifyDisableJobScheduling() {
+    void verifyDisableJobScheduling() {
         TestJobVerticle testJobVerticle = new TestJobVerticle(new JobSchedule(), true, true);
         assertThat(testJobVerticle.jobExecuted).isEqualTo(0);
         verify(testJobVerticle.vertxMock).undeploy(any());
