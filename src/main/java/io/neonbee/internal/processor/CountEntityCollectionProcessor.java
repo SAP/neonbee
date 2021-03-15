@@ -2,6 +2,9 @@ package io.neonbee.internal.processor;
 
 import static io.neonbee.entity.EntityVerticle.requestEntity;
 import static io.neonbee.internal.Helper.EMPTY;
+import static io.neonbee.internal.processor.EntityProcessor.findEntityByKeyPredicates;
+import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.chooseEntitySet;
+import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.fetchNavigationTargetEntities;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -27,12 +30,15 @@ import org.apache.olingo.server.api.ServiceMetadata;
 import org.apache.olingo.server.api.serializer.EntityCollectionSerializerOptions;
 import org.apache.olingo.server.api.serializer.SerializerException;
 import org.apache.olingo.server.api.uri.UriInfo;
+import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 import org.apache.olingo.server.api.uri.queryoption.FilterOption;
 import org.apache.olingo.server.api.uri.queryoption.OrderByOption;
 import org.apache.olingo.server.api.uri.queryoption.SkipOption;
 import org.apache.olingo.server.api.uri.queryoption.TopOption;
 import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitException;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
@@ -56,6 +62,10 @@ import io.vertx.ext.web.RoutingContext;
         justification = "Common practice in Olingo to name the implementation of the processor same as the interface")
 public class CountEntityCollectionProcessor extends AsynchronousProcessor
         implements org.apache.olingo.server.api.processor.CountEntityCollectionProcessor {
+    @VisibleForTesting
+    static final UnsupportedOperationException TOO_MANY_PARTS_EXCEPTION =
+            new UnsupportedOperationException("Read requests with more than two resource parts are not supported.");
+
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     private OData odata;
@@ -82,46 +92,65 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
     @Override
     public void readEntityCollection(ODataRequest request, ODataResponse response, UriInfo uriInfo,
             ContentType responseFormat) {
+        List<UriResource> resourceParts = uriInfo.getUriResourceParts();
+        if (resourceParts.size() > 2) {
+            throw TOO_MANY_PARTS_EXCEPTION;
+        }
         Promise<Void> processPromise = getProcessPromise();
-        EntityCollection entityCollection = new EntityCollection();
 
         // Retrieve the requested EntitySet from the uriInfo
-        EdmEntitySet edmEntitySet = ((UriResourceEntitySet) uriInfo.getUriResourceParts().get(0)).getEntitySet();
-        EdmEntityType edmEntityType = edmEntitySet.getEntityType();
+        UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0);
+        EdmEntityType edmEntityType = uriResourceEntitySet.getEntitySet().getEntityType();
 
-        // Fetch the data from backend
-        fetchEntities(request, edmEntityType, ew -> {
-            try {
-                Promise<List<Entity>> applyQueryOptionsPromise = Promise.promise();
+        Promise<List<Entity>> responsePromise = Promise.promise();
 
-                List<Entity> resultEntityList = applyFilterQueryOption(uriInfo.getFilterOption(), ew.getEntities());
-                if (!resultEntityList.isEmpty()) {
-                    applyOrderByQueryOption(uriInfo.getOrderByOption(), resultEntityList);
-                    resultEntityList = applySkipQueryOption(uriInfo.getSkipOption(), resultEntityList);
-                    resultEntityList = applyTopQueryOption(uriInfo.getTopOption(), resultEntityList);
-                    applyExpandQueryOptions(uriInfo, resultEntityList).onComplete(applyQueryOptionsPromise);
-                } else {
-                    applyQueryOptionsPromise.complete(resultEntityList);
-                }
-
-                applyQueryOptionsPromise.future().onSuccess(finalResultEntities -> {
-                    entityCollection.getEntities().addAll(finalResultEntities);
-                    EntityCollectionSerializerOptions opts;
-                    try {
-                        opts = createSerializerOptions(request, uriInfo, edmEntitySet);
-                        response.setContent(odata.createSerializer(responseFormat)
-                                .entityCollection(serviceMetadata, edmEntityType, entityCollection, opts).getContent());
-                        response.setStatusCode(HttpStatusCode.OK.getStatusCode());
-                        response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
-                        processPromise.complete();
-                    } catch (ODataException e) {
-                        processPromise.fail(e);
+        if (resourceParts.size() == 1) {
+            // Fetch the data from backend
+            fetchEntities(request, edmEntityType, ew -> {
+                try {
+                    List<Entity> resultEntityList = applyFilterQueryOption(uriInfo.getFilterOption(), ew.getEntities());
+                    if (!resultEntityList.isEmpty()) {
+                        applyOrderByQueryOption(uriInfo.getOrderByOption(), resultEntityList);
+                        resultEntityList = applySkipQueryOption(uriInfo.getSkipOption(), resultEntityList);
+                        resultEntityList = applyTopQueryOption(uriInfo.getTopOption(), resultEntityList);
+                        applyExpandQueryOptions(uriInfo, resultEntityList).onComplete(responsePromise);
+                    } else {
+                        responsePromise.complete(resultEntityList);
                     }
-                }).onFailure(processPromise::fail);
+                } catch (ODataException e) {
+                    processPromise.fail(e);
+                }
+            });
+        } else {
+            fetchEntities(request, edmEntityType, ew -> {
+                try {
+                    Entity foundEntity =
+                            findEntityByKeyPredicates(routingContext, uriResourceEntitySet, ew.getEntities());
+                    fetchNavigationTargetEntities(resourceParts.get(1), foundEntity, vertx, routingContext)
+                            .onComplete(responsePromise);
+                } catch (ODataApplicationException e) {
+                    processPromise.fail(e);
+                }
+            });
+        }
+
+        responsePromise.future().onSuccess(finalResultEntities -> {
+            EntityCollection entityCollection = new EntityCollection();
+            entityCollection.getEntities().addAll(finalResultEntities);
+            EntityCollectionSerializerOptions opts;
+            try {
+                EdmEntitySet edmEntitySet =
+                        chooseEntitySet(resourceParts, uriResourceEntitySet.getEntitySet(), routingContext);
+                opts = createSerializerOptions(request, uriInfo, edmEntitySet);
+                response.setContent(odata.createSerializer(responseFormat)
+                        .entityCollection(serviceMetadata, edmEntityType, entityCollection, opts).getContent());
+                response.setStatusCode(HttpStatusCode.OK.getStatusCode());
+                response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+                processPromise.complete();
             } catch (ODataException e) {
                 processPromise.fail(e);
             }
-        });
+        }).onFailure(processPromise::fail);
     }
 
     private void fetchEntities(ODataRequest request, EdmEntityType edmEntityType,
