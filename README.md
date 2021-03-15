@@ -2,6 +2,7 @@
 
 [![Discord](https://img.shields.io/discord/786526477922336778.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/Fc3JWAHWFm)
 [![REUSE status](https://api.reuse.software/badge/github.com/sap/neonbee)](https://api.reuse.software/info/github.com/sap/neonbee)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=neonbee_key&metric=coverage)](https://sonarcloud.io/dashboard?id=neonbee_key)
 
 NeonBee is an open source reactive dataflow engine, a data stream processing framework using [Vert.x](https://github.com/eclipse/vert.x).
 
