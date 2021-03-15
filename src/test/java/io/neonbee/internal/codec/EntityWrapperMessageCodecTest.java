@@ -37,7 +37,7 @@ class EntityWrapperMessageCodecTest extends NeonBeeTestBase {
     }
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         codec = new EntityWrapperMessageCodec(getNeonBee().getVertx());
     }
 

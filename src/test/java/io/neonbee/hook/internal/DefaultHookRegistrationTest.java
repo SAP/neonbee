@@ -24,7 +24,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
-public class DefaultHookRegistrationTest {
+class DefaultHookRegistrationTest {
     private DefaultHookRegistry hookRegistry;
 
     private Object instanceWithHook;

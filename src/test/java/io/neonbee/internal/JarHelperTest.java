@@ -6,7 +6,7 @@ import java.net.URI;
 
 import org.junit.jupiter.api.Test;
 
-public class JarHelperTest {
+class JarHelperTest {
 
     @Test
     void extractFilePathTest() {

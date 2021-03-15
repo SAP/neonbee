@@ -16,11 +16,11 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.Timeout;
 
-public class InstanceInfoHandlerTest extends DataVerticleTestBase {
+class InstanceInfoHandlerTest extends DataVerticleTestBase {
     @Test
     @DisplayName("Check the set X-Instance-Info header")
     @Timeout(value = 1, timeUnit = TimeUnit.SECONDS)
-    public void testXInstanceName(Vertx vertx) {
+    void testXInstanceName(Vertx vertx) {
         createRequest(HttpMethod.GET, "/").send(asyncResponse -> {
             if (asyncResponse.succeeded()) {
                 HttpResponse<Buffer> response = asyncResponse.result();

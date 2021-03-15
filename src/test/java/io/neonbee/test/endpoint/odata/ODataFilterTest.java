@@ -27,7 +27,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class ODataFilterTest extends ODataEndpointTestBase {
+class ODataFilterTest extends ODataEndpointTestBase {
     private ODataRequest oDataRequest;
 
     @Override

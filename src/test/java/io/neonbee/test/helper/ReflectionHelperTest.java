@@ -7,12 +7,12 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.junit5.VertxTestContext.ExecutionBlock;
 
-public class ReflectionHelperTest {
+class ReflectionHelperTest {
     private static final Integer NUMBER = 2;
 
     @Test
     @DisplayName("Check that final fields can be modified")
-    public void testSetValueOfPrivateStaticField() throws Throwable {
+    void testSetValueOfPrivateStaticField() throws Throwable {
         assertThat(NUMBER).isEqualTo(2);
         ExecutionBlock reset = ReflectionHelper.setValueOfPrivateStaticField(getClass(), "NUMBER", 3);
         assertThat(NUMBER).isEqualTo(3);

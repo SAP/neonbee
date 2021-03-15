@@ -18,7 +18,7 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.eventbus.DeliveryContext;
 import io.vertx.core.json.JsonObject;
 
-public class TrackingInterceptorTest {
+class TrackingInterceptorTest {
     private TestMessage<Object> message;
 
     @BeforeEach

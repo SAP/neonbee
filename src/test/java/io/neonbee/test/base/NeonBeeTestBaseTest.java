@@ -14,7 +14,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class NeonBeeTestBaseTest extends NeonBeeTestBase {
+class NeonBeeTestBaseTest extends NeonBeeTestBase {
     private static final JsonObject PRINCIPAL = new JsonObject().put("Hodor", "Hodor");
 
     @Override

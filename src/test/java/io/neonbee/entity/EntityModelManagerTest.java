@@ -39,7 +39,7 @@ import io.vertx.core.Vertx;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class EntityModelManagerTest extends NeonBeeTestBase {
+class EntityModelManagerTest extends NeonBeeTestBase {
     private static final Path TEST_SERVICE_1_MODEL_PATH = TEST_RESOURCES.resolveRelated("TestService1.csn");
 
     private static final Path TEST_SERVICE_2_MODEL_PATH = TEST_RESOURCES.resolveRelated("TestService2.csn");
@@ -49,7 +49,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should return the same odata instance for one thread")
-    public void validateODataBufferInSameThread() {
+    void validateODataBufferInSameThread() {
         OData odata1 = getBufferedOData();
         OData odata2 = getBufferedOData();
         assertThat(odata1).isSameInstanceAs(odata2);
@@ -58,7 +58,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should return different odata instances for multiple threads")
-    public void validateODataBufferInDifferentThreads() {
+    void validateODataBufferInDifferentThreads() {
         CompletableFuture<OData> odataFuture1 = new CompletableFuture<>();
         CompletableFuture<OData> odataFuture2 = new CompletableFuture<>();
 
@@ -75,7 +75,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if loading a non-existent model fails")
-    public void loadNonExistingModelTest(Vertx vertx, VertxTestContext testContext) {
+    void loadNonExistingModelTest(Vertx vertx, VertxTestContext testContext) {
         new EntityModelManager.Loader(vertx).loadModel(Path.of("not.existing.Service.csn"))
                 .onComplete(testContext.failing(result -> testContext.completeNow()));
     }
@@ -83,7 +83,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if multiple models can be loaded from files")
-    public void loadEDMXModelsTest(Vertx vertx, VertxTestContext testContext) {
+    void loadEDMXModelsTest(Vertx vertx, VertxTestContext testContext) {
         Loader loader = new EntityModelManager.Loader(vertx);
         CompositeFuture
                 .all(loader.loadModel(TEST_SERVICE_1_MODEL_PATH), loader.loadModel(TEST_SERVICE_2_MODEL_PATH),
@@ -104,7 +104,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if models from file system can be loaded")
-    public void loadModelsFileSystemTest(Vertx vertx, VertxTestContext testContext) {
+    void loadModelsFileSystemTest(Vertx vertx, VertxTestContext testContext) {
         Loader loader = new EntityModelManager.Loader(vertx);
         CompositeFuture
                 .all(loader.loadModel(TEST_SERVICE_1_MODEL_PATH), loader.loadModel(TEST_SERVICE_2_MODEL_PATH),
@@ -124,7 +124,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if the models from classpath can be loaded ")
-    public void loadFromClassPathTest(Vertx vertx, VertxTestContext testContext) throws IOException {
+    void loadFromClassPathTest(Vertx vertx, VertxTestContext testContext) throws IOException {
         Loader loader = new EntityModelManager.Loader(vertx);
         loader.scanClassPath().onComplete(testContext.succeeding(result -> testContext.verify(() -> {
             assertThat(loader.models.get("io.neonbee.test1").getEdmx().getEdm().getEntityContainer().getNamespace())
@@ -139,7 +139,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if the models from module can be loaded ")
-    public void loadFromModuleTest(Vertx vertx, VertxTestContext testContext) throws IOException {
+    void loadFromModuleTest(Vertx vertx, VertxTestContext testContext) throws IOException {
         // Create models
         Map.Entry<String, byte[]> referenceModel = buildModelEntry("ReferenceService.csn");
 
@@ -164,7 +164,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("test if loading models doesn't fail for non-existing working directories")
-    public void dontFailModelLoadingOnNonExistingWorkingDir(Vertx vertx, VertxTestContext testContext) {
+    void dontFailModelLoadingOnNonExistingWorkingDir(Vertx vertx, VertxTestContext testContext) {
         new EntityModelManager.Loader(vertx).loadDir(Path.of("non-existing"))
                 .onComplete(testContext.succeeding(models -> testContext.completeNow()));
     }
@@ -172,7 +172,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("lazy model loading: NeonBee should not load any model files after starting")
-    public void lazyModelLoadingTest(Vertx vertx, VertxTestContext testContext) throws Exception {
+    void lazyModelLoadingTest(Vertx vertx, VertxTestContext testContext) throws Exception {
         Path workingDir = FileSystemHelper.createTempDirectory();
         WorkingDirectoryBuilder.hollow().addModel(TEST_RESOURCES.resolveRelated("TestService1.csn"))
                 .addModel(TEST_RESOURCES.resolveRelated("TestService2.csn")).build(workingDir);
@@ -218,7 +218,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if getting single shared models will work for get shared edmx model")
-    public void getSingleSharedModelsTest(Vertx vertx, VertxTestContext testContext) throws Exception {
+    void getSingleSharedModelsTest(Vertx vertx, VertxTestContext testContext) throws Exception {
         Path workingDir = FileSystemHelper.createTempDirectory();
         WorkingDirectoryBuilder.hollow().addModel(TEST_RESOURCES.resolveRelated("TestService1.csn"))
                 .addModel(TEST_RESOURCES.resolveRelated("TestService2.csn")).build(workingDir);
@@ -239,7 +239,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if getting single non-existing model will fail for get shared edmx model")
-    public void getSingleNonExistingSharedModelTest(Vertx vertx, VertxTestContext testContext) {
+    void getSingleNonExistingSharedModelTest(Vertx vertx, VertxTestContext testContext) {
         getSharedModel(vertx, "non-existing").onComplete(testContext.failing(throwable -> testContext.verify(() -> {
             assertThat(throwable).isInstanceOf(NoSuchElementException.class);
             testContext.completeNow();
@@ -249,7 +249,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if getting CSN Model works")
-    public void getCSNModelTest(Vertx vertx, VertxTestContext testContext) {
+    void getCSNModelTest(Vertx vertx, VertxTestContext testContext) {
         Loader loader = new EntityModelManager.Loader(vertx);
         Future<CdsModel> csnModelFuture = loader.loadCsnModel(TEST_SERVICE_1_MODEL_PATH);
         csnModelFuture.compose(v -> loader.loadModel(TEST_SERVICE_1_MODEL_PATH))
@@ -264,7 +264,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("register / unregister module models")
-    public void registerModuleModels(Vertx vertx, VertxTestContext testContext) throws IOException {
+    void registerModuleModels(Vertx vertx, VertxTestContext testContext) throws IOException {
         Path workingDirectory = getNeonBee().getOptions().getWorkingDirectory();
         NeonBeeMockHelper.registerNeonBeeMock(vertx,
                 new NeonBeeOptions.Mutable().setIgnoreClassPath(true).setWorkingDirectory(workingDirectory));
@@ -290,7 +290,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("register / unregister multiple modules to verify that changing the unmodifiable BUFFERED_MODELS is working correctly.")
-    public void registerMultipleModuleModels(Vertx vertx, VertxTestContext testContext) throws IOException {
+    void registerMultipleModuleModels(Vertx vertx, VertxTestContext testContext) throws IOException {
         Path workingDirectory = getNeonBee().getOptions().getWorkingDirectory();
         NeonBeeMockHelper.registerNeonBeeMock(vertx,
                 new NeonBeeOptions.Mutable().setIgnoreClassPath(true).setWorkingDirectory(workingDirectory));

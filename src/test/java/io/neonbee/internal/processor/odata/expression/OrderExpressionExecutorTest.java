@@ -29,11 +29,9 @@ import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.constants.EdmTypeKind;
 import org.apache.olingo.commons.core.edm.EdmPropertyImpl;
 import org.apache.olingo.commons.core.edm.EdmTypeImpl;
-import org.apache.olingo.server.api.ODataApplicationException;
 import org.apache.olingo.server.api.uri.UriInfoResource;
 import org.apache.olingo.server.api.uri.UriResourcePrimitiveProperty;
 import org.apache.olingo.server.api.uri.queryoption.expression.Expression;
-import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitException;
 import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitor;
 import org.apache.olingo.server.core.uri.queryoption.OrderByItemImpl;
 import org.apache.olingo.server.core.uri.queryoption.OrderByOptionImpl;
@@ -43,7 +41,7 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.ext.web.RoutingContext;
 
-public class OrderExpressionExecutorTest {
+class OrderExpressionExecutorTest {
     private final RoutingContext routingContext = mock(RoutingContext.class);
 
     @Test
@@ -573,7 +571,7 @@ public class OrderExpressionExecutorTest {
 
     @SuppressWarnings("rawtypes")
     @Test
-    public void classDefinitionTest() throws Exception {
+    void classDefinitionTest() throws Exception {
         Constructor[] constructors = OrderExpressionExecutor.class.getDeclaredConstructors();
         // The class must only have one (private) constructor
         assertThat(constructors.length).isEqualTo(1);
@@ -589,7 +587,7 @@ public class OrderExpressionExecutorTest {
 
     public static class TestExpression implements Expression {
         @Override
-        public <T> T accept(ExpressionVisitor<T> visitor) throws ExpressionVisitException, ODataApplicationException {
+        public <T> T accept(ExpressionVisitor<T> visitor) {
             return null;
         }
     }

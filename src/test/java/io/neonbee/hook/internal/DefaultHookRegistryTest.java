@@ -25,7 +25,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
-public class DefaultHookRegistryTest {
+class DefaultHookRegistryTest {
     private static final String CORRELATION_ID = "bliblablub";
 
     private DefaultHookRegistry hookRegistry;

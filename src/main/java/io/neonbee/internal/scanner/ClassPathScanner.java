@@ -239,10 +239,11 @@ public class ClassPathScanner {
             URI uri = manifestResource.toURI();
             // filter for manifest files inside of jar files
             if ("jar".equals(uri.getScheme())) {
-                FileSystem fileSystem = FileSystems.newFileSystem(uri, Map.of());
-                Path rootPath = fileSystem.getPath("/");
-                scanDirectoryWithPredicateRecursive(rootPath, predicate).forEach(path -> resources.add(path.toUri()));
-                fileSystem.close();
+                try (FileSystem fileSystem = FileSystems.newFileSystem(uri, Map.of())) {
+                    Path rootPath = fileSystem.getPath("/");
+                    scanDirectoryWithPredicateRecursive(rootPath, predicate)
+                            .forEach(path -> resources.add(path.toUri()));
+                }
             }
         }
         return resources;

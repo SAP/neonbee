@@ -254,25 +254,23 @@ public class NeonBee {
     }
 
     private static Future<NeonBee> bootstrap(NeonBeeOptions options, Vertx vertx) {
-        return succeededFuture(new NeonBee(vertx, options)).compose(neonBee -> {
-            return neonBee.registerHooks()
-                    .compose(v -> neonBee.getHookRegistry().executeHooks(HookType.BEFORE_BOOTSTRAP).mapEmpty())
-                    .compose(v -> succeededFuture(decorateEventBus(neonBee)))
-                    .compose(v -> initializeSharedDataAccessor(neonBee)).compose(v -> neonBee.registerCodecs())
-                    .compose(v -> {
-                        // Set the default TimeZone for date operations. This overwrites any configured
-                        // user.timezone properties.
-                        TimeZone.setDefault(TimeZone.getTimeZone(options.getTimeZoneId()));
-                        return succeededFuture();
-                    }).compose(v -> neonBee.deployVerticles()).recover(throwable -> {
-                        // the instance has been created, but after initialization some post-initialization
-                        // tasks went wrong, stop Vert.x again. This will also call the close hook and clean up
-                        vertx.close();
+        return succeededFuture(new NeonBee(vertx, options)).compose(neonBee -> neonBee.registerHooks()
+                .compose(v -> neonBee.getHookRegistry().executeHooks(HookType.BEFORE_BOOTSTRAP).mapEmpty())
+                .compose(v -> succeededFuture(decorateEventBus(neonBee)))
+                .compose(v -> initializeSharedDataAccessor(neonBee)).compose(v -> neonBee.registerCodecs())
+                .compose(v -> {
+                    // Set the default TimeZone for date operations. This overwrites any configured
+                    // user.timezone properties.
+                    TimeZone.setDefault(TimeZone.getTimeZone(options.getTimeZoneId()));
+                    return succeededFuture();
+                }).compose(v -> neonBee.deployVerticles()).recover(throwable -> {
+                    // the instance has been created, but after initialization some post-initialization
+                    // tasks went wrong, stop Vert.x again. This will also call the close hook and clean up
+                    vertx.close();
 
-                        return failedFuture(throwable); // propagate the failure
-                    }).compose(v -> neonBee.getHookRegistry().executeHooks(HookType.AFTER_STARTUP).mapEmpty())
-                    .map(neonBee);
-        });
+                    return failedFuture(throwable); // propagate the failure
+                }).compose(v -> neonBee.getHookRegistry().executeHooks(HookType.AFTER_STARTUP).mapEmpty())
+                .map(neonBee));
     }
 
     private static Future<Void> initializeSharedDataAccessor(NeonBee neonBee) {

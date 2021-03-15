@@ -19,7 +19,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
-public class PendingDeploymentTest {
+class PendingDeploymentTest {
     private static final String CORRELATION_ID = "correlId";
 
     @Test

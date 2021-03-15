@@ -26,7 +26,7 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(NeonBeeExtension.class)
-public class LocalRequestClusterTest {
+class LocalRequestClusterTest {
     private static final DataVerticle<JsonObject> LOCAL_TARGET_VERTICLE = new DataVerticle<>() {
         @Override
         public String getName() {
@@ -42,7 +42,7 @@ public class LocalRequestClusterTest {
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that setLocalOnly works as expected")
-    public void testLocalRequest(@NeonBeeInstanceConfiguration(clustered = true) NeonBee source,
+    void testLocalRequest(@NeonBeeInstanceConfiguration(clustered = true) NeonBee source,
             @NeonBeeInstanceConfiguration(clustered = true) NeonBee target, VertxTestContext testContext) {
         Checkpoint nonLocalRequest = testContext.checkpoint();
         Checkpoint localRequest = testContext.checkpoint();

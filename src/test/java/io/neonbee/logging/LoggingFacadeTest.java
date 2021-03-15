@@ -23,7 +23,7 @@ import io.neonbee.data.internal.DataContextImpl;
 import io.vertx.ext.web.RoutingContext;
 
 @SuppressWarnings({ "PMD.MoreThanOneLogger", "PMD.ProperLogger" })
-public class LoggingFacadeTest {
+class LoggingFacadeTest {
     private static final LoggingFacade MOCKED_LOGGING_FACADE = mock(LoggingFacade.class, CALLS_REAL_METHODS);
 
     @BeforeEach

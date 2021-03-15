@@ -43,7 +43,7 @@ import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class ODataUpdateEntityTest extends ODataEndpointTestBase {
+class ODataUpdateEntityTest extends ODataEndpointTestBase {
     private ODataRequest oDataRequest;
 
     @Override

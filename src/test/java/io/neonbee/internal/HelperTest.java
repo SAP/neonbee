@@ -13,7 +13,7 @@ import org.junit.jupiter.api.condition.DisabledOnOs;
 import io.neonbee.test.helper.ReflectionHelper;
 import io.neonbee.test.helper.SystemHelper;
 
-public class HelperTest {
+class HelperTest {
 
     @Test
     @DisabledOnOs(value = { WINDOWS }, disabledReason = "SystemHelper.setEnvironment has no effect on Windows")

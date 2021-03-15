@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import io.neonbee.hook.HookContext;
 import io.neonbee.hook.HookType;
 
-public class DefaultHookContextTest {
+class DefaultHookContextTest {
 
     @Test
     void withoutParametersTest() {

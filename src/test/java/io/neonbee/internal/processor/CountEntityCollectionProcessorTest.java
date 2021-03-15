@@ -13,7 +13,7 @@ import org.apache.olingo.server.api.uri.UriResource;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-public class CountEntityCollectionProcessorTest {
+class CountEntityCollectionProcessorTest {
 
     @Test
     @DisplayName("Throw an exception when URIResource has more than two parts")
@@ -21,9 +21,9 @@ public class CountEntityCollectionProcessorTest {
         UriInfo mockedUriInfo = mock(UriInfo.class);
         when(mockedUriInfo.getUriResourceParts()).thenReturn(Arrays.asList(new UriResource[] { null, null, null }));
 
+        CountEntityCollectionProcessor processor = new CountEntityCollectionProcessor(null, null, null);
         UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
-                () -> new CountEntityCollectionProcessor(null, null, null).readEntityCollection(null, null,
-                        mockedUriInfo, null));
+                () -> processor.readEntityCollection(null, null, mockedUriInfo, null));
         assertThat(exception).isEqualTo(TOO_MANY_PARTS_EXCEPTION);
     }
 }

@@ -17,7 +17,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
-public class HookRegistryTest {
+class HookRegistryTest {
     private final String correlID = "correl";
 
     @Test
@@ -42,8 +42,7 @@ public class HookRegistryTest {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Check that registerHooks throw an error if no constructor is available")
-    void registerHooksFails(VertxTestContext testContext)
-            throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    void registerHooksFails(VertxTestContext testContext) throws SecurityException, IllegalArgumentException {
         HookRegistry registry = new TestHookRegistry();
 
         registry.registerHooks(Void.class, correlID).onComplete(testContext.failing(t -> {

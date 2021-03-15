@@ -41,7 +41,7 @@ import io.vertx.junit5.VertxTestContext;
  * http://baseUrl/odata/io.neonbee.test.NavProbs/Categories?$expand=products
  * </pre>
  */
-public class ODataExpandEntityCollectionTest extends ODataEndpointTestBase {
+class ODataExpandEntityCollectionTest extends ODataEndpointTestBase {
     @Override
     protected List<Path> provideEntityModels() {
         return List.of(getDeclaredEntityModel());

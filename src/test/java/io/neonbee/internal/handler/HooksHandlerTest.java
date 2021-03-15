@@ -21,7 +21,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxTestContext;
 
-public class HooksHandlerTest extends DataVerticleTestBase {
+class HooksHandlerTest extends DataVerticleTestBase {
     private static final String CORRELATION_ID = "bliblablub";
 
     @Test

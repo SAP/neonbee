@@ -190,7 +190,6 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
             } catch (IllegalArgumentException e) {
                 LOGGER.correlateWith(context).error("Missing message codec", e);
                 message.fail(FAILURE_CODE_MISSING_MESSAGE_CODEC, e.getMessage());
-                return;
             } catch (DataException e) {
                 // the routine can either fail the future, or throw the DataException, if so propagate the failure
                 LOGGER.correlateWith(context).error("Processing of message failed", e);
@@ -293,28 +292,25 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
              */
             LOGGER.correlateWith(context).debug("Sending message via the event bus to {}", qualifiedName);
             String address = getAddress(qualifiedName);
-            return Future.future(doneHandler -> {
-                vertx.eventBus().<U>request(address, request.getQuery(),
-                        requestDeliveryOptions(vertx, request, context, address), asyncReply -> {
-                            LOGGER.correlateWith(context).debug("Received event bus reply");
+            return Future.future(doneHandler -> vertx.eventBus().<U>request(address, request.getQuery(),
+                    requestDeliveryOptions(vertx, request, context, address), asyncReply -> {
+                        LOGGER.correlateWith(context).debug("Received event bus reply");
 
-                            if (asyncReply.succeeded()) {
-                                context.setData(Optional
-                                        .ofNullable(decodeContextFromString(
-                                                asyncReply.result().headers().get(CONTEXT_HEADER)))
-                                        .map(DataContext::data).orElse(null));
-                                doneHandler.complete(asyncReply.result().body());
-                            } else {
-                                Throwable cause = asyncReply.cause();
-                                if (LOGGER.isWarnEnabled()) {
-                                    LOGGER.correlateWith(context).warn("Failed to receive event bus reply from {}",
-                                            qualifiedName, cause);
-                                }
-
-                                doneHandler.fail(mapException(cause));
+                        if (asyncReply.succeeded()) {
+                            context.setData(Optional
+                                    .ofNullable(
+                                            decodeContextFromString(asyncReply.result().headers().get(CONTEXT_HEADER)))
+                                    .map(DataContext::data).orElse(null));
+                            doneHandler.complete(asyncReply.result().body());
+                        } else {
+                            Throwable cause = asyncReply.cause();
+                            if (LOGGER.isWarnEnabled()) {
+                                LOGGER.correlateWith(context).warn("Failed to receive event bus reply from {}",
+                                        qualifiedName, cause);
                             }
-                        });
-            });
+                            doneHandler.fail(mapException(cause));
+                        }
+                    }));
         }
 
         FullQualifiedName entityTypeName = request.getEntityTypeName();
@@ -459,12 +455,11 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
      * @return the resolution routine
      */
     private ResolutionRoutine resolutionRoutineForStrategy(ResolutionStrategy strategy) {
-        switch (strategy) {
-        case OPTIMIZED:
+        // case RECURSIVE:
+        if (strategy == ResolutionStrategy.OPTIMIZED) {
             return new OptimizedResolutionRoutine();
-        default: // case RECURSIVE:
-            return new RecursiveResolutionRoutine();
         }
+        return new RecursiveResolutionRoutine();
     }
 
     /**

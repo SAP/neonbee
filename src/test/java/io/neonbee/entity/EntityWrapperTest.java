@@ -20,7 +20,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class EntityWrapperTest extends NeonBeeTestBase {
+class EntityWrapperTest extends NeonBeeTestBase {
     private static final EntityWrapper TEST_USER_WRAPPER =
             new EntityWrapper("io.neonbee.test2.TestService2Users.TestUsers", createTestUser());
 
@@ -43,7 +43,7 @@ public class EntityWrapperTest extends NeonBeeTestBase {
 
     @Test
     @DisplayName("Check if equals works as expected")
-    public void testEquals() {
+    void testEquals() {
         EntityWrapper fooBarEmptyString = new EntityWrapper("Foo.Bar", (Entity) null);
         EntityWrapper fooBarEmptyFQN = new EntityWrapper(new FullQualifiedName("Foo", "Bar"), (Entity) null);
         EntityWrapper hodorHodorEmptyFQN = new EntityWrapper(new FullQualifiedName("Hodor", "Hodor"), (Entity) null);
@@ -65,7 +65,7 @@ public class EntityWrapperTest extends NeonBeeTestBase {
     @Test
     @DisplayName("Check if toBuffer works as expected")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    public void testToBuffer(VertxTestContext testContext) {
+    void testToBuffer(VertxTestContext testContext) {
         EntityModelManager.reloadModels(getNeonBee().getVertx()).onComplete(testContext.succeeding(map -> {
             testContext.verify(() -> {
                 Buffer buffer = TEST_USER_WRAPPER.toBuffer(getNeonBee().getVertx());
@@ -78,7 +78,7 @@ public class EntityWrapperTest extends NeonBeeTestBase {
     @Test
     @DisplayName("Check if fromBuffer works as expected")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    public void testFromBuffer(VertxTestContext testContext) {
+    void testFromBuffer(VertxTestContext testContext) {
         EntityModelManager.reloadModels(getNeonBee().getVertx()).onComplete(testContext.succeeding(map -> {
             testContext.verify(() -> {
                 EntityWrapper decodedWrapper =

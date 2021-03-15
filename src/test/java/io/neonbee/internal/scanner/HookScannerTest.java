@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import io.neonbee.internal.BasicJar;
 
-public class HookScannerTest {
+class HookScannerTest {
 
     @Test
     @DisplayName("Should find classes which have methods that are annnotaed with @Hook or @Hooks")

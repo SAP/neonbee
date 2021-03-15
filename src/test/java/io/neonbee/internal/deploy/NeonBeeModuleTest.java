@@ -36,7 +36,7 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 @SuppressWarnings("StreamResourceLeak") // Ignore in Errorprone -> Because it is just a test
-public class NeonBeeModuleTest extends NeonBeeTestBase {
+class NeonBeeModuleTest extends NeonBeeTestBase {
     private static final String CORRELATION_ID = "correlId";
 
     @Test

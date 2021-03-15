@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-public class ODataRequestTest {
+class ODataRequestTest {
     private final Map<String, Object> compositeMap = new HashMap<>();
 
     private final String expectedServiceRootURL = "my-namespace";
@@ -20,7 +20,7 @@ public class ODataRequestTest {
 
     @BeforeEach
     @DisplayName("Setup the base OData request")
-    public void setUp() {
+    void setUp() {
         FullQualifiedName fqn = new FullQualifiedName("my-namespace", "my-entity");
         odataRequest = new ODataRequest(fqn);
         compositeMap.clear();
@@ -28,7 +28,7 @@ public class ODataRequestTest {
 
     @Test
     @DisplayName("with $metadata set")
-    public void testGetUriWithMetadata() {
+    void testGetUriWithMetadata() {
         odataRequest.setMetadata();
         assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/$metadata");
         odataRequest.setMetadata().setKey(1).setProperty("ignore");
@@ -37,7 +37,7 @@ public class ODataRequestTest {
 
     @Test
     @DisplayName("with $count set")
-    public void testGetUriWithCount() {
+    void testGetUriWithCount() {
         odataRequest.setCount();
         assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity/$count");
         odataRequest.setCount().setKey(1).setProperty("ignore");
@@ -46,34 +46,34 @@ public class ODataRequestTest {
 
     @Test
     @DisplayName("with namespace and entity name")
-    public void testGetUriNamespace() {
+    void testGetUriNamespace() {
         assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity");
     }
 
     @Test
     @DisplayName("with single string key")
-    public void testGetUriSingleStringKey() {
+    void testGetUriSingleStringKey() {
         odataRequest.setKey("0123");
         assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity('0123')");
     }
 
     @Test
     @DisplayName("with single long key")
-    public void testGetUriSingleLongKey() {
+    void testGetUriSingleLongKey() {
         odataRequest.setKey(1234);
         assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity(1234)");
     }
 
     @Test
     @DisplayName("with single date key")
-    public void testGetUriSingleDateKey() {
+    void testGetUriSingleDateKey() {
         odataRequest.setKey(LocalDate.of(2020, 2, 22));
         assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity(2020-02-22)");
     }
 
     @Test
     @DisplayName("with multiple valid keys")
-    public void testGetUriMultipleValidKeys() {
+    void testGetUriMultipleValidKeys() {
         compositeMap.put("ID", 123L);
         compositeMap.put("Name", "cheese");
         compositeMap.put("Description", "something");
@@ -90,7 +90,7 @@ public class ODataRequestTest {
 
     @Test
     @DisplayName("with multiple invalid keys")
-    public void testGetUriMultipleInvalidKeys() {
+    void testGetUriMultipleInvalidKeys() {
         compositeMap.put("ID", 123L);
         compositeMap.put("", "cheese");
         odataRequest.setKey(compositeMap);
@@ -104,7 +104,7 @@ public class ODataRequestTest {
 
     @Test
     @DisplayName("with wrong type")
-    public void testGetUriWrongType() {
+    void testGetUriWrongType() {
         compositeMap.put("ID", '1');
         try {
             odataRequest.setKey(compositeMap);
@@ -117,7 +117,7 @@ public class ODataRequestTest {
 
     @Test
     @DisplayName("with multiple invocations of setKey")
-    public void testGetUriMultipleInvocationsOfSetKey() {
+    void testGetUriMultipleInvocationsOfSetKey() {
         compositeMap.put("ID", 123L);
         odataRequest.setKey(compositeMap).setKey(123L).setKey("surprise");
         assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity('surprise')");
@@ -125,14 +125,14 @@ public class ODataRequestTest {
 
     @Test
     @DisplayName("with property set")
-    public void testGetUriWithProperty() {
+    void testGetUriWithProperty() {
         odataRequest.setProperty("my-property");
         assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity/my-property");
     }
 
     @Test
     @DisplayName("with expand single attribute")
-    public void testExpand() {
+    void testExpand() {
         odataRequest.setKey("0123").setExpandQuery("ExpandItem");
         assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity('0123')?$expand=ExpandItem");
     }

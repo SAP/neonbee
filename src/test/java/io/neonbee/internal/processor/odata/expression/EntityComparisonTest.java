@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
-public class EntityComparisonTest {
+class EntityComparisonTest {
     private final EntityComparison testEntityComparisonImplementation = new EntityComparison() {};
 
     private static final byte[] BYTES_TEST = "Test".getBytes(UTF_8);

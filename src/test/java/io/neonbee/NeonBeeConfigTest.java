@@ -12,18 +12,18 @@ import org.junit.jupiter.api.Test;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-public class NeonBeeConfigTest {
+class NeonBeeConfigTest {
 
     @Test
     @DisplayName("should read the trackingDataHandlingStrategy correctly")
-    public void readtrackingDataHandlingStrategy() {
+    void readtrackingDataHandlingStrategy() {
         NeonBeeConfig config = new NeonBeeConfig(new JsonObject().put("trackingDataHandlingStrategy", "ABC"));
         assertThat(config.getTrackingDataHandlingStrategy()).isEqualTo("ABC");
     }
 
     @Test
     @DisplayName("should read the trackingDataHandlingStrategy correctly")
-    public void getPlatformClassesTest() {
+    void getPlatformClassesTest() {
         List<String> validListOfPlatformClasses = List.of("hodor");
         List<Object> nonValidListOfPlatformClasses = List.of("hodor", 3);
 

@@ -22,7 +22,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class ODataCreateEntityTest extends ODataEndpointTestBase {
+class ODataCreateEntityTest extends ODataEndpointTestBase {
 
     @Override
     protected List<Path> provideEntityModels() {

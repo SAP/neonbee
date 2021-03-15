@@ -172,7 +172,7 @@ class DataContextImplTest {
 
     @Test
     @DisplayName("DataVerticleCoordinate toString")
-    public void testToString() {
+    void testToString() {
         DataVerticleCoordinateImpl coordinate = new DataVerticleCoordinateImpl("DataVerticle")
                 .setDeploymentId("deploymentid").setIpAddress("ipAddress");
         assertThat(coordinate.toString())
@@ -233,13 +233,13 @@ class DataContextImplTest {
 
     @Test
     @DisplayName("it should be fine to create a empty context")
-    public void testNewContextConstructor() {
+    void testNewContextConstructor() {
         testEmptyContext(new DataContextImpl());
     }
 
     @Test
     @DisplayName("it should be fine to create a empty context with null values for the constructor")
-    public void testNullValueContextConstructor() {
+    void testNullValueContextConstructor() {
         testEmptyContext(new DataContextImpl(null, null, null, null));
     }
 
@@ -252,7 +252,7 @@ class DataContextImplTest {
 
     @Test
     @DisplayName("the context should accept any correlation id (incl. null)")
-    public void testCorrelationId() {
+    void testCorrelationId() {
         assertThat(new DataContextImpl("expected1", null, null, null).correlationId()).isEqualTo("expected1");
         assertThat(new DataContextImpl("expected2", null, null, null).correlationId()).isEqualTo("expected2");
         assertThat(new DataContextImpl(null, null, null, null).correlationId()).isNull();
@@ -260,7 +260,7 @@ class DataContextImplTest {
 
     @Test
     @DisplayName("the context should accept any bearer token (incl. null)")
-    public void testBearerToken() {
+    void testBearerToken() {
         assertThat(new DataContextImpl(null, "expected1", null, null).bearerToken()).isEqualTo("expected1");
         assertThat(new DataContextImpl(null, "expected2", null, null).bearerToken()).isEqualTo("expected2");
         assertThat(new DataContextImpl(null, null, null, null).bearerToken()).isNull();
@@ -268,7 +268,7 @@ class DataContextImplTest {
 
     @Test
     @DisplayName("the context should accept any user principal (incl. null)")
-    public void testUserPrincipal() {
+    void testUserPrincipal() {
         assertThat(new DataContextImpl(null, null, new JsonObject(), null).userPrincipal())
                 .isInstanceOf(JsonObject.class);
         assertThat(new DataContextImpl(null, null, new JsonObject().put("anyAttribute", "anyExpectedValue"), null)
@@ -278,7 +278,7 @@ class DataContextImplTest {
 
     @Test
     @DisplayName("the user principal of a context should be immutable")
-    public void testUserPrincipalImmutable() {
+    void testUserPrincipalImmutable() {
         assertThrows(UnsupportedOperationException.class, () -> new DataContextImpl(null, null, new JsonObject(), null)
                 .userPrincipal().put("anyAttribute", "anyValue"));
         assertThrows(UnsupportedOperationException.class,
@@ -287,7 +287,7 @@ class DataContextImplTest {
 
     @Test
     @DisplayName("the user arbitrary data of a context")
-    public void testArbitraryData() {
+    void testArbitraryData() {
         assertThat(new DataContextImpl(null, null, null, null).data()).isEmpty();
         // should create a mutable map
         assertDoesNotThrow(() -> new DataContextImpl(null, null, null, Collections.emptyMap()).data()
@@ -301,7 +301,7 @@ class DataContextImplTest {
 
     @Test
     @DisplayName("test passing a routing context instead")
-    public void testWithRoutingContext() {
+    void testWithRoutingContext() {
         RoutingContext routingContextMock = mock(RoutingContext.class);
         HttpServerRequest requestMock = mock(HttpServerRequest.class);
         User userMock = mock(User.class);
@@ -320,7 +320,7 @@ class DataContextImplTest {
 
     @Test
     @DisplayName("test encoding / decoding null context")
-    public void testNullEncodeDecode() {
+    void testNullEncodeDecode() {
         DataContext dataContext = DataContextImpl.decodeContextFromString(
                 DataContextImpl.encodeContextToString(new DataContextImpl(null, null, null, null)));
         assertThat(dataContext.correlationId()).isNull();
@@ -331,7 +331,7 @@ class DataContextImplTest {
 
     @Test
     @DisplayName("test encoding / decoding context")
-    public void testEncodeDecode() {
+    void testEncodeDecode() {
         DataContext dataContext = DataContextImpl.decodeContextFromString(DataContextImpl.encodeContextToString(
                 new DataContextImpl("expected1", "expected2", new JsonObject().put("expectedKey", "expectedValue"),
                         new JsonObject().put("expected1", "expected2").put("expectedArray", new JsonArray().add(0))

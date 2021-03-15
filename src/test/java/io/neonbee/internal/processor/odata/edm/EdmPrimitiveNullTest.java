@@ -10,18 +10,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-public class EdmPrimitiveNullTest {
+class EdmPrimitiveNullTest {
     EdmPrimitiveNull edmPrimitiveNull;
 
     @BeforeEach
-    public void beforeEach() {
+    void beforeEach() {
         edmPrimitiveNull = new EdmPrimitiveNull();
     }
 
     @Test
     @DisplayName("Test equals method")
     @SuppressWarnings({ "EqualsIncompatibleType", "TruthSelfEquals" })
-    public void equalsTest() throws ClassNotFoundException {
+    void equalsTest() throws ClassNotFoundException {
         assertThat(edmPrimitiveNull).isEqualTo(edmPrimitiveNull);
         assertThat(edmPrimitiveNull).isEqualTo(new EdmPrimitiveNull());
         assertThat(edmPrimitiveNull).isEqualTo(EdmPrimitiveNull.getInstance());
@@ -30,63 +30,63 @@ public class EdmPrimitiveNullTest {
 
     @Test
     @DisplayName("Test fromUriLiteral method")
-    public void fromUriLiteralTest() throws EdmPrimitiveTypeException {
+    void fromUriLiteralTest() throws EdmPrimitiveTypeException {
         assertThat(edmPrimitiveNull.fromUriLiteral("null")).isEqualTo("null");
         assertThat(edmPrimitiveNull.fromUriLiteral(null)).isNull();
     }
 
     @Test
     @DisplayName("Test toUriLiteral method")
-    public void toUriLiteralTest() {
+    void toUriLiteralTest() {
         assertThat(edmPrimitiveNull.toUriLiteral("null")).isEqualTo("null");
         assertThat(edmPrimitiveNull.toUriLiteral(null)).isNull();
     }
 
     @Test
     @DisplayName("Test getDefaultType method")
-    public void getDefaultTypeTest() {
+    void getDefaultTypeTest() {
         assertThat(edmPrimitiveNull.getDefaultType()).isNull();
     }
 
     @Test
     @DisplayName("Test getName method")
-    public void getNameTest() {
+    void getNameTest() {
         assertThat(edmPrimitiveNull.getName()).isEqualTo("Null");
     }
 
     @Test
     @DisplayName("Test getNamespace method")
-    public void getNamespaceTest() {
+    void getNamespaceTest() {
         assertThat(edmPrimitiveNull.getNamespace()).isEqualTo("Edm");
     }
 
     @Test
     @DisplayName("Test getFullQualifiedName method")
-    public void getFullQualifiedNameTest() {
+    void getFullQualifiedNameTest() {
         assertThat(edmPrimitiveNull.getFullQualifiedName()).isEqualTo(new FullQualifiedName("Edm", "Null"));
     }
 
     @Test
     @DisplayName("Test getKind method")
-    public void getKindTest() {
+    void getKindTest() {
         assertThat(edmPrimitiveNull.getKind()).isEqualTo(EdmTypeKind.PRIMITIVE);
     }
 
     @Test
     @DisplayName("Test isCompatible method")
-    public void isCompatibleTest() {
+    void isCompatibleTest() {
         assertThat(edmPrimitiveNull.isCompatible(new EdmPrimitiveNull())).isTrue();
     }
 
     @Test
     @DisplayName("Test toString method")
-    public void toStringTest() {
+    void toStringTest() {
         assertThat(edmPrimitiveNull.toString()).isEqualTo("Edm.Null");
     }
 
     @Test
     @DisplayName("Test validate method")
-    public void validateTest() {
+    void validateTest() {
         assertThat(edmPrimitiveNull.validate(null, null, null, null, null, null)).isTrue();
         assertThat(edmPrimitiveNull.validate(null, true, null, null, null, null)).isTrue();
         assertThat(edmPrimitiveNull.validate("null", true, null, null, null, null)).isTrue();
@@ -96,7 +96,7 @@ public class EdmPrimitiveNullTest {
 
     @Test
     @DisplayName("Test valueOfString method")
-    public void valueOfStringTest() throws EdmPrimitiveTypeException {
+    void valueOfStringTest() throws EdmPrimitiveTypeException {
         assertThat(edmPrimitiveNull.valueOfString("null", null, null, null, null, null, String.class)).isNull();
         assertThrows(EdmPrimitiveTypeException.class,
                 () -> edmPrimitiveNull.valueOfString("Lord C.", null, null, null, null, null, String.class));
@@ -108,7 +108,7 @@ public class EdmPrimitiveNullTest {
 
     @Test
     @DisplayName("Test valueToString method")
-    public void valueToStringTest() throws EdmPrimitiveTypeException {
+    void valueToStringTest() throws EdmPrimitiveTypeException {
         assertThat(edmPrimitiveNull.valueToString("Lord C.", null, null, null, null, null)).isEqualTo("null");
         assertThat(edmPrimitiveNull.valueToString(null, true, null, null, null, null)).isNull();
         assertThrows(EdmPrimitiveTypeException.class,
