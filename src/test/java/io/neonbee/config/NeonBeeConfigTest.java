@@ -66,7 +66,7 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
     }
 
     @Test
-    @DisplayName("should read the trackingDataHandlingStrategy correctly")
+    @DisplayName("should read the platform classes correctly")
     void testGetPlatformClasses() {
         List<String> validListOfPlatformClasses = List.of("hodor");
         List<Object> nonValidListOfPlatformClasses = List.of("hodor", 3);
