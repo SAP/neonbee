@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.4.0 (2021-03-18)
+
+### Bug Fixes
+
+- flaky WatchVerticleTest ([df677239](https://github.com/SAP/neonbee/commit/df67723915edcdade47b04e38490ffbb64e73985))
+- echo the correct project name ([eddbd5b2](https://github.com/SAP/neonbee/commit/eddbd5b27c2f01cb5c893a7ef6469a4a70a138b7))
+
+
+### Code Refactoring
+
+- simplify EntityProcessor ([6bd0a214](https://github.com/SAP/neonbee/commit/6bd0a214305e4432b4a3e7a3afe5c7e402cd0e8f))
+
+
+### Features
+
+- add $expand support for entities ([6c5d0790](https://github.com/SAP/neonbee/commit/6c5d07909d4695bde4bce1ba37a12aeaa5d16888))
+
+
+### Documentation
+
+- add coverage badge ([c0df69f7](https://github.com/SAP/neonbee/commit/c0df69f79e96f52ff1cd86c4165c3e87b0e3370d))
+
+
+### Build System
+
+- **deps**: bump `vertx` from 4.0.0 to 4.0.3 ([111301dd](https://github.com/SAP/neonbee/commit/111301dd60f18e3f30e5e4425396a0bcd1f4fed9))
+
+
+### Continuous Integration
+
+- use custom GitHub token for protected branches ([710f4274](https://github.com/SAP/neonbee/commit/710f42743f038541e58925818ac7ddf792154430))
+- add sonarqube to github voter ([52f43ab2](https://github.com/SAP/neonbee/commit/52f43ab21a57d835f4c79178658bbf5cbb2d6c53))
+
+
 ## 0.3.0 (2021-03-10)
 
 ### Bug Fixes
