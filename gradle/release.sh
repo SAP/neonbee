@@ -12,7 +12,7 @@ fi
 
 cd "$( dirname "$0" )/.."
 
-echo "Releasing forme-gev ${NEXT_VERSION}"
+echo "Releasing neonbee ${NEXT_VERSION}"
 
 git tag "${NEXT_VERSION}"  # hack: creating a temporary local tag which is needed for generating the changelog
 ./gradlew changelog
