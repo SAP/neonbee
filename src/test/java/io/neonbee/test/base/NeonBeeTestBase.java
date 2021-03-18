@@ -284,6 +284,11 @@ public class NeonBeeTestBase {
                     public String generateToken(JsonObject claims, JWTOptions options) {
                         return null;
                     }
+
+                    @Override
+                    public String generateToken(JsonObject claims) {
+                        return null;
+                    }
                 });
             }
         };

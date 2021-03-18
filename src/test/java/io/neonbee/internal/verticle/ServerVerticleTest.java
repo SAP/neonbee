@@ -139,7 +139,7 @@ public class ServerVerticleTest extends NeonBeeTestBase {
         String pubKey = "Hodor";
         JsonArray pubKeys = new JsonArray().add(new JsonObject().put("algorithm", "RS256").put("publicKey", pubKey));
 
-        String expectedBuffer = BEGIN_PUBLIC_KEY + "\n" + pubKey + "\n" + END_PUBLIC_KEY;
+        Buffer expectedBuffer = Buffer.buffer(BEGIN_PUBLIC_KEY + "\n" + pubKey + "\n" + END_PUBLIC_KEY);
         List<PubSecKeyOptions> keys = ServerVerticle.extractPubSecKeys(pubKeys);
         assertThat(keys).hasSize(1);
         assertThat(keys.get(0).getAlgorithm()).isEqualTo(algorithm);
