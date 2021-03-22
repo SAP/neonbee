@@ -22,7 +22,7 @@ public class HookRegistryTest {
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    @DisplayName("Check that registerHooks instanciate class correct")
+    @DisplayName("Check that registerHooks instantiate class correct")
     void registerHooksSuccess(VertxTestContext testContext) {
         HookRegistry registry = new TestHookRegistry() {
 

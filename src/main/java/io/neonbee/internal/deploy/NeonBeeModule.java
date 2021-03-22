@@ -101,7 +101,7 @@ public class NeonBeeModule {
     }
 
     /**
-     * Unique identifier of the module which has following strucutre: module name : module version.
+     * Unique identifier of the module which has following structure: module name : module version.
      *
      * @return the identifier
      */

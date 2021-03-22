@@ -87,7 +87,7 @@ public final class ODataEndpointHandler implements Handler<RoutingContext> {
      * <li>lower case the first character of the service name (Catalog -&gt; catalog)
      * <li>prefix a - to all upper case letters, followed by a lower case and lowercase the first (fooBar -&gt; foo-bar)
      * <li>lowercase the rest of the string (FOO -&gt; foo)
-     * <li>replace all occurences of "_" with "-" (foo_bar -&gt; foo-bar)
+     * <li>replace all occurrences of "_" with "-" (foo_bar -&gt; foo-bar)
      * </ol>
      * Due to the namespace being removed from the URI, no one-to-one mapping from URI to OData service is possible when
      * choosing CDS mapping. To still be able to address all OData services uniquely, the following condition must be
@@ -286,7 +286,7 @@ public final class ODataEndpointHandler implements Handler<RoutingContext> {
             OData odata = OData.newInstance();
             ODataHandler odataHandler = odata.createRawHandler(serviceMetadata);
 
-            // add further build-in processors for NeonBee here (every processor must handle the processPromise)
+            // add further built-in processors for NeonBee here (every processor must handle the processPromise)
             odataHandler.register(new CountEntityCollectionProcessor(vertx, routingContext, processPromise));
             odataHandler.register(new EntityProcessor(vertx, routingContext, processPromise));
             odataHandler.register(new BatchProcessor(vertx, routingContext, processPromise));

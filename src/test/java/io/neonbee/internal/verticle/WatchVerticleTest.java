@@ -175,7 +175,7 @@ public class WatchVerticleTest {
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    @DisplayName("CycleTest: WatchVerticle should detect recursivly that a file was created, modified and deleted")
+    @DisplayName("CycleTest: WatchVerticle should detect recursively that a file was created, modified and deleted")
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
     void testRecursivly(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {
@@ -243,7 +243,7 @@ public class WatchVerticleTest {
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    @DisplayName("CycleTest: WatchVerticle should detect existiting files recursivly that a file was created and modified")
+    @DisplayName("CycleTest: WatchVerticle should detect existiting files recursively that a file was created and modified")
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
     void testHandleExistingRecursivly(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {

@@ -85,7 +85,7 @@ public class ExpressionVisitorOperand implements EntityComparison {
         ExpressionVisitorOperand other = otherOperand.setType();
         EdmType otherType = other.getType();
 
-        // In case of numberic values make sure that the EDM type is equal, check also the java type.
+        // In case of numeric values make sure that the EDM type is equal, check also the java type.
         // It is possible that there is an conversion even if the same EdmType is provided.
         // For example consider an Edm.Int32 (internal Integer) and an Edm.Int16 (internal Short) value:
         // shortInstance.equals(intInstance) will always be false!
