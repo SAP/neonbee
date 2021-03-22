@@ -524,49 +524,49 @@ class OrderExpressionExecutorTest {
                 new EntityComparator(routingContext, "testBinaryProperty", true, EdmPrimitiveTypeKind.Binary);
         assertThat(assertThrows(IllegalArgumentException.class,
                 () -> Collections.sort(entityList, entityComperatorBinary)).getMessage()).isEqualTo(
-                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testBinaryProperty. The types of the compared vaules are Integer and byte[] but both must be one of: byte[], Byte[]");
+                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testBinaryProperty. The types of the compared values are Integer and byte[] but both must be one of: byte[], Byte[]");
 
         EntityComparator entityComperatorNumber =
                 new EntityComparator(routingContext, "testNumberProperty", true, EdmPrimitiveTypeKind.Int64);
         assertThat(assertThrows(IllegalArgumentException.class,
                 () -> Collections.sort(entityList, entityComperatorNumber)).getMessage()).isEqualTo(
-                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testNumberProperty. The types of the compared vaules are ArrayList and Integer but both must be one of: Short, Byte, Integer, Long, BigInteger");
+                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testNumberProperty. The types of the compared values are ArrayList and Integer but both must be one of: Short, Byte, Integer, Long, BigInteger");
 
         EntityComparator entityComperatorDecimal =
                 new EntityComparator(routingContext, "testDecimalProperty", true, EdmPrimitiveTypeKind.Decimal);
         assertThat(assertThrows(IllegalArgumentException.class,
                 () -> Collections.sort(entityList, entityComperatorDecimal)).getMessage()).isEqualTo(
-                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testDecimalProperty. The types of the compared vaules are byte[] and Double but both must be one of: Short, Byte, Integer, Long, BigInteger, BigDecimal, Double, Float");
+                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testDecimalProperty. The types of the compared values are byte[] and Double but both must be one of: Short, Byte, Integer, Long, BigInteger, BigDecimal, Double, Float");
 
         EntityComparator entityComperatorDouble =
                 new EntityComparator(routingContext, "testDoubleProperty", true, EdmPrimitiveTypeKind.Double);
         assertThat(assertThrows(IllegalArgumentException.class,
                 () -> Collections.sort(entityList, entityComperatorDouble)).getMessage()).isEqualTo(
-                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testDoubleProperty. The types of the compared vaules are Boolean and Float but both must be one of: Short, Byte, Integer, Long, BigDecimal, Double, Float");
+                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testDoubleProperty. The types of the compared values are Boolean and Float but both must be one of: Short, Byte, Integer, Long, BigDecimal, Double, Float");
 
         EntityComparator entityComperatorDate =
                 new EntityComparator(routingContext, "testDateProperty", true, EdmPrimitiveTypeKind.Date);
         assertThat(assertThrows(IllegalArgumentException.class,
                 () -> Collections.sort(entityList, entityComperatorDate)).getMessage()).isEqualTo(
-                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testDateProperty. The types of the compared vaules are Integer and Date but both must be one of: Calendar, Date, Timestamp, Time, Long, LocalDate, LocalDateTime, Instant");
+                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testDateProperty. The types of the compared values are Integer and Date but both must be one of: Calendar, Date, Timestamp, Time, Long, LocalDate, LocalDateTime, Instant");
 
         EntityComparator entityComperatorBoolean =
                 new EntityComparator(routingContext, "testBooleanProperty", true, EdmPrimitiveTypeKind.Boolean);
         assertThat(assertThrows(IllegalArgumentException.class,
                 () -> Collections.sort(entityList, entityComperatorBoolean)).getMessage()).isEqualTo(
-                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testBooleanProperty. The types of the compared vaules are Boolean and Integer but both must be one of: Boolean");
+                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testBooleanProperty. The types of the compared values are Boolean and Integer but both must be one of: Boolean");
 
         EntityComparator entityComperatorString =
                 new EntityComparator(routingContext, "testStringProperty", true, EdmPrimitiveTypeKind.String);
         assertThat(assertThrows(IllegalArgumentException.class,
                 () -> Collections.sort(entityList, entityComperatorString)).getMessage()).isEqualTo(
-                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testStringProperty. The types of the compared vaules are String and Integer but both must be one of: String");
+                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testStringProperty. The types of the compared values are String and Integer but both must be one of: String");
 
         EntityComparator entityComperatorGuid =
                 new EntityComparator(routingContext, "testGuidProperty", true, EdmPrimitiveTypeKind.Guid);
         assertThat(assertThrows(IllegalArgumentException.class,
                 () -> Collections.sort(entityList, entityComperatorGuid)).getMessage()).isEqualTo(
-                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testGuidProperty. The types of the compared vaules are UUID and String but both must be one of: UUID");
+                        "org.apache.olingo.server.api.ODataApplicationException: An error has occurred while comparing two values of property testGuidProperty. The types of the compared values are UUID and String but both must be one of: UUID");
     }
 
     @SuppressWarnings("rawtypes")

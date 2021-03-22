@@ -175,7 +175,7 @@ public interface EntityComparison {
     default RuntimeException createAndLogException(RoutingContext routingContext, List<Class<?>> listOfClasses,
             Object value1, Object value2, String propertyName) {
         String messageTemplate =
-                "An error has occurred while comparing two values of property %s. The types of the compared vaules are %s and %s but both must be one of: %s";
+                "An error has occurred while comparing two values of property %s. The types of the compared values are %s and %s but both must be one of: %s";
         String message = String.format(messageTemplate, propertyName, value1.getClass().getSimpleName(),
                 value2.getClass().getSimpleName(),
                 listOfClasses.stream().map(Class::getSimpleName).collect(Collectors.joining(", ")));
