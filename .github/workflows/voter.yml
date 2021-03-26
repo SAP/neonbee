@@ -47,8 +47,14 @@ jobs:
     - name: Build and analyze
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: ./gradlew build test
+
+    - name: Run Sonarqube
+      if: success() && github.repository == 'SAP/neonbee' # do not run on forks
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: ./gradlew build test sonarqube
+      run: ./gradlew sonarqube
 
     - name: Run javadoc
       run: ./gradlew javadoc
