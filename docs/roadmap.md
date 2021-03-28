@@ -21,14 +21,14 @@ NeonBee development started as a closed source development under the internal na
 
 ### 🚀 Milestones + Progress
 
-**OPEN** 📉 3 / 4 milestones completed (75%) 📅 February 2021
+**DONE** 📉 4 / 4 milestones completed (100%) 📅 February 2021
 
 | Status | 🚀 Milestone | [Types](https://www.conventionalcommits.org/) |
 | :---: | :--- | --- |
 | ✔️ | Improving all test bases and increase overall test coverage | `refactor` |
 | ✔️ | Find a new name for Vulp.x and renaming to NeonBee | `chore`, `refactor` |
 | ✔️ | Provide high level readme, license information, roadmap, etc. | `docs` |
-| ❌ | Going through SAPs open source process and releasing to GitHub.com | `chore` |
+| ✔️ | Going through SAPs open source process and releasing to GitHub.com | `chore` |
 
 ## 🌌 Road to Version 1.0
 
@@ -40,19 +40,20 @@ At the time of open sourcing to GitHub.com, NeonBee at version 0.2 still has to 
 
 ### 🚀 Milestones + Progress
 
-**NOT STARTED** 📉 0 / X milestones completed (0%) 📅 2022
+**ONGOING** 📉 0 / 11 milestones completed (0%) 📅 2022
 
 | Status | 🚀 Milestone | [Types](https://www.conventionalcommits.org/) |
 | :---: | :--- | --- |
 | ❌ | [Response context / hints & data types](milestones/E1_MS01_response_context.md) | `feat` |
 | ❌ | [Improve inter-verticle entity exchange](milestones/E1_MS02_entity_exchange.md) | `feat` |
 | ❌ | [Improve error handling and logging](milestones/E1_MS03_error_handling.md) | `feat` |
-| ❌ | [Full OASIS OData V4 support](milestones/E1_MS04_odata_support.md) | `feat` |
+| ⚡ | [Full OASIS OData V4 support](milestones/E1_MS04_odata_support.md) | `feat` |
 | ❌ | [New deployables concept](milestones/E1_MS05_new_deployables_concept.md) | `feat` |
-| ❌ | [Configurable modular endpoints](milestones/E1_MS06_configurable_endpoints.md) | `feat`, `build` |
+| ⚡ | [Configurable modular endpoints](milestones/E1_MS06_configurable_endpoints.md) | `feat`, `build` |
 | ❌ | [Documentation and homepage](milestones/E1_MS07_documentation.md) | `docs` |
 | ❌ | [Gradle build tooling](milestones/E1_MS08_build_tooling.md) | `build` |
 | ❌ | [Admin console / administrative user interface](milestones/E1_MS09_admin_console.md) | `feat` |
+| ❌ | [Change hooks to SPI / remove launcher pre-processors](milestones/E1_MS10_spi_hooks.md) | `feat` |
 | ❌ | [Other / smaller features & functions](milestones/E1_MS99_others.md) | `feat` |
 
 ## 🌌 Post 1.0 Era
