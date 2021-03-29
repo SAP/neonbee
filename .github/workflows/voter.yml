@@ -50,7 +50,7 @@ jobs:
       run: ./gradlew build test
 
     - name: Run Sonarqube
-      if: success() && github.repository == 'SAP/neonbee' # do not run on forks
+      if: github.event_name != 'pull_request'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
