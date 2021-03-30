@@ -13,6 +13,7 @@ import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.edm.EdmEntitySet;
 import org.apache.olingo.commons.api.edm.EdmNavigationProperty;
 import org.apache.olingo.commons.api.edm.EdmReferentialConstraint;
+import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.server.api.ODataApplicationException;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceNavigation;
@@ -39,7 +40,8 @@ public final class NavigationPropertyHelper {
      */
     public static Future<List<Entity>> fetchReferencedEntities(EdmNavigationProperty navigationProperty, Vertx vertx,
             RoutingContext routingContext) {
-        DataRequest req = new DataRequest(navigationProperty.getType().getFullQualifiedName(), new DataQuery());
+        FullQualifiedName fqn = navigationProperty.getType().getFullQualifiedName();
+        DataRequest req = new DataRequest(fqn, new DataQuery(fqn.getNamespace() + "/" + fqn.getName()));
         return requestEntity(vertx, req, new DataContextImpl(routingContext)).map(EntityWrapper::getEntities);
     }
 
