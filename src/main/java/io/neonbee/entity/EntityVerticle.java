@@ -59,6 +59,9 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
     @VisibleForTesting
     static final int ENTITY_SET_NAME_GROUP = 5;
 
+    @VisibleForTesting
+    static final int ENTITY_PROPERTY_NAME_GROUP = 6;
+
     /**
      * Pattern to match OData URI paths.
      *
@@ -75,15 +78,17 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
      * Some examples:
      *
      * <pre>
-     * URI path                          | Group 1 (Svc. Nsp.) | 2. CDS Nsp. | 3. Name | 4. Enty. Path | 5. ESN
-     * --------------------------------------------------------------------------------------------------------
-     * my.very/own.Service/Entity('Key') | my.very/own.Service | my.very/own | Service | Entity('Key') | Entity
-     * my.Service/Entity('Key')          | my.Service          | my          | Service | Entity('Key') | Entity
-     * Service/Entity('Key')             | Service             |             | Service | Entity('Key') | Entity
+     * URI path                          | Group 1 (Svc. Nsp.) | 2. CDS Nsp. | 3. Name | 4. Enty. Path | 5. ESN | 6. Property
+     * ----------------------------------------------------------------------------------------------------------------------
+     * my.very/own.Service/Entity('Key') | my.very/own.Service | my.very/own | Service | Entity('Key') | Entity |
+     * my.Service/Entity('Key')          | my.Service          | my          | Service | Entity('Key') | Entity |
+     * Service/Entity('Key')/property    | Service             |             | Service | Entity('Key') | Entity | property
+     * Service/Entity('Key')             | Service             |             | Service | Entity('Key') | Entity |
      * </pre>
      */
     @VisibleForTesting
-    static final Pattern URI_PATH_PATTERN = Pattern.compile("^/*((?:(.*)\\.)?(.*))/(([A-Za-z_]\\w+).*)$");
+    static final Pattern URI_PATH_PATTERN =
+            Pattern.compile("^/*((?:(.*)\\.)?(.*?))/(([A-Za-z_]\\w+).*?)(?:(?<=\\))/(.*))?$");
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 

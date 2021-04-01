@@ -3,6 +3,8 @@ package io.neonbee.entity;
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.entity.EntityVerticle.CDS_NAMESPACE_GROUP;
 import static io.neonbee.entity.EntityVerticle.CDS_SERVICE_NAME_GROUP;
+import static io.neonbee.entity.EntityVerticle.ENTITY_PATH_GROUP;
+import static io.neonbee.entity.EntityVerticle.ENTITY_PROPERTY_NAME_GROUP;
 import static io.neonbee.entity.EntityVerticle.ENTITY_SET_NAME_GROUP;
 import static io.neonbee.entity.EntityVerticle.SERVICE_NAMESPACE_GROUP;
 import static io.neonbee.entity.EntityVerticle.URI_PATH_PATTERN;
@@ -131,6 +133,12 @@ class EntityVerticleTest extends EntityVerticleTestBase {
 
         assertThat((matcher = URI_PATH_PATTERN.matcher("Service/Entity(1)")).find()).isTrue();
         assertThat(matcher.group(ENTITY_SET_NAME_GROUP)).isEqualTo("Entity");
+
+        assertThat((matcher = URI_PATH_PATTERN.matcher("Service/Entity(1)/property")).find()).isTrue();
+        assertThat(matcher.group(SERVICE_NAMESPACE_GROUP)).isEqualTo("Service");
+        assertThat(matcher.group(ENTITY_PATH_GROUP)).isEqualTo("Entity(1)");
+        assertThat(matcher.group(ENTITY_SET_NAME_GROUP)).isEqualTo("Entity");
+        assertThat(matcher.group(ENTITY_PROPERTY_NAME_GROUP)).isEqualTo("property");
 
         assertThat((matcher = URI_PATH_PATTERN.matcher("Service/Entity/$count")).find()).isTrue();
         assertThat(matcher.group(ENTITY_SET_NAME_GROUP)).isEqualTo("Entity");
