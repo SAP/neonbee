@@ -32,6 +32,7 @@ import org.apache.olingo.server.api.serializer.SerializerException;
 import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
+import org.apache.olingo.server.api.uri.queryoption.CountOption;
 import org.apache.olingo.server.api.uri.queryoption.FilterOption;
 import org.apache.olingo.server.api.uri.queryoption.OrderByOption;
 import org.apache.olingo.server.api.uri.queryoption.SkipOption;
@@ -102,12 +103,14 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
         UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0);
         EdmEntityType edmEntityType = uriResourceEntitySet.getEntitySet().getEntityType();
 
+        EntityCollection entityCollection = new EntityCollection();
         Promise<List<Entity>> responsePromise = Promise.promise();
 
         if (resourceParts.size() == 1) {
             // Fetch the data from backend
             fetchEntities(request, edmEntityType, ew -> {
                 try {
+                    applyCountOption(uriInfo.getCountOption(), ew.getEntities(), entityCollection);
                     List<Entity> resultEntityList = applyFilterQueryOption(uriInfo.getFilterOption(), ew.getEntities());
                     if (!resultEntityList.isEmpty()) {
                         applyOrderByQueryOption(uriInfo.getOrderByOption(), resultEntityList);
@@ -135,7 +138,6 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
         }
 
         responsePromise.future().onSuccess(finalResultEntities -> {
-            EntityCollection entityCollection = new EntityCollection();
             entityCollection.getEntities().addAll(finalResultEntities);
             EntityCollectionSerializerOptions opts;
             try {
@@ -157,6 +159,18 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
             Handler<EntityWrapper> resultHandler) {
         requestEntity(vertx, new DataRequest(edmEntityType.getFullQualifiedName(), odataRequestToQuery(request)),
                 new DataContextImpl(routingContext)).onFailure(getProcessPromise()::fail).onSuccess(resultHandler);
+    }
+
+    private void applyCountOption(CountOption countOption, List<Entity> unfilteredEntities,
+            EntityCollection entityCollection) {
+        // Apply $count system query option. The $count system query option with a value of true
+        // specifies that the total count of items within a collection matching the request be returned
+        // along with the result. The $count system query option ignores any $top, $skip, or $expand query
+        // options, and returns the total count of results across all pages including only those results
+        // matching any specified $filter and $search.
+        if ((countOption != null) && countOption.getValue()) {
+            entityCollection.setCount(unfilteredEntities.size());
+        }
     }
 
     private List<Entity> applyFilterQueryOption(FilterOption filterOption, List<Entity> unfilteredEntities)
@@ -268,7 +282,8 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
                 ContextURL.with().entitySet(edmEntitySet).selectList(selectList).suffix(Suffix.ENTITY).build();
 
         return EntityCollectionSerializerOptions.with().id(collectionId).contextURL(contextUrl)
-                .select(uriInfo.getSelectOption()).expand(uriInfo.getExpandOption()).build();
+                .select(uriInfo.getSelectOption()).expand(uriInfo.getExpandOption()).count(uriInfo.getCountOption())
+                .build();
     }
 
     @Override
