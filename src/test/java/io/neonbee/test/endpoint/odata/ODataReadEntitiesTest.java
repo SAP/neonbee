@@ -33,11 +33,16 @@ import io.neonbee.test.base.ODataRequest;
 import io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Future;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class ODataReadEntitiesTest extends ODataEndpointTestBase {
+    private static final List<JsonObject> ALL_ENTITIES = List.of(EXPECTED_ENTITY_DATA_1, EXPECTED_ENTITY_DATA_2,
+            EXPECTED_ENTITY_DATA_3, EXPECTED_ENTITY_DATA_4, EXPECTED_ENTITY_DATA_5);
 
     @Override
     protected List<Path> provideEntityModels() {
@@ -89,10 +94,20 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 if the service is existing and has test entities")
     void existingEntitiesTest(VertxTestContext testContext) {
-        assertODataEntitySetContainsExactly(
-                requestOData(new ODataRequest(TEST_ENTITY_SET_FQN)), List.of(EXPECTED_ENTITY_DATA_1,
-                        EXPECTED_ENTITY_DATA_2, EXPECTED_ENTITY_DATA_3, EXPECTED_ENTITY_DATA_4, EXPECTED_ENTITY_DATA_5),
+        assertODataEntitySetContainsExactly(requestOData(new ODataRequest(TEST_ENTITY_SET_FQN)), ALL_ENTITIES,
                 testContext).onComplete(testContext.succeedingThenComplete());
+    }
+
+    @Test
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("Respond with 200 if the service is existing and has test entities including correct inline count")
+    void existingEntitiesWithInlineCountTest(VertxTestContext testContext) {
+        Map<String, String> countQuery = Map.of("$count", "true");
+        Future<HttpResponse<Buffer>> response =
+                requestOData(new ODataRequest(TEST_ENTITY_SET_FQN).setQuery(countQuery));
+        assertOData(response, body -> assertThat(body.toJsonObject().getMap()).containsAtLeast("@odata.count", 5),
+                testContext).compose(v -> assertODataEntitySetContainsExactly(response, ALL_ENTITIES, testContext))
+                        .onComplete(testContext.succeedingThenComplete());
     }
 
     @Test
