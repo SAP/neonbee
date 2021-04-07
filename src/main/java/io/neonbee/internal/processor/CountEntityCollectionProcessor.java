@@ -110,8 +110,8 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
             // Fetch the data from backend
             fetchEntities(request, edmEntityType, ew -> {
                 try {
-                    applyCountOption(uriInfo.getCountOption(), ew.getEntities(), entityCollection);
                     List<Entity> resultEntityList = applyFilterQueryOption(uriInfo.getFilterOption(), ew.getEntities());
+                    applyCountOption(uriInfo.getCountOption(), resultEntityList, entityCollection);
                     if (!resultEntityList.isEmpty()) {
                         applyOrderByQueryOption(uriInfo.getOrderByOption(), resultEntityList);
                         resultEntityList = applySkipQueryOption(uriInfo.getSkipOption(), resultEntityList);
@@ -161,7 +161,7 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
                 new DataContextImpl(routingContext)).onFailure(getProcessPromise()::fail).onSuccess(resultHandler);
     }
 
-    private void applyCountOption(CountOption countOption, List<Entity> unfilteredEntities,
+    private void applyCountOption(CountOption countOption, List<Entity> filteredEntities,
             EntityCollection entityCollection) {
         // Apply $count system query option. The $count system query option with a value of true
         // specifies that the total count of items within a collection matching the request be returned
@@ -169,7 +169,7 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
         // options, and returns the total count of results across all pages including only those results
         // matching any specified $filter and $search.
         if ((countOption != null) && countOption.getValue()) {
-            entityCollection.setCount(unfilteredEntities.size());
+            entityCollection.setCount(filteredEntities.size());
         }
     }
 
