@@ -37,6 +37,21 @@ public final class SystemHelper {
         modifiableEnvironment.putAll(newEnvironment);
     }
 
+    /**
+     * This method replaces the JVM wide copy of the system environment with the passed environment map, executes the
+     * passed runnable, and resets the environment variables to the original value again.
+     *
+     * @param newEnvironment The new environment map
+     * @param runnable       The code that should be executed within the context of passed environment variables
+     * @throws Exception Could not change environment
+     */
+    public static void withEnvironment(Map<String, String> newEnvironment, Runnable runnable) throws Exception {
+        Map<String, String> oldEnvironment = Map.copyOf(System.getenv());
+        setEnvironment(newEnvironment);
+        runnable.run();
+        SystemHelper.setEnvironment(oldEnvironment);
+    }
+
     private SystemHelper() {
         // Utils class no need to instantiate
     }

@@ -2,6 +2,7 @@ package io.neonbee;
 
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
@@ -129,37 +130,48 @@ public class Launcher {
     static NeonBeeOptions parseOptions(CommandLine commandLine) {
         NeonBeeOptions.Mutable neonBeeOptions = new NeonBeeOptions.Mutable();
 
-        Optional.ofNullable(commandLine.<String>getOptionValue(WORKING_DIR.getName()))
-                .or(() -> Optional.of("./working_dir/"))
+        getLauncherOptionStringValue(commandLine, WORKING_DIR).or(() -> Optional.of("./working_dir/"))
                 .ifPresent(cwd -> neonBeeOptions.setWorkingDirectory(Paths.get(cwd)));
-
-        Optional.ofNullable(commandLine.<String>getOptionValue(INSTANCE_NAME.getName()))
-                .ifPresent(neonBeeOptions::setInstanceName);
-
-        Optional.ofNullable(commandLine.<Integer>getOptionValue(EVENT_LOOP_POOL_SIZE.getName()))
+        getLauncherOptionStringValue(commandLine, INSTANCE_NAME).ifPresent(neonBeeOptions::setInstanceName);
+        getLauncherOptionIntegerValue(commandLine, EVENT_LOOP_POOL_SIZE)
                 .ifPresent(neonBeeOptions::setEventLoopPoolSize);
-
-        Optional.ofNullable(commandLine.<Integer>getOptionValue(WORKER_POOL_SIZE.getName()))
-                .ifPresent(neonBeeOptions::setWorkerPoolSize);
-
-        neonBeeOptions.setIgnoreClassPath(commandLine.isFlagEnabled(IGNORE_CLASS_PATH_FLAG.getName()));
-        neonBeeOptions.setDisableJobScheduling(commandLine.isFlagEnabled(DISABLE_JOB_SCHEDULING_FLAG.getName()));
-
-        neonBeeOptions.setClustered(commandLine.isFlagEnabled(CLUSTERED.getName()));
-        Optional.ofNullable(commandLine.<Integer>getOptionValue(CLUSTER_PORT.getName()))
-                .ifPresent(neonBeeOptions::setClusterPort);
-        Optional.ofNullable(commandLine.<String>getOptionValue(CLUSTER_CONFIG.getName()))
-                .ifPresent(neonBeeOptions::setClusterConfigResource);
-
-        Optional.ofNullable(commandLine.<Integer>getOptionValue(SERVER_VERTICLE_PORT.getName()))
+        getLauncherOptionIntegerValue(commandLine, WORKER_POOL_SIZE).ifPresent(neonBeeOptions::setWorkerPoolSize);
+        getLauncherOptionIntegerValue(commandLine, CLUSTER_PORT).ifPresent(neonBeeOptions::setClusterPort);
+        getLauncherOptionStringValue(commandLine, CLUSTER_CONFIG).ifPresent(neonBeeOptions::setClusterConfigResource);
+        getLauncherOptionIntegerValue(commandLine, SERVER_VERTICLE_PORT)
                 .ifPresent(neonBeeOptions::setServerVerticlePort);
+        getLauncherOptionStringValue(commandLine, ACTIVE_PROFILES).ifPresent(neonBeeOptions::setActiveProfileValues);
+        getLauncherOptionStringValue(commandLine, TIMEZONE_ID).ifPresent(neonBeeOptions::setTimeZoneId);
 
-        Optional.ofNullable(commandLine.<String>getOptionValue(ACTIVE_PROFILES.getName()))
-                .ifPresent(neonBeeOptions::setActiveProfileValues);
-
-        Optional.ofNullable(commandLine.<String>getOptionValue(TIMEZONE_ID.getName()))
-                .ifPresent(neonBeeOptions::setTimeZoneId);
+        neonBeeOptions.setIgnoreClassPath(getLauncherOptionBooleanValue(commandLine, IGNORE_CLASS_PATH_FLAG));
+        neonBeeOptions.setDisableJobScheduling(getLauncherOptionBooleanValue(commandLine, DISABLE_JOB_SCHEDULING_FLAG));
+        neonBeeOptions.setClustered(getLauncherOptionBooleanValue(commandLine, CLUSTERED));
 
         return neonBeeOptions;
+    }
+
+    @VisibleForTesting
+    static boolean getLauncherOptionBooleanValue(CommandLine commandLine, Option option) {
+        if (commandLine.isFlagEnabled(option.getName())) {
+            return true;
+        }
+        return Optional.ofNullable(System.getenv(transformToEnvName(option.getLongName()))).map(Boolean::parseBoolean)
+                .orElse(false);
+    }
+
+    @VisibleForTesting
+    static Optional<Integer> getLauncherOptionIntegerValue(CommandLine commandLine, Option option) {
+        return Optional.ofNullable(commandLine.<Integer>getOptionValue(option.getName())).or(() -> Optional
+                .ofNullable(System.getenv(transformToEnvName(option.getLongName()))).map(Integer::parseInt));
+    }
+
+    @VisibleForTesting
+    static Optional<String> getLauncherOptionStringValue(CommandLine commandLine, Option option) {
+        return Optional.ofNullable(commandLine.<String>getOptionValue(option.getName()))
+                .or(() -> Optional.ofNullable(System.getenv(transformToEnvName(option.getLongName()))));
+    }
+
+    private static String transformToEnvName(String longName) {
+        return "NEONBEE_" + longName.replaceAll("-", "_").toUpperCase(Locale.ROOT);
     }
 }
