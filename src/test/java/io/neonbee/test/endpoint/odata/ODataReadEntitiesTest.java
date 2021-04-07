@@ -112,6 +112,19 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("Respond with 200 if the service is existing and has test entities including correct inline count with applied filters")
+    void existingEntitiesWithInlineCountAndFilterTest(VertxTestContext testContext) {
+        List<JsonObject> expectedEntities = List.of(EXPECTED_ENTITY_DATA_2, EXPECTED_ENTITY_DATA_4);
+        Map<String, String> query = Map.of("$filter", "KeyPropertyString in ('id.3', 'id-1')", "$count", "true");
+
+        Future<HttpResponse<Buffer>> response = requestOData(new ODataRequest(TEST_ENTITY_SET_FQN).setQuery(query));
+        assertOData(response, body -> assertThat(body.toJsonObject().getMap()).containsAtLeast("@odata.count", 2),
+                testContext).compose(v -> assertODataEntitySetContainsExactly(response, expectedEntities, testContext))
+                        .onComplete(testContext.succeedingThenComplete());
+    }
+
+    @Test
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 and the correct count of entities")
     void existingEntitiesCountTest(VertxTestContext testContext) {
         assertOData(requestOData(new ODataRequest(TEST_ENTITY_SET_FQN).setCount()), "5", testContext)
