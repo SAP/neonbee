@@ -35,4 +35,10 @@ class NeonBeeConfigTest {
         config = new NeonBeeConfig(createConfig.apply(nonValidListOfPlatformClasses));
         assertThat(config.getPlatformClasses()).containsExactlyElementsIn(validListOfPlatformClasses);
     }
+
+    @Test
+    @DisplayName("should have the correct default timezone")
+    void testDefaultTimeZone() {
+        assertThat(new NeonBeeConfig().getTimeZone()).isEqualTo(NeonBeeConfig.DEFAULT_TIME_ZONE);
+    }
 }

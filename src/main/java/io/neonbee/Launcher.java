@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.ServiceLoader;
-import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -55,21 +54,16 @@ public class Launcher {
     private static final Option CLUSTER_CONFIG = new Option().setLongName("cluster-config").setShortName("cc")
             .setDescription("Sets the cluster/Hazelast configuration file for NeonBee").setRequired(false);
 
-    private static final TypedOption<Integer> SERVER_VERTICLE_PORT =
-            new TypedOption<Integer>().setLongName("server-verticle-port").setShortName("svp")
-                    .setDescription("Sets the HTTP port of server verticle of the clustered NeonBee instance")
-                    .setRequired(false).setType(Integer.class);
+    private static final TypedOption<Integer> SERVER_PORT = new TypedOption<Integer>().setLongName("server-port")
+            .setShortName("port").setDescription("Sets the HTTP port of server of the clustered NeonBee instance")
+            .setRequired(false).setType(Integer.class);
 
     private static final Option ACTIVE_PROFILES = new Option().setLongName("active-profiles").setShortName("ap")
             .setDescription("Sets the active deployment profiles of NeonBee").setRequired(false);
 
-    private static final Option TIMEZONE_ID = new Option().setLongName("timezone-id").setShortName("tz").setDescription(
-            "Sets the default TimeZone Id for Java date operations. Defaults to UTC. This overwrites any user.timezone properties.")
-            .setRequired(false);
-
     private static final List<Option> OPTIONS = List.of(WORKING_DIR, INSTANCE_NAME, WORKER_POOL_SIZE,
             EVENT_LOOP_POOL_SIZE, IGNORE_CLASS_PATH_FLAG, DISABLE_JOB_SCHEDULING_FLAG, CLUSTERED, CLUSTER_PORT,
-            CLUSTER_CONFIG, SERVER_VERTICLE_PORT, ACTIVE_PROFILES, TIMEZONE_ID, HELP_FLAG);
+            CLUSTER_CONFIG, SERVER_PORT, ACTIVE_PROFILES, HELP_FLAG);
 
     @VisibleForTesting
     static final CLI INTERFACE = CLI.create("neonbee").setSummary("Start a NeonBee instance").addOptions(OPTIONS);
@@ -102,24 +96,16 @@ public class Launcher {
             NeonBeeOptions options = parseOptions(commandLine);
 
             ServiceLoader<LauncherPreProcessor> loader = ServiceLoader.load(LauncherPreProcessor.class);
-            List<LauncherPreProcessor> preProcessors =
-                    loader.stream().map(ServiceLoader.Provider::get).collect(Collectors.toList());
-            executePreProcessors(preProcessors, options);
+            loader.forEach(processor -> processor.execute(options));
+
             NeonBee.create(options).onSuccess(neonBee -> {
                 Launcher.neonBee = neonBee;
-            }).onFailure(cause -> {
-                System.err.println("Failed to start NeonBee '" + cause.getMessage() + "'"); // NOPMD
+            }).onFailure(throwable -> {
+                System.err.println("Failed to start NeonBee '" + throwable.getMessage() + "'"); // NOPMD
             });
         } catch (Exception e) {
             System.err.println("Error occurred during launcher pre-processing. " + e.getMessage()); // NOPMD
             System.exit(1); // NOPMD
-        }
-    }
-
-    @VisibleForTesting
-    protected static void executePreProcessors(List<LauncherPreProcessor> preProcessors, NeonBeeOptions options) {
-        for (LauncherPreProcessor processor : preProcessors) {
-            processor.execute(options);
         }
     }
 
@@ -135,10 +121,8 @@ public class Launcher {
         getLauncherOptionIntegerValue(commandLine, WORKER_POOL_SIZE).ifPresent(neonBeeOptions::setWorkerPoolSize);
         getLauncherOptionIntegerValue(commandLine, CLUSTER_PORT).ifPresent(neonBeeOptions::setClusterPort);
         getLauncherOptionStringValue(commandLine, CLUSTER_CONFIG).ifPresent(neonBeeOptions::setClusterConfigResource);
-        getLauncherOptionIntegerValue(commandLine, SERVER_VERTICLE_PORT)
-                .ifPresent(neonBeeOptions::setServerVerticlePort);
+        getLauncherOptionIntegerValue(commandLine, SERVER_PORT).ifPresent(neonBeeOptions::setServerPort);
         getLauncherOptionStringValue(commandLine, ACTIVE_PROFILES).ifPresent(neonBeeOptions::setActiveProfileValues);
-        getLauncherOptionStringValue(commandLine, TIMEZONE_ID).ifPresent(neonBeeOptions::setTimeZoneId);
 
         neonBeeOptions.setIgnoreClassPath(getLauncherOptionBooleanValue(commandLine, IGNORE_CLASS_PATH_FLAG));
         neonBeeOptions.setDisableJobScheduling(getLauncherOptionBooleanValue(commandLine, DISABLE_JOB_SCHEDULING_FLAG));

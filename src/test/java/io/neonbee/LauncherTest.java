@@ -77,13 +77,13 @@ class LauncherTest {
     @DisplayName("should generate expected neonbee options")
     void testExpectedNeonBeeOptions() throws Exception {
         args = new String[] { "-cwd", workDir, "-name", "Hodor", "-wps", "2", "-elps", "2", "-no-cp", "-no-jobs",
-                "-svp", "9000" };
+                "-port", "9000" };
         assertNeonBeeOptions();
 
         args = new String[] {};
         Map<String, String> envMap = Map.of("NEONBEE_WORKING_DIR", workDir, "NEONBEE_INSTANCE_NAME", "Hodor",
                 "NEONBEE_WORKER_POOL_SIZE", "2", "NEONBEE_EVENT_LOOP_POOL_SIZE", "2", "NEONBEE_IGNORE_CLASS_PATH",
-                "true", "NEONBEE_DISABLE_JOB_SCHEDULING", "true", "NEONBEE_SERVER_VERTICLE_PORT", "9000");
+                "true", "NEONBEE_DISABLE_JOB_SCHEDULING", "true", "NEONBEE_SERVER_PORT", "9000");
         withEnvironment(envMap, this::assertNeonBeeOptions);
     }
 
@@ -97,15 +97,6 @@ class LauncherTest {
         Map<String, String> envMap = Map.of("NEONBEE_WORKING_DIR", workDir, "NEONBEE_CLUSTERED", "true",
                 "NEONBEE_CLUSTER_CONFIG", "hazelcast-local.xml", "NEONBEE_CLUSTER_PORT", "10000");
         withEnvironment(envMap, this::assertClusteredOptions);
-    }
-
-    @Test
-    @DisplayName("should execute list of preprocessors.")
-    void testExecutePreProcessors() {
-        TestPreProcessor processor = new TestPreProcessor();
-        List<LauncherPreProcessor> preProcessors = List.of(processor);
-        Launcher.executePreProcessors(preProcessors, new NeonBeeOptions.Mutable());
-        assertThat(processor.isPreProcessorExecuted()).isTrue();
     }
 
     static class TestPreProcessor implements LauncherPreProcessor {
@@ -128,7 +119,7 @@ class LauncherTest {
         assertThat(neonBeeOptions.getEventLoopPoolSize()).isEqualTo(2);
         assertThat(neonBeeOptions.shouldIgnoreClassPath()).isTrue();
         assertThat(neonBeeOptions.shouldDisableJobScheduling()).isTrue();
-        assertThat(neonBeeOptions.getServerVerticlePort()).isEqualTo(9000);
+        assertThat(neonBeeOptions.getServerPort()).isEqualTo(9000);
     }
 
     private void assertClusteredOptions() {

@@ -203,7 +203,7 @@ public class ServerVerticle extends AbstractVerticle {
         router.route().handler(NotFoundHandler.create());
 
         NeonBeeOptions options = NeonBee.get(vertx).getOptions();
-        int port = Optional.ofNullable(options.getServerVerticlePort())
+        int port = Optional.ofNullable(options.getServerPort())
                 .orElse(config.getInteger(CONFIG_PROPERTY_PORT_KEY, DEFAULT_PORT));
 
         httpServer = vertx.createHttpServer(new HttpServerOptions()
