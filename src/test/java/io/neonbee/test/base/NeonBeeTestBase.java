@@ -1,6 +1,6 @@
 package io.neonbee.test.base;
 
-import static io.neonbee.internal.Helper.readConfigBlocking;
+import static io.neonbee.internal.helper.ConfigHelper.readConfigBlocking;
 import static io.neonbee.internal.verticle.ServerVerticle.CONFIG_PROPERTY_PORT_KEY;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;

@@ -1,6 +1,6 @@
 package io.neonbee;
 
-import static io.neonbee.internal.Helper.readConfigBlocking;
+import static io.neonbee.internal.helper.ConfigHelper.readConfigBlocking;
 
 import java.util.List;
 import java.util.Map;

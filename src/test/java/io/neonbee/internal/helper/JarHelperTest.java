@@ -1,4 +1,4 @@
-package io.neonbee.internal;
+package io.neonbee.internal.helper;
 
 import static com.google.common.truth.Truth.assertThat;
 

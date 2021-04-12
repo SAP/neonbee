@@ -1,7 +1,7 @@
 package io.neonbee.internal.processor;
 
 import static io.neonbee.entity.EntityVerticle.requestEntity;
-import static io.neonbee.internal.Helper.EMPTY;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.internal.processor.EntityProcessor.findEntityByKeyPredicates;
 import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.chooseEntitySet;
 import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.fetchNavigationTargetEntities;

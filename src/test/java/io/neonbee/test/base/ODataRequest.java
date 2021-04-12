@@ -1,7 +1,7 @@
 package io.neonbee.test.base;
 
-import static io.neonbee.internal.Helper.EMPTY;
-import static io.neonbee.internal.Helper.readConfigBlocking;
+import static io.neonbee.internal.helper.ConfigHelper.readConfig;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.internal.verticle.ServerVerticle.CONFIG_PROPERTY_PORT_KEY;
 import static io.neonbee.internal.verticle.ServerVerticle.DEFAULT_ODATA_BASE_PATH;
 
@@ -101,20 +101,22 @@ public class ODataRequest {
      */
     public Future<HttpResponse<Buffer>> send(NeonBee neonBee) {
         Vertx vertx = neonBee.getVertx();
-        DeploymentOptions opts = new DeploymentOptions(readConfigBlocking(vertx, ServerVerticle.class.getName()));
-        int port = opts.getConfig().getInteger(CONFIG_PROPERTY_PORT_KEY, -1);
-        String basePath = Optional.ofNullable(opts.getConfig().getJsonObject("odata"))
-                .map(odata -> odata.getString("basePath")).orElse(DEFAULT_ODATA_BASE_PATH);
+        return readConfig(vertx, ServerVerticle.class.getName()).compose(config -> {
+            DeploymentOptions opts = new DeploymentOptions(config);
+            int port = opts.getConfig().getInteger(CONFIG_PROPERTY_PORT_KEY, -1);
+            String basePath = Optional.ofNullable(opts.getConfig().getJsonObject("odata"))
+                    .map(odata -> odata.getString("basePath")).orElse(DEFAULT_ODATA_BASE_PATH);
 
-        WebClientOptions clientOpts = new WebClientOptions().setDefaultHost("localhost").setDefaultPort(port);
-        HttpRequest<Buffer> httpRequest = WebClient.create(vertx, clientOpts).request(method, basePath + getUri());
+            WebClientOptions clientOpts = new WebClientOptions().setDefaultHost("localhost").setDefaultPort(port);
+            HttpRequest<Buffer> httpRequest = WebClient.create(vertx, clientOpts).request(method, basePath + getUri());
 
-        httpRequest.queryParams().addAll(query);
-        httpRequest.putHeaders(headers);
-        Optional.ofNullable(interceptor).ifPresent(i -> i.accept(httpRequest));
-        httpRequest.queryParams(); // ensures that query params are encoded
+            httpRequest.queryParams().addAll(query);
+            httpRequest.putHeaders(headers);
+            Optional.ofNullable(interceptor).ifPresent(i -> i.accept(httpRequest));
+            httpRequest.queryParams(); // ensures that query params are encoded
 
-        return Optional.ofNullable(body).map(b -> httpRequest.sendBuffer(b)).orElse(httpRequest.send());
+            return Optional.ofNullable(body).map(httpRequest::sendBuffer).orElse(httpRequest.send());
+        });
     }
 
     /**

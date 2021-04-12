@@ -1,6 +1,6 @@
 package io.neonbee.internal.processor.odata;
 
-import static io.neonbee.internal.Helper.allComposite;
+import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.fetchReferencedEntities;
 import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.getRelatedEntities;
 import static io.vertx.core.Future.succeededFuture;

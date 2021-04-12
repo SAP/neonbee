@@ -7,7 +7,7 @@ import static io.neonbee.data.DataAction.UPDATE;
 import static io.neonbee.data.DataException.FAILURE_CODE_NO_HANDLERS;
 import static io.neonbee.data.DataException.FAILURE_CODE_TIMEOUT;
 import static io.neonbee.data.DataVerticle.requestData;
-import static io.neonbee.internal.Helper.multiMapToMap;
+import static io.neonbee.internal.helper.CollectionsHelper.multiMapToMap;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static io.netty.handler.codec.http.HttpResponseStatus.GATEWAY_TIMEOUT;

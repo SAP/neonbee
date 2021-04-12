@@ -4,9 +4,9 @@ import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.helper.FileSystemHelper.createDirs;
 import static io.neonbee.internal.helper.FileSystemHelper.deleteRecursive;
 import static io.neonbee.internal.helper.FileSystemHelper.exists;
+import static io.neonbee.internal.helper.FileSystemHelper.getProperties;
 import static io.neonbee.internal.helper.FileSystemHelper.isDirectory;
 import static io.neonbee.internal.helper.FileSystemHelper.openFile;
-import static io.neonbee.internal.helper.FileSystemHelper.props;
 import static io.neonbee.internal.helper.FileSystemHelper.readDir;
 import static io.neonbee.internal.helper.FileSystemHelper.readFile;
 import static io.neonbee.internal.helper.FileSystemHelper.writeFile;
@@ -180,7 +180,7 @@ class FileSystemHelperTest {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test should identify the property of the file")
     void testProps(Vertx vertx, VertxTestContext testContext) {
-        props(vertx, tempDir).onComplete(testContext.succeeding(property -> {
+        getProperties(vertx, tempDir).onComplete(testContext.succeeding(property -> {
             assertThat(property.isDirectory()).isTrue();
             testContext.completeNow();
         }));

@@ -1,10 +1,11 @@
 package io.neonbee.test.helper;
 
+import static io.neonbee.internal.helper.FunctionalHelper.uncheckedMapper;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import io.neonbee.internal.Helper;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -72,13 +73,13 @@ public final class DeploymentHelper {
             }
         }
 
-        return CompositeFuture.all(Helper.uncheckedMapper(undeployFutures)).mapEmpty();
+        return CompositeFuture.all(uncheckedMapper(undeployFutures)).mapEmpty();
     }
 
     public static boolean isVerticleDeployed(Vertx vertx, Class<? extends Verticle> verticleToCheck) {
         return vertx.deploymentIDs().stream()
                 .flatMap(deploymentId -> ((VertxInternal) vertx).getDeployment(deploymentId).getVerticles().stream())
-                .filter(verticle -> verticleToCheck.isInstance(verticle)).findFirst().isPresent();
+                .anyMatch(verticleToCheck::isInstance);
     }
 
     private DeploymentHelper() {

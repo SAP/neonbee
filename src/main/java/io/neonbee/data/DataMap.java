@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 
 import io.neonbee.entity.EntityWrapper;
-import io.neonbee.internal.Helper;
+import io.neonbee.internal.helper.FunctionalHelper;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 
@@ -215,7 +215,7 @@ public class DataMap extends AbstractMap<DataRequest, AsyncResult<?>> implements
      */
     private <U> Stream<Entry<DataRequest, AsyncResult<U>>> entryStream(String qualifiedName) {
         return entryStream().filter(entry -> qualifiedName.equals(entry.getKey().getQualifiedName()))
-                .map(Helper::uncheckedMapper);
+                .map(FunctionalHelper::uncheckedMapper);
     }
 
     /**
@@ -227,7 +227,7 @@ public class DataMap extends AbstractMap<DataRequest, AsyncResult<?>> implements
             FullQualifiedName entryEntityTypeName = entry.getKey().getEntityTypeName();
             return entityTypeNamespace.equals(entryEntityTypeName.getNamespace())
                     && entityTypeName.equals(entryEntityTypeName.getName());
-        }).map(Helper::uncheckedMapper);
+        }).map(FunctionalHelper::uncheckedMapper);
     }
 
     /**
@@ -235,7 +235,7 @@ public class DataMap extends AbstractMap<DataRequest, AsyncResult<?>> implements
      */
     private Stream<Entry<DataRequest, AsyncResult<EntityWrapper>>> entryStream(FullQualifiedName entityTypeName) {
         return entryStream().filter(entry -> entityTypeName.equals(entry.getKey().getEntityTypeName()))
-                .map(Helper::uncheckedMapper);
+                .map(FunctionalHelper::uncheckedMapper);
     }
 
     /*

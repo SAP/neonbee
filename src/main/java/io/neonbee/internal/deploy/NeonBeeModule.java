@@ -1,7 +1,7 @@
 package io.neonbee.internal.deploy;
 
-import static io.neonbee.internal.Helper.allComposite;
-import static io.neonbee.internal.Helper.joinComposite;
+import static io.neonbee.internal.helper.AsyncHelper.allComposite;
+import static io.neonbee.internal.helper.AsyncHelper.joinComposite;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 

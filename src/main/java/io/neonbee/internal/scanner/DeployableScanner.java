@@ -1,6 +1,6 @@
 package io.neonbee.internal.scanner;
 
-import static io.neonbee.internal.Helper.getClassLoader;
+import static io.neonbee.internal.scanner.ClassPathScanner.getClassLoader;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

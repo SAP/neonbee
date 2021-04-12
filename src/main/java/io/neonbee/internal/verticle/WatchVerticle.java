@@ -1,6 +1,7 @@
 package io.neonbee.internal.verticle;
 
-import static io.neonbee.internal.Helper.joinComposite;
+import static io.neonbee.internal.helper.AsyncHelper.joinComposite;
+import static io.neonbee.internal.helper.FunctionalHelper.uncheckedMapper;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
@@ -23,7 +24,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import io.neonbee.internal.Helper;
 import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.AbstractVerticle;
@@ -195,8 +195,8 @@ public class WatchVerticle extends AbstractVerticle {
         List<Future<Void>> futuresToResolve = new ArrayList<>();
         return registerWatchKey(dir).compose(v -> FileSystemHelper.readDir(vertx, dir))
                 .compose(dirContent -> handleFileEvents(dirContent, futuresToResolve))
-                .compose(fileFutures -> CompositeFuture.all(Helper.uncheckedMapper(fileFutures))
-                        .compose(compFut -> CompositeFuture.all(Helper.uncheckedMapper(futuresToResolve))).mapEmpty());
+                .compose(fileFutures -> CompositeFuture.all(uncheckedMapper(fileFutures))
+                        .compose(compFut -> CompositeFuture.all(uncheckedMapper(futuresToResolve))).mapEmpty());
     }
 
     /**
