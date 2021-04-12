@@ -3,7 +3,7 @@ package io.neonbee.entity;
 import static io.neonbee.entity.EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS;
 import static io.neonbee.entity.EntityModelManager.getBufferedOData;
 import static io.neonbee.entity.EntityModelManager.getSharedModel;
-import static io.neonbee.internal.Helper.EMPTY;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.internal.verticle.ConsolidationVerticle.ENTITY_TYPE_NAME_HEADER;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;

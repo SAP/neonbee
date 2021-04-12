@@ -1,8 +1,13 @@
 package io.neonbee.internal.helper;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -10,8 +15,15 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.AsyncFile;
 import io.vertx.core.file.FileProps;
 import io.vertx.core.file.OpenOptions;
+import io.vertx.core.json.JsonObject;
 
 public final class FileSystemHelper {
+    private static final ObjectMapper YAML_MAPPER = new YAMLMapper();
+
+    /**
+     * This helper class cannot be instantiated.
+     */
+    private FileSystemHelper() {}
 
     /**
      * This method checks if the file is a directory.
@@ -22,7 +34,7 @@ public final class FileSystemHelper {
      */
     @SuppressWarnings("PMD.LinguisticNaming")
     public static Future<Boolean> isDirectory(Vertx vertx, Path path) {
-        return props(vertx, path).compose(properties -> Future.succeededFuture(properties.isDirectory()));
+        return getProperties(vertx, path).compose(properties -> Future.succeededFuture(properties.isDirectory()));
     }
 
     /**
@@ -78,6 +90,39 @@ public final class FileSystemHelper {
     }
 
     /**
+     * This method reads the entire file in JSON format asynchronously and converts it to a {@link JsonObject}.
+     *
+     * @param vertx The related Vert.x instance
+     * @param path  The path of the file
+     * @return a future to the converted {@link JsonObject}
+     */
+    public static Future<JsonObject> readJSON(Vertx vertx, Path path) {
+        return readFile(vertx, path).map(Buffer::toJsonObject);
+    }
+
+    /**
+     * This method reads the entire file in YAML format asynchronously and converts it to a {@link JsonObject}.
+     *
+     * @param vertx The related Vert.x instance
+     * @param path  The path of the file
+     * @return a future to the converted {@link JsonObject}
+     */
+    public static Future<JsonObject> readYAML(Vertx vertx, Path path) {
+        return readFile(vertx, path).compose(buffer -> parseYAML(vertx, buffer));
+    }
+
+    private static Future<JsonObject> parseYAML(Vertx vertx, Buffer buffer) {
+        return vertx.executeBlocking(promise -> {
+            try {
+                JsonNode node = YAML_MAPPER.readTree(buffer.getBytes());
+                promise.complete(new JsonObject(node.toString()));
+            } catch (Exception e) {
+                promise.fail(e);
+            }
+        });
+    }
+
+    /**
      * This method creates a file and writes the {@code buffer} to the file, asynchronously.
      *
      * @param vertx  The related Vert.x instance
@@ -129,12 +174,44 @@ public final class FileSystemHelper {
      * @param path  The path of the file
      * @return Future of {@link FileProps}
      */
-    public static Future<FileProps> props(Vertx vertx, Path path) {
+    public static Future<FileProps> getProperties(Vertx vertx, Path path) {
         return Future.<FileProps>future(promise -> vertx.fileSystem().props(path.toString(), promise));
     }
 
-    private FileSystemHelper() {
-        /* nothing to do here */
+    /**
+     * Will be deleted in an upcoming commit, therefore no javadoc. TODO
+     *
+     * @param vertx vertx
+     * @param path  path
+     * @return json
+     */
+    public static JsonObject readJSONBlocking(Vertx vertx, String path) {
+        return vertx.fileSystem().readFileBlocking(path).toJsonObject();
     }
 
+    /**
+     * Will be deleted in an upcoming commit, therefore no javadoc. TODO
+     *
+     * @param buffer buffer
+     * @return json
+     */
+    public static JsonObject parseYAMLBlocking(Buffer buffer) {
+        try {
+            JsonNode node = YAML_MAPPER.readTree(buffer.getBytes());
+            return new JsonObject(node.toString());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Will be deleted in an upcoming commit, therefore no javadoc. TODO
+     *
+     * @param vertx vertx
+     * @param path  path
+     * @return json
+     */
+    public static JsonObject readYAMLBlocking(Vertx vertx, String path) {
+        return parseYAMLBlocking(vertx.fileSystem().readFileBlocking(path));
+    }
 }

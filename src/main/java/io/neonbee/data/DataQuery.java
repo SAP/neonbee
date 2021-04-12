@@ -25,9 +25,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 
-import io.neonbee.internal.Helper;
 import io.neonbee.internal.codec.BufferDeserializer;
 import io.neonbee.internal.codec.BufferSerializer;
+import io.neonbee.internal.helper.CollectionsHelper;
 import io.vertx.core.buffer.Buffer;
 
 /**
@@ -186,9 +186,9 @@ public final class DataQuery { // NOPMD not a "god class"
     public DataQuery(DataAction action, String uriPath, String query, Map<String, List<String>> headers, Buffer body) {
         this.action = action;
         this.setUriPath(uriPath); // Calling the setter here, because there is an additional check implemented.
-        this.headers = Helper.mutableCopyOf(headers != null ? headers : Map.of());
+        this.headers = CollectionsHelper.mutableCopyOf(headers != null ? headers : Map.of());
         this.parameters = parseQueryString(query);
-        this.body = Helper.copyOf(body);
+        this.body = CollectionsHelper.copyOf(body);
     }
 
     /**
@@ -385,7 +385,7 @@ public final class DataQuery { // NOPMD not a "god class"
      * @return the DataQuery for chaining
      */
     public DataQuery setHeaders(Map<String, List<String>> headers) {
-        this.headers = Helper.mutableCopyOf(headers);
+        this.headers = CollectionsHelper.mutableCopyOf(headers);
         return this;
     }
 
@@ -440,7 +440,7 @@ public final class DataQuery { // NOPMD not a "god class"
      * @return the DataQuery for chaining
      */
     public DataQuery setBody(Buffer body) {
-        this.body = Helper.copyOf(body);
+        this.body = CollectionsHelper.copyOf(body);
         return this;
     }
 

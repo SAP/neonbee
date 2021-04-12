@@ -1,6 +1,6 @@
 package io.neonbee.internal.verticle;
 
-import static io.neonbee.internal.Helper.EMPTY;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.vertx.core.http.HttpServerOptions.DEFAULT_MAX_HEADER_SIZE;
 import static io.vertx.core.http.HttpServerOptions.DEFAULT_MAX_INITIAL_LINE_LENGTH;
 

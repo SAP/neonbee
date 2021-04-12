@@ -1,6 +1,6 @@
 package io.neonbee.internal.deploy;
 
-import static io.neonbee.internal.Helper.readConfig;
+import static io.neonbee.internal.helper.ConfigHelper.readConfig;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
@@ -159,7 +159,7 @@ public class Deployable {
     // Visible For Testing
     static Future<DeploymentOptions> readVerticleConfig(Vertx vertx, String identifier, String correlationId,
             JsonObject defaultConfig) {
-        return Future.<JsonObject>future(configHandler -> readConfig(vertx, identifier, configHandler))
+        return readConfig(vertx, identifier)
                 // merge the config into the default config two levels deep (verticle settings & config first level)
                 .map(config -> new DeploymentOptions(
                         Optional.ofNullable(defaultConfig).orElseGet(JsonObject::new).mergeIn(config, 2)))

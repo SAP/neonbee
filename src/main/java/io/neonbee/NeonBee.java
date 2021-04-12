@@ -1,7 +1,7 @@
 package io.neonbee;
 
 import static ch.qos.logback.classic.util.ContextInitializer.CONFIG_FILE_PROPERTY;
-import static io.neonbee.internal.Helper.allComposite;
+import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 import static io.neonbee.internal.scanner.DeployableScanner.scanForDeployableClasses;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;

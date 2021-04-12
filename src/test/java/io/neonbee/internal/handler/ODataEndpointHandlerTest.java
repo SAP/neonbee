@@ -1,11 +1,11 @@
 package io.neonbee.internal.handler;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.internal.Helper.EMPTY;
 import static io.neonbee.internal.handler.ODataEndpointHandler.UriConversion.CDS;
 import static io.neonbee.internal.handler.ODataEndpointHandler.UriConversion.LOOSE;
 import static io.neonbee.internal.handler.ODataEndpointHandler.UriConversion.STRICT;
 import static io.neonbee.internal.handler.ODataEndpointHandler.mapODataResponse;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.vertx.core.CompositeFuture.all;

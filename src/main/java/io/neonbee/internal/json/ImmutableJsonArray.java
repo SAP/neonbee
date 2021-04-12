@@ -11,6 +11,11 @@ import io.vertx.core.json.JsonObject;
 
 public final class ImmutableJsonArray extends JsonArray {
     /**
+     * An empty immutable JSON array.
+     */
+    public static final ImmutableJsonArray EMPTY = new ImmutableJsonArray();
+
+    /**
      * Create a new instance with the given string.
      *
      * @param json a JsonArray represented as a string

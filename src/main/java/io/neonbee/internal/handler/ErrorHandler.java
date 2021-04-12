@@ -1,7 +1,7 @@
 package io.neonbee.internal.handler;
 
-import static io.neonbee.internal.Helper.readResourceToBuffer;
 import static io.neonbee.internal.handler.CorrelationIdHandler.getCorrelationId;
+import static io.neonbee.internal.helper.BufferHelper.readResourceToBuffer;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
