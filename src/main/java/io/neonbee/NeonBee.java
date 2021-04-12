@@ -251,7 +251,7 @@ public class NeonBee {
         return registerHooks().compose(nothing -> hookRegistry.executeHooks(HookType.BEFORE_BOOTSTRAP))
                 .compose(anything -> {
                     // set the default timezone and overwrite any configured user.timezone property
-                    TimeZone.setDefault(TimeZone.getTimeZone(options.getTimeZoneId()));
+                    TimeZone.setDefault(TimeZone.getTimeZone(config.getTimeZone()));
 
                     // decorate the event bus with in- & outbound interceptors for tracking
                     decorateEventBus();

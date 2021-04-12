@@ -34,6 +34,11 @@ public class NeonBeeConfig {
      */
     public static final String DEFAULT_TRACKING_DATA_HANDLING_STRATEGY = TrackingDataLoggingStrategy.class.getName();
 
+    /**
+     * The default timezone to use e.g. for logging. Defaults to UTC.
+     */
+    public static final String DEFAULT_TIME_ZONE = "UTC";
+
     private int eventBusTimeout = DEFAULT_EVENT_BUS_TIMEOUT;
 
     private Map<String, String> eventBusCodecs = Map.of();
@@ -42,8 +47,10 @@ public class NeonBeeConfig {
 
     private List<String> platformClasses = List.of();
 
+    private String timeZone = DEFAULT_TIME_ZONE;
+
     /**
-     * Load the NeonBee configuration from the NeonBee config. directory and convert it to a {@link NeonBeeConfig}.
+     * Loads the NeonBee configuration from the NeonBee config. directory and convert it to a {@link NeonBeeConfig}.
      *
      * @param vertx The Vert.x instance used to load the config file
      * @return a future to a {@link NeonBeeConfig}
@@ -80,7 +87,7 @@ public class NeonBeeConfig {
     }
 
     /**
-     * Get the event bus timeout in seconds.
+     * Gets the event bus timeout in seconds.
      * <p>
      * When a message is sent via the event bus (e.g. when calling data verticle) a timeout is applied if not specified
      * when sending the message this configuration will apply
@@ -104,7 +111,7 @@ public class NeonBeeConfig {
     }
 
     /**
-     * Get a list of default codecs to register on the event bus.
+     * Gets a list of default codecs to register on the event bus.
      * <p>
      * When a message is sent via the event bus (e.g. when calling data verticle) codecs will be used to transform the
      * object returned by the verticle to the event bus. Data verticle offer a codec mechanism for them to register /
@@ -174,6 +181,28 @@ public class NeonBeeConfig {
     @Fluent
     public NeonBeeConfig setPlatformClasses(List<String> platformClasses) {
         this.platformClasses = platformClasses;
+        return this;
+    }
+
+    /**
+     * Gets the timezone to be used as default in NeonBee. Either an abbreviation such as "PST", a full name such as
+     * "America/Los_Angeles".
+     *
+     * @return A string with the timezone
+     */
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    /**
+     * Sets the timezone used in NeonBee, e.g. when date / timestamps are returned via the web interface.
+     *
+     * @param timeZone The time zone to set
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    @Fluent
+    public NeonBeeConfig setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
         return this;
     }
 }
