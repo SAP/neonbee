@@ -68,6 +68,7 @@ public class NeonBeeTestBase {
     private boolean isDummyServerVerticleDeployed;
 
     @BeforeEach
+    @SuppressWarnings("unchecked")
     public void setUp(TestInfo testInfo, Vertx vertx, VertxTestContext testContext) throws Exception {
         // Build working directory
         workingDirPath = FileSystemHelper.createTempDirectory();
@@ -80,15 +81,15 @@ public class NeonBeeTestBase {
         }
 
         // make required NeonBee method accessible, because TestBase is not in same package
-        Promise<NeonBee> startPromise = Promise.promise();
-        Method m = NeonBee.class.getDeclaredMethod("instance", Supplier.class, NeonBeeOptions.class, Handler.class);
+        Method m = NeonBee.class.getDeclaredMethod("create", Supplier.class, NeonBeeOptions.class);
         m.setAccessible(true);
-        m.invoke(null, (Supplier<Future<Vertx>>) () -> succeededFuture(vertx), opts, startPromise);
+        Future<NeonBee> future =
+                (Future<NeonBee>) m.invoke(null, (Supplier<Future<Vertx>>) () -> succeededFuture(vertx), opts);
 
         // For some reason the BeforeEach method in the subclass is called before testContext of this class
         // is completed. Therefore this CountDownLatch is needed.
         CountDownLatch latch = new CountDownLatch(1);
-        startPromise.future().onComplete(asyncNeonBee -> {
+        future.onComplete(asyncNeonBee -> {
             if (asyncNeonBee.failed()) {
                 testContext.failNow(asyncNeonBee.cause());
                 latch.countDown();

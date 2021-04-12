@@ -2,6 +2,7 @@ package io.neonbee;
 
 import static ch.qos.logback.classic.util.ContextInitializer.CONFIG_FILE_PROPERTY;
 import static io.neonbee.internal.helper.AsyncHelper.allComposite;
+import static io.neonbee.internal.helper.HostHelper.getHostIp;
 import static io.neonbee.internal.scanner.DeployableScanner.scanForDeployableClasses;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
@@ -15,9 +16,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -25,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
@@ -57,12 +59,10 @@ import io.neonbee.internal.verticle.ModelRefreshVerticle;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Closeable;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -138,11 +138,12 @@ public class NeonBee {
 
     private static final int NUMBER_DEFAULT_INSTANCES = 16;
 
+    @VisibleForTesting
+    NeonBeeConfig config;
+
     private final Vertx vertx;
 
     private final NeonBeeOptions options;
-
-    private final NeonBeeConfig config;
 
     private final HookRegistry hookRegistry;
 
@@ -151,35 +152,6 @@ public class NeonBee {
     private AsyncMap<String, Object> sharedAsyncMap;
 
     private final Set<String> localConsumers = new ConcurrentHashSet<>();
-
-    @VisibleForTesting
-    static Future<Vertx> initVertx(NeonBeeOptions options) {
-        VertxOptions vertxOptions = new VertxOptions().setEventLoopPoolSize(options.getEventLoopPoolSize())
-                .setWorkerPoolSize(options.getWorkerPoolSize()).setMetricsOptions(new MicrometerMetricsOptions()
-                        .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true)).setEnabled(true));
-
-        Promise<Vertx> promise = Promise.promise();
-        if (options.isClustered()) {
-            HazelcastInstance hzInstance = Hazelcast.newHazelcastInstance(options.getClusterConfig());
-            vertxOptions.setClusterManager(new HazelcastClusterManager(hzInstance)).getEventBusOptions()
-                    .setPort(options.getClusterPort());
-            String currentIp = System.getenv("CF_INSTANCE_INTERNAL_IP");
-            if (!Strings.isNullOrEmpty(currentIp)) {
-                vertxOptions.getEventBusOptions().setHost(currentIp);
-            }
-            Vertx.clusteredVertx(vertxOptions, result -> {
-                if (result.failed()) {
-                    logger.error("Failed to start Vertx cluster", result.cause()); // NOPMD slf4j
-                    promise.fail(result.cause());
-                } else {
-                    promise.complete(result.result());
-                }
-            });
-        } else {
-            promise.complete(Vertx.vertx(vertxOptions));
-        }
-        return promise.future();
-    }
 
     /**
      * Convenience method for returning the current NeonBee instance.
@@ -190,9 +162,9 @@ public class NeonBee {
      *
      * @return A NeonBee instance or null
      */
-    public static NeonBee instance() {
+    public static NeonBee get() {
         Context context = Vertx.currentContext();
-        return context != null ? instance(context.owner()) : null;
+        return context != null ? get(context.owner()) : null;
     }
 
     /**
@@ -201,18 +173,17 @@ public class NeonBee {
      * @param vertx The Vert.x instance to get the NeonBee instance from
      * @return A NeonBee instance or null
      */
-    public static NeonBee instance(Vertx vertx) {
+    public static NeonBee get(Vertx vertx) {
         return NEONBEE_INSTANCES.get(vertx);
     }
 
     /**
      * Create a new NeonBee instance, with default options. Similar to the static {@link Vertx#vertx()} method.
      *
-     * @param resultHandler the result handler which is called as soon as the NeonBee instance has been created or the
-     *                      creation failed
+     * @return the future to a new NeonBee instance initialized with default options and a new Vert.x instance
      */
-    public static void instance(Handler<AsyncResult<NeonBee>> resultHandler) {
-        instance(new NeonBeeOptions.Mutable(), resultHandler);
+    public static Future<NeonBee> create() {
+        return create(new NeonBeeOptions.Mutable());
     }
 
     /**
@@ -220,28 +191,25 @@ public class NeonBee {
      * <p>
      * Note: This method is NOT a static method like {@link Vertx#vertx(VertxOptions)}, as no factory method is needed.
      *
-     * @param options       the NeonBee command line options
-     * @param resultHandler the result handler which is called as soon as the NeonBee instance has been created or the
-     *                      creation failed
+     * @param options the NeonBee command line options
+     * @return the future to a new NeonBee instance initialized with default options and a new Vert.x instance
      */
-    public static void instance(NeonBeeOptions options, Handler<AsyncResult<NeonBee>> resultHandler) {
-        instance(() -> initVertx(options), options, resultHandler);
+    public static Future<NeonBee> create(NeonBeeOptions options) {
+        return create(() -> newVertx(options), options);
     }
 
     @VisibleForTesting
     @SuppressWarnings("PMD.EmptyCatchBlock")
-    static void instance(Supplier<Future<Vertx>> vertxFutureSupplier, NeonBeeOptions options,
-            Handler<AsyncResult<NeonBee>> resultHandler) {
-
+    static Future<NeonBee> create(Supplier<Future<Vertx>> vertxFutureSupplier, NeonBeeOptions options) {
         try {
-            // Create the NeonBee working and logging directory (as the only mandatory directory for NeonBee)
+            // create the NeonBee working and logging directory (as the only mandatory directory for NeonBee)
             Files.createDirectories(options.getLogDirectory());
         } catch (IOException e) {
             // nothing to do here, we can also (at least try) to work w/o a working directory
             // we should discuss if NeonBee can run in general without a working dir or not
         }
 
-        // Switch to the SLF4J logging facade (using Logback as a logging backend). It is required to set the logging
+        // switch to the SLF4J logging facade (using Logback as a logging backend). It is required to set the logging
         // system properties before the first logger is initialized, so do it before the Vert.x initialization.
         setProperty(CONFIG_FILE_PROPERTY, options.getConfigDirectory().resolve("logback.xml").toString());
         setProperty(HAZELCAST_LOGGING_TYPE, "slf4j");
@@ -249,39 +217,51 @@ public class NeonBee {
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
         logger = LoggerFactory.getLogger(NeonBee.class);
 
-        // Create a Vert.x instance (clustered or unclustered)
-        vertxFutureSupplier.get().compose(vertx -> bootstrap(options, vertx)).onComplete(resultHandler);
+        // create a Vert.x instance (clustered or unclustered)
+        return vertxFutureSupplier.get().compose(vertx -> {
+            // create a NeonBee instance, load the configuration and boot it up
+            NeonBee neonBee = new NeonBee(vertx, options);
+
+            return neonBee.loadConfig().compose(config -> neonBee.boot()).map(neonBee);
+        });
     }
 
-    private static Future<NeonBee> bootstrap(NeonBeeOptions options, Vertx vertx) {
-        return succeededFuture(new NeonBee(vertx, options)).compose(neonBee -> neonBee.registerHooks()
-                .compose(v -> neonBee.getHookRegistry().executeHooks(HookType.BEFORE_BOOTSTRAP).mapEmpty())
-                .compose(v -> succeededFuture(decorateEventBus(neonBee)))
-                .compose(v -> initializeSharedDataAccessor(neonBee)).compose(v -> neonBee.registerCodecs())
-                .compose(v -> {
-                    // Set the default TimeZone for date operations. This overwrites any configured
-                    // user.timezone properties.
+    @VisibleForTesting
+    static Future<Vertx> newVertx(NeonBeeOptions options) {
+        VertxOptions vertxOptions = new VertxOptions().setEventLoopPoolSize(options.getEventLoopPoolSize())
+                .setWorkerPoolSize(options.getWorkerPoolSize()).setMetricsOptions(new MicrometerMetricsOptions()
+                        .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true)).setEnabled(true));
+
+        if (!options.isClustered()) {
+            return succeededFuture(Vertx.vertx(vertxOptions));
+        } else {
+            HazelcastInstance hzInstance = Hazelcast.newHazelcastInstance(options.getClusterConfig());
+            vertxOptions.setClusterManager(new HazelcastClusterManager(hzInstance)).getEventBusOptions()
+                    .setPort(options.getClusterPort());
+            Optional.ofNullable(getHostIp()).filter(Predicate.not(String::isEmpty))
+                    .ifPresent(currentIp -> vertxOptions.getEventBusOptions().setHost(currentIp));
+            return Vertx.clusteredVertx(vertxOptions).onFailure(throwable -> {
+                logger.error("Failed to start Vertx cluster", throwable); // NOPMD slf4j
+            });
+        }
+    }
+
+    private Future<Void> boot() {
+        return registerHooks().compose(nothing -> hookRegistry.executeHooks(HookType.BEFORE_BOOTSTRAP))
+                .compose(anything -> {
+                    // set the default timezone and overwrite any configured user.timezone property
                     TimeZone.setDefault(TimeZone.getTimeZone(options.getTimeZoneId()));
-                    return succeededFuture();
-                }).compose(v -> neonBee.deployVerticles()).recover(throwable -> {
-                    // the instance has been created, but after initialization some post-initialization
-                    // tasks went wrong, stop Vert.x again. This will also call the close hook and clean up
-                    vertx.close();
 
-                    return failedFuture(throwable); // propagate the failure
-                }).compose(v -> neonBee.getHookRegistry().executeHooks(HookType.AFTER_STARTUP).mapEmpty())
-                .map(neonBee));
-    }
+                    // decorate the event bus with in- & outbound interceptors for tracking
+                    decorateEventBus();
 
-    private static Future<Void> initializeSharedDataAccessor(NeonBee neonBee) {
-        return succeededFuture(new SharedDataAccessor(neonBee.getVertx(), NeonBee.class))
-                .compose(sharedData -> AsyncHelper.executeBlocking(neonBee.getVertx(), promise -> {
-                    neonBee.sharedLocalMap = sharedData.getLocalMap(SHARED_MAP_NAME);
-                    sharedData.<String, Object>getAsyncMap(SHARED_MAP_NAME, asyncResult -> {
-                        neonBee.sharedAsyncMap = asyncResult.result();
-                        promise.handle(asyncResult.mapEmpty());
-                    });
-                }));
+                    return allComposite(List.of(initializeSharedDataAccessor(), registerCodecs()))
+                            .compose(nothing -> deployVerticles()).onFailure(throwable -> {
+                                // the instance has been created, but after initialization some post-initialization
+                                // tasks went wrong, stop Vert.x again. This will also call the close hook and clean up
+                                vertx.close();
+                            }).compose(nothing -> hookRegistry.executeHooks(HookType.AFTER_STARTUP));
+                }).mapEmpty();
     }
 
     private Future<Void> registerHooks() {
@@ -295,20 +275,31 @@ public class NeonBee {
     }
 
     @VisibleForTesting
-    static Void decorateEventBus(NeonBee neonBee) {
+    void decorateEventBus() {
         TrackingDataHandlingStrategy strategy;
+
         try {
-            strategy = (TrackingDataHandlingStrategy) Class
-                    .forName(neonBee.getConfig().getTrackingDataHandlingStrategy()).getConstructor().newInstance();
+            strategy = (TrackingDataHandlingStrategy) Class.forName(config.getTrackingDataHandlingStrategy())
+                    .getConstructor().newInstance();
         } catch (Exception e) {
             logger.warn("Failed to load configured tracking handling strategy {}. Use default.",
-                    neonBee.getConfig().getTrackingDataHandlingStrategy(), e);
+                    config.getTrackingDataHandlingStrategy(), e);
             strategy = new TrackingDataLoggingStrategy();
         }
-        neonBee.getVertx().eventBus().addInboundInterceptor(new TrackingInterceptor(MessageDirection.INBOUND, strategy))
-                .addOutboundInterceptor(new TrackingInterceptor(MessageDirection.OUTBOUND, strategy));
 
-        return null;
+        vertx.eventBus().addInboundInterceptor(new TrackingInterceptor(MessageDirection.INBOUND, strategy))
+                .addOutboundInterceptor(new TrackingInterceptor(MessageDirection.OUTBOUND, strategy));
+    }
+
+    private Future<Void> initializeSharedDataAccessor() {
+        return succeededFuture(new SharedDataAccessor(vertx, NeonBee.class))
+                .compose(sharedData -> AsyncHelper.executeBlocking(vertx, promise -> {
+                    sharedLocalMap = sharedData.getLocalMap(SHARED_MAP_NAME);
+                    sharedData.<String, Object>getAsyncMap(SHARED_MAP_NAME, asyncResult -> {
+                        sharedAsyncMap = asyncResult.result();
+                        promise.handle(asyncResult.mapEmpty());
+                    });
+                }));
     }
 
     /**
@@ -358,7 +349,7 @@ public class NeonBee {
 
         List<Future<String>> deployFutures = new ArrayList<>(deploySystemVerticles());
         if (NeonBeeProfile.WEB.isActive(activeProfiles)) {
-            deployFutures.addAll(deployWebVerticles());
+            deployFutures.add(deployServerVerticle());
         }
 
         deployFutures.addAll(deployClassPathVerticles());
@@ -366,18 +357,18 @@ public class NeonBee {
     }
 
     /**
-     * Deploy any web verticle (bundled w/ NeonBee).
+     * Deploy the server verticle handling the endpoints.
      *
-     * @return a list of futures deploying verticle
+     * @return the future deploying the server verticle
      */
-    private List<Future<String>> deployWebVerticles() {
-        logger.info("Deploy web verticle.");
+    private Future<String> deployServerVerticle() {
+        logger.info("Deploy server verticle");
 
-        return List.of(Deployable
+        return Deployable
                 .fromClass(vertx, ServerVerticle.class, CORRELATION_ID,
                         new JsonObject().put("instances", NUMBER_DEFAULT_INSTANCES))
                 .compose(deployable -> deployable.deploy(vertx, CORRELATION_ID).future())
-                .map(Deployment::getDeploymentId));
+                .map(Deployment::getDeploymentId);
     }
 
     /**
@@ -459,14 +450,17 @@ public class NeonBee {
 
     @VisibleForTesting
     NeonBee(Vertx vertx, NeonBeeOptions options) {
-        this.options = options;
         this.vertx = vertx;
+        this.options = options;
 
         // to be able to retrieve the NeonBee instance from any point you have a Vert.x instance add it to a global map
         NEONBEE_INSTANCES.put(vertx, this);
         this.hookRegistry = new DefaultHookRegistry(vertx);
-        this.config = new NeonBeeConfig(vertx);
         registerCloseHandler(vertx);
+    }
+
+    private Future<NeonBeeConfig> loadConfig() {
+        return succeededFuture(this.config = new NeonBeeConfig(vertx));
     }
 
     @SuppressWarnings("rawtypes")
@@ -478,8 +472,8 @@ public class NeonBee {
                 /*
                  * Called when Vert.x instance is closed, perform shut-down operations here
                  */
-                handler.handle(getHookRegistry().executeHooks(HookType.BEFORE_SHUTDOWN)
-                        .compose(shutdownHooksExecutionOutcomes -> {
+                handler.handle(
+                        hookRegistry.executeHooks(HookType.BEFORE_SHUTDOWN).compose(shutdownHooksExecutionOutcomes -> {
                             if (shutdownHooksExecutionOutcomes.failed()) {
                                 shutdownHooksExecutionOutcomes.<Future>list().stream().filter(Future::failed).forEach(
                                         future -> logger.error("Shutdown hook execution failed", future.cause())); // NOPMD
@@ -560,18 +554,18 @@ public class NeonBee {
     /**
      * Registers a verticle as local consumer.
      *
-     * @param verticleAdresss verticle address
+     * @param verticleAddress verticle address
      */
-    public void registerLocalConsumer(String verticleAdresss) {
-        localConsumers.add(verticleAdresss);
+    public void registerLocalConsumer(String verticleAddress) {
+        localConsumers.add(verticleAddress);
     }
 
     /**
      * Unregisters a verticle as local consumer.
      *
-     * @param verticleAdresss verticle address
+     * @param verticleAddress verticle address
      */
-    public void unregisterLocalConsumer(String verticleAdresss) {
-        localConsumers.remove(verticleAdresss);
+    public void unregisterLocalConsumer(String verticleAddress) {
+        localConsumers.remove(verticleAddress);
     }
 }

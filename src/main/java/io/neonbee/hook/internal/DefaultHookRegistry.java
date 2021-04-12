@@ -67,7 +67,7 @@ public class DefaultHookRegistry implements HookRegistry {
     @Override
     public CompositeFuture executeHooks(HookType type, Map<String, Object> parameters) {
         List<Future<Void>> hookExecutions = hookRegistry.getOrDefault(type, List.of()).stream()
-                .map(DefaultHookRegistration.class::cast).map(registration -> executeHook(NeonBee.instance(vertx),
+                .map(DefaultHookRegistration.class::cast).map(registration -> executeHook(NeonBee.get(vertx),
                         registration, DefaultHookContext.of(type, parameters)))
                 .collect(Collectors.toList());
 

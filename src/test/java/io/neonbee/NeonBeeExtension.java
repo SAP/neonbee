@@ -247,7 +247,7 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<NeonBee> neonBeeHolder = new AtomicReference<>();
         LOGGER.info("Before NeonBee init.");
-        NeonBee.instance(neonBeeOptions, ar -> {
+        NeonBee.create(neonBeeOptions).onComplete(ar -> {
             LOGGER.info("NeonBee AsyncResult Handler. {}", ar.succeeded());
             if (ar.succeeded()) {
                 neonBeeHolder.set(ar.result());

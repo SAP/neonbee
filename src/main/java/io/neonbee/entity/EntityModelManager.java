@@ -361,7 +361,7 @@ public final class EntityModelManager {
          * Tries to load all model files available.
          */
         private Future<Map<String, EntityModel>> loadModelsFromModelDirectoryAndClasspath() {
-            NeonBeeOptions options = NeonBee.instance(vertx).getOptions();
+            NeonBeeOptions options = NeonBee.get(vertx).getOptions();
             return CompositeFuture.all(loadDir(options.getModelsDirectory()),
                     !options.shouldIgnoreClassPath() ? scanClassPath() : succeededFuture()).map(models);
         }

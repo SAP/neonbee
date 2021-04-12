@@ -202,7 +202,7 @@ public class ServerVerticle extends AbstractVerticle {
                         endpointConfig) -> PrometheusScrapingHandler.create(endpointConfig.getString("registryName")));
         router.route().handler(NotFoundHandler.create());
 
-        NeonBeeOptions options = NeonBee.instance(vertx).getOptions();
+        NeonBeeOptions options = NeonBee.get(vertx).getOptions();
         int port = Optional.ofNullable(options.getServerVerticlePort())
                 .orElse(config.getInteger(CONFIG_PROPERTY_PORT_KEY, DEFAULT_PORT));
 

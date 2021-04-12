@@ -112,7 +112,7 @@ class OtherExamples {
 
     @SuppressWarnings("unused")
     public void neonbeeExamples() {
-        NeonBee neonbee = NeonBee.instance(vertx);
+        NeonBee neonbee = NeonBee.get(vertx);
 
         neonbee.getOptions();
 

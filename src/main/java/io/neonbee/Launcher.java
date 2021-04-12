@@ -105,13 +105,10 @@ public class Launcher {
             List<LauncherPreProcessor> preProcessors =
                     loader.stream().map(ServiceLoader.Provider::get).collect(Collectors.toList());
             executePreProcessors(preProcessors, options);
-            NeonBee.instance(options, asyncNeonBee -> {
-                if (asyncNeonBee.failed()) {
-                    System.err.println("Failed to start NeonBee '" + asyncNeonBee.cause().getMessage() + "'"); // NOPMD
-                    return;
-                }
-
-                neonBee = asyncNeonBee.result();
+            NeonBee.create(options).onSuccess(neonBee -> {
+                Launcher.neonBee = neonBee;
+            }).onFailure(cause -> {
+                System.err.println("Failed to start NeonBee '" + cause.getMessage() + "'"); // NOPMD
             });
         } catch (Exception e) {
             System.err.println("Error occurred during launcher pre-processing. " + e.getMessage()); // NOPMD

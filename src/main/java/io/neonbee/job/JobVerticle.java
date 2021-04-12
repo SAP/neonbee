@@ -73,7 +73,7 @@ public abstract class JobVerticle extends AbstractVerticle {
 
     @Override
     public void start() {
-        if (!NeonBee.instance(getVertx()).getOptions().shouldDisableJobScheduling()) {
+        if (!NeonBee.get(getVertx()).getOptions().shouldDisableJobScheduling()) {
             scheduleJob();
         } else {
             finalizeJob();

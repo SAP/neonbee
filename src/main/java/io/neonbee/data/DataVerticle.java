@@ -200,7 +200,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
         registerDataVerticlePromise.future().compose(v -> {
             try {
                 start();
-                NeonBee.instance(vertx).registerLocalConsumer(address);
+                NeonBee.get(vertx).registerLocalConsumer(address);
                 return succeededFuture((Void) null);
             } catch (Exception e) {
                 return failedFuture(e);
@@ -210,7 +210,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
 
     @Override
     public void stop() throws Exception {
-        NeonBee neonBee = NeonBee.instance(vertx);
+        NeonBee neonBee = NeonBee.get(vertx);
         if (neonBee != null) { // NeonBee can be null, when the close hook has removed NeonBee - Vert.x mapping before
             neonBee.unregisterLocalConsumer(getAddress());
         }
@@ -387,7 +387,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
 
         // adapt further delivery options based on the request
         boolean localOnly = request.isLocalOnly()
-                || (request.isLocalPreferred() && NeonBee.instance(vertx).isLocalConsumerAvailable(address));
+                || (request.isLocalPreferred() && NeonBee.get(vertx).isLocalConsumerAvailable(address));
         deliveryOptions.setLocalOnly(localOnly);
         if (request.getSendTimeout() > 0) {
             deliveryOptions.setSendTimeout(request.getSendTimeout());
@@ -409,7 +409,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
      */
     private static DeliveryOptions deliveryOptions(Vertx vertx, MessageCodec<?, ?> codec, DataContext context) {
         DeliveryOptions deliveryOptions = new DeliveryOptions();
-        deliveryOptions.setSendTimeout(SECONDS.toMillis(NeonBee.instance(vertx).getConfig().getEventBusTimeout()))
+        deliveryOptions.setSendTimeout(SECONDS.toMillis(NeonBee.get(vertx).getConfig().getEventBusTimeout()))
                 .setCodecName(Optional.ofNullable(codec).map(MessageCodec::name).orElse(null));
         Optional.ofNullable(context).map(DataContextImpl::encodeContextToString)
                 .ifPresent(value -> deliveryOptions.addHeader(CONTEXT_HEADER, value));

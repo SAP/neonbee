@@ -23,7 +23,7 @@ public final class ConfigHelper {
     private ConfigHelper() {}
 
     public static Future<JsonObject> readConfig(Vertx vertx, String identifier) {
-        Path configDirPath = NeonBee.instance(vertx).getOptions().getConfigDirectory();
+        Path configDirPath = NeonBee.get(vertx).getOptions().getConfigDirectory();
 
         return readYAML(vertx, configDirPath.resolve(identifier + ".yaml"))
                 .recover(throwable -> throwable.getCause() instanceof NoSuchFileException
@@ -38,7 +38,7 @@ public final class ConfigHelper {
     }
 
     public static JsonObject readConfigBlocking(Vertx vertx, String identifier) {
-        Path configDirPath = NeonBee.instance(vertx).getOptions().getConfigDirectory();
+        Path configDirPath = NeonBee.get(vertx).getOptions().getConfigDirectory();
         try {
             return readYAMLBlocking(vertx, configDirPath.resolve(identifier + ".yaml").toAbsolutePath().toString());
         } catch (FileSystemException e) {

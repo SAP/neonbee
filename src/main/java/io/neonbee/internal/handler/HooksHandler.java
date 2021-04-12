@@ -29,7 +29,7 @@ public final class HooksHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext routingContext) {
-        NeonBee neonBee = NeonBee.instance(routingContext.vertx());
+        NeonBee neonBee = NeonBee.get(routingContext.vertx());
         neonBee.getHookRegistry()
                 .executeHooks(HookType.ONCE_PER_REQUEST, Map.of(ONCE_PER_REQUEST_ROUTING_CONTEXT, routingContext))
                 .onComplete(asyncResult -> {
