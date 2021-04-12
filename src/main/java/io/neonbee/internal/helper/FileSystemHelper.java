@@ -1,6 +1,5 @@
 package io.neonbee.internal.helper;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -176,42 +175,5 @@ public final class FileSystemHelper {
      */
     public static Future<FileProps> getProperties(Vertx vertx, Path path) {
         return Future.<FileProps>future(promise -> vertx.fileSystem().props(path.toString(), promise));
-    }
-
-    /**
-     * Will be deleted in an upcoming commit, therefore no javadoc. TODO
-     *
-     * @param vertx vertx
-     * @param path  path
-     * @return json
-     */
-    public static JsonObject readJSONBlocking(Vertx vertx, String path) {
-        return vertx.fileSystem().readFileBlocking(path).toJsonObject();
-    }
-
-    /**
-     * Will be deleted in an upcoming commit, therefore no javadoc. TODO
-     *
-     * @param buffer buffer
-     * @return json
-     */
-    public static JsonObject parseYAMLBlocking(Buffer buffer) {
-        try {
-            JsonNode node = YAML_MAPPER.readTree(buffer.getBytes());
-            return new JsonObject(node.toString());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Will be deleted in an upcoming commit, therefore no javadoc. TODO
-     *
-     * @param vertx vertx
-     * @param path  path
-     * @return json
-     */
-    public static JsonObject readYAMLBlocking(Vertx vertx, String path) {
-        return parseYAMLBlocking(vertx.fileSystem().readFileBlocking(path));
     }
 }

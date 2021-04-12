@@ -27,7 +27,7 @@ class InstanceInfoHandlerTest extends DataVerticleTestBase {
                 // We expect that the configured instance name (NeonBeeOptions), is added to the response header by the
                 // InstanceInfoHandler
                 assertThat(response.getHeader(X_INSTANCE_INFO_HEADER))
-                        .isEqualTo(NeonBee.instance(vertx).getOptions().getInstanceName());
+                        .isEqualTo(NeonBee.get(vertx).getOptions().getInstanceName());
             }
         });
     }

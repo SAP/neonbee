@@ -187,8 +187,8 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
      * @return A list of all (entity) verticle names as qualified names
      */
     public static Future<List<String>> getVerticlesForEntityType(Vertx vertx, FullQualifiedName entityTypeName) {
-        return Future.future(
-                asyncGet -> NeonBee.instance(vertx).getAsyncMap().get(sharedEntityMapName(entityTypeName), asyncGet))
+        return Future
+                .future(asyncGet -> NeonBee.get(vertx).getAsyncMap().get(sharedEntityMapName(entityTypeName), asyncGet))
                 .map(qualifiedNames -> ((List<?>) Optional.ofNullable((JsonArray) qualifiedNames)
                         .orElse(new JsonArray()).getList()).stream().map(Object::toString).distinct()
                                 .collect(Collectors.toList()));
@@ -248,7 +248,7 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
                 entityTypeNames().compose(fqns -> succeededFuture(Optional.ofNullable(fqns).orElse(Set.of())));
 
         entityTypeNames.compose(asyncEntityTypeNames -> {
-            AsyncMap<String, Object> asyncSharedMap = NeonBee.instance(vertx).getAsyncMap();
+            AsyncMap<String, Object> asyncSharedMap = NeonBee.get(vertx).getAsyncMap();
             return CompositeFuture.all(
                     asyncEntityTypeNames.stream().map(EntityVerticle::sharedEntityMapName).map(sharedEntityMapName -> {
                         Promise<Object> promise = Promise.promise();

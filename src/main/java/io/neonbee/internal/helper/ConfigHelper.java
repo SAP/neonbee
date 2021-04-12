@@ -1,9 +1,7 @@
 package io.neonbee.internal.helper;
 
 import static io.neonbee.internal.helper.FileSystemHelper.readJSON;
-import static io.neonbee.internal.helper.FileSystemHelper.readJSONBlocking;
 import static io.neonbee.internal.helper.FileSystemHelper.readYAML;
-import static io.neonbee.internal.helper.FileSystemHelper.readYAMLBlocking;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
@@ -15,7 +13,6 @@ import java.util.function.Supplier;
 import io.neonbee.NeonBee;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.file.FileSystemException;
 import io.vertx.core.json.JsonObject;
 
 public final class ConfigHelper {
@@ -36,7 +33,7 @@ public final class ConfigHelper {
      * @return a future to a JsonObject or a failed future in case reading failed or the config file was not found
      */
     public static Future<JsonObject> readConfig(Vertx vertx, String identifier) {
-        Path configDirPath = NeonBee.instance(vertx).getOptions().getConfigDirectory();
+        Path configDirPath = NeonBee.get(vertx).getOptions().getConfigDirectory();
 
         return readYAML(vertx, configDirPath.resolve(identifier + ".yaml"))
                 .recover(notFound(() -> readYAML(vertx, configDirPath.resolve(identifier + ".yml"))))
@@ -57,42 +54,6 @@ public final class ConfigHelper {
      */
     public static Future<JsonObject> readConfig(Vertx vertx, String identifier, JsonObject fallback) {
         return readConfig(vertx, identifier).recover(notFound(() -> succeededFuture(fallback)));
-    }
-
-    /**
-     * Will be deleted in an upcoming commit, therefore no javadoc. TODO
-     *
-     * @param vertx      vertx
-     * @param identifier identifier
-     * @return config
-     */
-    public static JsonObject readConfigBlocking(Vertx vertx, String identifier) {
-        Path configDirPath = NeonBee.instance(vertx).getOptions().getConfigDirectory();
-        try {
-            return readYAMLBlocking(vertx, configDirPath.resolve(identifier + ".yaml").toAbsolutePath().toString());
-        } catch (FileSystemException e) {
-            if (e.getCause() instanceof NoSuchFileException) {
-                return readJSONBlocking(vertx, configDirPath.resolve(identifier + ".json").toAbsolutePath().toString());
-            } else {
-                throw e;
-            }
-        }
-    }
-
-    /**
-     * Will be deleted in an upcoming commit, therefore no javadoc. TODO
-     *
-     * @param vertx      vertx
-     * @param identifier identifier
-     * @param fallback   fallback
-     * @return config
-     */
-    public static JsonObject readConfigBlocking(Vertx vertx, String identifier, JsonObject fallback) {
-        try {
-            return readConfigBlocking(vertx, identifier);
-        } catch (FileSystemException e) {
-            return fallback;
-        }
     }
 
     private static <T> Function<Throwable, Future<T>> notFound(Supplier<Future<T>> whenNotFound) {
