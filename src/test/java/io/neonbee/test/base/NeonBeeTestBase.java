@@ -1,6 +1,5 @@
 package io.neonbee.test.base;
 
-import static io.neonbee.internal.helper.ConfigHelper.readConfigBlocking;
 import static io.neonbee.internal.verticle.ServerVerticle.CONFIG_PROPERTY_PORT_KEY;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
@@ -41,7 +40,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -68,6 +66,7 @@ public class NeonBeeTestBase {
     private boolean isDummyServerVerticleDeployed;
 
     @BeforeEach
+    @SuppressWarnings("unchecked")
     public void setUp(TestInfo testInfo, Vertx vertx, VertxTestContext testContext) throws Exception {
         // Build working directory
         workingDirPath = FileSystemHelper.createTempDirectory();
@@ -80,15 +79,15 @@ public class NeonBeeTestBase {
         }
 
         // make required NeonBee method accessible, because TestBase is not in same package
-        Promise<NeonBee> startPromise = Promise.promise();
-        Method m = NeonBee.class.getDeclaredMethod("instance", Supplier.class, NeonBeeOptions.class, Handler.class);
+        Method m = NeonBee.class.getDeclaredMethod("create", Supplier.class, NeonBeeOptions.class);
         m.setAccessible(true);
-        m.invoke(null, (Supplier<Future<Vertx>>) () -> succeededFuture(vertx), opts, startPromise);
+        Future<NeonBee> future =
+                (Future<NeonBee>) m.invoke(null, (Supplier<Future<Vertx>>) () -> succeededFuture(vertx), opts);
 
         // For some reason the BeforeEach method in the subclass is called before testContext of this class
         // is completed. Therefore this CountDownLatch is needed.
         CountDownLatch latch = new CountDownLatch(1);
-        startPromise.future().onComplete(asyncNeonBee -> {
+        future.onComplete(asyncNeonBee -> {
             if (asyncNeonBee.failed()) {
                 testContext.failNow(asyncNeonBee.cause());
                 latch.countDown();
@@ -239,9 +238,8 @@ public class NeonBeeTestBase {
      * @return a pre-configured HTTP request which points to the NeonBee HTTP interface.
      */
     public HttpRequest<Buffer> createRequest(HttpMethod method, String path) {
-        DeploymentOptions deploymentOptions =
-                new DeploymentOptions(readConfigBlocking(getNeonBee().getVertx(), ServerVerticle.class.getName()));
-        int port = deploymentOptions.getConfig().getInteger(CONFIG_PROPERTY_PORT_KEY, -1);
+        int port = WorkingDirectoryBuilder.readDeploymentOptions(ServerVerticle.class, workingDirPath).getConfig()
+                .getInteger(CONFIG_PROPERTY_PORT_KEY, -1);
 
         WebClientOptions opts = new WebClientOptions().setDefaultHost("localhost").setDefaultPort(port);
         HttpRequest<Buffer> request = WebClient.create(getNeonBee().getVertx(), opts).request(method, path);

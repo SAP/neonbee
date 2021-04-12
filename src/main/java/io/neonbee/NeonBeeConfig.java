@@ -1,7 +1,5 @@
 package io.neonbee;
 
-import static io.neonbee.internal.helper.ConfigHelper.readConfigBlocking;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -12,7 +10,6 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
 import io.neonbee.logging.LoggingFacade;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 
 public class NeonBeeConfig {
@@ -28,22 +25,13 @@ public class NeonBeeConfig {
 
     private static final String DEFAULT_TRACKING_DATA_HANDLING_STRATEGY = TrackingDataLoggingStrategy.class.getName();
 
-    private int eventBusTimeout = DEFAULT_EVENT_BUS_TIMEOUT;
+    private final int eventBusTimeout;
 
     private final List<String> platformClasses;
 
     private final String trackingDataHandlingStrategy;
 
     private final Map<String, String> eventBusCodecs;
-
-    /**
-     * Package scoped default constructor.
-     * <p>
-     * Should never be initialized by anyone, but only retrieved via neonbee.getConfig()
-     */
-    NeonBeeConfig(Vertx vertx) {
-        this(readConfigBlocking(vertx, NeonBee.class.getName(), new JsonObject()));
-    }
 
     /**
      * Create a NeonBee config from JSON.

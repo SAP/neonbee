@@ -55,7 +55,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     @DisplayName("NeonBee should start with default options / default working directory")
     void testStart(Vertx vertx) {
         assertThat(getNeonBee()).isNotNull();
-        assertThat(NeonBee.instance(vertx)).isNotNull();
+        assertThat(NeonBee.get(vertx)).isNotNull();
     }
 
     @Test
@@ -78,7 +78,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Vert.x should start in non-clustered mode. ")
     void testStandaloneInitialization(VertxTestContext testContext) {
-        NeonBee.initVertx(new NeonBeeOptions.Mutable()).onComplete(testContext.succeeding(vertx -> {
+        NeonBee.newVertx(new NeonBeeOptions.Mutable()).onComplete(testContext.succeeding(vertx -> {
             assertThat(vertx.isClustered()).isFalse();
             testContext.completeNow();
         }));
@@ -88,7 +88,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Vert.x should start in clustered mode.")
     void testClusterInitialization(VertxTestContext testContext) {
-        NeonBee.initVertx(
+        NeonBee.newVertx(
                 new NeonBeeOptions.Mutable().setClustered(true).setClusterConfigResource("hazelcast-local.xml"))
                 .onComplete(testContext.succeeding(vertx -> {
                     assertThat(vertx.isClustered()).isTrue();
@@ -120,7 +120,7 @@ class NeonBeeTest extends NeonBeeTestBase {
         when(eventBus.addOutboundInterceptor(Mockito.any(Handler.class))).thenReturn(eventBus);
         ArgumentCaptor<Handler<DeliveryContext<Object>>> inboundHandlerCaptor = ArgumentCaptor.forClass(Handler.class);
         ArgumentCaptor<Handler<DeliveryContext<Object>>> outboundHandlerCaptor = ArgumentCaptor.forClass(Handler.class);
-        NeonBee.decorateEventBus(neonBee);
+        neonBee.decorateEventBus();
         verify(eventBus).addInboundInterceptor(inboundHandlerCaptor.capture());
         verify(eventBus).addOutboundInterceptor(outboundHandlerCaptor.capture());
         TrackingInterceptor inboundHandler = (TrackingInterceptor) inboundHandlerCaptor.getValue();
@@ -133,20 +133,14 @@ class NeonBeeTest extends NeonBeeTestBase {
 
     @Test
     void testFilterByProfile() {
-        assertThat(NeonBee.filterByAutoDeployAndProfiles(CoreVerticle.class, List.<NeonBeeProfile>of(CORE))).isTrue();
-        assertThat(NeonBee.filterByAutoDeployAndProfiles(CoreVerticle.class, List.<NeonBeeProfile>of(CORE, STABLE)))
-                .isTrue();
-        assertThat(NeonBee.filterByAutoDeployAndProfiles(CoreVerticle.class, List.<NeonBeeProfile>of(STABLE)))
-                .isFalse();
-        assertThat(NeonBee.filterByAutoDeployAndProfiles(StableVerticle.class, List.<NeonBeeProfile>of(STABLE)))
-                .isTrue();
-        assertThat(NeonBee.filterByAutoDeployAndProfiles(StableVerticle.class, List.<NeonBeeProfile>of(STABLE, CORE)))
-                .isTrue();
-        assertThat(NeonBee.filterByAutoDeployAndProfiles(IncubatorVerticle.class, List.<NeonBeeProfile>of(INCUBATOR)))
-                .isTrue();
-        assertThat(NeonBee.filterByAutoDeployAndProfiles(SystemVerticle.class, List.<NeonBeeProfile>of(CORE)))
-                .isFalse();
-        assertThat(NeonBee.filterByAutoDeployAndProfiles(SystemVerticle.class, List.<NeonBeeProfile>of(ALL))).isFalse();
+        assertThat(NeonBee.filterByAutoDeployAndProfiles(CoreVerticle.class, List.of(CORE))).isTrue();
+        assertThat(NeonBee.filterByAutoDeployAndProfiles(CoreVerticle.class, List.of(CORE, STABLE))).isTrue();
+        assertThat(NeonBee.filterByAutoDeployAndProfiles(CoreVerticle.class, List.of(STABLE))).isFalse();
+        assertThat(NeonBee.filterByAutoDeployAndProfiles(StableVerticle.class, List.of(STABLE))).isTrue();
+        assertThat(NeonBee.filterByAutoDeployAndProfiles(StableVerticle.class, List.of(STABLE, CORE))).isTrue();
+        assertThat(NeonBee.filterByAutoDeployAndProfiles(IncubatorVerticle.class, List.of(INCUBATOR))).isTrue();
+        assertThat(NeonBee.filterByAutoDeployAndProfiles(SystemVerticle.class, List.of(CORE))).isFalse();
+        assertThat(NeonBee.filterByAutoDeployAndProfiles(SystemVerticle.class, List.of(ALL))).isFalse();
     }
 
     @NeonBeeDeployable(profile = CORE)

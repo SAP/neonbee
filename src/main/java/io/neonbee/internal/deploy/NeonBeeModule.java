@@ -274,9 +274,8 @@ public class NeonBeeModule {
                     Map<String, byte[]> models = loadModelPayloads(classLoader, cps.scanManifestFiles(NEONBEE_MODELS));
                     Map<String, byte[]> extensionModels =
                             loadModelPayloads(classLoader, cps.scanManifestFiles(NEONBEE_MODEL_EXTENSIONS));
-                    SelfFirstClassLoader moduleClassLoader =
-                            new SelfFirstClassLoader(jarUrl, ClassLoader.getSystemClassLoader(),
-                                    NeonBee.instance(vertx).getConfig().getPlatformClasses());
+                    SelfFirstClassLoader moduleClassLoader = new SelfFirstClassLoader(jarUrl,
+                            ClassLoader.getSystemClassLoader(), NeonBee.get(vertx).getConfig().getPlatformClasses());
                     verticleClasses.addAll(loadClassesToDeploy(cps, moduleClassLoader));
                     promise.complete(new NeonBeeModule(vertx, moduleName, correlationId, pathOfJar, verticleClasses,
                             models, extensionModels));
