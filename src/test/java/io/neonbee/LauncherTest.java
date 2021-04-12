@@ -99,15 +99,6 @@ class LauncherTest {
         withEnvironment(envMap, this::assertClusteredOptions);
     }
 
-    @Test
-    @DisplayName("should execute list of preprocessors.")
-    void testExecutePreProcessors() {
-        TestPreProcessor processor = new TestPreProcessor();
-        List<LauncherPreProcessor> preProcessors = List.of(processor);
-        Launcher.executePreProcessors(preProcessors, new NeonBeeOptions.Mutable());
-        assertThat(processor.isPreProcessorExecuted()).isTrue();
-    }
-
     static class TestPreProcessor implements LauncherPreProcessor {
         private boolean preProcessorExecuted;
 
@@ -128,7 +119,7 @@ class LauncherTest {
         assertThat(neonBeeOptions.getEventLoopPoolSize()).isEqualTo(2);
         assertThat(neonBeeOptions.shouldIgnoreClassPath()).isTrue();
         assertThat(neonBeeOptions.shouldDisableJobScheduling()).isTrue();
-        assertThat(neonBeeOptions.getServerVerticlePort()).isEqualTo(9000);
+        assertThat(neonBeeOptions.getServerPort()).isEqualTo(9000);
     }
 
     private void assertClusteredOptions() {

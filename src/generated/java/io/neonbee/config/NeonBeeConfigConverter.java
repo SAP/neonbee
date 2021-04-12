@@ -37,6 +37,11 @@ public class NeonBeeConfigConverter {
                     obj.setPlatformClasses(list);
                 }
                 break;
+            case "timeZone":
+                if (member.getValue() instanceof String) {
+                    obj.setTimeZone((String) member.getValue());
+                }
+                break;
             case "trackingDataHandlingStrategy":
                 if (member.getValue() instanceof String) {
                     obj.setTrackingDataHandlingStrategy((String) member.getValue());
@@ -61,6 +66,9 @@ public class NeonBeeConfigConverter {
             JsonArray array = new JsonArray();
             obj.getPlatformClasses().forEach(item -> array.add(item));
             json.put("platformClasses", array);
+        }
+        if (obj.getTimeZone() != null) {
+            json.put("timeZone", obj.getTimeZone());
         }
         if (obj.getTrackingDataHandlingStrategy() != null) {
             json.put("trackingDataHandlingStrategy", obj.getTrackingDataHandlingStrategy());

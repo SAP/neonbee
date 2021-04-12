@@ -31,6 +31,8 @@ public class NeonBeeConfig {
 
     public static final String DEFAULT_TRACKING_DATA_HANDLING_STRATEGY = TrackingDataLoggingStrategy.class.getName();
 
+    public static final String DEFAULT_TIME_ZONE = "UTC";
+
     private int eventBusTimeout = DEFAULT_EVENT_BUS_TIMEOUT;
 
     private Map<String, String> eventBusCodecs;
@@ -38,6 +40,8 @@ public class NeonBeeConfig {
     private String trackingDataHandlingStrategy = DEFAULT_TRACKING_DATA_HANDLING_STRATEGY;
 
     private List<String> platformClasses;
+
+    private String timeZone = DEFAULT_TIME_ZONE;
 
     public static Future<NeonBeeConfig> load(Vertx vertx) {
         return readConfig(vertx, NeonBee.class.getName(), new JsonObject()).map(NeonBeeConfig::new);
@@ -165,6 +169,28 @@ public class NeonBeeConfig {
     @Fluent
     public NeonBeeConfig setPlatformClasses(List<String> platformClasses) {
         this.platformClasses = platformClasses;
+        return this;
+    }
+
+    /**
+     * Get the timezone to be used as default in NeonBee. Either an abbreviation such as "PST", a full name such as
+     * "America/Los_Angeles".
+     *
+     * @return A string with the timezone
+     */
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    /**
+     * Sets the timezone used in NeonBee, e.g. when date / timestamps are returned via the web interface.
+     *
+     * @param timeZone The time zone to set
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    @Fluent
+    public NeonBeeConfig setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
         return this;
     }
 }

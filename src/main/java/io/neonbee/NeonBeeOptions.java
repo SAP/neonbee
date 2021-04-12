@@ -125,7 +125,7 @@ public interface NeonBeeOptions {
      *
      * @return the port number of the server verticle
      */
-    Integer getServerVerticlePort();
+    Integer getServerPort();
 
     /**
      * Gets the currently active profiles.
@@ -135,19 +135,14 @@ public interface NeonBeeOptions {
     List<NeonBeeProfile> getActiveProfiles();
 
     /**
-     * Get the ID the ID for the TimeZone to be used as default. Either an abbreviation such as "PST", a full name such
-     * as "America/Los_Angeles".
-     *
-     * @return A string with the timezone
-     */
-    String getTimeZoneId();
-
-    /**
      * Create a mutable NeonBeeOptions similar to VertxOptions, but as NeonBeeOptions are exposed only the interface
      * shall be used, otherwise configuration changes could cause runtime errors. To initialize a new Vertx instance use
      * this Mutable inner class.
      */
     class Mutable implements NeonBeeOptions {
+        /**
+         * The default cluster configuration file name.
+         */
         public static final String DEFAULT_CLUSTER_CONFIG = "hazelcast-cf.xml";
 
         private int eventLoopPoolSize = VertxOptions.DEFAULT_EVENT_LOOP_POOL_SIZE;
@@ -168,11 +163,9 @@ public interface NeonBeeOptions {
 
         private boolean disableJobScheduling;
 
-        private Integer serverVerticlePort;
+        private Integer serverPort;
 
         private List<NeonBeeProfile> activeProfiles = List.of(NeonBeeProfile.ALL);
-
-        private String timeZoneId = "UTC";
 
         public Mutable() {
             instanceName = generateName();
@@ -329,14 +322,14 @@ public interface NeonBeeOptions {
             return this;
         }
 
-        public Mutable setServerVerticlePort(Integer serverVerticlePort) {
-            this.serverVerticlePort = serverVerticlePort;
+        public Mutable setServerPort(Integer serverPort) {
+            this.serverPort = serverPort;
             return this;
         }
 
         @Override
-        public Integer getServerVerticlePort() {
-            return this.serverVerticlePort;
+        public Integer getServerPort() {
+            return this.serverPort;
         }
 
         @Override
@@ -351,16 +344,6 @@ public interface NeonBeeOptions {
 
         public Mutable setActiveProfileValues(String profileValues) {
             this.activeProfiles = NeonBeeProfile.parseProfiles(profileValues);
-            return this;
-        }
-
-        @Override
-        public String getTimeZoneId() {
-            return this.timeZoneId;
-        }
-
-        public Mutable setTimeZoneId(String timeZoneId) {
-            this.timeZoneId = timeZoneId;
             return this;
         }
 
