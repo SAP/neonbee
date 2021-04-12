@@ -2,7 +2,6 @@ package io.neonbee.entity;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
-import static org.junit.Assert.assertThat;
 
 import java.util.concurrent.TimeUnit;
 

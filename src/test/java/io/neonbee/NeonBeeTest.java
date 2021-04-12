@@ -5,7 +5,7 @@ import static io.neonbee.NeonBeeProfile.ALL;
 import static io.neonbee.NeonBeeProfile.CORE;
 import static io.neonbee.NeonBeeProfile.INCUBATOR;
 import static io.neonbee.NeonBeeProfile.STABLE;
-import static io.neonbee.internal.Helper.EMPTY;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;

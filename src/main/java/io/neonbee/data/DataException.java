@@ -1,6 +1,6 @@
 package io.neonbee.data;
 
-import static io.neonbee.internal.Helper.EMPTY;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
 
 import java.util.Objects;
 import java.util.Optional;

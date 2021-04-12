@@ -13,6 +13,8 @@ import io.vertx.core.json.JsonObject;
  * An immutable implementation of the JsonObject.
  */
 public final class ImmutableJsonObject extends JsonObject {
+    public static final ImmutableJsonObject EMPTY = new ImmutableJsonObject();
+
     /**
      * Create an instance from a string of JSON.
      *

@@ -1,6 +1,6 @@
 package io.neonbee.entity;
 
-import static io.neonbee.internal.Helper.LOCAL_DELIVERY;
+import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -41,10 +41,9 @@ import com.sap.cds.reflect.CdsModel;
 
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeOptions;
-import io.neonbee.internal.Helper;
-import io.neonbee.internal.Helper.BufferInputStream;
 import io.neonbee.internal.SharedDataAccessor;
 import io.neonbee.internal.helper.AsyncHelper;
+import io.neonbee.internal.helper.BufferHelper.BufferInputStream;
 import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.processor.etag.MetadataETagSupport;
 import io.neonbee.internal.scanner.ClassPathScanner;
@@ -53,6 +52,7 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.file.FileSystemException;
 
 public final class EntityModelManager {
@@ -76,6 +76,8 @@ public final class EntityModelManager {
     static final Map<Vertx, Map<String, Map<String, EntityModel>>> BUFFERED_MODULE_MODELS = new WeakHashMap<>();
 
     private static final ThreadLocal<OData> THREAD_LOCAL_ODATA = ThreadLocal.withInitial(OData::newInstance);
+
+    private static final DeliveryOptions LOCAL_DELIVERY = new DeliveryOptions().setLocalOnly(true);
 
     private EntityModelManager() {
         // no need to instantiate a manager class
@@ -350,7 +352,7 @@ public final class EntityModelManager {
          */
         private Future<Map<String, EntityModel>> loadModelsFromModule(Map<String, byte[]> models,
                 Map<String, byte[]> extensionModels) {
-            return Helper.allComposite(models.entrySet().stream()
+            return allComposite(models.entrySet().stream()
                     .map(entry -> loadModel(entry.getKey(), entry.getValue(), extensionModels))
                     .collect(Collectors.toList())).map(this.models);
         }

@@ -1,7 +1,6 @@
 package io.neonbee.internal.scanner;
 
-import static io.neonbee.internal.Helper.EMPTY;
-import static io.neonbee.internal.Helper.getClassLoader;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,7 +28,7 @@ import org.objectweb.asm.ClassReader;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Streams;
-import io.neonbee.internal.JarHelper;
+import io.neonbee.internal.helper.JarHelper;
 
 /**
  * The possible entries for the classpath are defined here [1]:
@@ -72,6 +71,18 @@ public class ClassPathScanner {
      */
     public ClassPathScanner(ClassLoader classLoader) {
         this.classLoader = classLoader;
+    }
+
+    /**
+     * Retrieves the current threads context class loader or the class loader the {@link ClassPathScanner} was loaded
+     * with, in case the current thread has no context class loader to retrieve.
+     *
+     * @return A class loader
+     */
+    @SuppressWarnings("PMD.UseProperClassLoader")
+    public static ClassLoader getClassLoader() {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        return classLoader == null ? ClassPathScanner.class.getClassLoader() : classLoader;
     }
 
     /**

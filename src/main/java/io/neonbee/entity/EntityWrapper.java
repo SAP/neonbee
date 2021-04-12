@@ -1,6 +1,6 @@
 package io.neonbee.entity;
 
-import static io.neonbee.internal.Helper.mutableCopyOf;
+import static io.neonbee.internal.helper.CollectionsHelper.mutableCopyOf;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 

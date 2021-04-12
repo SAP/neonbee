@@ -4,11 +4,11 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.base.Strings.nullToEmpty;
 import static io.neonbee.entity.EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS;
 import static io.neonbee.entity.EntityModelManager.getSharedModels;
-import static io.neonbee.internal.Helper.EMPTY;
-import static io.neonbee.internal.Helper.entryConsumer;
-import static io.neonbee.internal.Helper.entryFunction;
-import static io.neonbee.internal.Helper.inputStreamToBuffer;
-import static io.neonbee.internal.Helper.replaceLast;
+import static io.neonbee.internal.helper.BufferHelper.inputStreamToBuffer;
+import static io.neonbee.internal.helper.FunctionalHelper.entryConsumer;
+import static io.neonbee.internal.helper.FunctionalHelper.entryFunction;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.neonbee.internal.helper.StringHelper.replaceLast;
 import static io.vertx.core.Future.succeededFuture;
 import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static org.apache.olingo.server.core.ODataHandlerException.MessageKeys.AMBIGUOUS_XHTTP_METHOD;
@@ -44,8 +44,8 @@ import org.apache.olingo.server.core.ODataHandlerException;
 import com.google.common.annotations.VisibleForTesting;
 
 import io.neonbee.entity.EntityModel;
-import io.neonbee.internal.Helper.BufferInputStream;
 import io.neonbee.internal.SharedDataAccessor;
+import io.neonbee.internal.helper.BufferHelper.BufferInputStream;
 import io.neonbee.internal.processor.BatchProcessor;
 import io.neonbee.internal.processor.CountEntityCollectionProcessor;
 import io.neonbee.internal.processor.EntityProcessor;
@@ -126,7 +126,9 @@ public final class ODataEndpointHandler implements Handler<RoutingContext> {
             uriPart = uriPart.replace('_', '-'); // foo_bar -> foo-bar
 
             return uriPart;
-        }), LOOSE(uriPart -> {
+        }),
+
+        LOOSE(uriPart -> {
             // join the namespace and service name, my.very.CatalogService -> my-very-catalog
             uriPart = CDS.apply(uriPart.substring(0, uriPart.lastIndexOf('.') + 1).replace('.', '-'))
                     + CDS.apply(uriPart);

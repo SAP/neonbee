@@ -5,7 +5,7 @@ import static io.neonbee.data.DataAction.DELETE;
 import static io.neonbee.data.DataAction.READ;
 import static io.neonbee.data.DataAction.UPDATE;
 import static io.neonbee.entity.EntityVerticle.requestEntity;
-import static io.neonbee.internal.Helper.EMPTY;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.chooseEntitySet;
 import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.fetchNavigationTargetEntity;
 import static org.apache.olingo.commons.api.http.HttpStatusCode.INTERNAL_SERVER_ERROR;

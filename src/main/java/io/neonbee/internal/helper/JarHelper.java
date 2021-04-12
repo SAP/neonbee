@@ -1,8 +1,12 @@
-package io.neonbee.internal;
+package io.neonbee.internal.helper;
 
 import java.net.URI;
 
 public final class JarHelper {
+    /**
+     * This helper class cannot be instantiated
+     */
+    private JarHelper() {}
 
     /**
      * This method extracts the relative file path of a passed resources located in a jar file. The URI resource path
@@ -20,9 +24,5 @@ public final class JarHelper {
     public static String extractFilePath(URI jarResource) {
         String uriString = jarResource.toString();
         return uriString.substring(uriString.lastIndexOf("!/") + 2);
-    }
-
-    private JarHelper() {
-        // helper class no need to instantiate
     }
 }

@@ -2,7 +2,7 @@ package io.neonbee.internal.processor;
 
 import static io.neonbee.data.DataAction.READ;
 import static io.neonbee.entity.EntityVerticle.requestEntity;
-import static io.neonbee.internal.Helper.EMPTY;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
 
 import java.io.InputStream;
 import java.util.List;

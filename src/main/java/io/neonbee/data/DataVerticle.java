@@ -9,7 +9,7 @@ import static io.neonbee.data.DataException.FAILURE_CODE_UNKNOWN_STRATEGY;
 import static io.neonbee.data.DataRequest.ResolutionStrategy.RECURSIVE;
 import static io.neonbee.data.internal.DataContextImpl.decodeContextFromString;
 import static io.neonbee.entity.EntityVerticle.requestEntity;
-import static io.neonbee.internal.Helper.EMPTY;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.Collections.emptyList;
@@ -32,7 +32,7 @@ import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeDeployable;
 import io.neonbee.data.DataRequest.ResolutionStrategy;
 import io.neonbee.data.internal.DataContextImpl;
-import io.neonbee.internal.Helper;
+import io.neonbee.internal.helper.FunctionalHelper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
@@ -277,12 +277,12 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
     public static <U> Future<U> requestData(Vertx vertx, DataRequest request, DataContext context) {
         DataSource<?> dataSource = request.getDataSource();
         if (dataSource != null) {
-            return dataSource.retrieveData(request.getQuery(), context).map(Helper::uncheckedMapper);
+            return dataSource.retrieveData(request.getQuery(), context).map(FunctionalHelper::uncheckedMapper);
         }
 
         DataSink<?> dataSink = request.getDataSink();
         if (dataSink != null) {
-            return dataSink.manipulateData(request.getQuery(), context).map(Helper::uncheckedMapper);
+            return dataSink.manipulateData(request.getQuery(), context).map(FunctionalHelper::uncheckedMapper);
         }
 
         String qualifiedName = request.getQualifiedName();
@@ -315,7 +315,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
 
         FullQualifiedName entityTypeName = request.getEntityTypeName();
         if (entityTypeName != null) {
-            return requestEntity(vertx, request, context).map(Helper::uncheckedMapper);
+            return requestEntity(vertx, request, context).map(FunctionalHelper::uncheckedMapper);
         }
 
         return failedFuture(new IllegalArgumentException("Data request did not specify what data to request"));

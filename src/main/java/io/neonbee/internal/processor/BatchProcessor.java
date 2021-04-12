@@ -1,6 +1,6 @@
 package io.neonbee.internal.processor;
 
-import static io.neonbee.internal.Helper.allComposite;
+import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;

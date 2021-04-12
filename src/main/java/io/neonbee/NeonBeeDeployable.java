@@ -1,7 +1,7 @@
 
 package io.neonbee;
 
-import static io.neonbee.internal.Helper.EMPTY;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

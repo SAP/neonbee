@@ -1,16 +1,117 @@
 package io.neonbee.internal.helper;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 
 /**
- * A helper that simplifies the integration of non asynchronous code into an asynchronous operation.
+ * A helper that simplifies the integration of asynchronous code like working with {@linkplain Future} and
+ * {@linkplain Handler} and integrating non-asynchronous code into an asynchronous operations.
  */
 public final class AsyncHelper {
+    /**
+     * This helper class cannot be instantiated
+     */
+    private AsyncHelper() {}
+
+    /**
+     * Type safe CompositeFuture future (as soon as Vert.x applies this interface signature, switch to
+     * CompositeFuture.all again).
+     *
+     * @param futures The futures to be checked for completeness
+     * @return A {@link CompositeFuture}, succeeded if all of the passed futures succeeded, failing otherwise.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public static CompositeFuture allComposite(List<? extends Future<?>> futures) {
+        return CompositeFuture.all((List<Future>) (Object) futures);
+    }
+
+    /**
+     * Type safe CompositeFuture future (as soon as Vert.x applies this interface signature, switch to
+     * CompositeFuture.join again).
+     *
+     * @param futures The futures to be checked for completeness
+     * @return A {@link CompositeFuture}, succeeded if any of the passed futures succeeded, failing otherwise.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public static CompositeFuture anyComposite(List<? extends Future<?>> futures) {
+        return CompositeFuture.any((List<Future>) (Object) futures);
+    }
+
+    /**
+     * Type safe CompositeFuture future (as soon as Vert.x applies this interface signature, switch to
+     * CompositeFuture.join again).
+     *
+     * @param futures A list of futures to be converted
+     * @return A {@link CompositeFuture} containing the passed futures
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public static CompositeFuture joinComposite(List<? extends Future<?>> futures) {
+        return CompositeFuture.join((List<Future>) (Object) futures);
+    }
+
+    public static AsyncResult<?>[] asyncResults(CompositeFuture compositeFuture) {
+        return typedAsyncResults(compositeFuture);
+    }
+
+    public static List<AsyncResult<?>> asyncResultList(CompositeFuture compositeFuture) {
+        return Arrays.asList(asyncResults(compositeFuture));
+    }
+
+    public static <T> AsyncResult<T>[] typedAsyncResults(CompositeFuture compositeFuture) {
+        @SuppressWarnings("unchecked")
+        AsyncResult<T>[] asyncResults = new AsyncResult[compositeFuture.size()];
+        Arrays.setAll(asyncResults, index -> new AsyncResult<T>() {
+            @Override
+            public T result() {
+                return compositeFuture.resultAt(index);
+            }
+
+            @Override
+            public Throwable cause() {
+                return compositeFuture.cause(index);
+            }
+
+            @Override
+            public boolean succeeded() {
+                return compositeFuture.succeeded(index);
+            }
+
+            @Override
+            public boolean failed() {
+                return compositeFuture.failed(index);
+            }
+        });
+        return asyncResults;
+    }
+
+    public static <T> List<AsyncResult<T>> typedAsyncResultList(CompositeFuture compositeFuture) {
+        return Arrays.asList(typedAsyncResults(compositeFuture));
+    }
+
+    public static boolean allSucceeded(AsyncResult<?>... asyncResults) {
+        return Arrays.stream(asyncResults).allMatch(AsyncResult::succeeded);
+    }
+
+    public static boolean anySucceeded(AsyncResult<?>... asyncResults) {
+        return Arrays.stream(asyncResults).anyMatch(AsyncResult::succeeded);
+    }
+
+    public static boolean allFailed(AsyncResult<?>... asyncResults) {
+        return Arrays.stream(asyncResults).allMatch(AsyncResult::failed);
+    }
+
+    public static boolean anyFailed(AsyncResult<?>... asyncResults) {
+        return Arrays.stream(asyncResults).anyMatch(AsyncResult::failed);
+    }
 
     /**
      * Runs a task and returns the result in an asynchronous fashion. The consumer is responsible for completing the
@@ -44,6 +145,4 @@ public final class AsyncHelper {
     public static <T> Future<T> executeBlocking(Vertx vertx, Supplier<T> blockingSupplier) {
         return executeBlocking(vertx, p -> p.complete(blockingSupplier.get()));
     }
-
-    private AsyncHelper() {}
 }

@@ -1,9 +1,9 @@
 package io.neonbee.data.internal;
 
 import static com.google.common.collect.Iterators.unmodifiableIterator;
-import static io.neonbee.internal.Helper.hostIp;
-import static io.neonbee.internal.Helper.mutableCopyOf;
 import static io.neonbee.internal.handler.CorrelationIdHandler.CORRELATION_ID;
+import static io.neonbee.internal.helper.CollectionsHelper.mutableCopyOf;
+import static io.neonbee.internal.helper.HostHelper.getHostIp;
 
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -273,7 +273,7 @@ public class DataContextImpl implements DataContext {
     public DataContext amendTopVerticleCoordinate(String deploymentId) {
         Optional.ofNullable(pathStack.peek()).map(DataVerticleCoordinateImpl.class::cast).ifPresent(coordinate -> {
             coordinate.setDeploymentId(deploymentId);
-            coordinate.setIpAddress(hostIp());
+            coordinate.setIpAddress(getHostIp());
         });
         return this;
     }

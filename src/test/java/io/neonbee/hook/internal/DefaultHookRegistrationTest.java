@@ -16,7 +16,7 @@ import io.neonbee.hook.HookContext;
 import io.neonbee.hook.HookRegistration;
 import io.neonbee.hook.HookType;
 import io.neonbee.internal.BasicJar;
-import io.neonbee.internal.Helper;
+import io.neonbee.internal.helper.StringHelper;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.Timeout;
@@ -109,6 +109,6 @@ class DefaultHookRegistrationTest {
         assertThat(defaultHookegistration.hashCode()).isEqualTo(defaultHookegistrationClone.hashCode());
 
         assertThat(differentHookegistration.hashCode()).isNotEqualTo(defaultHookegistration.hashCode());
-        assertThat(differentHookegistration.hashCode()).isNotEqualTo(Helper.EMPTY.hashCode());
+        assertThat(differentHookegistration.hashCode()).isNotEqualTo(StringHelper.EMPTY.hashCode());
     }
 }

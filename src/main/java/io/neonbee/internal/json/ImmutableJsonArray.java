@@ -10,6 +10,8 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public final class ImmutableJsonArray extends JsonArray {
+    public static final ImmutableJsonArray EMPTY = new ImmutableJsonArray();
+
     /**
      * Create a new instance with the given string.
      *

@@ -1,10 +1,10 @@
 package io.neonbee.test.endpoint.odata;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.internal.Helper.EMPTY;
 import static io.neonbee.internal.handler.ODataEndpointHandler.UriConversion.CDS;
 import static io.neonbee.internal.handler.ODataEndpointHandler.UriConversion.LOOSE;
 import static io.neonbee.internal.handler.ODataEndpointHandler.UriConversion.STRICT;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_1;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_2;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_3;
