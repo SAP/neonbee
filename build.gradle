@@ -71,6 +71,12 @@ dependencies {
     implementation group: 'com.google.guava', name: 'guava', version: '30.1-jre'
     implementation group: 'com.google.code.findbugs', name: 'annotations', version: '3.0.1'
 
+    // Compile only
+    compileOnly group: 'io.vertx', name: 'vertx-codegen', version: vertx_version
+
+    // Annotation processors
+    annotationProcessor group: 'io.vertx', name: 'vertx-codegen', classifier: 'processor', version: vertx_version
+
     // Framework test dependencies
     testImplementation group: 'io.vertx', name: 'vertx-junit5', version: vertx_version
 
@@ -106,6 +112,63 @@ apply from: 'gradle/changelog.gradle'
 
 task initWrapper(type: Wrapper) {
     gradleVersion = '6.8.3'
+}
+
+// ############ Annotation Processing
+
+sourceSets {
+    generated {
+        java {
+            srcDir 'src/generated/java'
+        }
+    }
+}
+
+task annotationProcessing(type: JavaCompile, group: 'build') {
+    options.annotationProcessorPath = configurations.annotationProcessor
+
+    source = sourceSets.main.java
+    classpath = configurations.compileClasspath
+    destinationDir = project.file('src/generated/java')
+    options.compilerArgs = [
+        "-proc:only",
+        "-processor", "io.vertx.codegen.CodeGenProcessor",
+        "-Acodegen.output=${project.projectDir}/src/main"
+    ]
+}
+
+// please note that due to this import the whole annotation processing cannot be split off to an own script
+// plugin (apply from: ...) due to we must use the JavaExtension on the classpath loaded by the above plugin block.
+// re-importing it in the script plugin, even with a own buildscript block, will not work, trust me! ;)
+
+import com.diffplug.gradle.spotless.JavaExtension
+import com.diffplug.spotless.LineEnding
+def spotlessGeneratedExtension = new JavaExtension(spotless)
+spotlessGeneratedExtension.target sourceSets.generated.java.srcDirs
+spotlessGeneratedExtension.encoding 'UTF8'
+spotlessGeneratedExtension.trimTrailingWhitespace()
+spotlessGeneratedExtension.removeUnusedImports()
+spotlessGeneratedExtension.endWithNewline()
+spotlessGeneratedExtension.setLineEndings(LineEnding.UNIX)
+spotlessGeneratedExtension.importOrderFile("$rootDir/gradle/spotless/neonbee.importorder")
+spotlessGeneratedExtension.eclipse('4.17.0').configFile "$rootDir/gradle/spotless/eclipse-formatter.xml"
+spotlessGeneratedExtension.custom 'Lambda fix', { it.replace('} )', '})').replace('} ,', '},') }
+
+def spotlessApplyGenerated = spotlessGeneratedExtension.createIndependentApplyTask('spotlessApplyGenerated')
+spotlessApplyGenerated.mustRunAfter('annotationProcessing')
+
+task generateCode {
+    dependsOn annotationProcessing
+    dependsOn spotlessApplyGenerated
+}
+
+compileJava {
+    dependsOn generateCode
+    source += sourceSets.generated.java
+    options.compilerArgs += '-proc:none'
+}
+clean {
+    delete += sourceSets.generated.java.srcDirs
 }
 
 // ############ Test Phase

@@ -31,6 +31,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
+import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.data.DataQuery;
 import io.neonbee.entity.EntityWrapper;
 import io.neonbee.hook.HookRegistry;
@@ -460,7 +461,7 @@ public class NeonBee {
     }
 
     private Future<NeonBeeConfig> loadConfig() {
-        return succeededFuture(this.config = new NeonBeeConfig(vertx));
+        return NeonBeeConfig.load(vertx).onSuccess(config -> this.config = config);
     }
 
     @SuppressWarnings("rawtypes")
