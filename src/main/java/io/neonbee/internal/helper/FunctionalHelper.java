@@ -5,6 +5,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public final class FunctionalHelper {
     /**
@@ -35,6 +36,30 @@ public final class FunctionalHelper {
      */
     public static <K, V> Consumer<Map.Entry<K, V>> entryConsumer(BiConsumer<? super K, ? super V> consumer) {
         return entry -> consumer.accept(entry.getKey(), entry.getValue());
+    }
+
+    /**
+     * To be used like map.entrySet().stream().filter(keyPredicate(key -&gt; ...)).
+     *
+     * @param predicate The predicate
+     * @param <K>       The type of the key of the map entry
+     * @param <V>       The type of the value of the map entry
+     * @return A predicate which applies the logic of the passed predicate to the map
+     */
+    public static <K, V> Predicate<Map.Entry<K, V>> keyPredicate(Predicate<? super K> predicate) {
+        return entry -> predicate.test(entry.getKey());
+    }
+
+    /**
+     * To be used like map.entrySet().stream().filter(valuePredicate(value -&gt; ...)).
+     *
+     * @param predicate The predicate
+     * @param <K>       The type of the key of the map entry
+     * @param <V>       The type of the value of the map entry
+     * @return A predicate which applies the logic of the passed predicate to the map
+     */
+    public static <K, V> Predicate<Map.Entry<K, V>> valuePredicate(Predicate<? super V> predicate) {
+        return entry -> predicate.test(entry.getValue());
     }
 
     /**

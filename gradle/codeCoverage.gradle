@@ -53,7 +53,7 @@ consoleReporter {
         // When the coverage is less than this value and
         // failIfLessThanThresholdError property is set to true,
         // the build will fail.
-        thresholdError 80
+        thresholdError 81
 
         // Set this property if you want to customize build error message
         // when you use 'failIfLessThanThresholdError' feature.

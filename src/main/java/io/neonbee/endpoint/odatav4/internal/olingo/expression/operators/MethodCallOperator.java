@@ -1,16 +1,17 @@
-package io.neonbee.internal.processor.odata.expression.operators;
+package io.neonbee.endpoint.odatav4.internal.olingo.expression.operators;
 
 import java.time.Instant;
 import java.util.List;
 
-import io.neonbee.internal.processor.odata.expression.operands.ExpressionVisitorOperand;
+import io.neonbee.endpoint.odatav4.internal.olingo.expression.operands.ExpressionVisitorOperand;
 import io.vertx.ext.web.RoutingContext;
 
 /**
  * Currently 2 different types of functions are supported for method calls: DateFunctions implemented in @see
- * io.neonbee.internal.processor.odata.expression.operators.DateFunctionMethodCallOperator and StringFunction in.
+ * io.neonbee.endpoint.odatav4.internal.olingo.expression.operators.DateFunctionMethodCallOperator and StringFunction
+ * in.
  *
- * @see io.neonbee.internal.processor.odata.expression.operators.StringFunctionMethodCallOperator
+ * @see io.neonbee.endpoint.odatav4.internal.olingo.expression.operators.StringFunctionMethodCallOperator
  */
 abstract class MethodCallOperator { // NOPMD abstract class w/o abstract methods as it should not be directly used
     protected final RoutingContext routingContext;

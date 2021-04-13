@@ -31,6 +31,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.apache.olingo.server.api.OData;
 import org.apache.olingo.server.api.ServiceMetadata;
+import org.apache.olingo.server.api.etag.ServiceMetadataETagSupport;
 import org.apache.olingo.server.core.MetadataParser;
 import org.apache.olingo.server.core.SchemaBasedEdmProvider;
 
@@ -45,7 +46,6 @@ import io.neonbee.internal.SharedDataAccessor;
 import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.helper.BufferHelper.BufferInputStream;
 import io.neonbee.internal.helper.FileSystemHelper;
-import io.neonbee.internal.processor.etag.MetadataETagSupport;
 import io.neonbee.internal.scanner.ClassPathScanner;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.CompositeFuture;
@@ -323,24 +323,46 @@ public final class EntityModelManager {
                     parser.addToEdmProvider(provider, csdlReader);
                 }
 
+                return getBufferedOData().createServiceMetadata(provider, Collections.emptyList(),
+                        new MetadataETagSupport(csdl));
+            }
+        }
+
+        @VisibleForTesting
+        static class MetadataETagSupport implements ServiceMetadataETagSupport {
+            private final String metadataETag;
+
+            private final String serviceDocumentETag;
+
+            @SuppressWarnings("checkstyle:MissingJavadocMethod") // don't know exactly what this is for
+            MetadataETagSupport(Buffer csdl) {
                 /*
                  * Please note: ETag for the service document and the metadata document. The same field for
                  * service-document and metadata-document ETag is used. It must change whenever the corresponding
                  * document changes.
                  */
-                return getBufferedOData().createServiceMetadata(provider, Collections.emptyList(),
-                        new MetadataETagSupport(generateMetadataETag(csdl)));
+                this.metadataETag = this.serviceDocumentETag = generateMetadataETag(csdl);
             }
-        }
 
-        /**
-         * This method generates an ETag string as defined in RFC2616/RFC7232 based on the provided EDMX file content
-         * contains the XML representation of the OData Common Schema Definition Language (CSDL).
-         *
-         * @return ETag string
-         */
-        private static String generateMetadataETag(Buffer cdsl) {
-            return "\"" + HASH_FUNCTION.newHasher().putUnencodedChars(cdsl.toString()).hash().toString() + "\"";
+            @Override
+            public String getMetadataETag() {
+                return metadataETag;
+            }
+
+            @Override
+            public String getServiceDocumentETag() {
+                return serviceDocumentETag;
+            }
+
+            /**
+             * This method generates an ETag string as defined in RFC2616/RFC7232 based on the provided EDMX file
+             * content contains the XML representation of the OData Common Schema Definition Language (CSDL).
+             *
+             * @return ETag string
+             */
+            private static String generateMetadataETag(Buffer csdl) {
+                return "\"" + HASH_FUNCTION.newHasher().putUnencodedChars(csdl.toString()).hash().toString() + "\"";
+            }
         }
 
         /**

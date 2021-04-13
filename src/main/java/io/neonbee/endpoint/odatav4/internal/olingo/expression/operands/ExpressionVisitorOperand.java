@@ -1,18 +1,18 @@
-package io.neonbee.internal.processor.odata.expression.operands;
+package io.neonbee.endpoint.odatav4.internal.olingo.expression.operands;
 
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_BOOLEAN;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_BYTE;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_DATE;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_DATE_TIME_OFFSET;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_DECIMAL;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_DOUBLE;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_INT16;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_INT32;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_INT64;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_NULL;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_SBYTE;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_SINGLE;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.TYPE_MAPPINGS;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_BOOLEAN;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_BYTE;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_DATE;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_DATE_TIME_OFFSET;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_DECIMAL;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_DOUBLE;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_INT16;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_INT32;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_INT64;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_NULL;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_SBYTE;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_SINGLE;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.TYPE_MAPPINGS;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -27,8 +27,8 @@ import org.apache.olingo.commons.api.edm.EdmType;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.ODataApplicationException;
 
-import io.neonbee.internal.processor.odata.edm.EdmConstants;
-import io.neonbee.internal.processor.odata.expression.EntityComparison;
+import io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants;
+import io.neonbee.endpoint.odatav4.internal.olingo.expression.EntityComparison;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.ext.web.RoutingContext;
 

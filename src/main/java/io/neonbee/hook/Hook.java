@@ -25,7 +25,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(Hooks.class)
 public @interface Hook {
-
     /**
      * The type of this hook (startup, shutdown, etc.).
      *

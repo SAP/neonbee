@@ -5,7 +5,6 @@ import static io.neonbee.internal.helper.BufferHelper.readResourceToBuffer;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
-import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Objects;
 
@@ -38,15 +37,18 @@ public final class ErrorHandler implements Handler<RoutingContext> {
     private final String errorTemplate;
 
     /**
-     * Convenience method as similar other Vertx handler implementations (e.g. ErrorHandler)
-     *
-     * @return The ErrorHandler
+     * Returns a new ErrorHandler with the default {@link #DEFAULT_ERROR_HANDLER_TEMPLATE template}.
      */
-    public static ErrorHandler create() {
-        return new ErrorHandler(DEFAULT_ERROR_HANDLER_TEMPLATE);
+    public ErrorHandler() {
+        this(DEFAULT_ERROR_HANDLER_TEMPLATE);
     }
 
-    private ErrorHandler(String errorTemplateName) {
+    /**
+     * Returns a new ErrorHandler with the passed template.
+     *
+     * @param errorTemplateName resource path to the template.
+     */
+    public ErrorHandler(String errorTemplateName) {
         Objects.requireNonNull(errorTemplateName);
         this.errorTemplate = readResourceToBuffer(errorTemplateName).toString();
     }
@@ -64,7 +66,7 @@ public final class ErrorHandler implements Handler<RoutingContext> {
         }
         // treat errorCodes >= 100 and errorCodes <= 1000 as HTTP errors
         if (errorCode < HTTP_ERROR_CODE_LOWER_LIMIT || errorCode >= HTTP_ERROR_CODE_UPPER_LIMIT) {
-            errorCode = HttpURLConnection.HTTP_INTERNAL_ERROR;
+            errorCode = INTERNAL_SERVER_ERROR.code();
             errorMessage = INTERNAL_SERVER_ERROR.reasonPhrase();
         }
         // HttpServerResponse will look-up a appropriate error code if statusMessage has not been explicitly set

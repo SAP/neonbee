@@ -13,7 +13,7 @@ class NotFoundHandlerTest {
     @DisplayName("test not found handler")
     void testNotFound() {
         RoutingContext routingContextMock = mock(RoutingContext.class);
-        NotFoundHandler.create().handle(routingContextMock);
+        new NotFoundHandler().handle(routingContextMock);
         verify(routingContextMock).fail(404);
     }
 }

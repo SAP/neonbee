@@ -1,8 +1,8 @@
-package io.neonbee.internal.processor.odata.expression;
+package io.neonbee.endpoint.odatav4.internal.olingo.expression;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.EDM_BINARY_JAVA_TYPES;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.EDM_STRING_JAVA_TYPES;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.EDM_BINARY_JAVA_TYPES;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.EDM_STRING_JAVA_TYPES;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.util.Arrays;

@@ -1,8 +1,8 @@
-package io.neonbee.internal.processor.odata;
+package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.fetchReferencedEntities;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.getRelatedEntities;
 import static io.neonbee.internal.helper.AsyncHelper.allComposite;
-import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.fetchReferencedEntities;
-import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.getRelatedEntities;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.stream.Collectors.toList;
 

@@ -1,6 +1,8 @@
 package io.neonbee.internal.handler;
 
-import java.net.HttpURLConnection;
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
+
 import java.util.Optional;
 
 import io.neonbee.logging.LoggingFacade;
@@ -18,15 +20,6 @@ public class LoggerHandler implements Handler<RoutingContext> {
      * The facaded logger to use to log the events.
      */
     private static final LoggingFacade LOGGER = LoggingFacade.create();
-
-    /**
-     * Convenience method as similar other Vert.x handler implementations (e.g. LoggerHandler).
-     *
-     * @return The ErrorHandler
-     */
-    public static LoggerHandler create() {
-        return new LoggerHandler();
-    }
 
     @Override
     public void handle(RoutingContext routingContext) {
@@ -61,9 +54,9 @@ public class LoggerHandler implements Handler<RoutingContext> {
 
         LOGGER.correlateWith(routingContext);
 
-        if (statusCode >= HttpURLConnection.HTTP_INTERNAL_ERROR) {
+        if (statusCode >= INTERNAL_SERVER_ERROR.code()) {
             LOGGER.error(message);
-        } else if (statusCode >= HttpURLConnection.HTTP_BAD_REQUEST) {
+        } else if (statusCode >= BAD_REQUEST.code()) {
             LOGGER.warn(message);
         } else {
             LOGGER.info(message);

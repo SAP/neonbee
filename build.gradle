@@ -48,7 +48,10 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-config', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-micrometer-metrics', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-auth-common', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-auth-htpasswd', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-auth-htdigest', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-auth-jwt', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-auth-oauth2', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-hazelcast', version: vertx_version
 
     def jackson_version = '2.11.3'

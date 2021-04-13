@@ -1,13 +1,13 @@
-package io.neonbee.internal.handler;
+package io.neonbee.endpoint.raw;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.internal.handler.RawDataEndpointHandler.determineQualifiedName;
-import static io.neonbee.internal.verticle.ServerVerticle.DEFAULT_RAW_BASE_PATH;
+import static io.neonbee.endpoint.raw.RawEndpoint.DEFAULT_BASE_PATH;
+import static io.neonbee.endpoint.raw.RawEndpoint.RawHandler.determineQualifiedName;
 import static io.neonbee.test.helper.DeploymentHelper.NEONBEE_NAMESPACE;
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
-import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
-import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
-import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -37,13 +37,13 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-class RawDataEndpointHandlerTest extends DataVerticleTestBase {
+class RawEndpointTest extends DataVerticleTestBase {
     private static RoutingContext mockRoutingContext(String routingPath) {
         RoutingContext routingContextMock = mock(RoutingContext.class);
         Route routeMock = mock(Route.class);
 
-        when(routingContextMock.normalizedPath()).thenReturn(DEFAULT_RAW_BASE_PATH + routingPath);
-        when(routingContextMock.mountPoint()).thenReturn(DEFAULT_RAW_BASE_PATH);
+        when(routingContextMock.normalizedPath()).thenReturn(DEFAULT_BASE_PATH + routingPath);
+        when(routingContextMock.mountPoint()).thenReturn(DEFAULT_BASE_PATH);
         when(routingContextMock.currentRoute()).thenReturn(routeMock);
         when(routeMock.getPath()).thenReturn(null);
 
@@ -73,8 +73,8 @@ class RawDataEndpointHandlerTest extends DataVerticleTestBase {
     }
 
     static Stream<Arguments> customStatusCodes() {
-        return Stream.of(Arguments.of(HTTP_BAD_REQUEST), Arguments.of(HTTP_FORBIDDEN), Arguments.of(HTTP_NOT_FOUND),
-                Arguments.of(INTERNAL_SERVER_ERROR.code()));
+        return Stream.of(Arguments.of(BAD_REQUEST.code()), Arguments.of(FORBIDDEN.code()),
+                Arguments.of(NOT_FOUND.code()), Arguments.of(INTERNAL_SERVER_ERROR.code()));
     }
 
     @ParameterizedTest(name = "{index}: with status code {0}")

@@ -32,7 +32,7 @@ class ODataDeleteEntityTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @Timeout(value = 2, timeUnit = TimeUnit.HOURS)
     @DisplayName("Respond with 405 METHOD NOT ALLOWED if the request was sent to the entity set url instead of a dedicated entity")
     void deleteEntitySetTest(VertxTestContext testContext) {
         requestOData(oDataRequest).onComplete(testContext.succeeding(response -> {

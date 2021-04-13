@@ -1,13 +1,13 @@
-package io.neonbee.internal.processor.odata.expression;
+package io.neonbee.endpoint.odatav4.internal.olingo.expression;
 
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.EDM_BINARY_JAVA_TYPES;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.EDM_BOOLEAN_JAVA_TYPES;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.EDM_DATE_TIMEOFDAY_DATETIMEOFFSET_JAVA_TYPES;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.EDM_DECIMAL_DURATION_JAVA_TYPES;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.EDM_GUID_JAVA_TYPES;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.EDM_INT16_INT32_INT64_BYTE_SBYTE_JAVA_TYPES;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.EDM_SINGLE_DOUBLE_JAVA_TYPES;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.EDM_STRING_JAVA_TYPES;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.EDM_BINARY_JAVA_TYPES;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.EDM_BOOLEAN_JAVA_TYPES;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.EDM_DATE_TIMEOFDAY_DATETIMEOFFSET_JAVA_TYPES;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.EDM_DECIMAL_DURATION_JAVA_TYPES;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.EDM_GUID_JAVA_TYPES;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.EDM_INT16_INT32_INT64_BYTE_SBYTE_JAVA_TYPES;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.EDM_SINGLE_DOUBLE_JAVA_TYPES;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.EDM_STRING_JAVA_TYPES;
 
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
@@ -30,7 +30,7 @@ import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.ODataApplicationException;
 
-import io.neonbee.internal.processor.odata.edm.EdmHelper;
+import io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmHelper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.ext.web.RoutingContext;
 

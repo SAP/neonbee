@@ -91,7 +91,7 @@
 
         <!-- Naming Checks https://checkstyle.sourceforge.io/config_naming.html -->
         <module name="PackageName">
-            <property name="format" value="^[a-z]+(\.[a-z]*)*$"/>
+            <property name="format" value="[a-z]+(\.[a-z][a-z0-9]*)*$"/>
             <message key="name.invalidPattern" value="Package name ''{0}'' must match pattern ''{1}''."/>
         </module>
         <module name="TypeName">

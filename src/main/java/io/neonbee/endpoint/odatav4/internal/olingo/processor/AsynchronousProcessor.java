@@ -1,4 +1,4 @@
-package io.neonbee.internal.processor;
+package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
