@@ -1,6 +1,6 @@
 package io.neonbee.internal.handler;
 
-import static io.neonbee.hook.HookType.ONCE_PER_REQUEST_ROUTING_CONTEXT;
+import static io.neonbee.hook.HookType.ROUTING_CONTEXT;
 
 import java.util.Map;
 
@@ -15,23 +15,13 @@ import io.vertx.ext.web.RoutingContext;
  * This handler will trigger the execution of the ONCE_PER_REQUEST hook, preventing execution of the next handlers if
  * any is any error occurs.
  */
-public final class HooksHandler implements Handler<RoutingContext> {
+public class HooksHandler implements Handler<RoutingContext> {
     private static final LoggingFacade LOGGER = LoggingFacade.create();
-
-    /**
-     * Creates a default HooksHandler.
-     *
-     * @return the HooksHandler
-     */
-    public static Handler<RoutingContext> create() {
-        return new HooksHandler();
-    }
 
     @Override
     public void handle(RoutingContext routingContext) {
-        NeonBee neonBee = NeonBee.get(routingContext.vertx());
-        neonBee.getHookRegistry()
-                .executeHooks(HookType.ONCE_PER_REQUEST, Map.of(ONCE_PER_REQUEST_ROUTING_CONTEXT, routingContext))
+        NeonBee.get(routingContext.vertx()).getHookRegistry()
+                .executeHooks(HookType.ONCE_PER_REQUEST, Map.of(ROUTING_CONTEXT, routingContext))
                 .onComplete(asyncResult -> {
                     if (asyncResult.failed()) {
                         Throwable cause = asyncResult.cause();
@@ -46,6 +36,4 @@ public final class HooksHandler implements Handler<RoutingContext> {
                     }
                 });
     }
-
-    private HooksHandler() {}
 }

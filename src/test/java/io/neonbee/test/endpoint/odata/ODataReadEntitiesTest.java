@@ -1,9 +1,10 @@
 package io.neonbee.test.endpoint.odata;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.internal.handler.ODataEndpointHandler.UriConversion.CDS;
-import static io.neonbee.internal.handler.ODataEndpointHandler.UriConversion.LOOSE;
-import static io.neonbee.internal.handler.ODataEndpointHandler.UriConversion.STRICT;
+import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.CONFIG_URI_CONVERSION;
+import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.CDS;
+import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.LOOSE;
+import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.STRICT;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_1;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_2;
@@ -25,8 +26,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import io.neonbee.config.EndpointConfig;
+import io.neonbee.config.ServerConfig;
+import io.neonbee.endpoint.odatav4.ODataV4Endpoint;
+import io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion;
 import io.neonbee.entity.EntityVerticle;
-import io.neonbee.internal.handler.ODataEndpointHandler.UriConversion;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.neonbee.test.base.ODataEndpointTestBase;
 import io.neonbee.test.base.ODataRequest;
@@ -62,8 +66,10 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
             }
 
             DeploymentOptions opts = WorkingDirectoryBuilder.readDeploymentOptions(ServerVerticle.class, root);
-            opts.getConfig().put("endpoints",
-                    new JsonObject().put("odata", new JsonObject().put("uriConversion", uriConversion.toString())));
+            EndpointConfig epc = new EndpointConfig().setType(ODataV4Endpoint.class.getName())
+                    .setAdditionalConfig(new JsonObject().put(CONFIG_URI_CONVERSION, uriConversion.toString()));
+            ServerConfig sc = new ServerConfig(opts.getConfig()).setEndpointConfigs(List.of(epc));
+            opts.setConfig(sc.toJson());
             WorkingDirectoryBuilder.writeDeploymentOptions(ServerVerticle.class, opts, root);
         });
     }

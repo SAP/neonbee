@@ -1,8 +1,8 @@
 package io.neonbee.internal.handler;
 
+import static io.neonbee.config.ServerConfig.CorrelationStrategy.GENERATE_UUID;
+import static io.neonbee.config.ServerConfig.CorrelationStrategy.REQUEST_HEADER;
 import static io.neonbee.internal.handler.CorrelationIdHandler.CORRELATION_ID;
-import static io.neonbee.internal.handler.CorrelationIdHandler.Strategy.GENERATE_UUID;
-import static io.neonbee.internal.handler.CorrelationIdHandler.Strategy.REQUEST_HEADER;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.RETURNS_MOCKS;
@@ -21,7 +21,7 @@ class CorrelationIdHandlerTest {
     @DisplayName("test GENERATE_UUID correlation strategy")
     void generateUuidStrategy() {
         RoutingContext routingContextMock = mock(RoutingContext.class);
-        CorrelationIdHandler.create(GENERATE_UUID).handle(routingContextMock);
+        new CorrelationIdHandler(GENERATE_UUID).handle(routingContextMock);
         verifyUuidCorrelationId(routingContextMock);
     }
 
@@ -30,7 +30,7 @@ class CorrelationIdHandlerTest {
     void requestHeaderStrategyFallback() {
         RoutingContext routingContextMock = mock(RoutingContext.class);
         when(routingContextMock.request()).then(RETURNS_MOCKS);
-        CorrelationIdHandler.create(REQUEST_HEADER).handle(routingContextMock);
+        new CorrelationIdHandler(REQUEST_HEADER).handle(routingContextMock);
         verifyUuidCorrelationId(routingContextMock);
     }
 
@@ -45,7 +45,7 @@ class CorrelationIdHandlerTest {
             when(requestMock.getHeader(header)).thenReturn(expectedCorrelationId);
             when(routingContextMock.request()).thenReturn(requestMock);
 
-            CorrelationIdHandler.create(REQUEST_HEADER).handle(routingContextMock);
+            new CorrelationIdHandler(REQUEST_HEADER).handle(routingContextMock);
             verifyGivenCorrelationId(routingContextMock, expectedCorrelationId);
         }
     }

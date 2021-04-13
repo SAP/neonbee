@@ -1,4 +1,4 @@
-package io.neonbee.internal.processor.odata.expression;
+package io.neonbee.endpoint.odatav4.internal.olingo.expression;
 
 import java.util.Comparator;
 import java.util.List;

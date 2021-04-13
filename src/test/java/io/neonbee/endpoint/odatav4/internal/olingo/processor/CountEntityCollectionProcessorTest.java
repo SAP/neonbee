@@ -1,7 +1,7 @@
-package io.neonbee.internal.processor;
+package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.internal.processor.CountEntityCollectionProcessor.TOO_MANY_PARTS_EXCEPTION;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.CountEntityCollectionProcessor.TOO_MANY_PARTS_EXCEPTION;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

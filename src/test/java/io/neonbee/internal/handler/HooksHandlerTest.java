@@ -2,6 +2,7 @@ package io.neonbee.internal.handler;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.DisplayName;
@@ -19,12 +20,14 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.Checkpoint;
+import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class HooksHandlerTest extends DataVerticleTestBase {
     private static final String CORRELATION_ID = "bliblablub";
 
     @Test
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Checks that HooksHandler executes hook")
     void checkHookGetsExecutedSuccess(VertxTestContext testContext) {
         Checkpoint cp = testContext.checkpoint(2);
@@ -43,6 +46,7 @@ class HooksHandlerTest extends DataVerticleTestBase {
     }
 
     @Test
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Checks that HooksHanlder executes hook and fail request in case of error")
     void checkHookGetsExecutedAndFailsRequestInCaseOfException(VertxTestContext testContext) {
         Checkpoint cp = testContext.checkpoint(2);
@@ -61,6 +65,7 @@ class HooksHandlerTest extends DataVerticleTestBase {
     }
 
     @Test
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Checks that HooksHanlder executes hook and propagate error code in case of DataException")
     void checkHookGetsExecutedAndPropagateErrorCodeIfDataException(VertxTestContext testContext) {
         Checkpoint cp = testContext.checkpoint(2);
@@ -79,7 +84,7 @@ class HooksHandlerTest extends DataVerticleTestBase {
     }
 
     private Future<Integer> sendRequestReturnStatusCode() {
-        return Future.<HttpResponse<Buffer>>future(p -> createRequest(HttpMethod.GET, "/404IsGoodEnough").send(p))
+        return Future.<HttpResponse<Buffer>>future(p -> createRequest(HttpMethod.GET, "/raw/core/Hodor").send(p))
                 .map(response -> response.statusCode());
     }
 

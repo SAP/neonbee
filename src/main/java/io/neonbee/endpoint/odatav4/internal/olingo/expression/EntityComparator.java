@@ -1,4 +1,4 @@
-package io.neonbee.internal.processor.odata.expression;
+package io.neonbee.endpoint.odatav4.internal.olingo.expression;
 
 import java.util.Comparator;
 
@@ -6,7 +6,7 @@ import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.server.api.ODataApplicationException;
 
-import io.neonbee.internal.processor.odata.edm.EdmHelper;
+import io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmHelper;
 import io.vertx.ext.web.RoutingContext;
 
 public class EntityComparator implements Comparator<Entity>, EntityComparison {

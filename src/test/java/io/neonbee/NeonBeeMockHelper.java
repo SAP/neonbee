@@ -14,6 +14,10 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.FileSystem;
 
 public final class NeonBeeMockHelper {
+    /**
+     * This helper class cannot be instantiated
+     */
+    private NeonBeeMockHelper() {}
 
     /**
      * Convenience method for retrieving a minimalist mocked NeonBee instance. The returned Vert.x instance has a logger
@@ -42,15 +46,9 @@ public final class NeonBeeMockHelper {
      * @param options the NeonBee options
      * @return the mocked NeonBee instance
      */
-    @SuppressWarnings({ "CatchAndPrintStackTrace", "PMD.AvoidPrintStackTrace" })
     public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeOptions options) {
-        try {
-            Logger logger = (Logger) ReflectionHelper.getValueOfPrivateStaticField(NeonBee.class, "logger");
-            logger = logger == null ? LoggerFactory.getLogger(NeonBee.class) : logger;
-            ReflectionHelper.setValueOfPrivateStaticField(NeonBee.class, "logger", logger);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        createLogger(); // the logger is only created internally, create one manually if required
+
         return new NeonBee(vertx, options);
     }
 
@@ -61,17 +59,23 @@ public final class NeonBeeMockHelper {
      * @param options the NeonBee options
      * @param config  the NeonBee config
      * @return the mocked NeonBee instance
-     * @throws Exception If private fields can't be set via reflections
      */
-    public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config)
-            throws Exception {
-        NeonBee neonbee = new NeonBee(vertx, options);
+    public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config) {
+        createLogger(); // the logger is only created internally, create one manually if required
 
-        // config field is private and final -> set config value with reflections
-        ReflectionHelper.setValueOfPrivateField(neonbee, "config", config);
-
-        return neonbee;
+        NeonBee neonBee = new NeonBee(vertx, options);
+        neonBee.config = config;
+        return neonBee;
     }
 
-    private NeonBeeMockHelper() {}
+    @SuppressWarnings({ "CatchAndPrintStackTrace", "PMD.AvoidPrintStackTrace" })
+    private static void createLogger() {
+        try {
+            Logger logger = (Logger) ReflectionHelper.getValueOfPrivateStaticField(NeonBee.class, "logger");
+            logger = logger == null ? LoggerFactory.getLogger(NeonBee.class) : logger;
+            ReflectionHelper.setValueOfPrivateStaticField(NeonBee.class, "logger", logger);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

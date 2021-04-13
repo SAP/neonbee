@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="io.neonbee.handler.TestService" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityContainer Name="EntityContainer">
+        <EntitySet Name="AllPropertiesNotNullable" EntityType="io.neonbee.handler.TestService.AllPropertiesNotNullable"/>
+        <EntitySet Name="AllPropertiesNullable" EntityType="io.neonbee.handler.TestService.AllPropertiesNullable"/>
+        <EntitySet Name="MultipleKeyProperties" EntityType="io.neonbee.handler.TestService.MultipleKeyProperties"/>
+        <EntitySet Name="TestCategories" EntityType="io.neonbee.handler.TestService.TestCategories">
+          <NavigationPropertyBinding Path="testProducts" Target="TestProducts"/>
+        </EntitySet>
+        <EntitySet Name="TestProducts" EntityType="io.neonbee.handler.TestService.TestProducts">
+          <NavigationPropertyBinding Path="testCategory" Target="TestCategories"/>
+        </EntitySet>
+      </EntityContainer>
+      <EntityType Name="AllPropertiesNotNullable">
+        <Key>
+          <PropertyRef Name="KeyPropertyString"/>
+        </Key>
+        <Property Name="KeyPropertyString" Type="Edm.String" Nullable="false"/>
+        <Property Name="PropertyString" Type="Edm.String" Nullable="false"/>
+        <Property Name="PropertyChar" Type="Edm.String" Nullable="false"/>
+        <Property Name="PropertyString100" Type="Edm.String" MaxLength="100" Nullable="false"/>
+        <Property Name="PropertyLargeString" Type="Edm.String"/>
+        <Property Name="PropertyBinary" Type="Edm.Binary" Nullable="false"/>
+        <Property Name="PropertyBinary100" Type="Edm.Binary" MaxLength="100" Nullable="false"/>
+        <Property Name="PropertyLargeBinary" Type="Edm.Binary"/>
+        <Property Name="PropertyBoolean" Type="Edm.Boolean" Nullable="false"/>
+        <Property Name="PropertyDate" Type="Edm.Date" Nullable="false"/>
+        <Property Name="PropertyTime" Type="Edm.TimeOfDay" Nullable="false"/>
+        <Property Name="PropertyDateTime" Type="Edm.DateTimeOffset"/>
+        <Property Name="PropertyTimestamp" Type="Edm.DateTimeOffset" Precision="7" Nullable="false"/>
+        <Property Name="PropertyDecimal" Type="Edm.Decimal" Scale="5" Precision="11" Nullable="false"/>
+        <Property Name="PropertyDecimalFloat" Type="Edm.Decimal"/>
+        <Property Name="PropertyDouble" Type="Edm.Double" Nullable="false"/>
+        <Property Name="PropertyUuid" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="PropertyInt32" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="PropertyInt64" Type="Edm.Int64" Nullable="false"/>
+      </EntityType>
+      <EntityType Name="AllPropertiesNullable">
+        <Key>
+          <PropertyRef Name="KeyPropertyString"/>
+        </Key>
+        <Property Name="KeyPropertyString" Type="Edm.String" Nullable="false"/>
+        <Property Name="PropertyString" Type="Edm.String"/>
+        <Property Name="PropertyChar" Type="Edm.String"/>
+        <Property Name="PropertyString100" Type="Edm.String" MaxLength="100"/>
+        <Property Name="PropertyLargeString" Type="Edm.String"/>
+        <Property Name="PropertyBinary" Type="Edm.Binary"/>
+        <Property Name="PropertyBinary100" Type="Edm.Binary" MaxLength="100"/>
+        <Property Name="PropertyLargeBinary" Type="Edm.Binary"/>
+        <Property Name="PropertyBoolean" Type="Edm.Boolean"/>
+        <Property Name="PropertyDate" Type="Edm.Date"/>
+        <Property Name="PropertyTime" Type="Edm.TimeOfDay"/>
+        <Property Name="PropertyDateTime" Type="Edm.DateTimeOffset"/>
+        <Property Name="PropertyTimestamp" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="PropertyDecimal" Type="Edm.Decimal" Scale="5" Precision="11"/>
+        <Property Name="PropertyDecimalFloat" Type="Edm.Decimal"/>
+        <Property Name="PropertyDouble" Type="Edm.Double"/>
+        <Property Name="PropertyUuid" Type="Edm.Guid"/>
+        <Property Name="PropertyInt32" Type="Edm.Int32"/>
+        <Property Name="PropertyInt64" Type="Edm.Int64"/>
+      </EntityType>
+      <EntityType Name="MultipleKeyProperties">
+        <Key>
+          <PropertyRef Name="KeyPropertyString"/>
+          <PropertyRef Name="KeyPropertyInt32"/>
+          <PropertyRef Name="KeyPropertyBoolean"/>
+        </Key>
+        <Property Name="KeyPropertyString" Type="Edm.String" Nullable="false"/>
+        <Property Name="KeyPropertyInt32" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="KeyPropertyBoolean" Type="Edm.Boolean" Nullable="false"/>
+      </EntityType>
+      <EntityType Name="TestCategories">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.String" Nullable="false"/>
+        <Property Name="name" Type="Edm.String" Nullable="false"/>
+        <Property Name="description" Type="Edm.String"/>
+        <NavigationProperty Name="testProducts" Type="Collection(io.neonbee.handler.TestService.TestProducts)" Partner="testCategory"/>
+      </EntityType>
+      <EntityType Name="TestProducts">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.String" Nullable="false"/>
+        <Property Name="name" Type="Edm.String" Nullable="false"/>
+        <Property Name="description" Type="Edm.String"/>
+        <NavigationProperty Name="testCategory" Type="io.neonbee.handler.TestService.TestCategories" Partner="testProducts">
+          <ReferentialConstraint Property="testCategory_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="testCategory_ID" Type="Edm.String"/>
+      </EntityType>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

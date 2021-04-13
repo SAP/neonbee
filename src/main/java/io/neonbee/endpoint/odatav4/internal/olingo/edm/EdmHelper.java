@@ -1,4 +1,4 @@
-package io.neonbee.internal.processor.odata.edm;
+package io.neonbee.endpoint.odatav4.internal.olingo.edm;
 
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -18,8 +18,8 @@ import org.apache.olingo.server.api.ODataApplicationException;
 import org.apache.olingo.server.api.uri.UriParameter;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 
+import io.neonbee.endpoint.odatav4.internal.olingo.expression.operands.ExpressionVisitorOperand;
 import io.neonbee.entity.EntityModelManager;
-import io.neonbee.internal.processor.odata.expression.operands.ExpressionVisitorOperand;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.ext.web.RoutingContext;
 

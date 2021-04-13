@@ -9,14 +9,6 @@ import io.vertx.core.MultiMap;
 import io.vertx.ext.web.RoutingContext;
 
 public class CacheControlHandler implements Handler<RoutingContext> {
-    /**
-     * Convenience method as similar other Vertx handler implementations (e.g. ErrorHandler)
-     *
-     * @return The CacheControlHandler
-     */
-    public static CacheControlHandler create() {
-        return new CacheControlHandler();
-    }
 
     @Override
     public void handle(RoutingContext routingContext) {

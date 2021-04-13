@@ -1,4 +1,4 @@
-package io.neonbee.internal.processor.odata.edm;
+package io.neonbee.endpoint.odatav4.internal.olingo.edm;
 
 import static com.google.common.truth.Truth.assertThat;
 

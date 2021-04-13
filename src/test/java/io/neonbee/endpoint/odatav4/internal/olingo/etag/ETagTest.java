@@ -1,4 +1,4 @@
-package io.neonbee.internal.processor;
+package io.neonbee.endpoint.odatav4.internal.olingo.etag;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
@@ -20,7 +20,6 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class ETagTest extends ODataEndpointTestBase {
-
     @Override
     protected List<Path> provideEntityModels() {
         return List.of(TEST_RESOURCES.resolveRelated("ProcessorService.csn"));

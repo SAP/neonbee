@@ -1,0 +1,28 @@
+{
+  "namespace": "io.neonbee.handler2",
+  "definitions": {
+    "io.neonbee.handler2.Test2Service": {
+      "kind": "service"
+    },
+    "io.neonbee.handler2.Test2Service.TestUsers": {
+      "kind": "entity",
+      "elements": {
+        "ID": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "name": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "description": {
+          "type": "cds.String"
+        }
+      }
+    }
+  },
+  "meta": {
+    "creator": "CDS Compiler v1.26.2"
+  },
+  "$version": "1.0"
+}

@@ -1,6 +1,6 @@
-package io.neonbee.internal.processor.odata.expression;
+package io.neonbee.endpoint.odatav4.internal.olingo.expression;
 
-import static io.neonbee.internal.processor.odata.edm.EdmHelper.throwNotImplementedODataException;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmHelper.throwNotImplementedODataException;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,12 +22,12 @@ import org.apache.olingo.server.api.uri.queryoption.expression.Member;
 import org.apache.olingo.server.api.uri.queryoption.expression.MethodKind;
 import org.apache.olingo.server.api.uri.queryoption.expression.UnaryOperatorKind;
 
-import io.neonbee.internal.processor.odata.edm.EdmHelper;
-import io.neonbee.internal.processor.odata.expression.operands.ExpressionVisitorOperand;
-import io.neonbee.internal.processor.odata.expression.operators.BinaryOperator;
-import io.neonbee.internal.processor.odata.expression.operators.DateFunctionMethodCallOperator;
-import io.neonbee.internal.processor.odata.expression.operators.StringFunctionMethodCallOperator;
-import io.neonbee.internal.processor.odata.expression.operators.UnaryOperator;
+import io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmHelper;
+import io.neonbee.endpoint.odatav4.internal.olingo.expression.operands.ExpressionVisitorOperand;
+import io.neonbee.endpoint.odatav4.internal.olingo.expression.operators.BinaryOperator;
+import io.neonbee.endpoint.odatav4.internal.olingo.expression.operators.DateFunctionMethodCallOperator;
+import io.neonbee.endpoint.odatav4.internal.olingo.expression.operators.StringFunctionMethodCallOperator;
+import io.neonbee.endpoint.odatav4.internal.olingo.expression.operators.UnaryOperator;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.ext.web.RoutingContext;
 

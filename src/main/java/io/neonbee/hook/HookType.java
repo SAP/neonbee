@@ -1,7 +1,5 @@
 package io.neonbee.hook;
 
-import io.neonbee.data.DataException;
-
 public enum HookType {
     /**
      * The bootstrap hook is called when a new NeonBee instance was created, even before the NeonBee configuration is
@@ -19,18 +17,15 @@ public enum HookType {
     AFTER_STARTUP,
 
     /**
-     * The once per request hook is called once for each web request, before it is dispatched to the appropriate domain
-     * verticle for handling.
+     * This hook is called once for each web request before it is dispatched to the appropriate endpoint for handling.
      * <p>
      * Note: This hook is intended for the implementation of cross-cutting concerns (for example logging or global
-     * authorization checks).
+     * authorization checks). In case this hook handles the provided {@linkplain #ROUTING_CONTEXT} in the
+     * {@linkplain HookContext} it may not call the {@code hookPromise}, to break the chain.
      * <p>
-     * In case a hook fails with a {@linkplain DataException}, the status code returned will be the one contained in
-     * this domain exception.
+     * Available parameters in the {@linkplain HookContext}:
      * <p>
-     * Available parameters in the HookContext:
-     * <p>
-     * routingContext: {@linkplain io.vertx.ext.web.RoutingContext}
+     * {@link #ROUTING_CONTEXT}: {@linkplain io.vertx.ext.web.RoutingContext}
      */
     ONCE_PER_REQUEST,
 
@@ -40,7 +35,7 @@ public enum HookType {
     BEFORE_SHUTDOWN;
 
     /**
-     * Name for the routing context parameter of HookType ONCE_PER_REQUEST.
+     * Name for the routing context parameter of HookType {@link #ONCE_PER_REQUEST}.
      */
-    public static final String ONCE_PER_REQUEST_ROUTING_CONTEXT = "routingContext";
+    public static final String ROUTING_CONTEXT = "routingContext";
 }

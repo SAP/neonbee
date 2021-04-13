@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -148,6 +149,17 @@ public final class CollectionsHelper {
                 .collect(Collectors.<Map.Entry<String, String>, String, List<String>>toMap(Map.Entry::getKey,
                         entry -> Collections.singletonList(entry.getValue()),
                         (listA, listB) -> Stream.concat(listA.stream(), listB.stream()).collect(Collectors.toList())));
+    }
+
+    /**
+     * Returns a collector converting Map.Entry&lt;K, U&gt; into a Map&lt;K, U&gt;.
+     *
+     * @param <K> the type of keys maintained by this map
+     * @param <V> the type of mapped values
+     * @return a collector converting entities into a map
+     */
+    public static <K, V> Collector<Map.Entry<K, V>, ?, Map<K, V>> identityMapCollector() {
+        return Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue);
     }
 
     /**

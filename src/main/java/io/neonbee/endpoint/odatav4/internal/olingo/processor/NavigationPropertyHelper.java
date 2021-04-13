@@ -1,4 +1,4 @@
-package io.neonbee.internal.processor.odata;
+package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
 import static io.neonbee.entity.EntityVerticle.requestEntity;
 import static io.vertx.core.Future.failedFuture;
