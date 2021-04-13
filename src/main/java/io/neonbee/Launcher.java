@@ -93,7 +93,7 @@ public class Launcher {
         }
 
         try {
-            NeonBeeOptions options = parseOptions(commandLine);
+            NeonBeeOptions options = setOptions(commandLine);
 
             ServiceLoader<LauncherPreProcessor> loader = ServiceLoader.load(LauncherPreProcessor.class);
             loader.stream().map(ServiceLoader.Provider::get).forEach(processor -> processor.execute(options));
@@ -110,7 +110,7 @@ public class Launcher {
     }
 
     @VisibleForTesting
-    static NeonBeeOptions parseOptions(CommandLine commandLine) {
+    static NeonBeeOptions setOptions(CommandLine commandLine) {
         NeonBeeOptions.Mutable neonBeeOptions = new NeonBeeOptions.Mutable();
 
         getLauncherOptionStringValue(commandLine, WORKING_DIR).or(() -> Optional.of("./working_dir/"))

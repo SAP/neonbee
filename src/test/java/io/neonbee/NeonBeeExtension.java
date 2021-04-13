@@ -106,14 +106,14 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         NeonBeeInstanceConfiguration config =
                 parameterContext.getParameter().getAnnotation(NeonBeeInstanceConfiguration.class);
         if (config == null) {
-            return options.setWorkingDirectory(Paths.get("./working_dir/"))
-                    .setServerVerticlePort(SystemHelper.getFreePort()).setActiveProfiles(List.<NeonBeeProfile>of());
+            return options.setWorkingDirectory(Paths.get("./working_dir/")).setServerPort(SystemHelper.getFreePort())
+                    .setActiveProfiles(List.<NeonBeeProfile>of());
         } else {
             options.setActiveProfiles(Arrays.<NeonBeeProfile>asList(config.activeProfiles()))
                     .setClusterConfigResource(config.clusterConfigFile()).setClustered(config.clustered())
                     .setClusterPort(config.clusterPort()).setDisableJobScheduling(config.disableJobScheduling())
                     .setEventLoopPoolSize(config.eventLoopPoolSize()).setIgnoreClassPath(config.ignoreClassPath())
-                    .setServerVerticlePort(SystemHelper.getFreePort()).setWorkerPoolSize(config.workerPoolSize())
+                    .setServerPort(SystemHelper.getFreePort()).setWorkerPoolSize(config.workerPoolSize())
                     .setWorkingDirectory(Paths.get(config.workingDirectoryPath()));
             if (!Strings.isNullOrEmpty(config.instanceName())) {
                 options.setInstanceName(config.instanceName());

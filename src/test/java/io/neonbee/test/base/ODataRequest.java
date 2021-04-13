@@ -1,9 +1,9 @@
 package io.neonbee.test.base;
 
+import static io.neonbee.config.ServerConfig.PROPERTY_PORT;
+import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.DEFAULT_BASE_PATH;
 import static io.neonbee.internal.helper.ConfigHelper.readConfig;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
-import static io.neonbee.internal.verticle.ServerVerticle.CONFIG_PROPERTY_PORT_KEY;
-import static io.neonbee.internal.verticle.ServerVerticle.DEFAULT_ODATA_BASE_PATH;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -21,13 +21,15 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 
 import io.neonbee.NeonBee;
+import io.neonbee.endpoint.odatav4.ODataV4Endpoint;
 import io.neonbee.internal.verticle.ServerVerticle;
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
@@ -102,10 +104,10 @@ public class ODataRequest {
     public Future<HttpResponse<Buffer>> send(NeonBee neonBee) {
         Vertx vertx = neonBee.getVertx();
         return readConfig(vertx, ServerVerticle.class.getName()).compose(config -> {
-            DeploymentOptions opts = new DeploymentOptions(config);
-            int port = opts.getConfig().getInteger(CONFIG_PROPERTY_PORT_KEY, -1);
-            String basePath = Optional.ofNullable(opts.getConfig().getJsonObject("odata"))
-                    .map(odata -> odata.getString("basePath")).orElse(DEFAULT_ODATA_BASE_PATH);
+            int port = config.getInteger(PROPERTY_PORT, -1);
+            String basePath = config.getJsonArray("endpoints", new JsonArray()).stream().map(JsonObject.class::cast)
+                    .filter(endpoint -> ODataV4Endpoint.class.getSimpleName().equals(endpoint.getString("type")))
+                    .findFirst().map(odata -> odata.getString("basePath")).orElse(DEFAULT_BASE_PATH);
 
             WebClientOptions clientOpts = new WebClientOptions().setDefaultHost("localhost").setDefaultPort(port);
             HttpRequest<Buffer> httpRequest = WebClient.create(vertx, clientOpts).request(method, basePath + getUri());

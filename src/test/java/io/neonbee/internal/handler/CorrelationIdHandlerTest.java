@@ -1,8 +1,8 @@
 package io.neonbee.internal.handler;
 
+import static io.neonbee.config.ServerConfig.CorrelationStrategy.GENERATE_UUID;
+import static io.neonbee.config.ServerConfig.CorrelationStrategy.REQUEST_HEADER;
 import static io.neonbee.internal.handler.CorrelationIdHandler.CORRELATION_ID;
-import static io.neonbee.internal.handler.CorrelationIdHandler.Strategy.GENERATE_UUID;
-import static io.neonbee.internal.handler.CorrelationIdHandler.Strategy.REQUEST_HEADER;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.RETURNS_MOCKS;

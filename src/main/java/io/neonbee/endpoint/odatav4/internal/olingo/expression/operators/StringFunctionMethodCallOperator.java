@@ -1,8 +1,8 @@
-package io.neonbee.internal.processor.odata.expression.operators;
+package io.neonbee.endpoint.odatav4.internal.olingo.expression.operators;
 
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_BOOLEAN;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_INT32;
-import static io.neonbee.internal.processor.odata.edm.EdmConstants.PRIMITIVE_STRING;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_BOOLEAN;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_INT32;
+import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.PRIMITIVE_STRING;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -13,8 +13,8 @@ import org.apache.olingo.commons.api.edm.EdmType;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.ODataApplicationException;
 
-import io.neonbee.internal.processor.odata.edm.EdmPrimitiveNull;
-import io.neonbee.internal.processor.odata.expression.operands.ExpressionVisitorOperand;
+import io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmPrimitiveNull;
+import io.neonbee.endpoint.odatav4.internal.olingo.expression.operands.ExpressionVisitorOperand;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.ext.web.RoutingContext;
 

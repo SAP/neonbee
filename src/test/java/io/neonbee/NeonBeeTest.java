@@ -22,6 +22,7 @@ import org.junit.jupiter.api.TestInfo;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.internal.tracking.MessageDirection;
 import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
 import io.neonbee.internal.tracking.TrackingInterceptor;

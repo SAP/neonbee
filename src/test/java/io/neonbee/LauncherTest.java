@@ -2,10 +2,11 @@ package io.neonbee;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.Launcher.INTERFACE;
-import static io.neonbee.Launcher.parseOptions;
+import static io.neonbee.Launcher.setOptions;
 import static io.neonbee.test.helper.FileSystemHelper.createTempDirectory;
 import static io.neonbee.test.helper.SystemHelper.withEnvironment;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.condition.OS.WINDOWS;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
 
 import com.hazelcast.config.ClasspathXmlConfig;
 
@@ -45,7 +47,7 @@ class LauncherTest {
     @DisplayName("should throw an error, if working directory value is not passed")
     void throwErrorIfWorkingDirValueIsEmpty() {
         args = new String[] { "-cwd" };
-        MissingValueException exception = assertThrows(MissingValueException.class, this::parseOptionsArgs);
+        MissingValueException exception = assertThrows(MissingValueException.class, this::setArgumentOptions);
         assertThat(exception.getMessage()).isEqualTo("The option 'working-directory' requires a value");
     }
 
@@ -53,7 +55,7 @@ class LauncherTest {
     @DisplayName("should throw an error, if instance-name is empty")
     void throwErrorIfInstanceNameIsEmpty() {
         args = new String[] { "-cwd", workDir, "-name", "" };
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, this::parseOptionsArgs);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, this::setArgumentOptions);
         assertThat(exception.getMessage()).isEqualTo("instanceName must not be empty");
     }
 
@@ -61,7 +63,7 @@ class LauncherTest {
     @DisplayName("should throw error, if the passed value is other than integer for worker pool size")
     void validateWorkerPoolSizeValue() {
         args = new String[] { "-cwd", workDir, "-name", "Hodor", "-wps", "hodor" };
-        InvalidValueException exception = assertThrows(InvalidValueException.class, this::parseOptionsArgs);
+        InvalidValueException exception = assertThrows(InvalidValueException.class, this::setArgumentOptions);
         assertThat(exception.getMessage()).isEqualTo("The value 'hodor' is not accepted by 'worker-pool-size'");
     }
 
@@ -69,7 +71,7 @@ class LauncherTest {
     @DisplayName("should throw error, if the passed value is other than integer for event loop pool size")
     void validateEventLoopPoolSizeValue() {
         args = new String[] { "-cwd", workDir, "-name", "Hodor", "-elps", "hodor" };
-        InvalidValueException exception = assertThrows(InvalidValueException.class, this::parseOptionsArgs);
+        InvalidValueException exception = assertThrows(InvalidValueException.class, this::setArgumentOptions);
         assertThat(exception.getMessage()).isEqualTo("The value 'hodor' is not accepted by 'event-loop-pool-size'");
     }
 
@@ -77,18 +79,35 @@ class LauncherTest {
     @DisplayName("should generate expected neonbee options")
     void testExpectedNeonBeeOptions() throws Exception {
         args = new String[] { "-cwd", workDir, "-name", "Hodor", "-wps", "2", "-elps", "2", "-no-cp", "-no-jobs",
-                "-svp", "9000" };
+                "-port", "9000" };
         assertNeonBeeOptions();
 
+        NeonBeeOptions neonBeeOptions = setOptions(INTERFACE.parse(List.of(args)));
+        assertThat(neonBeeOptions.getInstanceName()).isEqualTo("Hodor");
+        assertThat(neonBeeOptions.getWorkerPoolSize()).isEqualTo(2);
+        assertThat(neonBeeOptions.getEventLoopPoolSize()).isEqualTo(2);
+        assertThat(neonBeeOptions.shouldIgnoreClassPath()).isTrue();
+        assertThat(neonBeeOptions.shouldDisableJobScheduling()).isTrue();
+        assertThat(neonBeeOptions.getServerPort()).isEqualTo(9000);
+        args = new String[] {};
+        neonBeeOptions = setOptions(INTERFACE.parse(List.of(args)));
+        assertThat(neonBeeOptions.getServerPort()).isNull();
+    }
+
+    @Test
+    @DisplayName("should generate expected neonbee options")
+    @DisabledOnOs(value = { WINDOWS }, disabledReason = "SystemHelper.withEnvironment has no effect on Windows")
+    void testExpectedNeonBeeEnvironmentOptions() throws Exception {
         args = new String[] {};
         Map<String, String> envMap = Map.of("NEONBEE_WORKING_DIR", workDir, "NEONBEE_INSTANCE_NAME", "Hodor",
                 "NEONBEE_WORKER_POOL_SIZE", "2", "NEONBEE_EVENT_LOOP_POOL_SIZE", "2", "NEONBEE_IGNORE_CLASS_PATH",
-                "true", "NEONBEE_DISABLE_JOB_SCHEDULING", "true", "NEONBEE_SERVER_VERTICLE_PORT", "9000");
+                "true", "NEONBEE_DISABLE_JOB_SCHEDULING", "true", "NEONBEE_SERVER_PORT", "9000");
         withEnvironment(envMap, this::assertNeonBeeOptions);
     }
 
     @Test
     @DisplayName("should generate expected clustered neonbee options")
+    @DisabledOnOs(value = { WINDOWS }, disabledReason = "SystemHelper.withEnvironment has no effect on Windows")
     void testExpectedClusterNeonBeeOptions() throws Exception {
         args = new String[] { "-cwd", workDir, "-cl", "-cc", "hazelcast-local.xml", "-clp", "10000" };
         assertClusteredOptions();
@@ -113,7 +132,7 @@ class LauncherTest {
     }
 
     private void assertNeonBeeOptions() {
-        NeonBeeOptions neonBeeOptions = parseOptionsArgs();
+        NeonBeeOptions neonBeeOptions = setArgumentOptions();
         assertThat(neonBeeOptions.getInstanceName()).isEqualTo("Hodor");
         assertThat(neonBeeOptions.getWorkerPoolSize()).isEqualTo(2);
         assertThat(neonBeeOptions.getEventLoopPoolSize()).isEqualTo(2);
@@ -123,7 +142,7 @@ class LauncherTest {
     }
 
     private void assertClusteredOptions() {
-        NeonBeeOptions neonBeeOptions = parseOptionsArgs();
+        NeonBeeOptions neonBeeOptions = setArgumentOptions();
         assertThat(neonBeeOptions.getClusterPort()).isEqualTo(10000);
         assertThat(neonBeeOptions.isClustered()).isTrue();
         assertThat(neonBeeOptions.getClusterConfig()).isInstanceOf(ClasspathXmlConfig.class);
@@ -132,7 +151,7 @@ class LauncherTest {
         assertThat(xmlConfig.getNetworkConfig().getPort()).isEqualTo(20000);
     }
 
-    private NeonBeeOptions parseOptionsArgs() {
-        return parseOptions(INTERFACE.parse(List.of(args)));
+    private NeonBeeOptions setArgumentOptions() {
+        return setOptions(INTERFACE.parse(List.of(args)));
     }
 }

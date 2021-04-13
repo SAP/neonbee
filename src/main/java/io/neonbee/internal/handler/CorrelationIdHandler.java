@@ -1,14 +1,9 @@
 package io.neonbee.internal.handler;
 
-import static io.neonbee.internal.handler.CorrelationIdHandler.Strategy.GENERATE_UUID;
+import static io.neonbee.config.ServerConfig.CorrelationStrategy.GENERATE_UUID;
 
-import java.util.UUID;
-import java.util.function.Function;
-
-import com.google.common.base.Strings;
-
+import io.neonbee.config.ServerConfig.CorrelationStrategy;
 import io.vertx.core.Handler;
-import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.RoutingContext;
 
 public class CorrelationIdHandler implements Handler<RoutingContext> {
@@ -17,7 +12,7 @@ public class CorrelationIdHandler implements Handler<RoutingContext> {
      */
     public static final String CORRELATION_ID = "correlationId";
 
-    private Strategy strategy;
+    private CorrelationStrategy strategy;
 
     /**
      * Convenience method as similar other Vertx handler implementations (e.g. ErrorHandler)
@@ -38,7 +33,7 @@ public class CorrelationIdHandler implements Handler<RoutingContext> {
      * @param strategy The correlation {@link Strategy}
      * @return A CorrelationIdHandler instance
      */
-    public static CorrelationIdHandler create(Strategy strategy) {
+    public static CorrelationIdHandler create(CorrelationStrategy strategy) {
         return new CorrelationIdHandler(strategy);
     }
 
@@ -47,7 +42,7 @@ public class CorrelationIdHandler implements Handler<RoutingContext> {
      *
      * @param strategy The strategy
      */
-    public CorrelationIdHandler(Strategy strategy) {
+    public CorrelationIdHandler(CorrelationStrategy strategy) {
         this.strategy = strategy;
     }
 
@@ -65,37 +60,5 @@ public class CorrelationIdHandler implements Handler<RoutingContext> {
      */
     public static String getCorrelationId(RoutingContext routingContext) {
         return routingContext.get(CORRELATION_ID);
-    }
-
-    public enum Strategy {
-        /**
-         * Generates a random UUID for every incoming request.
-         */
-        GENERATE_UUID(routingContext -> UUID.randomUUID().toString()),
-        /**
-         * Generates a random UUID for every incoming request.
-         */
-        REQUEST_HEADER(routingContext -> {
-            HttpServerRequest request = routingContext.request();
-            String correlationId = request.getHeader("X-CorrelationID");
-            if (Strings.isNullOrEmpty(correlationId)) {
-                correlationId = request.getHeader("x-vcap-request-id"); // used on CloudFoundry
-            }
-            if (Strings.isNullOrEmpty(correlationId)) {
-                correlationId = GENERATE_UUID.getCorrelationId(routingContext);
-            }
-            return correlationId;
-        });
-
-        @SuppressWarnings("ImmutableEnumChecker")
-        final Function<RoutingContext, String> mapping;
-
-        Strategy(Function<RoutingContext, String> mapping) {
-            this.mapping = mapping;
-        }
-
-        String getCorrelationId(RoutingContext routingContext) {
-            return mapping.apply(routingContext);
-        }
     }
 }

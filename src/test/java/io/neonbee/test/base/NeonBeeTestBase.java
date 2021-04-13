@@ -1,7 +1,5 @@
 package io.neonbee.test.base;
 
-import static io.neonbee.internal.helper.ConfigHelper.readConfigBlocking;
-import static io.neonbee.internal.verticle.ServerVerticle.CONFIG_PROPERTY_PORT_KEY;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
@@ -12,6 +10,7 @@ import java.net.URL;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
@@ -26,6 +25,8 @@ import com.google.common.io.Resources;
 
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeOptions;
+import io.neonbee.config.AuthHandlerConfig;
+import io.neonbee.config.ServerConfig;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.entity.EntityVerticle;
 import io.neonbee.internal.deploy.Deployable;
@@ -48,19 +49,21 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.auth.authentication.Credentials;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.Session;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.handler.AuthenticationHandler;
-import io.vertx.ext.web.handler.JWTAuthHandler;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
 public class NeonBeeTestBase {
+    public static final String CONTEXT_PROPERTY_SERVER_VERTICLE_PORT = "serverVerticlePort";
+
     private Path workingDirPath;
 
     private NeonBee neonbee;
@@ -95,14 +98,18 @@ public class NeonBeeTestBase {
                 latch.countDown();
             } else {
                 neonbee = asyncNeonBee.result();
+
+                DeploymentOptions serverVerticleOpts =
+                        WorkingDirectoryBuilder.readDeploymentOptions(ServerVerticle.class, workingDirPath);
+                neonbee.getLocalMap().put(CONTEXT_PROPERTY_SERVER_VERTICLE_PORT,
+                        new ServerConfig(serverVerticleOpts.getConfig()).getPort());
+
                 Optional.ofNullable(provideUserPrincipal(testInfo)).map(userPrincipal -> {
-                    // Replace current SevrerVerticle with a dummy SevrerVerticle that also has a dummy AuthHandler to
+                    // Replace current ServerVerticle with a dummy ServerVerticle that also has a dummy AuthHandler to
                     // provide the user principal specified in the provideUserPrincipal method
                     ServerVerticle dummyServerVertice = createDummyServerVerticle(testInfo);
 
-                    DeploymentOptions serverVerticleOpts =
-                            WorkingDirectoryBuilder.readDeploymentOptions(ServerVerticle.class, workingDirPath);
-                    serverVerticleOpts.getConfig().put("authenticationChain", new JsonArray().add(new JsonObject()));
+                    serverVerticleOpts.getConfig().put("authenticationChain", new JsonArray());
 
                     isDummyServerVerticleDeployed = true;
                     return undeployVerticles(ServerVerticle.class)
@@ -240,10 +247,7 @@ public class NeonBeeTestBase {
      * @return a pre-configured HTTP request which points to the NeonBee HTTP interface.
      */
     public HttpRequest<Buffer> createRequest(HttpMethod method, String path) {
-        DeploymentOptions deploymentOptions =
-                new DeploymentOptions(readConfigBlocking(getNeonBee().getVertx(), ServerVerticle.class.getName()));
-        int port = deploymentOptions.getConfig().getInteger(CONFIG_PROPERTY_PORT_KEY, -1);
-
+        int port = (Integer) getNeonBee().getLocalMap().get(CONTEXT_PROPERTY_SERVER_VERTICLE_PORT);
         WebClientOptions opts = new WebClientOptions().setDefaultHost("localhost").setDefaultPort(port);
         HttpRequest<Buffer> request = WebClient.create(getNeonBee().getVertx(), opts).request(method, path);
         return isDummyServerVerticleDeployed ? request.bearerTokenAuthentication("dummy") : request;
@@ -271,24 +275,24 @@ public class NeonBeeTestBase {
 
     private ServerVerticle createDummyServerVerticle(TestInfo testInfo) {
         return new ServerVerticle() {
-
-            @Override
-            public AuthenticationHandler createAuthHandler(JsonObject config) {
-                return JWTAuthHandler.create(new JWTAuth() {
-
+            protected Optional<AuthenticationHandler> createAuthChainHandler(List<AuthHandlerConfig> authChainConfig) {
+                return Optional.of(new AuthenticationHandler() {
                     @Override
-                    public void authenticate(JsonObject credentials, Handler<AsyncResult<User>> resultHandler) {
-                        resultHandler.handle(succeededFuture(User.create(provideUserPrincipal(testInfo))));
+                    public void handle(RoutingContext ctx) {
+                        ctx.setUser(User.create(provideUserPrincipal(testInfo)));
+                        Session session = ctx.session();
+                        if (session != null) {
+                            // the user has upgraded from unauthenticated to authenticated
+                            // session should be upgraded as recommended by owasp
+                            session.regenerateId();
+                        }
+
+                        ctx.next();
                     }
 
                     @Override
-                    public String generateToken(JsonObject claims, JWTOptions options) {
-                        return null;
-                    }
-
-                    @Override
-                    public String generateToken(JsonObject claims) {
-                        return null;
+                    public void parseCredentials(RoutingContext context, Handler<AsyncResult<Credentials>> handler) {
+                        handler.handle(succeededFuture());
                     }
                 });
             }

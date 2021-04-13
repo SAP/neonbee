@@ -125,8 +125,8 @@ class NeonBeeOptionsTest {
     @Test
     @DisplayName("Test server verticle port set correctly")
     void checkServerVerticlePort() {
-        assertThat(new NeonBeeOptions.Mutable().getServerVerticlePort()).isNull();
-        assertThat(new NeonBeeOptions.Mutable().setServerVerticlePort(10000).getServerVerticlePort()).isEqualTo(10000);
+        assertThat(new NeonBeeOptions.Mutable().getServerPort()).isNull();
+        assertThat(new NeonBeeOptions.Mutable().setServerPort(10000).getServerPort()).isEqualTo(10000);
     }
 
     @Test

@@ -1,4 +1,4 @@
-package io.neonbee.internal.processor.odata.expression;
+package io.neonbee.endpoint.odatav4.internal.olingo.expression;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.test.endpoint.odata.verticle.TestService3EntityVerticle.ENTITY_DATA_1;

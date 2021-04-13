@@ -1,10 +1,10 @@
-package io.neonbee.internal.processor;
+package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.EntityProcessor.findEntityByKeyPredicates;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.chooseEntitySet;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.fetchNavigationTargetEntities;
 import static io.neonbee.entity.EntityVerticle.requestEntity;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
-import static io.neonbee.internal.processor.EntityProcessor.findEntityByKeyPredicates;
-import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.chooseEntitySet;
-import static io.neonbee.internal.processor.odata.NavigationPropertyHelper.fetchNavigationTargetEntities;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -44,10 +44,9 @@ import com.google.common.annotations.VisibleForTesting;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.internal.DataContextImpl;
+import io.neonbee.endpoint.odatav4.internal.olingo.expression.FilterExpressionVisitor;
+import io.neonbee.endpoint.odatav4.internal.olingo.expression.OrderExpressionExecutor;
 import io.neonbee.entity.EntityWrapper;
-import io.neonbee.internal.processor.odata.EntityExpander;
-import io.neonbee.internal.processor.odata.expression.FilterExpressionVisitor;
-import io.neonbee.internal.processor.odata.expression.OrderExpressionExecutor;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;

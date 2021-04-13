@@ -1,9 +1,9 @@
 package io.neonbee.test.endpoint.odata;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.internal.handler.ODataEndpointHandler.UriConversion.CDS;
-import static io.neonbee.internal.handler.ODataEndpointHandler.UriConversion.LOOSE;
-import static io.neonbee.internal.handler.ODataEndpointHandler.UriConversion.STRICT;
+import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.CDS;
+import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.LOOSE;
+import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.STRICT;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_1;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_2;
@@ -25,8 +25,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion;
 import io.neonbee.entity.EntityVerticle;
-import io.neonbee.internal.handler.ODataEndpointHandler.UriConversion;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.neonbee.test.base.ODataEndpointTestBase;
 import io.neonbee.test.base.ODataRequest;

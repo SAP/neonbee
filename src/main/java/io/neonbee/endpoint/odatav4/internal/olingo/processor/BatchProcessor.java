@@ -1,9 +1,9 @@
-package io.neonbee.internal.processor;
+package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
 import static io.neonbee.internal.helper.AsyncHelper.allComposite;
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -105,7 +105,7 @@ public class BatchProcessor extends AsynchronousProcessor
             ODataResponse response = facade.handleODataRequest(request);
 
             int statusCode = response.getStatusCode();
-            if (statusCode < HttpURLConnection.HTTP_BAD_REQUEST) {
+            if (statusCode < BAD_REQUEST.code()) {
                 responses.add(response);
             } else {
                 return new ODataResponsePart(response, false);

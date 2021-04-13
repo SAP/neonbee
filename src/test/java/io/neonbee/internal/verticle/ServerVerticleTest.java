@@ -1,28 +1,27 @@
 package io.neonbee.internal.verticle;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.internal.verticle.ServerVerticle.BEGIN_PUBLIC_KEY;
-import static io.neonbee.internal.verticle.ServerVerticle.END_PUBLIC_KEY;
+import static io.neonbee.internal.verticle.ServerVerticle.createSessionStore;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import io.neonbee.config.ServerConfig.SessionHandling;
 import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.PubSecKeyOptions;
+import io.vertx.ext.web.sstore.ClusteredSessionStore;
+import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
@@ -30,52 +29,26 @@ import io.vertx.junit5.VertxTestContext;
 class ServerVerticleTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    void testDetermineSessionHandling() throws InterruptedException {
+    void testCreateSessionStore() throws InterruptedException {
         Vertx mockedVertx = mock(Vertx.class);
         when(mockedVertx.isClustered()).thenReturn(false);
 
-        JsonObject config = new JsonObject();
-
-        assertThat(ServerVerticle.determineSessionHandling(mockedVertx, config))
-                .isEqualTo(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING_NONE);
-
-        config.remove(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING);
-        config.put(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING, "");
-        assertThat(ServerVerticle.determineSessionHandling(mockedVertx, config))
-                .isEqualTo(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING_NONE);
-
-        config.remove(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING);
-        config.put(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING, "none");
-        assertThat(ServerVerticle.determineSessionHandling(mockedVertx, config))
-                .isEqualTo(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING_NONE);
-
-        config.remove(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING);
-        config.put(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING, "local");
-        assertThat(ServerVerticle.determineSessionHandling(mockedVertx, config))
-                .isEqualTo(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING_LOCAL);
-
-        config.remove(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING);
-        config.put(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING, "clustered");
-        assertThat(ServerVerticle.determineSessionHandling(mockedVertx, config))
-                .isEqualTo(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING_LOCAL);
+        assertThat(createSessionStore(mockedVertx, SessionHandling.NONE).isEmpty()).isTrue();
+        assertThat(createSessionStore(mockedVertx, SessionHandling.LOCAL).get()).isInstanceOf(LocalSessionStore.class);
+        assertThat(createSessionStore(mockedVertx, SessionHandling.CLUSTERED).get())
+                .isInstanceOf(LocalSessionStore.class);
     }
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    void testDetermineSessionHandlingClustered() throws InterruptedException {
+    void testCreateSessionStoreClustered() throws InterruptedException {
         Vertx mockedVertx = mock(Vertx.class);
         when(mockedVertx.isClustered()).thenReturn(true);
 
-        JsonObject config = new JsonObject();
-
-        config.put(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING, "local");
-        assertThat(ServerVerticle.determineSessionHandling(mockedVertx, config))
-                .isEqualTo(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING_LOCAL);
-
-        config.remove(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING);
-        config.put(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING, "clustered");
-        assertThat(ServerVerticle.determineSessionHandling(mockedVertx, config))
-                .isEqualTo(ServerVerticle.CONFIG_PROPERTY_SESSION_HANDLING_CLUSTERED);
+        assertThat(createSessionStore(mockedVertx, SessionHandling.NONE).isEmpty()).isTrue();
+        assertThat(createSessionStore(mockedVertx, SessionHandling.LOCAL).get()).isInstanceOf(LocalSessionStore.class);
+        assertThat(createSessionStore(mockedVertx, SessionHandling.CLUSTERED).get())
+                .isInstanceOf(ClusteredSessionStore.class);
     }
 
     @Test
@@ -131,19 +104,6 @@ class ServerVerticleTest extends NeonBeeTestBase {
                     assertThat(response.statusCode()).isEqualTo(404);
                     checkpoint.flag();
                 })));
-    }
-
-    @Test
-    void testExtractPubSecKeys() {
-        String algorithm = "RS256";
-        String pubKey = "Hodor";
-        JsonArray pubKeys = new JsonArray().add(new JsonObject().put("algorithm", "RS256").put("publicKey", pubKey));
-
-        Buffer expectedBuffer = Buffer.buffer(BEGIN_PUBLIC_KEY + "\n" + pubKey + "\n" + END_PUBLIC_KEY);
-        List<PubSecKeyOptions> keys = ServerVerticle.extractPubSecKeys(pubKeys);
-        assertThat(keys).hasSize(1);
-        assertThat(keys.get(0).getAlgorithm()).isEqualTo(algorithm);
-        assertThat(keys.get(0).getBuffer()).isEqualTo(expectedBuffer);
     }
 
     @Override

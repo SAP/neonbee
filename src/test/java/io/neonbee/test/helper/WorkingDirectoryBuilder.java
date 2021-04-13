@@ -1,6 +1,6 @@
 package io.neonbee.test.helper;
 
-import static io.neonbee.internal.verticle.ServerVerticle.CONFIG_PROPERTY_PORT_KEY;
+import static io.neonbee.config.ServerConfig.PROPERTY_PORT;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -69,8 +69,7 @@ public final class WorkingDirectoryBuilder {
      * @throws IOException In case that no free port can be found.
      */
     public WorkingDirectoryBuilder setDefaultServerVerticleConfig() throws IOException {
-        return setVerticleConfig(ServerVerticle.class,
-                new JsonObject().put(CONFIG_PROPERTY_PORT_KEY, SystemHelper.getFreePort()));
+        return setVerticleConfig(ServerVerticle.class, new JsonObject().put(PROPERTY_PORT, SystemHelper.getFreePort()));
     }
 
     /**
