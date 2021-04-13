@@ -2,6 +2,7 @@ package io.neonbee.internal.verticle;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.verticle.ServerVerticle.createSessionStore;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
 import io.neonbee.config.ServerConfig.SessionHandling;
+import io.neonbee.internal.handler.DefaultErrorHandler;
 import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.Vertx;
@@ -30,7 +32,7 @@ import io.vertx.junit5.VertxTestContext;
 class ServerVerticleTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    void testCreateSessionStore() throws InterruptedException {
+    void testCreateSessionStore() {
         Vertx mockedVertx = mock(Vertx.class);
         when(mockedVertx.isClustered()).thenReturn(false);
         when(mockedVertx.sharedData()).thenReturn(mock(SharedData.class));
@@ -43,7 +45,7 @@ class ServerVerticleTest extends NeonBeeTestBase {
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    void testCreateSessionStoreClustered() throws InterruptedException {
+    void testCreateSessionStoreClustered() {
         Vertx mockedVertx = mock(Vertx.class);
         when(mockedVertx.isClustered()).thenReturn(true);
         when(mockedVertx.sharedData()).thenReturn(mock(SharedData.class));
@@ -107,6 +109,16 @@ class ServerVerticleTest extends NeonBeeTestBase {
                     assertThat(response.statusCode()).isEqualTo(404);
                     checkpoint.flag();
                 })));
+    }
+
+    @Test
+    void testgGetErrorHandlerDefault() throws Exception {
+        JsonObject config = new JsonObject();
+        assertThat(ServerVerticle.getErrorHandler(config)).isInstanceOf(DefaultErrorHandler.class);
+
+        ClassNotFoundException exception = assertThrows(ClassNotFoundException.class,
+                () -> ServerVerticle.getErrorHandler(config.put("errorHandler", "Hugo")));
+        assertThat(exception).hasMessageThat().contains("Hugo");
     }
 
     @Override

@@ -25,7 +25,7 @@ import io.neonbee.config.ServerConfig.SessionHandling;
 import io.neonbee.endpoint.Endpoint;
 import io.neonbee.internal.handler.CacheControlHandler;
 import io.neonbee.internal.handler.CorrelationIdHandler;
-import io.neonbee.internal.handler.ErrorHandler;
+import io.neonbee.internal.handler.DefaultErrorHandler;
 import io.neonbee.internal.handler.HooksHandler;
 import io.neonbee.internal.handler.InstanceInfoHandler;
 import io.neonbee.internal.handler.LoggerHandler;
@@ -44,6 +44,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.AuthenticationHandler;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ChainAuthHandler;
+import io.vertx.ext.web.handler.ErrorHandler;
 import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.handler.TimeoutHandler;
 import io.vertx.ext.web.sstore.ClusteredSessionStore;
@@ -69,6 +70,9 @@ public class ServerVerticle extends AbstractVerticle {
         }
     };
 
+    @VisibleForTesting
+    static final String DEFAULT_ERROR_HANDLER_CLASS_NAME = DefaultErrorHandler.class.getName();
+
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     @Override
@@ -82,41 +86,54 @@ public class ServerVerticle extends AbstractVerticle {
         // sequence issues, block scope the variable to prevent using it after the endpoints have been mounted
         Route rootRoute = router.route();
 
-        rootRoute.failureHandler(new ErrorHandler());
-        rootRoute.handler(new LoggerHandler());
-        rootRoute.handler(BodyHandler.create(false /* do not handle file uploads */));
-        rootRoute.handler(new CorrelationIdHandler(config.getCorrelationStrategy()));
-        rootRoute.handler(TimeoutHandler.create(SECONDS.toMillis(config.getTimeout()), config.getTimeoutStatusCode()));
-        rootRoute.handler(new CacheControlHandler());
-        rootRoute.handler(new InstanceInfoHandler());
+        try {
+            rootRoute.failureHandler(getErrorHandler(config()));
+            rootRoute.handler(new LoggerHandler());
+            rootRoute.handler(BodyHandler.create(false /* do not handle file uploads */));
+            rootRoute.handler(new CorrelationIdHandler(config.getCorrelationStrategy()));
+            rootRoute.handler(
+                    TimeoutHandler.create(SECONDS.toMillis(config.getTimeout()), config.getTimeoutStatusCode()));
+            rootRoute.handler(new CacheControlHandler());
+            rootRoute.handler(new InstanceInfoHandler());
 
-        createSessionStore(vertx, config.getSessionHandling()).map(SessionHandler::create)
-                .ifPresent(sessionHandler -> rootRoute
-                        .handler(sessionHandler.setSessionCookieName(config.getSessionCookieName())));
+            createSessionStore(vertx, config.getSessionHandling()).map(SessionHandler::create)
+                    .ifPresent(sessionHandler -> rootRoute
+                            .handler(sessionHandler.setSessionCookieName(config.getSessionCookieName())));
 
-        // add all endpoint handlers as sub-routes here
-        mountEndpoints(router, config.getEndpointConfigs(), createAuthChainHandler(config.getAuthChainConfig()),
-                new HooksHandler()).onFailure(startPromise::fail).onSuccess(nothing -> {
-                    // the NotFoundHandler fails the routing context finally
-                    router.route().handler(new NotFoundHandler());
+            // add all endpoint handlers as sub-routes here
+            mountEndpoints(router, config.getEndpointConfigs(), createAuthChainHandler(config.getAuthChainConfig()),
+                    new HooksHandler()).onFailure(startPromise::fail).onSuccess(nothing -> {
+                        // the NotFoundHandler fails the routing context finally
+                        router.route().handler(new NotFoundHandler());
 
-                    // Use the port passed via command line options, instead the configured one.
-                    Optional.ofNullable(NeonBee.get(vertx).getOptions().getServerPort())
-                            .ifPresent(port -> config.setPort(port));
+                        // Use the port passed via command line options, instead the configured one.
+                        Optional.ofNullable(NeonBee.get(vertx).getOptions().getServerPort()).ifPresent(config::setPort);
 
-                    vertx.createHttpServer(config /* ServerConfig is a HttpServerOptions subclass */)
-                            .exceptionHandler(throwable -> {
-                                LOGGER.error("HTTP Socket Exception", throwable);
-                            }).requestHandler(router).listen().onSuccess(httpServer -> {
-                                LOGGER.info("HTTP server started on port {}", httpServer.actualPort());
-                                if (LOGGER.isDebugEnabled()) {
-                                    LOGGER.debug("HTTP server configured with routes: {}", router.getRoutes().stream()
-                                            .map(Route::toString).collect(Collectors.joining(",")));
-                                }
-                            }).onFailure(cause -> {
-                                LOGGER.error("HTTP server could not be started", cause);
-                            }).<Void>mapEmpty().onComplete(startPromise);
-                });
+                        vertx.createHttpServer(config /* ServerConfig is a HttpServerOptions subclass */)
+                                .exceptionHandler(throwable -> {
+                                    LOGGER.error("HTTP Socket Exception", throwable);
+                                }).requestHandler(router).listen().onSuccess(httpServer -> {
+                                    LOGGER.info("HTTP server started on port {}", httpServer.actualPort());
+                                    if (LOGGER.isDebugEnabled()) {
+                                        LOGGER.debug("HTTP server configured with routes: {}", router.getRoutes()
+                                                .stream().map(Route::toString).collect(Collectors.joining(",")));
+                                    }
+                                }).onFailure(cause -> {
+                                    LOGGER.error("HTTP server could not be started", cause);
+                                }).<Void>mapEmpty().onComplete(startPromise);
+                    });
+        } catch (Exception e) {
+            LOGGER.error("Server could not be started", e);
+            startPromise.fail(e);
+        }
+    }
+
+    @VisibleForTesting
+    static ErrorHandler getErrorHandler(JsonObject config) throws ClassNotFoundException, NoSuchMethodException,
+            IllegalAccessException, InvocationTargetException, InstantiationException {
+        String className = config.getString("errorHandler", DEFAULT_ERROR_HANDLER_CLASS_NAME);
+        String errorHandlerClassName = className.isEmpty() ? DEFAULT_ERROR_HANDLER_CLASS_NAME : className;
+        return (ErrorHandler) Class.forName(errorHandlerClassName).getConstructor().newInstance();
     }
 
     /**
@@ -175,9 +192,8 @@ public class ServerVerticle extends AbstractVerticle {
             }
 
             JsonObject endpointAdditionalConfig = Optional.ofNullable(defaultEndpointConfig.getAdditionalConfig())
-                    .map(JsonObject::copy).orElseGet(() -> new JsonObject());
-            Optional.ofNullable(endpointConfig.getAdditionalConfig())
-                    .ifPresent(config -> endpointAdditionalConfig.mergeIn(config));
+                    .map(JsonObject::copy).orElseGet(JsonObject::new);
+            Optional.ofNullable(endpointConfig.getAdditionalConfig()).ifPresent(endpointAdditionalConfig::mergeIn);
 
             Router endpointRouter;
             try {
