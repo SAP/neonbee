@@ -7,10 +7,10 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import io.neonbee.data.DataException;
 import io.neonbee.logging.LoggingFacade;
-import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.MIMEHeader;
@@ -19,7 +19,7 @@ import io.vertx.ext.web.RoutingContext;
 /**
  * Similar to the io.vertx.ext.web.handler.impl.ErrorHandlerImpl, w/ minor adoptions for error text and template.
  */
-public final class ErrorHandler implements Handler<RoutingContext> {
+public class DefaultErrorHandler implements io.vertx.ext.web.handler.ErrorHandler {
     /**
      * The default template to use for rendering.
      */
@@ -39,7 +39,7 @@ public final class ErrorHandler implements Handler<RoutingContext> {
     /**
      * Returns a new ErrorHandler with the default {@link #DEFAULT_ERROR_HANDLER_TEMPLATE template}.
      */
-    public ErrorHandler() {
+    public DefaultErrorHandler() {
         this(DEFAULT_ERROR_HANDLER_TEMPLATE);
     }
 
@@ -48,9 +48,9 @@ public final class ErrorHandler implements Handler<RoutingContext> {
      *
      * @param errorTemplateName resource path to the template.
      */
-    public ErrorHandler(String errorTemplateName) {
+    public DefaultErrorHandler(String errorTemplateName) {
         Objects.requireNonNull(errorTemplateName);
-        this.errorTemplate = readResourceToBuffer(errorTemplateName).toString();
+        this.errorTemplate = Objects.requireNonNull(readResourceToBuffer(errorTemplateName)).toString();
     }
 
     @Override
@@ -77,6 +77,68 @@ public final class ErrorHandler implements Handler<RoutingContext> {
         answerWithError(routingContext, errorCode, errorMessage);
     }
 
+    /**
+     * Creates a String with the text/plain error response.
+     *
+     * @param routingContext the routing context
+     * @param errorCode      the error code of the response
+     * @param errorMessage   the error message of the response
+     * @return A String with the plain text error response.
+     */
+    protected String createPlainResponse(RoutingContext routingContext, int errorCode, String errorMessage) {
+        StringBuilder builder =
+                new StringBuilder().append("Error ").append(errorCode).append(": ").append(errorMessage);
+        String correlationId = getCorrelationId(routingContext);
+        if (correlationId != null) {
+            builder.append(" (Correlation ID: ").append(correlationId).append(')');
+        }
+        return builder.toString();
+    }
+
+    /**
+     * Creates a String with the application/json error response.
+     *
+     * @param routingContext the routing context
+     * @param errorCode      the error code of the response
+     * @param errorMessage   the error message of the response
+     * @return A JsonObject with the error response.
+     */
+    protected JsonObject createJsonResponse(RoutingContext routingContext, int errorCode, String errorMessage) {
+        JsonObject error = new JsonObject().put("code", errorCode).put("message", errorMessage);
+        Optional.ofNullable(getCorrelationId(routingContext)).ifPresent(id -> error.put("correlationId", id));
+        return new JsonObject().put("error", error);
+    }
+
+    /**
+     * Creates a String with the text/html error response.
+     *
+     * @param routingContext the routing context
+     * @param errorCode      the error code of the response
+     * @param errorMessage   the error message of the response
+     * @return A String with the html encoded error response.
+     */
+    protected String createHtmlResponse(RoutingContext routingContext, int errorCode, String errorMessage) {
+        return errorTemplate.replace("{errorCode}", Integer.toString(errorCode)).replace("{errorMessage}", errorMessage)
+                .replace("{correlationId}", getCorrelationId(routingContext));
+    }
+
+    private boolean sendError(RoutingContext routingContext, String mime, int errorCode, String errorMessage) {
+        HttpServerResponse response = routingContext.response();
+        if (mime.startsWith("text/html")) {
+            response.putHeader(CONTENT_TYPE, "text/html");
+            response.end(createHtmlResponse(routingContext, errorCode, errorMessage));
+        } else if (mime.startsWith("application/json")) {
+            response.putHeader(CONTENT_TYPE, "application/json");
+            response.end(createJsonResponse(routingContext, errorCode, errorMessage).toBuffer());
+        } else if (mime.startsWith("text/plain")) {
+            response.putHeader(CONTENT_TYPE, "text/plain");
+            response.end(createPlainResponse(routingContext, errorCode, errorMessage));
+        } else {
+            return false;
+        }
+        return true;
+    }
+
     private void answerWithError(RoutingContext routingContext, int errorCode, String errorMessage) {
         routingContext.response().setStatusCode(errorCode);
         if (!sendErrorResponseMIME(routingContext, errorCode, errorMessage)
@@ -98,36 +160,6 @@ public final class ErrorHandler implements Handler<RoutingContext> {
             if (sendError(routingContext, accept.value(), errorCode, errorMessage)) {
                 return true;
             }
-        }
-        return false;
-    }
-
-    private boolean sendError(RoutingContext routingContext, String mime, int errorCode, String errorMessage) {
-        String correlationId = getCorrelationId(routingContext);
-        HttpServerResponse response = routingContext.response();
-        if (mime.startsWith("text/html")) {
-            response.putHeader(CONTENT_TYPE, "text/html");
-            response.end(errorTemplate.replace("{errorCode}", Integer.toString(errorCode))
-                    .replace("{errorMessage}", errorMessage).replace("{correlationId}", correlationId));
-            return true;
-        } else if (mime.startsWith("application/json")) {
-            JsonObject jsonError = new JsonObject();
-            jsonError.put("code", errorCode).put("message", errorMessage);
-            if (correlationId != null) {
-                jsonError.put("correlationId", correlationId);
-            }
-            response.putHeader(CONTENT_TYPE, "application/json");
-            response.end(new JsonObject().put("error", jsonError).encode());
-            return true;
-        } else if (mime.startsWith("text/plain")) {
-            response.putHeader(CONTENT_TYPE, "text/plain");
-            StringBuilder builder = new StringBuilder();
-            builder.append("Error ").append(errorCode).append(": ").append(errorMessage);
-            if (correlationId != null) {
-                builder.append(" (Correlation ID: ").append(correlationId).append(')');
-            }
-            response.end(builder.toString());
-            return true;
         }
         return false;
     }
