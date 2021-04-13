@@ -1,7 +1,6 @@
-package io.neonbee;
+package io.neonbee.config;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.NeonBeeConfig.PLATFORM_CLASSES_KEY;
 
 import java.util.List;
 import java.util.function.Function;
@@ -23,12 +22,12 @@ class NeonBeeConfigTest {
 
     @Test
     @DisplayName("should read the trackingDataHandlingStrategy correctly")
-    void getPlatformClassesTest() {
+    void testGetPlatformClasses() {
         List<String> validListOfPlatformClasses = List.of("hodor");
         List<Object> nonValidListOfPlatformClasses = List.of("hodor", 3);
 
         Function<List<?>, JsonObject> createConfig =
-                list -> new JsonObject().put(PLATFORM_CLASSES_KEY, new JsonArray(list));
+                list -> new JsonObject().put("platformClasses", new JsonArray(list));
 
         NeonBeeConfig config = new NeonBeeConfig(createConfig.apply(validListOfPlatformClasses));
         assertThat(config.getPlatformClasses()).containsExactlyElementsIn(validListOfPlatformClasses);

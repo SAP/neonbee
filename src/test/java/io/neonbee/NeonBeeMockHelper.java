@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.test.helper.ReflectionHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
