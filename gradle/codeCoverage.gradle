@@ -62,11 +62,22 @@ consoleReporter {
         // Set this property to false if you don't need colorized output.
         colorEnabled true
 
-        // Due to the fact that some tests are disabled on macOS, we have to reduce the code coverage thresholds
-        if (org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX()) {
+        // Due to the fact that some tests are disabled on macOS and Windows, we have to reduce the code coverage thresholds
+        def operatingSystem = org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem()
+        if (operatingSystem.isMacOsX() || operatingSystem.isWindows()) {
             thresholdFine -= 5
             thresholdWarning -= 5
             thresholdError -= 5
+        }
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            excludes = [
+                '**/*Converter.class'
+            ]
         }
     }
 }

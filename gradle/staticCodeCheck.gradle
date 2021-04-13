@@ -3,13 +3,17 @@ apply plugin: 'checkstyle'
 // ############ Spotless
 spotless {
     java {
+        // note: these settings must be duplicated into the build.gradle file!
         encoding 'UTF8'
         trimTrailingWhitespace()
         removeUnusedImports()
         endWithNewline()
+        lineEndings 'UNIX'
         importOrderFile("${rootDir}/gradle/spotless/neonbee.importorder")
         eclipse('4.17.0').configFile "${rootDir}/gradle/spotless/eclipse-formatter.xml"
         custom 'Lambda fix', { it.replace('} )', '})').replace('} ,', '},') }
+
+        targetExclude sourceSets.generated.java.srcDirs.collect { fileTree(it).files } // will be handled by an own spotlessApplyGenerated
     }
 }
 
@@ -52,6 +56,7 @@ spotbugs {
     toolVersion = '4.2.1'
     effort = 'max'
     reportLevel = 'medium'
+    excludeFilter = file("${projectDir}/gradle/findbugs/excludeFilter.xml")
 }
 
 spotbugsMain {

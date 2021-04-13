@@ -2,7 +2,6 @@ package io.neonbee;
 
 import static ch.qos.logback.classic.util.ContextInitializer.CONFIG_FILE_PROPERTY;
 import static io.neonbee.internal.helper.AsyncHelper.allComposite;
-import static io.neonbee.internal.helper.ConfigHelper.readConfig;
 import static io.neonbee.internal.helper.HostHelper.getHostIp;
 import static io.neonbee.internal.scanner.DeployableScanner.scanForDeployableClasses;
 import static io.vertx.core.CompositeFuture.all;
@@ -33,6 +32,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
+import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.data.DataQuery;
 import io.neonbee.entity.EntityWrapper;
 import io.neonbee.hook.HookRegistry;
@@ -463,8 +463,7 @@ public class NeonBee {
     }
 
     private Future<NeonBeeConfig> loadConfig() {
-        return readConfig(getVertx(), NeonBee.class.getName(), new JsonObject())
-                .map(config -> this.config = new NeonBeeConfig(config));
+        return NeonBeeConfig.load(vertx).onSuccess(config -> this.config = config);
     }
 
     @SuppressWarnings("rawtypes")

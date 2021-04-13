@@ -1,61 +1,82 @@
 package io.neonbee.config;
 
+import static io.neonbee.internal.helper.ConfigHelper.readConfig;
+
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
-import com.google.common.annotations.VisibleForTesting;
-
+import io.neonbee.NeonBee;
+import io.neonbee.NeonBeeOptions;
 import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
-import io.neonbee.logging.LoggingFacade;
+import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.annotations.Fluent;
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 
+/**
+ * In contrast to the {@link NeonBeeOptions} the {@link NeonBeeConfig} is persistent configuration in a file.
+ *
+ * Whilst the {@link NeonBeeOptions} contain information which is to specify when NeonBee starts, such as the port of
+ * the server to start on and the cluster to connect to, which potentially could be different across cluster nodes, the
+ * {@link NeonBeeConfig} contains information which is mostly shared across different cluster nodes or you would like to
+ * decide for and set before starting up NeonBee.
+ */
+@DataObject(generateConverter = true, publicConverter = false)
 public class NeonBeeConfig {
     /**
      * The default timeout for an event bus request.
      */
     public static final int DEFAULT_EVENT_BUS_TIMEOUT = 30;
 
-    @VisibleForTesting
-    static final String PLATFORM_CLASSES_KEY = "platformClasses";
+    /**
+     * The default tracking data handling strategy.
+     */
+    public static final String DEFAULT_TRACKING_DATA_HANDLING_STRATEGY = TrackingDataLoggingStrategy.class.getName();
 
-    private static final LoggingFacade LOGGER = LoggingFacade.create();
+    private int eventBusTimeout = DEFAULT_EVENT_BUS_TIMEOUT;
 
-    private static final String DEFAULT_TRACKING_DATA_HANDLING_STRATEGY = TrackingDataLoggingStrategy.class.getName();
+    private Map<String, String> eventBusCodecs = Map.of();
 
-    private final int eventBusTimeout;
+    private String trackingDataHandlingStrategy = DEFAULT_TRACKING_DATA_HANDLING_STRATEGY;
 
-    private final List<String> platformClasses;
-
-    private final String trackingDataHandlingStrategy;
-
-    private final Map<String, String> eventBusCodecs;
+    private List<String> platformClasses = List.of();
 
     /**
-     * Create a NeonBee config from JSON.
+     * Load the NeonBee configuration from the NeonBee config. directory and convert it to a {@link NeonBeeConfig}.
      *
-     * @param json the JSON
+     * @param vertx The Vert.x instance used to load the config file
+     * @return a future to a {@link NeonBeeConfig}
      */
-    @VisibleForTesting
-    NeonBeeConfig(JsonObject json) {
-        this.eventBusTimeout = json.getInteger("eventBusTimeout", DEFAULT_EVENT_BUS_TIMEOUT);
-        this.eventBusCodecs = json.getJsonObject("eventBusCodecs", new JsonObject()).stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> (String) entry.getValue()));
-        this.trackingDataHandlingStrategy =
-                json.getString("trackingDataHandlingStrategy", DEFAULT_TRACKING_DATA_HANDLING_STRATEGY);
-        this.platformClasses = Optional.ofNullable(json.getJsonArray(PLATFORM_CLASSES_KEY))
-                .map(jsonArray -> jsonArray.stream().map(o -> {
-                    if (o instanceof String) {
-                        return (String) o;
-                    } else {
-                        LOGGER.warn(
-                                "The attribute \"platformClasses\" of the NeonBee config must only contain Strings. Because of this value {} will be ignored.",
-                                String.valueOf(o));
-                        return null;
-                    }
-                }).filter(Objects::nonNull).collect(Collectors.toList())).orElse(List.of());
+    public static Future<NeonBeeConfig> load(Vertx vertx) {
+        return readConfig(vertx, NeonBee.class.getName(), new JsonObject()).map(NeonBeeConfig::new);
+    }
+
+    /**
+     * Creates an initial NeonBee configuration object.
+     */
+    public NeonBeeConfig() {}
+
+    /**
+     * Creates a {@linkplain NeonBeeConfig} parsing a given JSON object.
+     *
+     * @param json the JSON object to parse
+     */
+    public NeonBeeConfig(JsonObject json) {
+        this();
+
+        NeonBeeConfigConverter.fromJson(json, this);
+    }
+
+    /**
+     * Transforms this configuration object into JSON.
+     *
+     * @return a JSON representation of this configuration
+     */
+    public JsonObject toJson() {
+        JsonObject json = new JsonObject();
+        NeonBeeConfigConverter.toJson(this, json);
+        return json;
     }
 
     /**
@@ -68,6 +89,18 @@ public class NeonBeeConfig {
      */
     public int getEventBusTimeout() {
         return eventBusTimeout;
+    }
+
+    /**
+     * Sets the event bus timeout in seconds.
+     *
+     * @param eventBusTimeout the event bus timeout in seconds
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    @Fluent
+    public NeonBeeConfig setEventBusTimeout(int eventBusTimeout) {
+        this.eventBusTimeout = eventBusTimeout;
+        return this;
     }
 
     /**
@@ -85,6 +118,18 @@ public class NeonBeeConfig {
     }
 
     /**
+     * Sets the event bus codecs to be loaded with NeonBee.
+     *
+     * @param eventBusCodecs a map of default codes to use
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    @Fluent
+    public NeonBeeConfig setEventBusCodecs(Map<String, String> eventBusCodecs) {
+        this.eventBusCodecs = eventBusCodecs;
+        return this;
+    }
+
+    /**
      * Returns the implementation class name of the tracking data handling strategy.
      *
      * @return the implementation class name
@@ -94,17 +139,41 @@ public class NeonBeeConfig {
     }
 
     /**
+     * Sets the class to load for the tracking data handling.
+     *
+     * @param trackingDataHandlingStrategy a class name of a tracking data handling class
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    @Fluent
+    public NeonBeeConfig setTrackingDataHandlingStrategy(String trackingDataHandlingStrategy) {
+        this.trackingDataHandlingStrategy = trackingDataHandlingStrategy;
+        return this;
+    }
+
+    /**
      * The idea of this method is to define, which classes are considered as platform classes. This is important to know
      * to avoid potential class loading issues during the load of a NeonBee Module. Because generally a class which is
      * already loaded by the platform shouldn't also be loaded by the class loader which loads the classes for the
      * NeonBee Module.<br>
      * <br>
      *
-     * Example values: [io.vertx.core.json.JsonObject, io.neonbee.data*, io.neo*]
+     * Example values: [io.vertx.core.json.JsonObject, io.neonbee.data*, com.foo.bar*]
      *
      * @return a list of Strings that could contain full qualified class names, or prefixes marked with a *;
      */
     public List<String> getPlatformClasses() {
         return platformClasses;
+    }
+
+    /**
+     * Sets classes available by the platform.
+     *
+     * @param platformClasses a list of class names
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    @Fluent
+    public NeonBeeConfig setPlatformClasses(List<String> platformClasses) {
+        this.platformClasses = platformClasses;
+        return this;
     }
 }
