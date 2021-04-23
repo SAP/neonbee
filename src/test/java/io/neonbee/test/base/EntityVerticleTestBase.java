@@ -18,7 +18,6 @@ import io.vertx.core.Future;
 import io.vertx.junit5.VertxTestContext;
 
 public abstract class EntityVerticleTestBase extends NeonBeeTestBase implements EntityResponseVerifier {
-
     /**
      * @return A list of {@link Path paths} to the models to be provided in this test.
      */

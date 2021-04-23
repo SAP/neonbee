@@ -316,7 +316,7 @@ public class NeonBee {
                 .registerDefaultCodec(ImmutableJsonObject.class, new ImmutableJsonObjectMessageCodec());
 
         // add any additional default codecs (configured in NeonBeeOptions) here
-        getConfig().getEventBusCodecs().forEach(this::registerCodec);
+        Optional.ofNullable(getConfig().getEventBusCodecs()).ifPresent(codecs -> codecs.forEach(this::registerCodec));
 
         return succeededFuture();
     }

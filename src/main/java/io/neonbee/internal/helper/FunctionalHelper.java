@@ -27,6 +27,30 @@ public final class FunctionalHelper {
     }
 
     /**
+     * To be used like map.entrySet().stream().filter(keyPredicate(key -&gt; ...)).
+     *
+     * @param predicate The predicate
+     * @param <K>       The type of the key of the map entry
+     * @param <V>       The type of the value of the map entry
+     * @return A predicate which applies the logic of the passed predicate to the map
+     */
+    public static <K, V> Predicate<Map.Entry<K, V>> keyPredicate(Predicate<? super K> predicate) {
+        return entry -> predicate.test(entry.getKey());
+    }
+
+    /**
+     * To be used like map.entrySet().stream().filter(valuePredicate(value -&gt; ...)).
+     *
+     * @param predicate The predicate
+     * @param <K>       The type of the key of the map entry
+     * @param <V>       The type of the value of the map entry
+     * @return A predicate which applies the logic of the passed predicate to the map
+     */
+    public static <K, V> Predicate<Map.Entry<K, V>> valuePredicate(Predicate<? super V> predicate) {
+        return entry -> predicate.test(entry.getValue());
+    }
+
+    /**
      * To be used like map.entrySet().stream().map(entryFunction((key, value) -&gt; ...)).
      *
      * @param function The {@link BiFunction} with the logic to be applied to the map entries

@@ -1,5 +1,6 @@
 package io.neonbee.config;
 
+import static io.neonbee.internal.helper.ConfigHelper.rephraseConfigNames;
 import static io.netty.handler.codec.http.HttpResponseStatus.GATEWAY_TIMEOUT;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableBiMap;
 
 import io.neonbee.endpoint.metrics.MetricsEndpoint;
 import io.neonbee.endpoint.odatav4.ODataV4Endpoint;
@@ -194,6 +196,9 @@ public class ServerConfig extends HttpServerOptions {
             .stream(new Class<?>[] { RawEndpoint.class, ODataV4Endpoint.class, MetricsEndpoint.class })
             .map(endpointClass -> new EndpointConfig().setType(endpointClass.getName())).collect(Collectors.toList()));
 
+    private static final ImmutableBiMap<String, String> REPHRASE_MAP = ImmutableBiMap.<String, String>builder()
+            .put("endpointConfigs", "endpoints").put("authChainConfig", "authenticationChain").build();
+
     private int timeout = DEFAULT_TIMEOUT;
 
     private int timeoutStatusCode = GATEWAY_TIMEOUT.code();
@@ -223,8 +228,10 @@ public class ServerConfig extends HttpServerOptions {
      */
     public ServerConfig(JsonObject json) {
         super(json);
-        overrideDefaults(json);
-        ServerConfigConverter.fromJson(json, this);
+
+        JsonObject newJson = rephraseConfigNames(json.copy(), REPHRASE_MAP, true);
+        overrideDefaults(newJson);
+        ServerConfigConverter.fromJson(newJson, this);
     }
 
     private void overrideDefaults(JsonObject json) {
@@ -240,6 +247,7 @@ public class ServerConfig extends HttpServerOptions {
     public JsonObject toJson() {
         JsonObject json = super.toJson();
         ServerConfigConverter.toJson(this, json);
+        rephraseConfigNames(json, REPHRASE_MAP, false);
         return json;
     }
 

@@ -1,15 +1,25 @@
 package io.neonbee.config;
 
+import static io.neonbee.internal.helper.ConfigHelper.collectAdditionalConfig;
+import static io.neonbee.internal.helper.ConfigHelper.rephraseConfigNames;
+
 import java.util.List;
+import java.util.Optional;
+
+import com.google.common.collect.ImmutableBiMap;
 
 import io.neonbee.endpoint.Endpoint;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.ChainAuthHandler;
 
 @DataObject(generateConverter = true, publicConverter = false)
 public class EndpointConfig {
+    private static final ImmutableBiMap<String, String> REPHRASE_MAP =
+            ImmutableBiMap.<String, String>builder().put("authChainConfig", "authenticationChain").build();
+
     private String type;
 
     private String basePath;
@@ -33,7 +43,10 @@ public class EndpointConfig {
     public EndpointConfig(JsonObject json) {
         this();
 
-        EndpointConfigConverter.fromJson(json, this);
+        JsonObject newJson = rephraseConfigNames(json.copy(), REPHRASE_MAP, true);
+        EndpointConfigConverter.fromJson(newJson, this);
+        additionalConfig = Optional.ofNullable(additionalConfig).orElseGet(JsonObject::new)
+                .mergeIn(collectAdditionalConfig(newJson, "type", "basePath", "enabled", "authChainConfig"));
     }
 
     /**
@@ -44,6 +57,8 @@ public class EndpointConfig {
     public JsonObject toJson() {
         JsonObject json = new JsonObject();
         EndpointConfigConverter.toJson(this, json);
+        Optional.ofNullable(additionalConfig).ifPresent(config -> json.mergeIn(config));
+        rephraseConfigNames(json, REPHRASE_MAP, false);
         return json;
     }
 
@@ -83,6 +98,7 @@ public class EndpointConfig {
      * @param basePath the base path as string
      * @return the {@linkplain EndpointConfig} for fluent use
      */
+    @Fluent
     public EndpointConfig setBasePath(String basePath) {
         this.basePath = basePath;
         return this;
@@ -103,6 +119,7 @@ public class EndpointConfig {
      * @param enabled true, false or null
      * @return the {@linkplain EndpointConfig} for fluent use
      */
+    @Fluent
     public EndpointConfig setEnabled(Boolean enabled) {
         this.enabled = enabled;
         return this;
@@ -124,6 +141,7 @@ public class EndpointConfig {
      * @param authChainConfig the list of authentication handler configurations to initialize
      * @return the {@linkplain EndpointConfig} for fluent use
      */
+    @Fluent
     public EndpointConfig setAuthChainConfig(List<AuthHandlerConfig> authChainConfig) {
         this.authChainConfig = authChainConfig;
         return this;
@@ -134,6 +152,7 @@ public class EndpointConfig {
      *
      * @return additional configurations as JSON object
      */
+    @GenIgnore
     public JsonObject getAdditionalConfig() {
         return additionalConfig;
     }
@@ -144,6 +163,8 @@ public class EndpointConfig {
      * @param additionalConfig the additional configuration to set
      * @return the {@linkplain EndpointConfig} for fluent use
      */
+    @Fluent
+    @GenIgnore
     public EndpointConfig setAdditionalConfig(JsonObject additionalConfig) {
         this.additionalConfig = additionalConfig;
         return this;

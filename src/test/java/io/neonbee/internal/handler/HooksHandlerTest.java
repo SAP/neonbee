@@ -2,6 +2,7 @@ package io.neonbee.internal.handler;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +20,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.Checkpoint;
+import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class HooksHandlerTest extends DataVerticleTestBase {
@@ -26,6 +28,7 @@ class HooksHandlerTest extends DataVerticleTestBase {
 
     @Test
     @DisplayName("Checks that HooksHandler executes hook")
+    @Timeout(value = 3, timeUnit = TimeUnit.SECONDS)
     void checkHookGetsExecutedSuccess(VertxTestContext testContext) {
         Checkpoint cp = testContext.checkpoint(2);
         TestHook hook = new TestHook();
@@ -44,6 +47,7 @@ class HooksHandlerTest extends DataVerticleTestBase {
 
     @Test
     @DisplayName("Checks that HooksHanlder executes hook and fail request in case of error")
+    @Timeout(value = 3, timeUnit = TimeUnit.SECONDS)
     void checkHookGetsExecutedAndFailsRequestInCaseOfException(VertxTestContext testContext) {
         Checkpoint cp = testContext.checkpoint(2);
         TestHook hook = new TestHook();
@@ -62,6 +66,7 @@ class HooksHandlerTest extends DataVerticleTestBase {
 
     @Test
     @DisplayName("Checks that HooksHanlder executes hook and propagate error code in case of DataException")
+    @Timeout(value = 3, timeUnit = TimeUnit.SECONDS)
     void checkHookGetsExecutedAndPropagateErrorCodeIfDataException(VertxTestContext testContext) {
         Checkpoint cp = testContext.checkpoint(2);
         TestHook hook = new TestHook();

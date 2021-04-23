@@ -20,6 +20,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.shareddata.SharedData;
 import io.vertx.ext.web.sstore.ClusteredSessionStore;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.junit5.Checkpoint;
@@ -32,6 +33,7 @@ class ServerVerticleTest extends NeonBeeTestBase {
     void testCreateSessionStore() throws InterruptedException {
         Vertx mockedVertx = mock(Vertx.class);
         when(mockedVertx.isClustered()).thenReturn(false);
+        when(mockedVertx.sharedData()).thenReturn(mock(SharedData.class));
 
         assertThat(createSessionStore(mockedVertx, SessionHandling.NONE).isEmpty()).isTrue();
         assertThat(createSessionStore(mockedVertx, SessionHandling.LOCAL).get()).isInstanceOf(LocalSessionStore.class);
@@ -44,6 +46,7 @@ class ServerVerticleTest extends NeonBeeTestBase {
     void testCreateSessionStoreClustered() throws InterruptedException {
         Vertx mockedVertx = mock(Vertx.class);
         when(mockedVertx.isClustered()).thenReturn(true);
+        when(mockedVertx.sharedData()).thenReturn(mock(SharedData.class));
 
         assertThat(createSessionStore(mockedVertx, SessionHandling.NONE).isEmpty()).isTrue();
         assertThat(createSessionStore(mockedVertx, SessionHandling.LOCAL).get()).isInstanceOf(LocalSessionStore.class);

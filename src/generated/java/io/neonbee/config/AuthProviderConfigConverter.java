@@ -11,11 +11,6 @@ public class AuthProviderConfigConverter {
     static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, AuthProviderConfig obj) {
         for (java.util.Map.Entry<String, Object> member : json) {
             switch (member.getKey()) {
-            case "additionalConfig":
-                if (member.getValue() instanceof JsonObject) {
-                    obj.setAdditionalConfig(((JsonObject) member.getValue()).copy());
-                }
-                break;
             case "type":
                 if (member.getValue() instanceof String) {
                     obj.setType(
@@ -31,9 +26,6 @@ public class AuthProviderConfigConverter {
     }
 
     static void toJson(AuthProviderConfig obj, java.util.Map<String, Object> json) {
-        if (obj.getAdditionalConfig() != null) {
-            json.put("additionalConfig", obj.getAdditionalConfig());
-        }
         if (obj.getType() != null) {
             json.put("type", obj.getType().name());
         }

@@ -161,8 +161,8 @@ public class Deployable {
             JsonObject defaultConfig) {
         return readConfig(vertx, identifier)
                 // merge the config into the default config two levels deep (verticle settings & config first level)
-                .map(config -> new DeploymentOptions(
-                        Optional.ofNullable(defaultConfig).orElseGet(JsonObject::new).mergeIn(config, 2)))
+                .map(config -> new DeploymentOptions(Optional.ofNullable(defaultConfig).map(JsonObject::copy)
+                        .orElseGet(JsonObject::new).mergeIn(config, 2)))
                 .recover(throwable -> {
                     if (throwable.getCause() instanceof NoSuchFileException) {
                         return succeededFuture(

@@ -96,11 +96,17 @@ public class ServerVerticle extends AbstractVerticle {
                             .handler(sessionHandler.setSessionCookieName(config.getSessionCookieName())));
         }
 
+        // create the default authentication (chain) and hooks handlers
+        Optional<AuthenticationHandler> defaultAuthHandler = createAuthHandler(config.getAuthChainConfig());
+        HooksHandler hooksHandler = HooksHandler.create();
+
         // add all endpoint handlers as sub-routes here
-        mountEndpoints(router, config.getEndpointConfigs(), createAuthChainHandler(config.getAuthChainConfig()),
-                HooksHandler.create()).onFailure(startPromise::fail).onSuccess(nothing -> {
-                    // the NotFoundHandler fails the routing context finally
-                    router.route().handler(NotFoundHandler.create());
+        mountEndpoints(router, config.getEndpointConfigs(), defaultAuthHandler, hooksHandler)
+                .onFailure(startPromise::fail).onSuccess(nothing -> {
+                    // register a fallback route and the NotFoundHandler, which finally fails
+                    Route fallbackRoute = router.route();
+                    defaultAuthHandler.ifPresent(fallbackRoute::handler);
+                    fallbackRoute.handler(hooksHandler).handler(NotFoundHandler.create());
 
                     vertx.createHttpServer(config /* ServerConfig is a HttpServerOptions subclass */)
                             .exceptionHandler(throwable -> {
@@ -172,7 +178,7 @@ public class ServerVerticle extends AbstractVerticle {
             }
 
             JsonObject endpointAdditionalConfig = Optional.ofNullable(defaultEndpointConfig.getAdditionalConfig())
-                    .map(JsonObject::copy).orElseGet(() -> new JsonObject());
+                    .map(JsonObject::copy).orElseGet(JsonObject::new);
             Optional.ofNullable(endpointConfig.getAdditionalConfig())
                     .ifPresent(config -> endpointAdditionalConfig.mergeIn(config));
 
@@ -186,7 +192,7 @@ public class ServerVerticle extends AbstractVerticle {
             }
 
             Optional<AuthenticationHandler> endpointAuthHandler =
-                    createAuthChainHandler(Optional.ofNullable(endpointConfig.getAuthChainConfig())
+                    createAuthHandler(Optional.ofNullable(endpointConfig.getAuthChainConfig())
                             .orElse(defaultEndpointConfig.getAuthChainConfig())).or(() -> defaultAuthHandler);
 
             Route endpointRoute = router.route(endpointBasePath + "*");
@@ -256,7 +262,7 @@ public class ServerVerticle extends AbstractVerticle {
      * @return an optional auth. chain handler or an empty optional if no authentication should be used
      */
     @VisibleForTesting
-    protected Optional<AuthenticationHandler> createAuthChainHandler(List<AuthHandlerConfig> authChainConfig) {
+    protected Optional<AuthenticationHandler> createAuthHandler(List<AuthHandlerConfig> authChainConfig) {
         if (authChainConfig == null) {
             // fallback to default authentication type (if available)
             return Optional.empty();

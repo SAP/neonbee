@@ -25,6 +25,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import io.neonbee.endpoint.odatav4.ODataV4Endpoint;
 import io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion;
 import io.neonbee.entity.EntityVerticle;
 import io.neonbee.internal.verticle.ServerVerticle;
@@ -35,6 +36,7 @@ import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.Timeout;
@@ -62,8 +64,8 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
             }
 
             DeploymentOptions opts = WorkingDirectoryBuilder.readDeploymentOptions(ServerVerticle.class, root);
-            opts.getConfig().put("endpoints",
-                    new JsonObject().put("odata", new JsonObject().put("uriConversion", uriConversion.toString())));
+            opts.getConfig().put("endpoints", new JsonArray().add(new JsonObject()
+                    .put("type", ODataV4Endpoint.class.getName()).put("uriConversion", uriConversion.toString())));
             WorkingDirectoryBuilder.writeDeploymentOptions(ServerVerticle.class, opts, root);
         });
     }

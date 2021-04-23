@@ -82,18 +82,21 @@ class OlingoEndpointTest {
         HttpServerRequest request = mock(HttpServerRequest.class);
         when(request.path()).thenReturn(expectedPath);
         when(request.query()).thenReturn(expectedQuery);
-        when(request.scheme()).thenReturn("https");
+        when(request.scheme()).thenReturn("http");
+        when(request.host()).thenReturn("localhost");
         when(request.method()).thenReturn(HttpMethod.GET);
         when(request.headers()).thenReturn(MultiMap.caseInsensitiveMultiMap());
 
         RoutingContext routingContext = mock(RoutingContext.class);
         when(routingContext.request()).thenReturn(request);
         when(routingContext.getBody()).thenReturn(Buffer.buffer(""));
+        when(routingContext.mountPoint()).thenReturn("/");
         when(routingContext.currentRoute()).thenReturn(null);
         when(routingContext.get(CorrelationIdHandler.CORRELATION_ID)).thenReturn("correlId");
 
         ODataRequest odataReq = mapToODataRequest(routingContext, expectedNamespace);
-        assertThat(odataReq.getRawRequestUri()).isEqualTo("/" + expectedNamespace + expectedPath + "?" + expectedQuery);
+        assertThat(odataReq.getRawRequestUri())
+                .isEqualTo("http://localhost/" + expectedNamespace + expectedPath + "?" + expectedQuery);
         assertThat(odataReq.getRawODataPath()).isEqualTo(expectedPath);
         assertThat(odataReq.getRawQueryPath()).isEqualTo(expectedQuery);
     }

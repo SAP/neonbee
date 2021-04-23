@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -275,7 +276,8 @@ public class NeonBeeModule {
                     Map<String, byte[]> extensionModels =
                             loadModelPayloads(classLoader, cps.scanManifestFiles(NEONBEE_MODEL_EXTENSIONS));
                     SelfFirstClassLoader moduleClassLoader = new SelfFirstClassLoader(jarUrl,
-                            ClassLoader.getSystemClassLoader(), NeonBee.get(vertx).getConfig().getPlatformClasses());
+                            ClassLoader.getSystemClassLoader(),
+                            Optional.ofNullable(NeonBee.get(vertx).getConfig().getPlatformClasses()).orElse(List.of()));
                     verticleClasses.addAll(loadClassesToDeploy(cps, moduleClassLoader));
                     promise.complete(new NeonBeeModule(vertx, moduleName, correlationId, pathOfJar, verticleClasses,
                             models, extensionModels));

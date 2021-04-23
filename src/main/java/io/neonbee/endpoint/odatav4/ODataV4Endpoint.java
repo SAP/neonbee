@@ -240,30 +240,27 @@ public class ODataV4Endpoint implements Endpoint {
                     .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(String::length).reversed()))
                     .forEach(entryConsumer((uriPath, edmxModel) -> {
                         String schemaNamespace = edmxModel.getEdm().getEntityContainer().getNamespace();
-                        router.route((uriPath.isEmpty() ? EMPTY : ("/" + uriPath)) + "/*")
-                                // some entities should not get exposed, register a handler, checking the block list
-                                .handler(routingContext -> {
-                                    // normalize the URI first
-                                    NormalizedUri normalizedUri = normalizeUri(routingContext, schemaNamespace);
-                                    if (LOGGER.isDebugEnabled()) {
-                                        LOGGER.correlateWith(routingContext).debug("Normalized OData V4 URI {}",
-                                                normalizedUri);
-                                    }
-
-                                    // if a entity is specified check it against the block list
-                                    // TODO: maybe also navigation properties have to be taken into account here?
-                                    if (normalizedUri.fullQualifiedName != null
-                                            && !exposedEntities.isAllowed(normalizedUri.fullQualifiedName)) {
-                                        routingContext.fail(FORBIDDEN.code());
-                                        return;
-                                    }
-
-                                    routingContext.next();
-                                })
-                                // TODO depending on the config either create Olingo or CDS based OData V4 handlers here
-                                .handler(OlingoEndpointHandler.create(edmxModel));
+                        // some entities should not get exposed, register a handler, checking the block list
+                        // TODO depending on the config either create Olingo or CDS based OData V4 handlers here
                         LOGGER.info("Serving OData service endpoint for {} at {}{} ({} URI mapping)", schemaNamespace,
                                 basePath, uriPath, uriConversion.name().toLowerCase(Locale.getDefault()));
+                        router.route((uriPath.isEmpty() ? EMPTY : ("/" + uriPath)) + "/*").handler(routingContext -> {
+                            NormalizedUri normalizedUri = normalizeUri(routingContext, schemaNamespace);
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.correlateWith(routingContext).debug("OData V4 endpoint handling {}, {}",
+                                        routingContext.request().uri(), normalizedUri);
+                            }
+
+                            // if a entity is specified check it against the block list
+                            // TODO: maybe also navigation properties have to be taken into account here?
+                            if (normalizedUri.fullQualifiedName != null
+                                    && !exposedEntities.isAllowed(normalizedUri.fullQualifiedName)) {
+                                routingContext.fail(FORBIDDEN.code());
+                                return;
+                            }
+
+                            routingContext.next();
+                        }).handler(OlingoEndpointHandler.create(edmxModel));
                     }));
 
             // remove any of the old routes, so the old models will stop serving
@@ -446,7 +443,7 @@ public class ODataV4Endpoint implements Endpoint {
             baseUri = hostUri + (basePath = routeMountPoint);
 
             // parse out the resource path and entity name
-            resourcePath = requestPath.substring(routeMountPoint.length() + routePath.length() - 1);
+            resourcePath = requestPath.substring(routeMountPoint.length() + routePath.length() - 2);
             entityName = emptyToNull(resourcePath.split("\\W", 2)[0]); // assume the first non-word char. separates it
 
             // if an entity name is provided, concatenate the full qualified name

@@ -104,7 +104,7 @@ public class ODataRequest {
     public Future<HttpResponse<Buffer>> send(NeonBee neonBee) {
         Vertx vertx = neonBee.getVertx();
         return readConfig(vertx, ServerVerticle.class.getName()).compose(config -> {
-            int port = config.getInteger(PROPERTY_PORT, -1);
+            int port = config.getJsonObject("config").getInteger(PROPERTY_PORT, -1);
             String basePath = config.getJsonArray("endpoints", new JsonArray()).stream().map(JsonObject.class::cast)
                     .filter(endpoint -> ODataV4Endpoint.class.getSimpleName().equals(endpoint.getString("type")))
                     .findFirst().map(odata -> odata.getString("basePath")).orElse(DEFAULT_BASE_PATH);

@@ -12,11 +12,6 @@ public class EndpointConfigConverter {
     static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, EndpointConfig obj) {
         for (java.util.Map.Entry<String, Object> member : json) {
             switch (member.getKey()) {
-            case "additionalConfig":
-                if (member.getValue() instanceof JsonObject) {
-                    obj.setAdditionalConfig(((JsonObject) member.getValue()).copy());
-                }
-                break;
             case "authChainConfig":
                 if (member.getValue() instanceof JsonArray) {
                     java.util.ArrayList<io.neonbee.config.AuthHandlerConfig> list = new java.util.ArrayList<>();
@@ -51,9 +46,6 @@ public class EndpointConfigConverter {
     }
 
     static void toJson(EndpointConfig obj, java.util.Map<String, Object> json) {
-        if (obj.getAdditionalConfig() != null) {
-            json.put("additionalConfig", obj.getAdditionalConfig());
-        }
         if (obj.getAuthChainConfig() != null) {
             JsonArray array = new JsonArray();
             obj.getAuthChainConfig().forEach(item -> array.add(item.toJson()));

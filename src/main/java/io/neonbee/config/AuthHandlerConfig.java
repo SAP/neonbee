@@ -1,5 +1,7 @@
 package io.neonbee.config;
 
+import static io.neonbee.internal.helper.ConfigHelper.collectAdditionalConfig;
+import static io.neonbee.internal.helper.ConfigHelper.rephraseConfigNames;
 import static io.vertx.ext.web.handler.BasicAuthHandler.DEFAULT_REALM;
 import static io.vertx.ext.web.handler.RedirectAuthHandler.DEFAULT_LOGIN_REDIRECT_URL;
 import static io.vertx.ext.web.handler.RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM;
@@ -10,12 +12,14 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableBiMap;
 import com.google.errorprone.annotations.Immutable;
 
 import io.neonbee.config.AuthProviderConfig.AuthProviderType;
 import io.neonbee.internal.json.ImmutableJsonObject;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.htdigest.HtdigestAuth;
@@ -31,6 +35,9 @@ import io.vertx.ext.web.handler.RedirectAuthHandler;
 @DataObject(generateConverter = true, publicConverter = false)
 public class AuthHandlerConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+    private static final ImmutableBiMap<String, String> REPHRASE_MAP =
+            ImmutableBiMap.<String, String>builder().put("authProviderConfig", "provider").build();
 
     private AuthHandlerType type;
 
@@ -138,7 +145,10 @@ public class AuthHandlerConfig {
     public AuthHandlerConfig(JsonObject json) {
         this();
 
-        AuthHandlerConfigConverter.fromJson(json, this);
+        JsonObject newJson = rephraseConfigNames(json.copy(), REPHRASE_MAP, true);
+        AuthHandlerConfigConverter.fromJson(newJson, this);
+        additionalConfig = Optional.ofNullable(additionalConfig).orElseGet(JsonObject::new)
+                .mergeIn(collectAdditionalConfig(newJson, "type", "authProviderConfig"));
     }
 
     /**
@@ -149,6 +159,8 @@ public class AuthHandlerConfig {
     public JsonObject toJson() {
         JsonObject json = new JsonObject();
         AuthHandlerConfigConverter.toJson(this, json);
+        Optional.ofNullable(additionalConfig).ifPresent(config -> json.mergeIn(config));
+        rephraseConfigNames(json, REPHRASE_MAP, false);
         return json;
     }
 
@@ -200,6 +212,7 @@ public class AuthHandlerConfig {
      *
      * @return additional configurations as JSON object
      */
+    @GenIgnore
     public JsonObject getAdditionalConfig() {
         return additionalConfig;
     }
@@ -211,6 +224,7 @@ public class AuthHandlerConfig {
      * @return the {@linkplain AuthHandlerConfig} for fluent use
      */
     @Fluent
+    @GenIgnore
     public AuthHandlerConfig setAdditionalConfig(JsonObject additionalConfig) {
         this.additionalConfig = additionalConfig;
         return this;

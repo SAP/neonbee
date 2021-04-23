@@ -11,11 +11,6 @@ public class AuthHandlerConfigConverter {
     static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, AuthHandlerConfig obj) {
         for (java.util.Map.Entry<String, Object> member : json) {
             switch (member.getKey()) {
-            case "additionalConfig":
-                if (member.getValue() instanceof JsonObject) {
-                    obj.setAdditionalConfig(((JsonObject) member.getValue()).copy());
-                }
-                break;
             case "authProviderConfig":
                 if (member.getValue() instanceof JsonObject) {
                     obj.setAuthProviderConfig(new io.neonbee.config.AuthProviderConfig(
@@ -37,9 +32,6 @@ public class AuthHandlerConfigConverter {
     }
 
     static void toJson(AuthHandlerConfig obj, java.util.Map<String, Object> json) {
-        if (obj.getAdditionalConfig() != null) {
-            json.put("additionalConfig", obj.getAdditionalConfig());
-        }
         if (obj.getAuthProviderConfig() != null) {
             json.put("authProviderConfig", obj.getAuthProviderConfig().toJson());
         }

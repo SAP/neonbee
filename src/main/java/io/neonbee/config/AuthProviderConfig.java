@@ -1,5 +1,6 @@
 package io.neonbee.config;
 
+import static io.neonbee.internal.helper.ConfigHelper.collectAdditionalConfig;
 import static io.vertx.ext.auth.htdigest.HtdigestAuth.HTDIGEST_FILE;
 
 import java.lang.invoke.MethodHandles;
@@ -13,6 +14,7 @@ import com.google.errorprone.annotations.Immutable;
 import io.neonbee.internal.json.ImmutableJsonObject;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
@@ -114,6 +116,8 @@ public class AuthProviderConfig {
         this();
 
         AuthProviderConfigConverter.fromJson(json, this);
+        additionalConfig = Optional.ofNullable(additionalConfig).orElseGet(JsonObject::new)
+                .mergeIn(collectAdditionalConfig(json, "type"));
     }
 
     /**
@@ -124,6 +128,7 @@ public class AuthProviderConfig {
     public JsonObject toJson() {
         JsonObject json = new JsonObject();
         AuthProviderConfigConverter.toJson(this, json);
+        Optional.ofNullable(additionalConfig).ifPresent(config -> json.mergeIn(config));
         return json;
     }
 
@@ -153,6 +158,7 @@ public class AuthProviderConfig {
      *
      * @return additional configurations as JSON object
      */
+    @GenIgnore
     public JsonObject getAdditionalConfig() {
         return additionalConfig;
     }
@@ -164,6 +170,7 @@ public class AuthProviderConfig {
      * @return the {@linkplain AuthProviderConfig} for fluent use
      */
     @Fluent
+    @GenIgnore
     public AuthProviderConfig setAdditionalConfig(JsonObject additionalConfig) {
         this.additionalConfig = additionalConfig;
         return this;

@@ -8,7 +8,6 @@ import io.neonbee.test.helper.DataResponseVerifier;
 import io.vertx.core.Future;
 
 public class DataVerticleTestBase extends NeonBeeTestBase implements DataResponseVerifier {
-
     /**
      * Request data from a {@link DataVerticle}.
      *

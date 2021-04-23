@@ -275,7 +275,7 @@ public class NeonBeeTestBase {
     private ServerVerticle createDummyServerVerticle(TestInfo testInfo) {
         return new ServerVerticle() {
             @Override
-            protected Optional<AuthenticationHandler> createAuthChainHandler(List<AuthHandlerConfig> authChainConfig) {
+            protected Optional<AuthenticationHandler> createAuthHandler(List<AuthHandlerConfig> authChainConfig) {
                 return Optional.of(new AuthenticationHandler() {
                     @Override
                     public void handle(RoutingContext ctx) {
