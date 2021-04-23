@@ -1,8 +1,7 @@
 package io.neonbee.endpoint.odatav4.internal.olingo;
 
+import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.normalizeUri;
 import static io.neonbee.internal.helper.BufferHelper.inputStreamToBuffer;
-import static io.neonbee.internal.helper.StringHelper.EMPTY;
-import static io.neonbee.internal.helper.StringHelper.replaceLast;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static org.apache.olingo.server.core.ODataHandlerException.MessageKeys.AMBIGUOUS_XHTTP_METHOD;
 import static org.apache.olingo.server.core.ODataHandlerException.MessageKeys.HTTP_METHOD_NOT_ALLOWED;
@@ -10,12 +9,8 @@ import static org.apache.olingo.server.core.ODataHandlerException.MessageKeys.IN
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Pattern;
 
 import org.apache.olingo.commons.api.ex.ODataRuntimeException;
 import org.apache.olingo.commons.api.http.HttpHeader;
@@ -31,24 +26,21 @@ import org.apache.olingo.server.core.ODataHandlerException;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import io.neonbee.endpoint.odatav4.ODataV4Endpoint.NormalizedUri;
 import io.neonbee.endpoint.odatav4.internal.olingo.processor.BatchProcessor;
 import io.neonbee.endpoint.odatav4.internal.olingo.processor.CountEntityCollectionProcessor;
 import io.neonbee.endpoint.odatav4.internal.olingo.processor.EntityProcessor;
 import io.neonbee.endpoint.odatav4.internal.olingo.processor.PrimitiveProcessor;
 import io.neonbee.internal.helper.BufferHelper.BufferInputStream;
-import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.ext.web.Route;
 import io.vertx.ext.web.RoutingContext;
 
 public final class OlingoEndpointHandler implements Handler<RoutingContext> {
-    private static final LoggingFacade LOGGER = LoggingFacade.create();
-
     private final ServiceMetadata serviceMetadata;
 
     /**
@@ -134,79 +126,33 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
     static ODataRequest mapToODataRequest(RoutingContext routingContext, String schemaNamespace)
             throws ODataLibraryException {
         HttpServerRequest request = routingContext.request();
-        Buffer requestBody = routingContext.getBody();
-        Route route = routingContext.currentRoute();
-        String requestPath = request.path(); // routePath w/ exactly one tailing slash
-        String requestQuery = request.query();
-        // note that getPath returns *only* the path prefix, so essentially the uriPath with leading and tailing slashes
-        // w/o the tailing *, the * is handled and stripped by the router!
-        String routePath = Optional.ofNullable(route).map(Route::getPath).orElse(EMPTY).replaceAll("/+$", EMPTY) + "/";
-        if (!requestPath.contains(routePath)) {
-            // special case if calling the service root at /odata/svc, always append a forward slash for easier handling
-            requestPath += "/";
-        }
-
-        // When loose / CDS URI path mapping is used, replace the last occurrence of the routePath, w/ the service
-        // namespace, so the entity verticle can always assume that the full namespace will be part of the request path.
-        // Find the last occurrence, as the service name could match the basePath of the router and thus e.g.
-        // "/odata/odata" would get replaced with "/namespace/odata" instead the expected "/odata/namespace". As the
-        // entity set name never contains a forward slash, replacing the last occurrence of the routePath (which
-        // contains a tailing /) is always safe!
-        String servicePath = "/" + schemaNamespace + "/";
-        if (routePath.isEmpty()) {
-            // replace last forward slash with service namespace, might not be accurate, but should work!
-            requestPath = replaceLast(requestPath, "/", servicePath);
-        } else {
-            requestPath = replaceLast(requestPath, Pattern.quote(routePath), servicePath);
-        }
 
         ODataRequest odataRequest = new ODataRequest();
-        odataRequest.setBody(new BufferInputStream(requestBody));
         odataRequest.setProtocol(request.scheme());
         odataRequest.setMethod(mapODataRequestMethod(request));
+        odataRequest.setBody(new BufferInputStream(routingContext.getBody()));
         for (String header : request.headers().names()) {
             odataRequest.addHeader(header, request.headers().getAll(header));
         }
 
-        /* @formatter:off
-         * This is how the raw URI attributes need to be filled:
+        /* @formatter:off *//*
+         * The OData request is awaiting the following fields:
          *
-         * <pre>
-         *   rawRequestUri           = /my%20service/svc.sys1/Employees?$format=json,$top=10
-         *   rawBaseUri              = /my%20service
-         *   rawServiceResolutionUri = svc.sys1
-         *   rawODataPath            = /Employees
-         *   rawQueryPath            = $format=json,$top=10
-         * </pre>
+         * rawRequestUri = http://localhost/my%20service/sys1/Employees?$format=json,$top=10
+         * rawBaseUri = http://localhost/my%20service
+         * rawServiceResolutionUri = sys1
+         * rawODataPath = /Employees
+         * rawQueryPath = $format=json,$top=10
          *
-         * This is what we have in the route handler:
-         *
-         * <pre>
-         *   requestPath  = /my%20service/sys1/Employees
-         *   requestQuery = $format=json,$top=10
-         *   routePath    = /sys1/
-         *   servicePath  = /svc.sys1/
-         * </pre>
-         */
-        LOGGER.correlateWith(routingContext).debug(
-                "OData request: requestPath={}, requestQuery={}, routePath={}, servicePath={}", requestPath,
-                requestQuery, routePath, servicePath);
-        // rawQueryPath contains the decoded query
-        String rawQueryPath = requestQuery != null ? URLDecoder.decode(requestQuery, StandardCharsets.UTF_8) : null;
-        String rawRequestUri = requestPath + (rawQueryPath == null ? "" : "?" + rawQueryPath);
-        String rawBaseUri = requestPath.substring(0, requestPath.lastIndexOf(servicePath));
-        String rawServiceResolutionUri = servicePath.replaceAll("^/+", EMPTY).replaceAll("/+$", EMPTY);
-        String rawODataPath = requestPath.substring((rawBaseUri.length() + servicePath.length()) - 1);
+         * We can map these from the normalizedUri
+         *//* @formatter:on */
 
-        LOGGER.correlateWith(routingContext).debug(
-                "OData request: rawRequestUri={}, rawBaseUri={}, rawServiceResolutionUri={}, rawODataPath={}, rawQueryPath={}",
-                rawRequestUri, rawBaseUri, rawServiceResolutionUri, rawODataPath, rawQueryPath);
-
-        odataRequest.setRawRequestUri(rawRequestUri);
-        odataRequest.setRawBaseUri(rawBaseUri);
-        odataRequest.setRawServiceResolutionUri(rawServiceResolutionUri);
-        odataRequest.setRawODataPath(rawODataPath);
-        odataRequest.setRawQueryPath(rawQueryPath);
+        NormalizedUri normalizedUri = normalizeUri(routingContext, schemaNamespace);
+        odataRequest.setRawRequestUri(normalizedUri.requestUri);
+        odataRequest.setRawBaseUri(normalizedUri.baseUri);
+        odataRequest.setRawServiceResolutionUri(normalizedUri.schemaNamespace);
+        odataRequest.setRawODataPath(normalizedUri.resourcePath);
+        odataRequest.setRawQueryPath(normalizedUri.requestQuery);
 
         return odataRequest;
     }

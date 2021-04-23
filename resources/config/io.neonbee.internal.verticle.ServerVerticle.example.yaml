@@ -10,7 +10,7 @@ config:
     # sets whether to use application-layer protocol negotiation or not, defaults to true
     useAlpn: true
     # one of: NONE, LOCAL or CLUSTERED, defaults to NONE
-    sessionHandling: none
+    sessionHandling: NONE
     # the name of the session cookie, defaults to neonbee-web.session
     sessionCookieName: neonbee-web.session
 
@@ -49,6 +49,11 @@ config:
         authenticationChain: ~
         # namespace and service name URI mapping (STRICT, or LOOSE based on CDS)
         uriConversion: STRICT
+        # a block / allow list of verticles to expose via this endpoint (defaults to empty / all entities exposed)
+        # the value of block / allow must be an array with Strings representing a regexp.
+        exposedEntities:
+          block: [any_allow_list_of_regexp_here]
+          allow: [any_block_list_of_regexp_here]
 
       # provides a REST endpoint (JSON, text, binary), for accessing data verticles
       - type: io.neonbee.endpoint.raw.RawEndpoint
@@ -60,6 +65,11 @@ config:
         authenticationChain: ~
         # whether or not to expose hidden verticles, defaults to false
         exposeHiddenVerticles: false
+        # a block / allow list of verticles to expose via this endpoint (defaults to empty all verticles exposed)
+        # the value of block / allow must be an array with Strings representing a regexp.
+        exposedVerticles:
+          block: [any_allow_list_of_regexp_here]
+          allow: [any_block_list_of_regexp_here]
 
       # provides an Prometheus scraping endpoint for Micrometer.io metrics
       - type: io.neonbee.endpoint.metrics.MetricsEndpoint
