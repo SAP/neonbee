@@ -20,6 +20,7 @@ import io.neonbee.endpoint.raw.RawEndpoint;
 import io.neonbee.internal.json.ImmutableJsonObject;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.annotations.Fluent;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.Http2Settings;
@@ -54,7 +55,7 @@ import io.vertx.ext.web.RoutingContext;
  *   decompressionSupported: boolean, // sets whether the server should decompress request bodies, defaults to true
  *   // ... any other io.vertx.core.http.HttpServerOptions with the given defaults of the class
  *   timeout: number, // the number of seconds before the router timeout applies, defaults to 30
- *   timeoutErrorCode: number, // the error code for the default timeout, defaults to 504
+ *   timeoutStatusCode: number, // the status code for the default timeout, defaults to 504
  *   sessionHandling: string, // one of: none, local or enabled, defaults to none
  *   sessionCookieName: string, // the name of the session cookie, defaults to neonbee-web.session
  *   correlationStrategy: string, // one of: request_header, generate_uuid, defaults to request_header
@@ -94,18 +95,19 @@ import io.vertx.ext.web.RoutingContext;
  * </code>
  */
 @DataObject(generateConverter = true, publicConverter = false)
+@SuppressWarnings({ "PMD.ExcessivePublicCount", "PMD.CyclomaticComplexity", "PMD.TooManyMethods", "PMD.GodClass" })
 public class ServerConfig extends HttpServerOptions {
     public enum SessionHandling {
         /**
-         * No session handling
+         * No session handling.
          */
         NONE,
         /**
-         * Local session handling or in clustered operation on each cluster node
+         * Local session handling or in clustered operation on each cluster node.
          */
         LOCAL,
         /**
-         * Clustered session handling in a shared map across the whole cluster
+         * Clustered session handling in a shared map across the whole cluster.
          */
         CLUSTERED
     }
@@ -137,25 +139,55 @@ public class ServerConfig extends HttpServerOptions {
             this.mapper = mapper;
         }
 
+        /**
+         * Returns the correlation ID based on the selected strategy.
+         *
+         * @param routingContext the {@link RoutingContext} to determine the correlation ID for
+         * @return the correlation ID, depending on the strategy related to this routing context
+         */
         public String getCorrelationId(RoutingContext routingContext) {
             return mapper.apply(routingContext);
         }
     }
 
+    /**
+     * The port property name in the JSON representation of {@link ServerConfig}.
+     */
     public static final String PROPERTY_PORT = "port";
 
+    /**
+     * The default port of NeonBee.
+     */
     public static final int DEFAULT_PORT = 8080;
 
+    /**
+     * By default NeonBee is configured to use ALPN (HTTP/2).
+     */
     public static final boolean DEFAULT_USE_ALPN = true;
 
+    /**
+     * By default NeonBees server verticle is using compression support.
+     */
     public static final boolean DEFAULT_COMPRESSION_SUPPORTED = true;
 
+    /**
+     * The default compression level is 1, which means minimal compression, but less resource consumption.
+     */
     public static final int DEFAULT_COMPRESSION_LEVEL = 1;
 
+    /**
+     * By default NeonBees server verticle is using decompression support.
+     */
     public static final boolean DEFAULT_DECOMPRESSION_SUPPORTED = true;
 
+    /**
+     * The default timeout for web requests to the {@link ServerVerticle} is 30 seconds.
+     */
     public static final int DEFAULT_TIMEOUT = 30;
 
+    /**
+     * The default name to store the session information in a cookie.
+     */
     public static final String DEFAULT_SESSION_COOKIE_NAME = "neonbee-web.session";
 
     private static final List<EndpointConfig> DEFAULT_ENDPOINT_CONFIGS = Collections.unmodifiableList(Arrays
@@ -164,7 +196,7 @@ public class ServerConfig extends HttpServerOptions {
 
     private int timeout = DEFAULT_TIMEOUT;
 
-    private int timeoutErrorCode = GATEWAY_TIMEOUT.code();
+    private int timeoutStatusCode = GATEWAY_TIMEOUT.code();
 
     private SessionHandling sessionHandling = SessionHandling.NONE;
 
@@ -176,11 +208,19 @@ public class ServerConfig extends HttpServerOptions {
 
     private List<AuthHandlerConfig> authChainConfig;
 
+    /**
+     * Create a default server configuration.
+     */
     public ServerConfig() {
         super();
-        overrideDefaults(null);
+        overrideDefaults(ImmutableJsonObject.EMPTY);
     }
 
+    /**
+     * Create a server configuration based on a given JSON object.
+     *
+     * @param json the JSON object to parse
+     */
     public ServerConfig(JsonObject json) {
         super(json);
         overrideDefaults(json);
@@ -188,10 +228,6 @@ public class ServerConfig extends HttpServerOptions {
     }
 
     private void overrideDefaults(JsonObject json) {
-        if (json == null) {
-            json = ImmutableJsonObject.EMPTY;
-        }
-
         // we override some settings like the default port, use alpn and compression settings
         setPort(json.getInteger(PROPERTY_PORT, DEFAULT_PORT));
         setUseAlpn(json.getBoolean("useAlpn", DEFAULT_USE_ALPN));
@@ -207,64 +243,152 @@ public class ServerConfig extends HttpServerOptions {
         return json;
     }
 
+    /**
+     * Get the timeout of the server verticle in seconds.
+     *
+     * @return the timeout in seconds
+     */
     public int getTimeout() {
         return timeout;
     }
 
+    /**
+     * Set the timeout of the server verticle in seconds.
+     *
+     * @param timeout the timeout in seconds
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
     public ServerConfig setTimeout(int timeout) {
         this.timeout = timeout;
         return this;
     }
 
+    /**
+     * Get the HTTP status code sent, when the {@link #getTimeout()} is reached. Defaults to 504 Gateway Timeout.
+     *
+     * @return an HTTP status code
+     */
+    public int getTimeoutStatusCode() {
+        return timeoutStatusCode;
+    }
+
+    /**
+     * Set the HTTP status code sent, when the {@link #getTimeout()} is reached. Defaults to 504 Gateway Timeout.
+     *
+     * @param timeoutStatusCode an HTTP status code
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
+    public ServerConfig setTimeoutStatusCode(int timeoutStatusCode) {
+        this.timeoutStatusCode = timeoutStatusCode;
+        return this;
+    }
+
+    /**
+     * Get the session handling strategy configured.
+     *
+     * @return the currently set session handling strategy
+     */
     public SessionHandling getSessionHandling() {
         return sessionHandling;
     }
 
+    /**
+     * Set the session handling strategy to use by the {@link ServerVerticle}.
+     *
+     * @param sessionHandling the session handling strategy
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
     public ServerConfig setSessionHandling(SessionHandling sessionHandling) {
         this.sessionHandling = sessionHandling;
         return this;
     }
 
+    /**
+     * Get the cookie name to use to store the session identifier.
+     *
+     * @return the cookie name in use
+     */
     public String getSessionCookieName() {
         return sessionCookieName;
     }
 
+    /**
+     * Set the cookie name to use for storing the session identifier.
+     *
+     * @param sessionCookieName the cookie name to use
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
     public ServerConfig setSessionCookieName(String sessionCookieName) {
         this.sessionCookieName = sessionCookieName;
         return this;
     }
 
+    /**
+     * Get the strategy to determine a correlation ID for a given request.
+     *
+     * @return the correlation strategy to use
+     */
     public CorrelationStrategy getCorrelationStrategy() {
         return correlationStrategy;
     }
 
+    /**
+     * Set the strategy to use to determine a correlation ID for a given request.
+     *
+     * @param correlationStrategy the correlation strategy to use
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
     public ServerConfig setCorrelationStrategy(CorrelationStrategy correlationStrategy) {
         this.correlationStrategy = correlationStrategy;
         return this;
     }
 
-    public int getTimeoutErrorCode() {
-        return timeoutErrorCode;
-    }
-
-    public ServerConfig setTimeoutErrorCode(int timeoutErrorCode) {
-        this.timeoutErrorCode = timeoutErrorCode;
-        return this;
-    }
-
+    /**
+     * Return a list of all endpoints to configure for the {@link ServerVerticle}.
+     *
+     * @return a list of {@link EndpointConfig}
+     */
     public List<EndpointConfig> getEndpointConfigs() {
         return endpointConfigs;
     }
 
+    /**
+     * Set the endpoints to configure for the server.
+     *
+     * @param endpointConfigs the endpoint configurations
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
     public ServerConfig setEndpointConfigs(List<EndpointConfig> endpointConfigs) {
         this.endpointConfigs = endpointConfigs;
         return this;
     }
 
+    /**
+     * Get the default authentication chain configuration, as a fallback for any endpoints without an explicit
+     * authentication chain configured.
+     *
+     * @return the default authentication chain configuration for any endpoints that do not set a authentication chain
+     *         explicitly
+     */
     public List<AuthHandlerConfig> getAuthChainConfig() {
         return authChainConfig;
     }
 
+    /**
+     * Set the default authentication chain configuration, which is u sed as a fallback for any endpoints without an
+     * explicit authentication chain configured. Setting {@code null} or an empty list will result in no authentication
+     * check performed.
+     *
+     * @param authChainConfig the authentication chain
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
     public ServerConfig setAuthChainConfig(List<AuthHandlerConfig> authChainConfig) {
         this.authChainConfig = authChainConfig;
         return this;
@@ -275,13 +399,13 @@ public class ServerConfig extends HttpServerOptions {
      */
 
     @Override
-    public ServerConfig addCrlPath(String crlPath) throws NullPointerException {
+    public ServerConfig addCrlPath(String crlPath) {
         super.addCrlPath(crlPath);
         return this;
     }
 
     @Override
-    public ServerConfig addCrlValue(Buffer crlValue) throws NullPointerException {
+    public ServerConfig addCrlValue(Buffer crlValue) {
         super.addCrlValue(crlValue);
         return this;
     }

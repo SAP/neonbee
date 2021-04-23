@@ -26,6 +26,7 @@ import static java.lang.Character.isUpperCase;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -37,6 +38,7 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.endpoint.Endpoint;
+import io.neonbee.internal.RegexBlockList;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -52,10 +54,18 @@ import io.vertx.ext.web.RoutingContext;
 public class RawEndpoint implements Endpoint {
     public static final String DEFAULT_BASE_PATH = "/raw/";
 
+    /**
+     * Hidden verticles are those verticles not being exposed via the raw endpoint. To denounce a verticle as "hidden"
+     * the name of the verticle has to start with an underscore _ after the namespace part. In the default configuration
+     * of the raw endpoint the "exposeHiddenVerticles" parameter is set to {@code false}.
+     */
+    private static final Pattern HIDDEN_VERTICLES_PATTERN = Pattern.compile("(?:^|/)(?!.*/)_");
+
     @Override
     public EndpointConfig getDefaultConfig() {
         // as the EndpointConfig stays mutable, do not extract this to a static variable, but return a new object
-        return new EndpointConfig().setType(RawEndpoint.class.getName()).setBasePath(DEFAULT_BASE_PATH);
+        return new EndpointConfig().setType(RawEndpoint.class.getName()).setBasePath(DEFAULT_BASE_PATH)
+                .setAdditionalConfig(new JsonObject().put("exposeHiddenVerticles", false));
     }
 
     @Override
@@ -66,6 +76,8 @@ public class RawEndpoint implements Endpoint {
     @VisibleForTesting
     static class RawHandler implements Handler<RoutingContext> {
         private final boolean exposeHiddenVerticles;
+
+        private final RegexBlockList exposedVerticles;
 
         /**
          * Convenience method as similar other Vertx handler implementations (e.g. ErrorHandler)
@@ -83,7 +95,16 @@ public class RawEndpoint implements Endpoint {
          * @param config the configuration
          */
         public RawHandler(JsonObject config) {
+            // exposeHiddenVertices is a configuration which is explicitly additional to the "exposedVerticles" block
+            // list. this is due to the nature of the block list, blocking all verticles by default when only a allow
+            // list is specified. if we would add the HIDDEN_VERTICLES_PATTERN to the block list here, this might have
+            // side effects for the user of the block list, as if the user would add something only to the allow list
+            // the list would behave differently than expected. thus this parameter is checked in addition.
             exposeHiddenVerticles = config.getBoolean("exposeHiddenVerticles", false);
+
+            // a block / allow list of all verticles that should be exposed via this endpoint (works in conjunction with
+            // the exposeHiddenVerticles flag, as described in the previous comment)
+            exposedVerticles = RegexBlockList.fromJson(config.getValue("exposedVerticles"));
         }
 
         @Override
@@ -102,11 +123,13 @@ public class RawEndpoint implements Endpoint {
                 routingContext.fail(BAD_REQUEST.code(),
                         new IllegalArgumentException("Missing the full qualified verticle name"));
                 return;
-            } else if (!exposeHiddenVerticles && qualifiedName.charAt(qualifiedName.lastIndexOf('/') + 1) == '_') {
-                // do not even start looking for a verticle, as _ verticle are not exposed publicly!
+            } else if ((!exposeHiddenVerticles && HIDDEN_VERTICLES_PATTERN.matcher(qualifiedName).matches())
+                    || !exposedVerticles.isAllowed(qualifiedName)) {
+                // do not even start looking for a verticle, as the vert as _ verticle are not exposed publicly!
                 routingContext.fail(NOT_FOUND.code());
                 return;
             }
+
             String decodedQueryPath = null;
             try {
                 if (!Strings.isNullOrEmpty(request.query())) {

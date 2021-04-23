@@ -35,6 +35,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.Credentials;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
@@ -85,7 +86,7 @@ public class ServerVerticle extends AbstractVerticle {
             rootRoute.handler(BodyHandler.create(false /* do not handle file uploads */));
             rootRoute.handler(CorrelationIdHandler.create(config.getCorrelationStrategy()));
             rootRoute.handler(
-                    TimeoutHandler.create(SECONDS.toMillis(config.getTimeout()), config.getTimeoutErrorCode()));
+                    TimeoutHandler.create(SECONDS.toMillis(config.getTimeout()), config.getTimeoutStatusCode()));
             rootRoute.handler(CacheControlHandler.create());
             rootRoute.handler(InstanceInfoHandler.create());
 
@@ -116,15 +117,12 @@ public class ServerVerticle extends AbstractVerticle {
     }
 
     /**
-     * Mounts all endpoints as sub routers to the given router
+     * Mounts all endpoints as sub routers to the given router.
      *
      * @param router             the main router of the server verticle
      * @param endpointConfigs    a list of endpoint configurations to mount
      * @param defaultAuthHandler the fallback auth. handler in case no auth. handler is specified by the endpoint
      * @param hooksHandler       the "once per request" handler, to be executed after authentication on an endpoint
-     * @throws IllegalArgumentException      thrown if the configuration contained an illegal argument or value
-     * @throws UnsupportedOperationException thrown if some feature is not supported to be configured yet
-     * @throws Exception                     thrown in case of any other exception raised during endpoint initialization
      */
     private Future<Void> mountEndpoints(Router router, List<EndpointConfig> endpointConfigs,
             Optional<AuthenticationHandler> defaultAuthHandler, HooksHandler hooksHandler) {
@@ -166,25 +164,29 @@ public class ServerVerticle extends AbstractVerticle {
                 continue;
             }
 
-            Optional<AuthenticationHandler> endpointAuthHandler =
-                    createAuthChainHandler(Optional.ofNullable(endpointConfig.getAuthChainConfig())
-                            .orElse(defaultEndpointConfig.getAuthChainConfig())).or(() -> defaultAuthHandler);
-
             String endpointBasePath =
                     Optional.ofNullable(endpointConfig.getBasePath()).orElse(defaultEndpointConfig.getBasePath());
             if (!endpointBasePath.endsWith("/")) {
                 endpointBasePath += "/";
             }
 
+            JsonObject endpointAdditionalConfig = Optional.ofNullable(defaultEndpointConfig.getAdditionalConfig())
+                    .map(JsonObject::copy).orElseGet(() -> new JsonObject());
+            Optional.ofNullable(endpointConfig.getAdditionalConfig())
+                    .ifPresent(config -> endpointAdditionalConfig.mergeIn(config));
+
             Router endpointRouter;
             try {
-                endpointRouter =
-                        endpoint.createEndpointRouter(vertx, endpointBasePath, endpointConfig.getAdditionalConfig());
+                endpointRouter = endpoint.createEndpointRouter(vertx, endpointBasePath, endpointAdditionalConfig);
             } catch (Exception e) {
                 LOGGER.error("Failed to initialize endpoint router for endpoint with type {} with configuration {}",
-                        endpointType, endpointConfig.getAdditionalConfig(), e);
+                        endpointType, endpointAdditionalConfig, e);
                 return failedFuture(e);
             }
+
+            Optional<AuthenticationHandler> endpointAuthHandler =
+                    createAuthChainHandler(Optional.ofNullable(endpointConfig.getAuthChainConfig())
+                            .orElse(defaultEndpointConfig.getAuthChainConfig())).or(() -> defaultAuthHandler);
 
             Route endpointRoute = router.route(endpointBasePath + "*");
             endpointAuthHandler.ifPresent(endpointRoute::handler);
@@ -219,11 +221,12 @@ public class ServerVerticle extends AbstractVerticle {
      */
     @VisibleForTesting
     static Optional<SessionStore> createSessionStore(Vertx vertx, SessionHandling sessionHandling) {
+        SessionHandling effectiveSessionHandling = sessionHandling;
         if (SessionHandling.CLUSTERED.equals(sessionHandling) && !vertx.isClustered()) {
-            sessionHandling = SessionHandling.LOCAL;
+            effectiveSessionHandling = SessionHandling.LOCAL;
         }
 
-        switch (sessionHandling) {
+        switch (effectiveSessionHandling) {
         case LOCAL: // sessions are stored locally in memory in a shared local map and only available on this instance
             return Optional.of(LocalSessionStore.create(vertx));
         case CLUSTERED: // sessions are stored in a distributed map which is accessible across the Vert.x cluster
@@ -234,8 +237,24 @@ public class ServerVerticle extends AbstractVerticle {
     }
 
     /**
+     * This method will return a full configured authentication handler with the following rules:
+     * <ul>
+     * <li>In case the auth. chain configuration is {@code null} an empty optional will be returned, meaning that either
+     * no authentication should be used or NeonBee should fall back to the default authentication chain.
+     * <li>In case the auth. chain configuration is empty, a dummy authentication handler, skipping authentication will
+     * be returned which is used to state "no authentication" should be done for this endpoint.
+     * <li>In case the auth. chain configuration contains exactly one configuration, the authentication handler will be
+     * configured and returned by this method accordingly.
+     * <li>In case multiple authentication handlers are configured in the authentication chain, an
+     * {@link ChainAuthHandler} will be created with all configured authentication handlers in the order they appear in
+     * the list of configurations.
+     * </ul>
      * Overridden in {@link NeonBeeTestBase} and thus protected.
+     *
+     * @param authChainConfig a list of authentication handler configurations to create a auth. chain for
+     * @return an optional auth. chain handler or an empty optional if no authentication should be used
      */
+    @VisibleForTesting
     protected Optional<AuthenticationHandler> createAuthChainHandler(List<AuthHandlerConfig> authChainConfig) {
         if (authChainConfig == null) {
             // fallback to default authentication type (if available)

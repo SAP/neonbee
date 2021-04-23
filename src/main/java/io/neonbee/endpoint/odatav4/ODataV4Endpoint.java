@@ -8,33 +8,43 @@ import static io.neonbee.entity.EntityModelManager.getSharedModels;
 import static io.neonbee.internal.helper.FunctionalHelper.entryConsumer;
 import static io.neonbee.internal.helper.FunctionalHelper.entryFunction;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static io.vertx.core.Future.succeededFuture;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Strings;
+
 import io.neonbee.config.EndpointConfig;
 import io.neonbee.endpoint.Endpoint;
 import io.neonbee.endpoint.odatav4.internal.olingo.OlingoEndpointHandler;
 import io.neonbee.entity.EntityModel;
+import io.neonbee.internal.RegexBlockList;
 import io.neonbee.internal.SharedDataAccessor;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 
 public class ODataV4Endpoint implements Endpoint {
     public static final String DEFAULT_BASE_PATH = "/odata/";
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
+
+    private static final String NORMALIZED_URI_CONTEXT_KEY = ODataV4Endpoint.class.getName() + "_normalizedUri";
 
     /**
      * Either STRICT (&lt;namespace&gt;.&lt;service&gt;), LOOSE (&lt;path4 mapping of namespace&gt;-&lt;path4 mapping of
@@ -146,7 +156,8 @@ public class ODataV4Endpoint implements Endpoint {
     @Override
     public EndpointConfig getDefaultConfig() {
         // as the EndpointConfig stays mutable, do not extract this to a static variable, but return a new object
-        return new EndpointConfig().setType(ODataV4Endpoint.class.getName()).setBasePath(DEFAULT_BASE_PATH);
+        return new EndpointConfig().setType(ODataV4Endpoint.class.getName()).setBasePath(DEFAULT_BASE_PATH)
+                .setAdditionalConfig(new JsonObject().put("uriConversion", STRICT.name()));
     }
 
     @Override
@@ -155,16 +166,22 @@ public class ODataV4Endpoint implements Endpoint {
         AtomicBoolean initialized = new AtomicBoolean(); // true if the router was initialized already
         AtomicReference<Map<String, EntityModel>> models = new AtomicReference<>();
 
+        // the URI convention used to expose the given service in the endpoint.
+        UriConversion uriConversion = UriConversion.byName(config.getString("uriConversion", STRICT.name()));
+
+        // a block / allow list of all entities that should be exposed via this endpoint. the entity name is always
+        // matched against the full qualified name of the entity in question (URI conversion is applied by NeonBee).
+        RegexBlockList exposedEntities = RegexBlockList.fromJson(config.getValue("exposedEntities"));
+
         // Register the event bus consumer first, otherwise it could happen that during initialization we are missing an
         // update to the data model, a refresh of the router will only be triggered in case it is already initialized.
         // This is a NON-local consumer, this means the reload could be triggered from anywhere, however currently the
         // reload is only triggered in case the EntityModelManager reloads the models locally (and triggers a local
         // publish of the message, thus only triggering the routers to be reloaded on the local instance).
-        UriConversion uriConversion = UriConversion.byName(config.getString("uriConversion", STRICT.name()));
         vertx.eventBus().consumer(EVENT_BUS_MODELS_LOADED_ADDRESS, message -> {
             // do not refresh the router if it wasn't even initialized
             if (initialized.get()) {
-                refreshRouter(vertx, router, basePath, uriConversion, models);
+                refreshRouter(vertx, router, basePath, uriConversion, exposedEntities, models);
             }
         });
 
@@ -177,9 +194,10 @@ public class ODataV4Endpoint implements Endpoint {
         initialRoute.handler(
                 routingContext -> new SharedDataAccessor(vertx, ODataV4Endpoint.class).getLocalLock(asyncLock ->
                 // immediately initialize the router, this will also "arm" the event bus listener
-                (!initialized.getAndSet(true) ? refreshRouter(vertx, router, basePath, uriConversion, models)
+                (!initialized.getAndSet(true)
+                        ? refreshRouter(vertx, router, basePath, uriConversion, exposedEntities, models)
                         : succeededFuture()).onComplete(handler -> {
-                            // Wait for the refresh to finish (the result doesn't matter), remove the initial route, as
+                            // wait for the refresh to finish (the result doesn't matter), remove the initial route, as
                             // this will redirect all requests to the registered service endpoint handlers (if non have
                             // been registered, e.g. due to a failure in model loading, it'll result in an 404). Could
                             // have been removed already by refreshRouter, we don't care!
@@ -189,7 +207,7 @@ public class ODataV4Endpoint implements Endpoint {
                                 asyncLock.result().release();
                             }
 
-                            // Let the router again handle the context again, now with either all service endpoints
+                            // let the router again handle the context again, now with either all service endpoints
                             // registered, or none in case there have been a failure while loading the models.
                             // NOTE: Re-route is the only elegant way I found to restart the current router to take
                             // the new routes! Might consider checking again with the Vert.x 4.0 release.
@@ -200,7 +218,7 @@ public class ODataV4Endpoint implements Endpoint {
     }
 
     private static Future<Void> refreshRouter(Vertx vertx, Router router, String basePath, UriConversion uriConversion,
-            AtomicReference<Map<String, EntityModel>> currentModels) {
+            RegexBlockList exposedEntities, AtomicReference<Map<String, EntityModel>> currentModels) {
         return getSharedModels(vertx).compose(models -> {
             if (models == currentModels.get()) {
                 return succeededFuture(); // no update needed
@@ -211,19 +229,38 @@ public class ODataV4Endpoint implements Endpoint {
             // before adding new routes, get a list of existing routes, to remove after the new routes have been added
             List<Route> existingRoutes = router.getRoutes();
 
-            // Register new routes first, this will avoid downtimes of already existing services. Register the shortest
+            // register new routes first, this will avoid downtimes of already existing services. Register the shortest
             // routes last, this will lead to some routes like the empty namespace / to be registered last.
             models.values().stream().flatMap(entityModel -> entityModel.getEdmxes().entrySet().stream())
                     .map(entryFunction(
                             (schemaNamespace, edmxModel) -> Map.entry(uriConversion.apply(schemaNamespace), edmxModel)))
                     .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(String::length).reversed()))
                     .forEach(entryConsumer((uriPath, edmxModel) -> {
-                        // TODO depending on the config either create Olingo or CDS based OData V4 handlers here
+                        String schemaNamespace = edmxModel.getEdm().getEntityContainer().getNamespace();
                         router.route((uriPath.isEmpty() ? EMPTY : ("/" + uriPath)) + "/*")
+                                // some entities should not get exposed, register a handler, checking the block list
+                                .handler(routingContext -> {
+                                    // normalize the URI first
+                                    NormalizedUri normalizedUri = normalizeUri(routingContext, schemaNamespace);
+                                    if (LOGGER.isDebugEnabled()) {
+                                        LOGGER.correlateWith(routingContext).debug("Normalized OData V4 URI {}",
+                                                normalizedUri);
+                                    }
+
+                                    // if a entity is specified check it against the block list
+                                    // TODO: maybe also navigation properties have to be taken into account here?
+                                    if (normalizedUri.fullQualifiedName != null
+                                            && !exposedEntities.isAllowed(normalizedUri.fullQualifiedName)) {
+                                        routingContext.fail(FORBIDDEN.code());
+                                        return;
+                                    }
+
+                                    routingContext.next();
+                                })
+                                // TODO depending on the config either create Olingo or CDS based OData V4 handlers here
                                 .handler(OlingoEndpointHandler.create(edmxModel));
-                        LOGGER.info("Serving OData service endpoint for {} at {}{} ({} URI mapping)",
-                                edmxModel.getEdm().getEntityContainer().getNamespace(), basePath, uriPath,
-                                uriConversion.name().toLowerCase(Locale.getDefault()));
+                        LOGGER.info("Serving OData service endpoint for {} at {}{} ({} URI mapping)", schemaNamespace,
+                                basePath, uriPath, uriConversion.name().toLowerCase(Locale.getDefault()));
                     }));
 
             // remove any of the old routes, so the old models will stop serving
@@ -233,5 +270,196 @@ public class ODataV4Endpoint implements Endpoint {
                     models.size(), existingRoutes.size());
             return succeededFuture();
         });
+    }
+
+    /**
+     * Normalize a given OData V4 request URI using a given {@link RoutingContext} and the schema namespace.
+     *
+     * A once parsed {@link NormalizedUri} is associated with the given {@link RoutingContext} so the same reference of
+     * the URI is returned if this method is invoked multiple times with the same {@link RoutingContext} given.
+     *
+     * @param routingContext  the routing context to parse the {@link NormalizedUri} from. Depending on the
+     *                        {@link UriConversion} the routing path / uri might not contain the right schema namespace
+     * @param schemaNamespace the schema namespace of the service in question
+     * @return a {@link NormalizedUri}
+     */
+    public static NormalizedUri normalizeUri(RoutingContext routingContext, String schemaNamespace) {
+        return Optional.<NormalizedUri>ofNullable(routingContext.get(NORMALIZED_URI_CONTEXT_KEY)).orElseGet(() -> {
+            NormalizedUri normalizedUri = new NormalizedUri(routingContext, schemaNamespace);
+            routingContext.put(NORMALIZED_URI_CONTEXT_KEY, normalizedUri);
+            return normalizedUri;
+        });
+    }
+
+    /* @formatter:off *//**
+     * This class represents a normalized OData V4 URI and helps to split it up in several path segments.
+     * <p>
+     * Asserting the most specific URI, given the following example from the OASIS OData URI specification:
+     *
+     * <pre>
+     *   http://host:port/path/SampleService.svc/Categories(1)/Products?$top=2&$orderby=Name
+     * </pre>
+     *
+     * Assuming loose URI conversion is used, NeonBee will expose the service at:
+     *
+     * <pre>
+     *   http://host:port/path/sample-service-svc/Categories(1)/Products?$top=2&$orderby=Name
+     * </pre>
+     *
+     * We get the following information from the handler configuration:
+     *
+     * <pre>
+     *   schemaNamespace = SampleService.svc
+     * </pre>
+     *
+     * We get the following information from the routing context / request:
+     *
+     * <pre>
+     *   requestUri      = http://host:port/path/sample-service-svc/Categories(1)/Products?$top=2&$orderby=Name
+     *   requestPath     = /path/sample-service-svc/Categories(1)/Products
+     *   requestQuery    = $top=2&$orderby=Name
+     *   routeMountPoint = /path/
+     *   routePath       = /sample-service-svc/
+     * </pre>
+     *
+     * The URI is normalized to the following components, note how the URI always will be normalized as if no
+     * URI conversion was performed:
+     *
+     * <pre>
+     *   requestUri        = http://host:port/path/SampleService.svc/Categories(1)/Products?$top=2&$orderby=Name
+     *   requestPath       = /path/SampleService.svc/Categories(1)/Products
+     *   requestQuery      = $top=2&$orderby=Name
+     *   baseUri           = http://host:port/path/
+     *   basePath          = /path/
+     *   schemaNamespace   = SampleService.svc
+     *   resourcePath      = /Categories(1)/Products
+     *   entityName        = Categories
+     *   fullQualifiedName = SampleService.svc.Categories
+     * </pre>
+     *//* @formatter:on */
+    public static class NormalizedUri {
+        /**
+         * The full request URI:
+         *
+         * <pre>
+         * http://host:port/path/SampleService.svc/Categories(1)/Products?$top=2&$orderby=Name
+         * </pre>
+         */
+        public final String requestUri;
+
+        /**
+         * The requests path:
+         *
+         * <pre>
+         * /path/SampleService.svc/Categories(1)/Products
+         * </pre>
+         */
+        public final String requestPath;
+
+        /**
+         * The requests query:
+         *
+         * <pre>
+         * $top=2&$orderby=Name
+         * </pre>
+         */
+        public final String requestQuery;
+
+        /**
+         * The base URI of the OData endpoint:
+         *
+         * <pre>
+         * http://host:port/path/
+         * </pre>
+         */
+        public final String baseUri;
+
+        /**
+         * The base path of the OData endpoint:
+         *
+         * <pre>
+         * /path/
+         * </pre>
+         */
+        public final String basePath;
+
+        /**
+         * The schema namespace of the OData model the request was made for:
+         *
+         * <pre>
+         * SampleService.svc
+         * </pre>
+         */
+        public final String schemaNamespace;
+
+        /**
+         * The full resource path of the OData request:
+         *
+         * <pre>
+         * /Categories(1)/Products
+         * </pre>
+         */
+        public final String resourcePath;
+
+        /**
+         * The entity name of the requested entity (if any or null):
+         *
+         * <pre>
+         * Categories
+         * </pre>
+         */
+        public final String entityName;
+
+        /**
+         * The full qualified name of the requested entity (if any or null):
+         *
+         * <pre>
+         * Categories
+         * </pre>
+         */
+        public final String fullQualifiedName;
+
+        private NormalizedUri(RoutingContext routingContext, String schemaNamespace) {
+            // the (unconverted) schema namespace is a input to the constructor
+            this.schemaNamespace = schemaNamespace;
+
+            Route route = routingContext.currentRoute();
+            // note that getPath() returns *only* the path prefix, so essentially the base path and converted schema
+            // namespace with leading and tailing slashes w/o the tailing *, which is handled and stripped by the router
+            String routeMountPoint = routingContext.mountPoint(), routePath = // routePath w/ exactly one tailing slash
+                    Optional.ofNullable(route).map(Route::getPath).orElse(EMPTY).replaceAll("/+$", EMPTY) + "/";
+
+            HttpServerRequest request = routingContext.request();
+            String requestPath = request.path();
+            if (!requestPath.contains(routePath)) {
+                // special case if calling the service root at /path/SampleService.svc, always append a forward slash
+                // for easier handling, so to make it /path/SampleService.svc/
+                requestPath += '/';
+            }
+
+            // parse out the base URI and path
+            String hostUri = request.scheme() + "://" + request.host();
+            baseUri = hostUri + (basePath = routeMountPoint);
+
+            // parse out the resource path and entity name
+            resourcePath = requestPath.substring(routeMountPoint.length() + routePath.length() - 1);
+            entityName = Strings.emptyToNull(resourcePath.split("\\W", 2)[0]); // assume the first non-word character
+                                                                               // separates it
+
+            // if an entity name is provided, concatenate the full qualified name
+            fullQualifiedName = entityName != null ? schemaNamespace + '.' + entityName : null;
+
+            // construct the full request path and URI, the query is provided by the request
+            requestUri = hostUri + (this.requestPath = basePath + schemaNamespace + resourcePath)
+                    + (!(requestQuery = Strings.nullToEmpty(request.query())).isEmpty() ? "?" + requestQuery : EMPTY);
+        }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this).add("requestUri", requestUri).add("requestPath", requestPath)
+                    .add("requestQuery", requestQuery).add("baseUri", baseUri).add("basePath", basePath)
+                    .add("schemaNamespace", schemaNamespace).add("resourcePath", resourcePath)
+                    .add("entityName", entityName).add("fullQualifiedName", fullQualifiedName).toString();
+        }
     }
 }

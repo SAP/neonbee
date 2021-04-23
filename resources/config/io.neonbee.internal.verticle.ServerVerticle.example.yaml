@@ -26,8 +26,8 @@ config:
 
     # the number of seconds before the router timeout applies, defaults to 30
     timeout: 30
-    # the error code for the default timeout, defaults to 504
-    timeoutErrorCode: 504
+    # the status code for the default timeout, defaults to 504
+    timeoutStatusCode: 504
 
     # the maximum length of all HTTP headers, defaults to 8192 bytes
     maxHeaderSize: 8192
@@ -46,6 +46,10 @@ config:
         authenticationChain: ~
         # namespace and service name URI mapping (strict, or loose based on CDS)
         uriConversion: strict
+        # a block / allow list of verticles to expose via this endpoint (defaults to empty / all entities exposed)
+        exposedEntities:
+          block: [any_allow_list_of_regexp_here]
+          allow: [any_block_list_of_regexp_here]
 
       # provides a REST endpoint (JSON, text, binary), for accessing data verticles
       - type: io.neonbee.endpoint.RawEndpoint
@@ -57,6 +61,11 @@ config:
         authenticationChain: ~
         # whether or not to expose hidden verticles, defaults to false
         exposeHiddenVerticles: false
+        # a block / allow list of verticles to expose via this endpoint (defaults to empty all verticles exposed)
+        exposedVerticles:
+          block: [any_allow_list_of_regexp_here]
+          allow: [any_block_list_of_regexp_here]
+
 
       # provides an Prometheus scraping endpoint for Micrometer.io metrics
       - type: io.neonbee.endpoint.MetricsEndpoint

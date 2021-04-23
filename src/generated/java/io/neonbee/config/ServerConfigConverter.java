@@ -54,9 +54,9 @@ public class ServerConfigConverter {
                     obj.setTimeout(((Number) member.getValue()).intValue());
                 }
                 break;
-            case "timeoutErrorCode":
+            case "timeoutStatusCode":
                 if (member.getValue() instanceof Number) {
-                    obj.setTimeoutErrorCode(((Number) member.getValue()).intValue());
+                    obj.setTimeoutStatusCode(((Number) member.getValue()).intValue());
                 }
                 break;
             }
@@ -88,6 +88,6 @@ public class ServerConfigConverter {
             json.put("sessionHandling", obj.getSessionHandling().name());
         }
         json.put("timeout", obj.getTimeout());
-        json.put("timeoutErrorCode", obj.getTimeoutErrorCode());
+        json.put("timeoutStatusCode", obj.getTimeoutStatusCode());
     }
 }
