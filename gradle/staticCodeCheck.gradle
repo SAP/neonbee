@@ -56,6 +56,7 @@ spotbugs {
     toolVersion = '4.2.1'
     effort = 'max'
     reportLevel = 'medium'
+    excludeFilter = file("$projectDir/gradle/findbugs/excludeFilter.xml")
 }
 
 spotbugsMain {

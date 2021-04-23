@@ -16,10 +16,19 @@ public final class HostHelper {
     private static String currentIp;
 
     /**
-     * This helper class cannot be instantiated
+     * This helper class cannot be instantiated.
      */
     private HostHelper() {}
 
+    /**
+     * Determines the host IP by trying to determine it from a "CF_INSTANCE_INTERNAL_IP" environment variable, trying to
+     * determine or by falling back to localhost (127.0.0.1) in case the IP could not be determined.
+     * <p>
+     * Note: This method does NOT account for any dynamic IP address changes, but only determines and caches the IP
+     * address once and returns the same result after the first call.
+     *
+     * @return the IP address of the local host or 127.0.0.1
+     */
     @SuppressWarnings({ "PMD.AvoidUsingHardCodedIP", "PMD.NonThreadSafeSingleton" })
     public static String getHostIp() {
         if (currentIp == null) {
@@ -36,6 +45,11 @@ public final class HostHelper {
         return currentIp;
     }
 
+    /**
+     * Returns whether the current host is a Mac.
+     *
+     * @return true if the host is a Mac
+     */
     @SuppressWarnings("PMD.UseLocaleWithCaseConversions")
     public static boolean isMac() {
         try {

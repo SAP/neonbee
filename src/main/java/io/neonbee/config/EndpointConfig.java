@@ -21,12 +21,12 @@ public class EndpointConfig {
     private JsonObject additionalConfig;
 
     /**
-     * Creates an initial {@linkplain EndpointConfig}
+     * Creates an initial {@linkplain EndpointConfig}.
      */
     public EndpointConfig() {}
 
     /**
-     * Creates a {@linkplain EndpointConfig} parsing a given JSON object
+     * Creates a {@linkplain EndpointConfig} parsing a given JSON object.
      *
      * @param json the JSON object to parse
      */
@@ -37,7 +37,7 @@ public class EndpointConfig {
     }
 
     /**
-     * Transforms this configuration object into JSON
+     * Transforms this configuration object into JSON.
      *
      * @return a JSON representation of this configuration
      */
@@ -48,7 +48,7 @@ public class EndpointConfig {
     }
 
     /**
-     * Returns the type of the endpoint, a full qualified class name of an {@linkplain Endpoint}
+     * Returns the type of the endpoint, a full qualified class name of an {@linkplain Endpoint}.
      *
      * @return the type as string
      */
@@ -57,7 +57,7 @@ public class EndpointConfig {
     }
 
     /**
-     * Sets the type of the endpoint, must be a full qualified class name of an {@linkplain Endpoint}
+     * Sets the type of the endpoint, must be a full qualified class name of an {@linkplain Endpoint}.
      *
      * @param type the fully qualified class name as the endpoint type
      * @return the {@linkplain EndpointConfig} for fluent use
@@ -69,7 +69,7 @@ public class EndpointConfig {
     }
 
     /**
-     * Gets base path this endpoint is exposed to
+     * Gets base path this endpoint is exposed to.
      *
      * @return the base path as string
      */
@@ -78,7 +78,7 @@ public class EndpointConfig {
     }
 
     /**
-     * Sets the base path for the endpoint
+     * Sets the base path for the endpoint.
      *
      * @param basePath the base path as string
      * @return the {@linkplain EndpointConfig} for fluent use
@@ -89,7 +89,7 @@ public class EndpointConfig {
     }
 
     /**
-     * Returns wether this endpoint is enabled or not. May also return {@code null} in case unset
+     * Returns wether this endpoint is enabled or not. May also return {@code null} in case unset.
      *
      * @return true if enabled, false otherwise or null if unset
      */
@@ -98,7 +98,7 @@ public class EndpointConfig {
     }
 
     /**
-     * Sets / unsets whether this endpoint is enabled or not
+     * Sets / unsets whether this endpoint is enabled or not.
      *
      * @param enabled true, false or null
      * @return the {@linkplain EndpointConfig} for fluent use
@@ -109,7 +109,7 @@ public class EndpointConfig {
     }
 
     /**
-     * Gets a list of authentication handler configurations to use in a authentication chain
+     * Gets a list of authentication handler configurations to use in a authentication chain.
      *
      * @return the list of authentication handler configurations
      */
@@ -118,7 +118,8 @@ public class EndpointConfig {
     }
 
     /**
-     * Sets a list of authentication handler configurations, which will be joined into one {@linkplain ChainAuthHandler}
+     * Sets a list of authentication handler configurations, which will be joined into one
+     * {@linkplain ChainAuthHandler}.
      *
      * @param authChainConfig the list of authentication handler configurations to initialize
      * @return the {@linkplain EndpointConfig} for fluent use
@@ -129,7 +130,7 @@ public class EndpointConfig {
     }
 
     /**
-     * Returns additional configurations for this specific endpoint type
+     * Returns additional configurations for this specific endpoint type.
      *
      * @return additional configurations as JSON object
      */
@@ -138,7 +139,7 @@ public class EndpointConfig {
     }
 
     /**
-     * Sets additional configurations for this specific endpoint type
+     * Sets additional configurations for this specific endpoint type.
      *
      * @param additionalConfig the additional configuration to set
      * @return the {@linkplain EndpointConfig} for fluent use

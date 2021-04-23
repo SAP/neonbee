@@ -31,10 +31,10 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
 
-public class OlingoEndpointTest {
+class OlingoEndpointTest {
     @Test
     @DisplayName("map generic response")
-    public void checkGenericResponseMapping() {
+    void checkGenericResponseMapping() {
         ODataResponse odataResponse = new ODataResponse();
         odataResponse.setStatusCode(200);
         odataResponse.setHeader("expected1", "value1");
@@ -55,7 +55,7 @@ public class OlingoEndpointTest {
 
     @Test
     @DisplayName("map OData response")
-    public void checkODataResponseMapping() {
+    void checkODataResponseMapping() {
         ODataResponse odataResponse = new ODataResponse();
         ODataContent odataContentMock = mock(ODataContent.class);
         doAnswer((Answer<ODataContent>) invocation -> {
@@ -74,7 +74,7 @@ public class OlingoEndpointTest {
 
     @Test
     @DisplayName("test mapToODataRequest")
-    public void testMapToODataRequest() throws Exception {
+    void testMapToODataRequest() throws Exception {
         String expectedQuery = "$filter=foo eq 'bar'&$limit=42";
         String expectedPath = "/path";
         String expectedNamespace = "namespace";

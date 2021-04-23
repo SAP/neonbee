@@ -52,6 +52,9 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class RawEndpoint implements Endpoint {
+    /**
+     * The default path the raw endpoint is exposed by NeonBee.
+     */
     public static final String DEFAULT_BASE_PATH = "/raw/";
 
     /**
@@ -94,7 +97,7 @@ public class RawEndpoint implements Endpoint {
          *
          * @param config the configuration
          */
-        public RawHandler(JsonObject config) {
+        private RawHandler(JsonObject config) {
             // exposeHiddenVertices is a configuration which is explicitly additional to the "exposedVerticles" block
             // list. this is due to the nature of the block list, blocking all verticles by default when only a allow
             // list is specified. if we would add the HIDDEN_VERTICLES_PATTERN to the block list here, this might have

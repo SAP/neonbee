@@ -18,7 +18,7 @@ import io.vertx.core.Vertx;
  */
 public final class AsyncHelper {
     /**
-     * This helper class cannot be instantiated
+     * This helper class cannot be instantiated.
      */
     private AsyncHelper() {}
 
@@ -58,14 +58,33 @@ public final class AsyncHelper {
         return CompositeFuture.join((List<Future>) (Object) futures);
     }
 
+    /**
+     * Returns an array of async. results for a given {@link CompositeFuture}.
+     *
+     * @param compositeFuture the composite future to get the results for
+     * @return an array of (untyped) {@link AsyncResult}
+     */
     public static AsyncResult<?>[] asyncResults(CompositeFuture compositeFuture) {
         return typedAsyncResults(compositeFuture);
     }
 
+    /**
+     * Returns a list of async. results for a given {@link CompositeFuture}.
+     *
+     * @param compositeFuture the composite future to get the results for
+     * @return a list of (untyped) {@link AsyncResult}
+     */
     public static List<AsyncResult<?>> asyncResultList(CompositeFuture compositeFuture) {
         return Arrays.asList(asyncResults(compositeFuture));
     }
 
+    /**
+     * Returns a typed array of async. results for a given {@link CompositeFuture}.
+     *
+     * @param <T>             the shared type of all async. results
+     * @param compositeFuture the composite future to get the results for
+     * @return an array of {@link AsyncResult}
+     */
     public static <T> AsyncResult<T>[] typedAsyncResults(CompositeFuture compositeFuture) {
         @SuppressWarnings("unchecked")
         AsyncResult<T>[] asyncResults = new AsyncResult[compositeFuture.size()];
@@ -93,22 +112,53 @@ public final class AsyncHelper {
         return asyncResults;
     }
 
+    /**
+     * Returns a typed list of async. results for a given {@link CompositeFuture}.
+     *
+     * @param <T>             the shared type of all async. results
+     * @param compositeFuture the composite future to get the results for
+     * @return a list of {@link AsyncResult}
+     */
     public static <T> List<AsyncResult<T>> typedAsyncResultList(CompositeFuture compositeFuture) {
         return Arrays.asList(typedAsyncResults(compositeFuture));
     }
 
+    /**
+     * Checks whether all async. results of a given vararg array have been successful.
+     *
+     * @param asyncResults the varargs array of {@link AsyncResult} to check
+     * @return true if all async. results are a success
+     */
     public static boolean allSucceeded(AsyncResult<?>... asyncResults) {
         return Arrays.stream(asyncResults).allMatch(AsyncResult::succeeded);
     }
 
+    /**
+     * Checks whether any async. results of a given vararg array have been successful.
+     *
+     * @param asyncResults the varargs array of {@link AsyncResult} to check
+     * @return true if any async. results are a success
+     */
     public static boolean anySucceeded(AsyncResult<?>... asyncResults) {
         return Arrays.stream(asyncResults).anyMatch(AsyncResult::succeeded);
     }
 
+    /**
+     * Checks whether all async. results of a given vararg array have failed.
+     *
+     * @param asyncResults the varargs array of {@link AsyncResult} to check
+     * @return true if all async. results have failed
+     */
     public static boolean allFailed(AsyncResult<?>... asyncResults) {
         return Arrays.stream(asyncResults).allMatch(AsyncResult::failed);
     }
 
+    /**
+     * Checks whether any async. results of a given vararg array failed.
+     *
+     * @param asyncResults the varargs array of {@link AsyncResult} to check
+     * @return true if any async. results have failed
+     */
     public static boolean anyFailed(AsyncResult<?>... asyncResults) {
         return Arrays.stream(asyncResults).anyMatch(AsyncResult::failed);
     }

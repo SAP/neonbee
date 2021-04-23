@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 
 public final class FunctionalHelper {
     /**
-     * This helper class cannot be instantiated
+     * This helper class cannot be instantiated.
      */
     private FunctionalHelper() {}
 
@@ -51,6 +51,14 @@ public final class FunctionalHelper {
         return entry -> consumer.accept(entry.getKey(), entry.getValue());
     }
 
+    /**
+     * An unchecked mapper converting one type into another.
+     *
+     * @param <T>   the target type
+     * @param <U>   the source type
+     * @param value the value to convert of type U
+     * @return the converted value in type T
+     */
     @SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
     public static <T, U> T uncheckedMapper(U value) {
         return (T) value;

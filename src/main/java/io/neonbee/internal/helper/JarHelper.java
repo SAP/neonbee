@@ -4,7 +4,7 @@ import java.net.URI;
 
 public final class JarHelper {
     /**
-     * This helper class cannot be instantiated
+     * This helper class cannot be instantiated.
      */
     private JarHelper() {}
 

@@ -123,11 +123,11 @@ public class AnnotationHelper {
         CsdlAnnotation annotation = new CsdlAnnotation();
         annotation.setTerm(term);
 
-        CsdlRecord record = new CsdlRecord();
         CsdlPropertyValue propertyValue = new CsdlPropertyValue();
         propertyValue.setProperty(property);
 
         propertyValue.setValue(expression);
+        CsdlRecord record = new CsdlRecord();
         record.setPropertyValues(List.of(propertyValue));
         annotation.setExpression(record);
         annotations.setAnnotations(List.of(annotation));

@@ -12,7 +12,7 @@ public class CorrelationIdHandler implements Handler<RoutingContext> {
      */
     public static final String CORRELATION_ID = "correlationId";
 
-    private CorrelationStrategy strategy;
+    private final CorrelationStrategy strategy;
 
     /**
      * Convenience method as similar other Vertx handler implementations (e.g. ErrorHandler)

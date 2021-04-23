@@ -60,7 +60,6 @@ public final class NeonBeeMockHelper {
      * @param options the NeonBee options
      * @param config  the NeonBee config
      * @return the mocked NeonBee instance
-     * @throws Exception If private fields can't be set via reflections
      */
     public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config) {
         createLogger(); // the logger is only created internally, create one manually if required
@@ -70,6 +69,7 @@ public final class NeonBeeMockHelper {
         return neonBee;
     }
 
+    @SuppressWarnings({ "CatchAndPrintStackTrace", "PMD.AvoidPrintStackTrace" })
     private static void createLogger() {
         try {
             Logger logger = (Logger) ReflectionHelper.getValueOfPrivateStaticField(NeonBee.class, "logger");

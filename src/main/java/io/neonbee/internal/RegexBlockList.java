@@ -10,16 +10,19 @@ import io.vertx.core.json.JsonObject;
 
 /**
  * A regex based block list, which primarily checks if an entry is blocked, but has a fallback to allow certain entries
- * if they are blocked by the block list.
+ * if they are blocked by the block list. Creating an instance using default constructor
  */
 public class RegexBlockList {
-    private List<Pattern> blockList = new ArrayList<>(), allowList = new ArrayList<>();
+    private final List<Pattern> blockList;
+
+    private final List<Pattern> allowList;
 
     /**
-     * Create a empty (all allowing) RegexBlockList
+     * Create a all-allow {@link RegexBlockList} list.
      */
     public RegexBlockList() {
-        // nothing to initialize here
+        blockList = new ArrayList<>();
+        allowList = new ArrayList<>();
     }
 
     /**
@@ -43,9 +46,7 @@ public class RegexBlockList {
     public static RegexBlockList fromJson(Object json) {
         RegexBlockList blockList = new RegexBlockList();
 
-        if (json == null) {
-            return blockList;
-        } else if (json instanceof String) {
+        if (json instanceof String) {
             blockList.allow((String) json);
         } else if (json instanceof JsonArray) {
             ((JsonArray) json).stream().map(String.class::cast).forEach(blockList::allow);

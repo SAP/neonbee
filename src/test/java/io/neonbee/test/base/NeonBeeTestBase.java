@@ -42,7 +42,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -66,7 +65,7 @@ public class NeonBeeTestBase {
 
     private Path workingDirPath;
 
-    private NeonBee neonbee;
+    private NeonBee neonBee;
 
     private boolean isDummyServerVerticleDeployed;
 
@@ -97,11 +96,11 @@ public class NeonBeeTestBase {
                 testContext.failNow(asyncNeonBee.cause());
                 latch.countDown();
             } else {
-                neonbee = asyncNeonBee.result();
+                neonBee = asyncNeonBee.result();
 
                 DeploymentOptions serverVerticleOpts =
                         WorkingDirectoryBuilder.readDeploymentOptions(ServerVerticle.class, workingDirPath);
-                neonbee.getLocalMap().put(CONTEXT_PROPERTY_SERVER_VERTICLE_PORT,
+                neonBee.getLocalMap().put(CONTEXT_PROPERTY_SERVER_VERTICLE_PORT,
                         new ServerConfig(serverVerticleOpts.getConfig()).getPort());
 
                 Optional.ofNullable(provideUserPrincipal(testInfo)).map(userPrincipal -> {
@@ -168,7 +167,7 @@ public class NeonBeeTestBase {
      * @return The current NeonBee instance
      */
     public final NeonBee getNeonBee() {
-        return neonbee;
+        return neonBee;
     }
 
     /**
@@ -178,8 +177,8 @@ public class NeonBeeTestBase {
      * @return A succeeded future with the Deployment, or a failed future with the cause.
      */
     public Future<Deployment> deployVerticle(Verticle verticle) {
-        return Deployable.fromVerticle(neonbee.getVertx(), verticle, "", null)
-                .compose(deployable -> deployable.deploy(neonbee.getVertx(), "").future());
+        return Deployable.fromVerticle(neonBee.getVertx(), verticle, "", null)
+                .compose(deployable -> deployable.deploy(neonBee.getVertx(), "").future());
     }
 
     /**
@@ -200,8 +199,8 @@ public class NeonBeeTestBase {
      * @return A succeeded future with the Deployment, or a failed future with the cause.
      */
     public Future<Deployment> deployVerticle(Class<? extends Verticle> verticleClass) {
-        return Deployable.fromClass(neonbee.getVertx(), verticleClass, "", null)
-                .compose(deployable -> deployable.deploy(neonbee.getVertx(), "").future());
+        return Deployable.fromClass(neonBee.getVertx(), verticleClass, "", null)
+                .compose(deployable -> deployable.deploy(neonBee.getVertx(), "").future());
     }
 
     /**
@@ -222,7 +221,7 @@ public class NeonBeeTestBase {
      * @return A succeeded future, or a failed future with the cause.
      */
     public Future<Void> undeployVerticle(String deploymentID) {
-        return DeploymentHelper.undeployVerticle(neonbee.getVertx(), deploymentID);
+        return DeploymentHelper.undeployVerticle(neonBee.getVertx(), deploymentID);
     }
 
     /**
@@ -232,7 +231,7 @@ public class NeonBeeTestBase {
      * @return A succeeded future, or a failed future with the cause.
      */
     public Future<Void> undeployVerticles(Class<? extends Verticle> verticleClass) {
-        return DeploymentHelper.undeployAllVerticlesOfClass(neonbee.getVertx(), verticleClass);
+        return DeploymentHelper.undeployAllVerticlesOfClass(neonBee.getVertx(), verticleClass);
     }
 
     /**
@@ -275,6 +274,7 @@ public class NeonBeeTestBase {
 
     private ServerVerticle createDummyServerVerticle(TestInfo testInfo) {
         return new ServerVerticle() {
+            @Override
             protected Optional<AuthenticationHandler> createAuthChainHandler(List<AuthHandlerConfig> authChainConfig) {
                 return Optional.of(new AuthenticationHandler() {
                     @Override

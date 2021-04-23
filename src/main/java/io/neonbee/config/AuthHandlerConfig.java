@@ -10,6 +10,8 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.errorprone.annotations.Immutable;
+
 import io.neonbee.config.AuthProviderConfig.AuthProviderType;
 import io.neonbee.internal.json.ImmutableJsonObject;
 import io.vertx.codegen.annotations.DataObject;
@@ -30,11 +32,18 @@ import io.vertx.ext.web.handler.RedirectAuthHandler;
 public class AuthHandlerConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+    private AuthHandlerType type;
+
+    private AuthProviderConfig authProviderConfig;
+
+    private JsonObject additionalConfig;
+
     /**
      * Private functional interface for {@link AuthHandlerType} enumeration.
      */
+    @Immutable
     @FunctionalInterface
-    private static interface AuthHandlerFactory {
+    private interface AuthHandlerFactory {
         /**
          * Create a Vert.x {@link AuthenticationHandler} based on the {@link AuthHandlerConfig}.
          *
@@ -50,6 +59,7 @@ public class AuthHandlerConfig {
     /**
      * The type of the authentication handler supported by NeonBee.
      */
+    @Immutable
     public enum AuthHandlerType implements AuthHandlerFactory {
         /**
          * HTTP Basic authentication.
@@ -58,7 +68,7 @@ public class AuthHandlerConfig {
                 .create(authProviderConfig.createAuthProvider(vertx),
                         additionalConfig.getString("realm", DEFAULT_REALM))),
         /**
-         * HTTP Basic authentication using .digest file format to perform authentication
+         * HTTP Basic authentication using .digest file format to perform authentication.
          */
         HTDIGEST((Vertx vertx, AuthProviderConfig authProviderConfig, JsonObject additionalConfig) -> {
             if (!AuthProviderType.HTDIGEST.equals(authProviderConfig.getType())) {
@@ -115,19 +125,13 @@ public class AuthHandlerConfig {
         }
     }
 
-    private AuthHandlerType type;
-
-    private AuthProviderConfig authProviderConfig;
-
-    private JsonObject additionalConfig;
-
     /**
-     * Creates an initial {@linkplain AuthHandlerConfig}
+     * Creates an initial {@linkplain AuthHandlerConfig}.
      */
     public AuthHandlerConfig() {}
 
     /**
-     * Creates a {@linkplain AuthHandlerConfig} parsing a given JSON object
+     * Creates a {@linkplain AuthHandlerConfig} parsing a given JSON object.
      *
      * @param json the JSON object to parse
      */
@@ -138,7 +142,7 @@ public class AuthHandlerConfig {
     }
 
     /**
-     * Transforms this configuration object into JSON
+     * Transforms this configuration object into JSON.
      *
      * @return a JSON representation of this configuration
      */
@@ -149,7 +153,7 @@ public class AuthHandlerConfig {
     }
 
     /**
-     * Returns the type of the authentication handler
+     * Returns the type of the authentication handler.
      *
      * @return the type as {@linkplain AuthHandlerType}
      */
@@ -158,7 +162,7 @@ public class AuthHandlerConfig {
     }
 
     /**
-     * Sets the type of the authentication handler
+     * Sets the type of the authentication handler.
      *
      * @param type the type to set
      * @return the {@linkplain AuthHandlerConfig} for fluent use
@@ -170,7 +174,7 @@ public class AuthHandlerConfig {
     }
 
     /**
-     * Returns the authentication provider configuration
+     * Returns the authentication provider configuration.
      *
      * @return the authentication provider configuration
      */
@@ -180,7 +184,7 @@ public class AuthHandlerConfig {
 
     /**
      * Sets the authentication provider configuration to be forwarded to the authentication provider when configuration
-     * is done
+     * is done.
      *
      * @param authProviderConfig the authentication provider configuration to set
      * @return the {@linkplain AuthHandlerConfig} for fluent use
@@ -192,7 +196,7 @@ public class AuthHandlerConfig {
     }
 
     /**
-     * Returns additional configurations for this specific authentication handler type
+     * Returns additional configurations for this specific authentication handler type.
      *
      * @return additional configurations as JSON object
      */
@@ -201,7 +205,7 @@ public class AuthHandlerConfig {
     }
 
     /**
-     * Sets additional configurations for this specific authentication handler type
+     * Sets additional configurations for this specific authentication handler type.
      *
      * @param additionalConfig the additional configuration to set
      * @return the {@linkplain AuthHandlerConfig} for fluent use
@@ -216,6 +220,7 @@ public class AuthHandlerConfig {
      * Creates a new {@link AuthenticationHandler} based on this configuration, which is used to protect some or all
      * endpoints.
      *
+     * @param vertx the Vert.x instance to use to create the authentication handler
      * @return the created {@link AuthenticationHandler}
      */
     public AuthenticationHandler createAuthHandler(Vertx vertx) {

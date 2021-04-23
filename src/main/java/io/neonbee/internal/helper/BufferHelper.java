@@ -11,14 +11,29 @@ public final class BufferHelper {
     private static final int DEFAULT_BUFFER_SIZE = 4096;
 
     /**
-     * This helper class cannot be instantiated
+     * This helper class cannot be instantiated.
      */
     private BufferHelper() {}
 
+    /**
+     * Converts a given Java {@link InputStream} into a Vert.x {@link Buffer}.
+     *
+     * @param input the {@link InputStream} to convert
+     * @return a {@link Buffer} encapsulating the given {@link InputStream}
+     * @throws IOException an {@link IOException} if the conversion fails
+     */
     public static Buffer inputStreamToBuffer(InputStream input) throws IOException {
         return inputStreamToBuffer(input, DEFAULT_BUFFER_SIZE);
     }
 
+    /**
+     * Converts a given Java {@link InputStream} into a Vert.x {@link Buffer}.
+     *
+     * @param input      the {@link InputStream} to convert
+     * @param bufferSize the buffer size to use converting th {@link InputStream}
+     * @return a {@link Buffer} encapsulating the given {@link InputStream}
+     * @throws IOException an {@link IOException} if the conversion fails
+     */
     public static Buffer inputStreamToBuffer(InputStream input, int bufferSize) throws IOException {
         byte[] data = new byte[bufferSize];
 
@@ -31,6 +46,12 @@ public final class BufferHelper {
         return buffer;
     }
 
+    /**
+     * Read a given resource into a buffer.
+     *
+     * @param resource The resource to read
+     * @return a Vert.x {@link Buffer}
+     */
     @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE",
             justification = "False positive in Spotbugs, see https://github.com/spotbugs/spotbugs/issues/1338")
     public static Buffer readResourceToBuffer(String resource) {
@@ -42,20 +63,39 @@ public final class BufferHelper {
         }
     }
 
-    public static InputStream bufferToInputSteram(Buffer buffer) {
+    /**
+     * Convert a Vert.x {@link Buffer} into a Java {@link InputStream}.
+     *
+     * @param buffer the buffer to convert
+     * @return a InputStream converting the given Buffer on the fly
+     */
+    public static InputStream bufferToInputStream(Buffer buffer) {
         return new BufferInputStream(buffer);
     }
 
+    /**
+     * A specific implementation for converting a Vert.x {@link Buffer} into a Java {@link InputStream}.
+     */
     public static class BufferInputStream extends InputStream {
         private Buffer buffer;
 
         private int position;
 
+        /**
+         * Create a new {@link BufferInputStream} based on a Vert.x {@link Buffer}.
+         *
+         * @param buffer the buffer to convert to a {@link InputStream}
+         */
         public BufferInputStream(Buffer buffer) {
             super();
             this.buffer = buffer;
         }
 
+        /**
+         * Get the current position of the buffer.
+         *
+         * @return the current position of the buffer
+         */
         public int getPosition() {
             return position;
         }

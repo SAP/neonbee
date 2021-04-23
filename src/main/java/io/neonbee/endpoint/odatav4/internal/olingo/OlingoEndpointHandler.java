@@ -12,8 +12,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import org.apache.olingo.commons.api.ex.ODataRuntimeException;
 import org.apache.olingo.commons.api.http.HttpHeader;
 import org.apache.olingo.commons.api.http.HttpMethod;
@@ -25,6 +23,8 @@ import org.apache.olingo.server.api.ODataRequest;
 import org.apache.olingo.server.api.ODataResponse;
 import org.apache.olingo.server.api.ServiceMetadata;
 import org.apache.olingo.server.core.ODataHandlerException;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import io.neonbee.endpoint.odatav4.ODataV4Endpoint.NormalizedUri;
 import io.neonbee.endpoint.odatav4.internal.olingo.processor.BatchProcessor;

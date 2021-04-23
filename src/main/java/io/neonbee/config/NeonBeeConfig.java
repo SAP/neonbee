@@ -29,8 +29,14 @@ public class NeonBeeConfig {
      */
     public static final int DEFAULT_EVENT_BUS_TIMEOUT = 30;
 
+    /**
+     * The default tracking data handling strategy.
+     */
     public static final String DEFAULT_TRACKING_DATA_HANDLING_STRATEGY = TrackingDataLoggingStrategy.class.getName();
 
+    /**
+     * The default timezone to use e.g. for logging. Defaults to UTC.
+     */
     public static final String DEFAULT_TIME_ZONE = "UTC";
 
     private int eventBusTimeout = DEFAULT_EVENT_BUS_TIMEOUT;
@@ -43,17 +49,23 @@ public class NeonBeeConfig {
 
     private String timeZone = DEFAULT_TIME_ZONE;
 
+    /**
+     * Load the NeonBee configuration from the NeonBee config. directory and convert it to a {@link NeonBeeConfig}.
+     *
+     * @param vertx The Vert.x instance used to load the config file
+     * @return a future to a {@link NeonBeeConfig}
+     */
     public static Future<NeonBeeConfig> load(Vertx vertx) {
         return readConfig(vertx, NeonBee.class.getName(), new JsonObject()).map(NeonBeeConfig::new);
     }
 
     /**
-     * Creates an initial NeonBee configuration object
+     * Creates an initial NeonBee configuration object.
      */
     public NeonBeeConfig() {}
 
     /**
-     * Creates a {@linkplain NeonBeeConfig} parsing a given JSON object
+     * Creates a {@linkplain NeonBeeConfig} parsing a given JSON object.
      *
      * @param json the JSON object to parse
      */
@@ -64,7 +76,7 @@ public class NeonBeeConfig {
     }
 
     /**
-     * Transforms this configuration object into JSON
+     * Transforms this configuration object into JSON.
      *
      * @return a JSON representation of this configuration
      */
@@ -134,7 +146,7 @@ public class NeonBeeConfig {
     }
 
     /**
-     * Sets the class to load for the tracking data handling
+     * Sets the class to load for the tracking data handling.
      *
      * @param trackingDataHandlingStrategy a class name of a tracking data handling class
      * @return the {@linkplain NeonBeeConfig} for fluent use
@@ -161,7 +173,7 @@ public class NeonBeeConfig {
     }
 
     /**
-     * Sets classes available by the platform
+     * Sets classes available by the platform.
      *
      * @param platformClasses a list of class names
      * @return the {@linkplain NeonBeeConfig} for fluent use

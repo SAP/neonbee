@@ -335,7 +335,7 @@ public final class EntityModelManager {
             private final String serviceDocumentETag;
 
             @SuppressWarnings("checkstyle:MissingJavadocMethod") // don't know exactly what this is for
-            public MetadataETagSupport(Buffer csdl) {
+            MetadataETagSupport(Buffer csdl) {
                 /*
                  * Please note: ETag for the service document and the metadata document. The same field for
                  * service-document and metadata-document ETag is used. It must change whenever the corresponding

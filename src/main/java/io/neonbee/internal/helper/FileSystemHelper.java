@@ -20,7 +20,7 @@ public final class FileSystemHelper {
     private static final ObjectMapper YAML_MAPPER = new YAMLMapper();
 
     /**
-     * This helper class cannot be instantiated
+     * This helper class cannot be instantiated.
      */
     private FileSystemHelper() {}
 
@@ -37,7 +37,7 @@ public final class FileSystemHelper {
     }
 
     /**
-     * This method invokes {@link #readDir(Vertx, Path, String)} and reads the content of a passed directory,
+     * This method invokes {@link #readDir(Vertx, Path, String)} and reads the content of a passed directory
      * asynchronously.
      *
      * @param vertx The related Vert.x instance
@@ -51,7 +51,7 @@ public final class FileSystemHelper {
 
     /**
      * This method reads the content of a passed directory. The {@code filter} parameter is a regular expression for
-     * filtering by file name, asynchronously.
+     * filtering by file name asynchronously.
      *
      * @param vertx  The related Vert.x instance
      * @param filter The filter expression.
@@ -64,7 +64,7 @@ public final class FileSystemHelper {
     }
 
     /**
-     * Open the file represented by {@code path}, asynchronously.
+     * Open the file represented by {@code path} asynchronously.
      * <p>
      * The file is opened for both reading and writing. If the file does not already exist it will be created.
      *
@@ -78,7 +78,7 @@ public final class FileSystemHelper {
     }
 
     /**
-     * This method reads the entire file as a {@link Buffer}, asynchronously.
+     * This method reads the entire file as a {@link Buffer} asynchronously.
      *
      * @param vertx The related Vert.x instance
      * @param path  The path of the file
@@ -88,10 +88,25 @@ public final class FileSystemHelper {
         return Future.<Buffer>future(readFilePromise -> vertx.fileSystem().readFile(path.toString(), readFilePromise));
     }
 
+    /**
+     * This method reads the entire file in JSON format asynchronously and converts it to a {@link JsonObject}.
+     *
+     * @param vertx The related Vert.x instance
+     * @param path  The path of the file
+     * @return a future to the converted {@link JsonObject}
+     */
     public static Future<JsonObject> readJSON(Vertx vertx, Path path) {
         return readFile(vertx, path).map(Buffer::toJsonObject);
     }
 
+    /**
+     * This method reads the entire file in YAML format asynchronously and converts it to a {@link JsonObject}. * @param
+     * vertx The related Vert.x instance
+     *
+     * @param vertx The related Vert.x instance
+     * @param path  The path of the file
+     * @return a future to the converted {@link JsonObject}
+     */
     public static Future<JsonObject> readYAML(Vertx vertx, Path path) {
         return readFile(vertx, path).compose(buffer -> parseYAML(vertx, buffer));
     }

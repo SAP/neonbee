@@ -1,5 +1,6 @@
 package io.neonbee.endpoint.odatav4;
 
+import static com.google.common.base.Strings.emptyToNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.base.Strings.nullToEmpty;
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.STRICT;
@@ -22,7 +23,6 @@ import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Strings;
 
 import io.neonbee.config.EndpointConfig;
 import io.neonbee.endpoint.Endpoint;
@@ -40,6 +40,9 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class ODataV4Endpoint implements Endpoint {
+    /**
+     * The default path the OData V4 endpoint is exposed by NeonBee.
+     */
     public static final String DEFAULT_BASE_PATH = "/odata/";
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
@@ -297,13 +300,13 @@ public class ODataV4Endpoint implements Endpoint {
      * Asserting the most specific URI, given the following example from the OASIS OData URI specification:
      *
      * <pre>
-     *   http://host:port/path/SampleService.svc/Categories(1)/Products?$top=2&$orderby=Name
+     *   http://host:port/path/SampleService.svc/Categories(1)/Products?$top=2&amp;$orderby=Name
      * </pre>
      *
      * Assuming loose URI conversion is used, NeonBee will expose the service at:
      *
      * <pre>
-     *   http://host:port/path/sample-service-svc/Categories(1)/Products?$top=2&$orderby=Name
+     *   http://host:port/path/sample-service-svc/Categories(1)/Products?$top=2&amp;$orderby=Name
      * </pre>
      *
      * We get the following information from the handler configuration:
@@ -315,9 +318,9 @@ public class ODataV4Endpoint implements Endpoint {
      * We get the following information from the routing context / request:
      *
      * <pre>
-     *   requestUri      = http://host:port/path/sample-service-svc/Categories(1)/Products?$top=2&$orderby=Name
+     *   requestUri      = http://host:port/path/sample-service-svc/Categories(1)/Products?$top=2&amp;$orderby=Name
      *   requestPath     = /path/sample-service-svc/Categories(1)/Products
-     *   requestQuery    = $top=2&$orderby=Name
+     *   requestQuery    = $top=2&amp;$orderby=Name
      *   routeMountPoint = /path/
      *   routePath       = /sample-service-svc/
      * </pre>
@@ -326,9 +329,9 @@ public class ODataV4Endpoint implements Endpoint {
      * URI conversion was performed:
      *
      * <pre>
-     *   requestUri        = http://host:port/path/SampleService.svc/Categories(1)/Products?$top=2&$orderby=Name
+     *   requestUri        = http://host:port/path/SampleService.svc/Categories(1)/Products?$top=2&amp;$orderby=Name
      *   requestPath       = /path/SampleService.svc/Categories(1)/Products
-     *   requestQuery      = $top=2&$orderby=Name
+     *   requestQuery      = $top=2&amp;$orderby=Name
      *   baseUri           = http://host:port/path/
      *   basePath          = /path/
      *   schemaNamespace   = SampleService.svc
@@ -339,16 +342,16 @@ public class ODataV4Endpoint implements Endpoint {
      *//* @formatter:on */
     public static class NormalizedUri {
         /**
-         * The full request URI:
+         * The full request URI.
          *
          * <pre>
-         * http://host:port/path/SampleService.svc/Categories(1)/Products?$top=2&$orderby=Name
+         * http://host:port/path/SampleService.svc/Categories(1)/Products?$top=2&amp;$orderby=Name
          * </pre>
          */
         public final String requestUri;
 
         /**
-         * The requests path:
+         * The requests path.
          *
          * <pre>
          * /path/SampleService.svc/Categories(1)/Products
@@ -357,16 +360,16 @@ public class ODataV4Endpoint implements Endpoint {
         public final String requestPath;
 
         /**
-         * The requests query:
+         * The requests query.
          *
          * <pre>
-         * $top=2&$orderby=Name
+         * $top=2&amp;$orderby=Name
          * </pre>
          */
         public final String requestQuery;
 
         /**
-         * The base URI of the OData endpoint:
+         * The base URI of the OData endpoint.
          *
          * <pre>
          * http://host:port/path/
@@ -375,7 +378,7 @@ public class ODataV4Endpoint implements Endpoint {
         public final String baseUri;
 
         /**
-         * The base path of the OData endpoint:
+         * The base path of the OData endpoint.
          *
          * <pre>
          * /path/
@@ -384,7 +387,7 @@ public class ODataV4Endpoint implements Endpoint {
         public final String basePath;
 
         /**
-         * The schema namespace of the OData model the request was made for:
+         * The schema namespace of the OData model the request was made for.
          *
          * <pre>
          * SampleService.svc
@@ -393,7 +396,7 @@ public class ODataV4Endpoint implements Endpoint {
         public final String schemaNamespace;
 
         /**
-         * The full resource path of the OData request:
+         * The full resource path of the OData request.
          *
          * <pre>
          * /Categories(1)/Products
@@ -402,7 +405,7 @@ public class ODataV4Endpoint implements Endpoint {
         public final String resourcePath;
 
         /**
-         * The entity name of the requested entity (if any or null):
+         * The entity name of the requested entity (if any or null).
          *
          * <pre>
          * Categories
@@ -411,7 +414,7 @@ public class ODataV4Endpoint implements Endpoint {
         public final String entityName;
 
         /**
-         * The full qualified name of the requested entity (if any or null):
+         * The full qualified name of the requested entity (if any or null).
          *
          * <pre>
          * Categories
@@ -423,11 +426,12 @@ public class ODataV4Endpoint implements Endpoint {
             // the (unconverted) schema namespace is a input to the constructor
             this.schemaNamespace = schemaNamespace;
 
-            Route route = routingContext.currentRoute();
             // note that getPath() returns *only* the path prefix, so essentially the base path and converted schema
             // namespace with leading and tailing slashes w/o the tailing *, which is handled and stripped by the router
-            String routeMountPoint = routingContext.mountPoint(), routePath = // routePath w/ exactly one tailing slash
-                    Optional.ofNullable(route).map(Route::getPath).orElse(EMPTY).replaceAll("/+$", EMPTY) + "/";
+            String routeMountPoint = routingContext.mountPoint();
+            // routePath with exactly one tailing slash
+            String routePath = Optional.ofNullable(routingContext.currentRoute()).map(Route::getPath).orElse(EMPTY)
+                    .replaceAll("/+$", EMPTY) + "/";
 
             HttpServerRequest request = routingContext.request();
             String requestPath = request.path();
@@ -443,15 +447,14 @@ public class ODataV4Endpoint implements Endpoint {
 
             // parse out the resource path and entity name
             resourcePath = requestPath.substring(routeMountPoint.length() + routePath.length() - 1);
-            entityName = Strings.emptyToNull(resourcePath.split("\\W", 2)[0]); // assume the first non-word character
-                                                                               // separates it
+            entityName = emptyToNull(resourcePath.split("\\W", 2)[0]); // assume the first non-word char. separates it
 
             // if an entity name is provided, concatenate the full qualified name
             fullQualifiedName = entityName != null ? schemaNamespace + '.' + entityName : null;
 
             // construct the full request path and URI, the query is provided by the request
             requestUri = hostUri + (this.requestPath = basePath + schemaNamespace + resourcePath)
-                    + (!(requestQuery = Strings.nullToEmpty(request.query())).isEmpty() ? "?" + requestQuery : EMPTY);
+                    + (!(requestQuery = nullToEmpty(request.query())).isEmpty() ? "?" + requestQuery : EMPTY);
         }
 
         @Override

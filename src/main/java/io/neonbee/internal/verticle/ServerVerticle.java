@@ -77,8 +77,9 @@ public class ServerVerticle extends AbstractVerticle {
         // the main router of the server verticle
         Router router = Router.router(vertx);
 
-        { // instead of creating new routes, vert.x recommends to add multiple handlers to one route instead. to prevent
-          // sequence issues, block scope the variable to prevent using it after the endpoints have been mounted
+        // instead of creating new routes, vert.x recommends to add multiple handlers to one route instead. to prevent
+        // sequence issues, block scope the variable to prevent using it after the endpoints have been mounted
+        {
             Route rootRoute = router.route();
 
             rootRoute.failureHandler(ErrorHandler.create(/* use default error template */));

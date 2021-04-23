@@ -8,6 +8,8 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.errorprone.annotations.Immutable;
+
 import io.neonbee.internal.json.ImmutableJsonObject;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.Fluent;
@@ -26,11 +28,16 @@ import io.vertx.ext.auth.oauth2.OAuth2Options;
 public class AuthProviderConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+    private AuthProviderType type;
+
+    private JsonObject additionalConfig;
+
     /**
      * Private functional interface for {@link AuthProviderType} enumeration.
      */
+    @Immutable
     @FunctionalInterface
-    private static interface AuthProviderFactory {
+    private interface AuthProviderFactory {
         /**
          * Create a Vert.x {@link AuthenticationProvider} based on the {@link AuthProviderConfig}.
          *
@@ -44,6 +51,7 @@ public class AuthProviderConfig {
     /**
      * The type of the authentication provider supported by NeonBee.
      */
+    @Immutable
     public enum AuthProviderType implements AuthProviderFactory {
         /**
          * An authentication provider using a .htdigest file as store.
@@ -92,17 +100,13 @@ public class AuthProviderConfig {
         }
     }
 
-    private AuthProviderType type;
-
-    private JsonObject additionalConfig;
-
     /**
-     * Creates an initial {@linkplain AuthProviderConfig}
+     * Creates an initial {@linkplain AuthProviderConfig}.
      */
     public AuthProviderConfig() {}
 
     /**
-     * Creates a {@linkplain AuthProviderConfig} parsing a given JSON object
+     * Creates a {@linkplain AuthProviderConfig} parsing a given JSON object.
      *
      * @param json the JSON object to parse
      */
@@ -113,7 +117,7 @@ public class AuthProviderConfig {
     }
 
     /**
-     * Transforms this configuration object into JSON
+     * Transforms this configuration object into JSON.
      *
      * @return a JSON representation of this configuration
      */
@@ -124,7 +128,7 @@ public class AuthProviderConfig {
     }
 
     /**
-     * Returns the type of the authentication provider
+     * Returns the type of the authentication provider.
      *
      * @return the type as {@linkplain AuthProviderType}
      */
@@ -133,7 +137,7 @@ public class AuthProviderConfig {
     }
 
     /**
-     * Sets the type of the authentication provider
+     * Sets the type of the authentication provider.
      *
      * @param type the type to set
      * @return the {@linkplain AuthProviderConfig} for fluent use
@@ -145,7 +149,7 @@ public class AuthProviderConfig {
     }
 
     /**
-     * Returns additional configurations for this specific authentication provider type
+     * Returns additional configurations for this specific authentication provider type.
      *
      * @return additional configurations as JSON object
      */
@@ -154,7 +158,7 @@ public class AuthProviderConfig {
     }
 
     /**
-     * Sets additional configurations for this specific authentication provider type
+     * Sets additional configurations for this specific authentication provider type.
      *
      * @param additionalConfig the additional configuration to set
      * @return the {@linkplain AuthProviderConfig} for fluent use
@@ -165,6 +169,13 @@ public class AuthProviderConfig {
         return this;
     }
 
+    /**
+     * Creates a new {@link AuthenticationProvider} based on this configuration, which is used to provide the
+     * authorization for some or all endpoints.
+     *
+     * @param vertx the Vert.x instance to use to create the authentication provider
+     * @return the created {@link AuthenticationProvider}
+     */
     public AuthenticationProvider createAuthProvider(Vertx vertx) {
         return type.createAuthProvider(vertx, additionalConfig);
     }

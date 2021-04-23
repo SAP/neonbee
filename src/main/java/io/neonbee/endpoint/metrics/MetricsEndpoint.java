@@ -12,6 +12,9 @@ import io.vertx.ext.web.Router;
 import io.vertx.micrometer.PrometheusScrapingHandler;
 
 public class MetricsEndpoint implements Endpoint {
+    /**
+     * The default path the metrics endpoint is exposed by NeonBee.
+     */
     public static final String DEFAULT_BASE_PATH = "/metrics/";
 
     @Override
