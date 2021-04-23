@@ -100,6 +100,21 @@ class RawEndpointTest extends DataVerticleTestBase {
     }
 
     @Test
+    @Timeout(value = 2, timeUnit = TimeUnit.HOURS)
+    @DisplayName("RawDataEndpoint must prohibit requests to DataVerticles starting with underscore by default")
+    void testProhibitRequestsToUnderScoreDVsByDefault(VertxTestContext testContext) {
+        String verticleName = "_TestVerticle" + UUID.randomUUID().toString();
+
+        DataVerticle<String> dummy =
+                createDummyDataVerticle(NEONBEE_NAMESPACE + '/' + verticleName).withStaticResponse("You have failed");
+        deployVerticle(dummy).compose(s -> sendRequest(verticleName, "", ""))
+                .onComplete(testContext.succeeding(res -> testContext.verify(() -> {
+                    assertThat(res.statusCode()).isEqualTo(404);
+                    testContext.completeNow();
+                })));
+    }
+
+    @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("RawDataEndpointHandler must set uriPath and query correct")
     void testPassQueryToDataQuery(VertxTestContext testContext) {

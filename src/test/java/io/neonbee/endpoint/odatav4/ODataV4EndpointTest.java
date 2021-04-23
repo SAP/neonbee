@@ -100,6 +100,7 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
         assertThat(CDS.apply("concatenateWordsWith-.FOOBarBAZService")).isEqualTo("foobarbaz");
         assertThat(CDS.apply("everythingGoesLowerCase.FOO-BAR-BAZ")).isEqualTo("foo-bar-baz");
         assertThat(CDS.apply("replaceAny_With-.FOO_BAR")).isEqualTo("foo-bar");
+        assertThat(CDS.apply("Service")).isEqualTo("");
 
         // special case, naming a service in a namespace only "Service" will result in the empty name for the service
         assertThat(CDS.apply("any.namespace.Service")).isEqualTo("");
@@ -108,6 +109,7 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
         assertThat(LOOSE.apply("my.very.CatalogService")).isEqualTo("my-very-catalog");
         assertThat(LOOSE.apply("io.neonbee.test.TestService1")).isEqualTo("io-neonbee-test-test-service1");
         assertThat(LOOSE.apply("Frontend.Service")).isEqualTo("frontend");
+        assertThat(LOOSE.apply("Service")).isEqualTo("");
     }
 
     private Future<HttpResponse<Buffer>> requestMetadata(String namespace) {
@@ -134,7 +136,7 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
         all(assertOData(requestMetadata("io-neonbee-handler-test"), ODataV4EndpointTest::assertTS1Handler, testContext),
                 assertOData(requestMetadata("io-neonbee-handler2-test2"), ODataV4EndpointTest::assertTS2Handler,
                         testContext),
-                assertOData(requestMetadata("test-service3"), ODataV4EndpointTest::assertTS3Handler, testContext))
+                assertOData(requestMetadata(""), ODataV4EndpointTest::assertTS3Handler, testContext))
                         .onComplete(testContext.succeedingThenComplete());
     }
 
