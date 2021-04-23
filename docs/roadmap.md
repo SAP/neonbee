@@ -40,7 +40,7 @@ At the time of open sourcing to GitHub.com, NeonBee at version 0.2 still has to 
 
 ### 🚀 Milestones + Progress
 
-**ONGOING** 📉 0 / 11 milestones completed (0%) 📅 2022
+**ONGOING** 📉 1 / 11 milestones completed (9%) 📅 2022
 
 | Status | 🚀 Milestone | [Types](https://www.conventionalcommits.org/) |
 | :---: | :--- | --- |
@@ -49,7 +49,7 @@ At the time of open sourcing to GitHub.com, NeonBee at version 0.2 still has to 
 | ❌ | [Improve error handling and logging](milestones/E1_MS03_error_handling.md) | `feat` |
 | ⚡ | [Full OASIS OData V4 support](milestones/E1_MS04_odata_support.md) | `feat` |
 | ❌ | [New deployables concept](milestones/E1_MS05_new_deployables_concept.md) | `feat` |
-| ⚡ | [Configurable modular endpoints](milestones/E1_MS06_configurable_endpoints.md) | `feat`, `build` |
+| ✔️ | [Configurable modular endpoints](milestones/E1_MS06_configurable_endpoints.md) | `feat`, `build` |
 | ❌ | [Documentation and homepage](milestones/E1_MS07_documentation.md) | `docs` |
 | ❌ | [Gradle build tooling](milestones/E1_MS08_build_tooling.md) | `build` |
 | ❌ | [Admin console / administrative user interface](milestones/E1_MS09_admin_console.md) | `feat` |
