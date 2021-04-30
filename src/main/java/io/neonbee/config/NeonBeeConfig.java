@@ -1,4 +1,4 @@
-package io.neonbee;
+package io.neonbee.config;
 
 import java.util.List;
 import java.util.Map;
