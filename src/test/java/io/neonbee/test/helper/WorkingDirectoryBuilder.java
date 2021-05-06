@@ -15,6 +15,8 @@ import java.util.function.Consumer;
 
 import com.sap.cds.reflect.CdsModel;
 
+import io.neonbee.NeonBee;
+import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.entity.ModelDefinitionHelper;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.vertx.core.DeploymentOptions;
@@ -56,6 +58,8 @@ public final class WorkingDirectoryBuilder {
     private final Set<Path> models = new HashSet<>();
 
     private Consumer<Path> customTask;
+
+    private NeonBeeConfig neonbeeConfig;
 
     private WorkingDirectoryBuilder(DirType dirType, Path sourcePath) {
         this.dirType = dirType;
@@ -112,10 +116,21 @@ public final class WorkingDirectoryBuilder {
      * working directory.
      *
      * @param customTask {@link Path} to the model
-     * @return The WorkingDirectoryBuilder
+     * @return the WorkingDirectoryBuilder
      */
     public WorkingDirectoryBuilder setCustomTask(Consumer<Path> customTask) {
         this.customTask = customTask;
+        return this;
+    }
+
+    /**
+     * Adds the NeonBeeConfig to the working directory.
+     *
+     * @param neonbeeConfig the {@link NeonBeeConfig} to set.
+     * @return the WorkingDirectoryBuilder
+     */
+    public WorkingDirectoryBuilder setNeonBeeConfig(NeonBeeConfig neonbeeConfig) {
+        this.neonbeeConfig = neonbeeConfig;
         return this;
     }
 
@@ -154,6 +169,11 @@ public final class WorkingDirectoryBuilder {
 
         for (Path modelToAdd : models) {
             copyModel(workingDirRoot.resolve(MODELS_DIR), modelToAdd);
+        }
+
+        if (neonbeeConfig != null) {
+            Path destination = workingDirRoot.resolve(CONFIG_DIR).resolve(NeonBee.class.getName() + ".json");
+            Files.writeString(destination, neonbeeConfig.toJson().encodePrettily());
         }
 
         Optional.ofNullable(customTask).ifPresent(ct -> ct.accept(workingDirRoot));
