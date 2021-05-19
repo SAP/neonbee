@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 
+import io.neonbee.NeonBee;
 import io.neonbee.config.AuthHandlerConfig;
 import io.neonbee.config.EndpointConfig;
 import io.neonbee.config.ServerConfig;
@@ -98,6 +99,10 @@ public class ServerVerticle extends AbstractVerticle {
                 new HooksHandler()).onFailure(startPromise::fail).onSuccess(nothing -> {
                     // the NotFoundHandler fails the routing context finally
                     router.route().handler(new NotFoundHandler());
+
+                    // Use the port passed via command line options, instead the configured one.
+                    Optional.ofNullable(NeonBee.get(vertx).getOptions().getServerPort())
+                            .ifPresent(port -> config.setPort(port));
 
                     vertx.createHttpServer(config /* ServerConfig is a HttpServerOptions subclass */)
                             .exceptionHandler(throwable -> {
