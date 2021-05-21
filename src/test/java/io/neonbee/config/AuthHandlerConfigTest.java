@@ -2,20 +2,28 @@ package io.neonbee.config;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.config.AuthHandlerConfig.AuthHandlerType.HTDIGEST;
+import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.IOException;
+import java.util.Base64;
 import java.util.function.BiConsumer;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.neonbee.NeonBeeMockHelper;
 import io.neonbee.config.AuthHandlerConfig.AuthHandlerType;
 import io.neonbee.config.AuthProviderConfig.AuthProviderType;
 import io.neonbee.internal.helper.StringHelper;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.VertxExtension;
 
+@ExtendWith(VertxExtension.class)
 class AuthHandlerConfigTest {
 
     @Test
@@ -76,6 +84,21 @@ class AuthHandlerConfigTest {
         AuthProviderConfig apc = new AuthProviderConfig().setType(AuthProviderType.JDBC);
         assertThat(ahc.setAuthProviderConfig(apc)).isSameInstanceAs(ahc);
         assertThat(ahc.getAuthProviderConfig()).isEqualTo(apc);
+    }
+
+    @Test
+    @DisplayName("test that creation of JWT AuthHandler works")
+    void testCreateAuthHandlerJWT(Vertx vertx) throws IOException {
+        Buffer pem = Buffer.buffer("-----BEGIN PUBLIC KEY-----\n");
+        pem.appendBuffer(TEST_RESOURCES.getRelated("publicKey.txt")).appendString("\n-----END PUBLIC KEY-----");
+
+        JsonObject pubKey = new JsonObject().put("buffer", Base64.getEncoder().encodeToString(pem.getBytes()))
+                .put("algorithm", "RS256");
+        AuthProviderConfig apc = new AuthProviderConfig().setType(AuthProviderType.JWT);
+        apc.getAdditionalConfig().put("pubSecKeys", new JsonArray().add(pubKey));
+        AuthHandlerConfig ahc = new AuthHandlerConfig().setType(AuthHandlerType.JWT).setAuthProviderConfig(apc);
+
+        assertThat(ahc.createAuthHandler(vertx)).isNotNull();
     }
 
     @Test
