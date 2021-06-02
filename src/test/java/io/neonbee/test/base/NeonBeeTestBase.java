@@ -38,10 +38,8 @@ import io.neonbee.test.helper.DummyVerticleHelper.DummyDataVerticleFactory;
 import io.neonbee.test.helper.DummyVerticleHelper.DummyEntityVerticleFactory;
 import io.neonbee.test.helper.FileSystemHelper;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -49,7 +47,6 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.authentication.Credentials;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.client.HttpRequest;
@@ -289,11 +286,6 @@ public class NeonBeeTestBase {
                         }
 
                         ctx.next();
-                    }
-
-                    @Override
-                    public void parseCredentials(RoutingContext context, Handler<AsyncResult<Credentials>> handler) {
-                        handler.handle(succeededFuture());
                     }
                 });
             }

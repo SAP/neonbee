@@ -31,13 +31,10 @@ import io.neonbee.internal.handler.InstanceInfoHandler;
 import io.neonbee.internal.handler.LoggerHandler;
 import io.neonbee.internal.handler.NotFoundHandler;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.authentication.Credentials;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -62,11 +59,6 @@ public class ServerVerticle extends AbstractVerticle {
         @Override
         public void handle(RoutingContext routingContext) {
             routingContext.next();
-        }
-
-        @Override
-        public void parseCredentials(RoutingContext context, Handler<AsyncResult<Credentials>> handler) {
-            handler.handle(succeededFuture());
         }
     };
 
