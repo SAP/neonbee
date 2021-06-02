@@ -69,6 +69,13 @@ consoleReporter {
             thresholdWarning -= 5
             thresholdError -= 5
         }
+
+        // Clustered tests ared disabled on Github Actions
+        if (Objects.nonNull(System.getenv("GITHUB_WORKFLOW"))) {
+            thresholdFine -= 1
+            thresholdWarning -= 1
+            thresholdError -= 1
+        }
     }
 }
 

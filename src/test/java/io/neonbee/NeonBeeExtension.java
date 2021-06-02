@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -24,6 +25,8 @@ import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
+import org.junit.jupiter.api.extension.ConditionEvaluationResult;
+import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
 import org.junit.jupiter.api.extension.ExtensionContext.Store;
@@ -42,7 +45,7 @@ import io.vertx.junit5.VertxTestContext;
 
 @SuppressWarnings("rawtypes")
 public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionCallback, AfterTestExecutionCallback,
-        BeforeEachCallback, AfterEachCallback, BeforeAllCallback, AfterAllCallback {
+        BeforeEachCallback, AfterEachCallback, BeforeAllCallback, AfterAllCallback, ExecutionCondition {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NeonBeeExtension.class);
 
@@ -295,5 +298,13 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
                 }
             }
         };
+    }
+
+    @Override
+    public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
+        if (Objects.isNull(System.getenv("GITHUB_WORKFLOW"))) {
+            return ConditionEvaluationResult.enabled("No Github Actions -> Run Tests");
+        }
+        return ConditionEvaluationResult.disabled("Github Actions -> Skip Tests");
     }
 }
