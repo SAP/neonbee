@@ -1,5 +1,70 @@
 # Changelog
 
+## 0.5.0 (2021-06-07)
+
+### Bug Fixes
+
+- use gradle task for setting new version ([9295c74a](https://github.com/SAP/neonbee/commit/9295c74a04e1bde51859f03b381a73900be054ab))
+- correct typos ([d340192e](https://github.com/SAP/neonbee/commit/d340192ea4f837d7c8186c47a8bb8b921f230981))
+- switch to async. log appender ([880b338b](https://github.com/SAP/neonbee/commit/880b338b04bbaee03fc7aede7cf6fe823f3d85d8))
+- add fake URI path to navigation properties requests ([3d2af584](https://github.com/SAP/neonbee/commit/3d2af584f49f6272d06c0c8f82c6aaae3cd197c9))
+- enable parseUriInfo for OData URIs containing properties ([fea16bde](https://github.com/SAP/neonbee/commit/fea16bdece36b846559cf6353f638345240c1b63))
+- re-enable system query count ([d90c40f8](https://github.com/SAP/neonbee/commit/d90c40f80537d71fdb2df5abd4c5d7671f674391))
+- calculation of system query count ([35bd1dce](https://github.com/SAP/neonbee/commit/35bd1dcea21a95f464e8b0ff14b26476b760d7ac))
+- respect HTTP server port configuration in NeonBee options ([4cdbd150](https://github.com/SAP/neonbee/commit/4cdbd1506cc28ed5709ce385a42e7817d12d2144))
+- example for ServerVerticle (ServerConfig) ([2509bfcc](https://github.com/SAP/neonbee/commit/2509bfcc27f8aa71bc60b0146ec6546b9c0875c5))
+
+
+### Code Refactoring
+
+- remove annotation provider leftovers ([1b9e0059](https://github.com/SAP/neonbee/commit/1b9e00599052568e5d4412586cae49bd5c08c21d))
+- split up god-class "Helper" ([aacf9ff8](https://github.com/SAP/neonbee/commit/aacf9ff802db23d80929030610630b3e4d78bb48))
+- refactor NeonBee class ([61800401](https://github.com/SAP/neonbee/commit/6180040137d717b8d2be66acd236e5867a397f82))
+- move files to prepare upcoming NeonBeeConfig change ([0f47cec2](https://github.com/SAP/neonbee/commit/0f47cec27a0963e16d8acbd911637926db95745d))
+- serverPort + timeZone in options / config and Launcher ([9499d2f3](https://github.com/SAP/neonbee/commit/9499d2f3a84f69fc863e62fa3527991867e73cbc))
+- move files to prepare endpoints change ([ddb9c29d](https://github.com/SAP/neonbee/commit/ddb9c29d562377f0ae19584f27008ee35cfe7359))
+
+
+### Features
+
+- add limited support for OData navigation properties ([d520f703](https://github.com/SAP/neonbee/commit/d520f703574b10ae631e6cac9187b8e71984cf46))
+- make launcher options configurable via env ([f51886d0](https://github.com/SAP/neonbee/commit/f51886d00d6125fe90ea821300cb32943e685475))
+- add Vert.x code generation and made NeonBeeConfig a DataObject ([e026ab19](https://github.com/SAP/neonbee/commit/e026ab194618cb77f4ebe1a191e86b882531c540))
+- add missing tests for NeonBeeOptions ([9608bcca](https://github.com/SAP/neonbee/commit/9608bcca7b1045747fc8b66421c549fe7bbacf7f))
+- add missing tests for NeonBeeConfig ([40b66db0](https://github.com/SAP/neonbee/commit/40b66db0ac8ea592ffa560b370d3e52a6a42edcc))
+- make the ServerVerticle and its endpoints fully configurable ([7871036d](https://github.com/SAP/neonbee/commit/7871036dedbef47d84116dee0cdcd092b2bb7354))
+- add support for custom error handlers ([0b34d82c](https://github.com/SAP/neonbee/commit/0b34d82cf0682ad9698011446576e3152cbe7973))
+- add test for JWT AuthHandler creation ([ac544cfa](https://github.com/SAP/neonbee/commit/ac544cfa75ac64a5f46d26730601be0305b4da55))
+- introduce exposedEntities/Verticles allow/block lists ([2c4e8356](https://github.com/SAP/neonbee/commit/2c4e8356bbd37705fefe36b0fe2cf87be9691696))
+
+
+### Documentation
+
+- update roadmap ([e98466eb](https://github.com/SAP/neonbee/commit/e98466eb5b0c09b3d90ce3df5e98da8218070b80))
+- mark configurable endpoints milestone as done ([e2003852](https://github.com/SAP/neonbee/commit/e200385258894225ff83cd88c24475d6d7060b7a))
+
+
+### Chores
+
+- add PMD rules to avoid unnecessary modifiers in tests ([2e1c95dd](https://github.com/SAP/neonbee/commit/2e1c95dd52545396de8dd3a42d7b08f3580a6b18))
+- add java doc build for test sources to the voter ([decc350d](https://github.com/SAP/neonbee/commit/decc350d5384972d3f66f28b81d7e5ae7f027571))
+- bump static code dependencies ([59a1ba87](https://github.com/SAP/neonbee/commit/59a1ba87042348785908ad7735f165f4d7d4231b))
+
+
+### Build System
+
+- **ci**: set Github Actions OS to ubuntu-18.04 ([a7c20b1b](https://github.com/SAP/neonbee/commit/a7c20b1b1c166ef855c14fc627dce18e4c4d3bc6))
+- **commitlint**: allow pascal-case scopes ([1a80e51d](https://github.com/SAP/neonbee/commit/1a80e51d4a1edd02f385b6bab5353b8afaaf997b))
+- **deps**: replace cds-services-impl with cds4j-core ([a72d2d0e](https://github.com/SAP/neonbee/commit/a72d2d0e95511610cc219b8c3dc6e867a8fab4ae))
+- **deps**: bump `vertx` from 4.0.3 to 4.1.0 ([55753cbd](https://github.com/SAP/neonbee/commit/55753cbd9ae50544be857453c66e5e89fc29536e))
+
+
+### Continuous Integration
+
+- **actions**: disable sonarqube on forks ([dc73c8ef](https://github.com/SAP/neonbee/commit/dc73c8ef1566084a404b4478fc385e8a844afc39))
+- **actions**: disable sonarqube on pull requests ([0f1135a7](https://github.com/SAP/neonbee/commit/0f1135a792efadece349464ba423ebe472f903f2))
+
+
 ## 0.4.0 (2021-03-18)
 
 ### Bug Fixes
