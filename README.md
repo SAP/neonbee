@@ -60,6 +60,8 @@ Endpoints are standardized interfaces provided by NeonBee. Endpoints call entry 
 
 ## Getting Started
 
+NeonBee itself doesn't provide any examples yet, but some examples can be found in this [repository](https://github.com/gedack/neonbee-examples).
+
 The NeonBee data processing framework can be started like any other ordinary application server by using the start-up scripts provided in the root folder of NeonBee. By default, the boot sequence will check for verticles in the `/verticles` directory as well as from any remote source configured and deploy all these verticles automatically. This can be customized via command line and via a central configuration file in the `/config` directory. Also, the data model definition can be updated / loaded during runtime. To do so, valid CDS files must be put into the `/models` directory.
 
 ### Writing Your First Data Verticles
