@@ -87,28 +87,6 @@ public class ClassPathScanner {
 
     /**
      * Scans the class path for MANIFEST.MF files (in JARs), in case the manifest file contains the given attribute,
-     * returns the value.
-     *
-     * This method should be invoked on a {@link ClassLoader} with a single jat file only.
-     *
-     * @param attributeName The name of the attribute in the MANIFEST.MF to search for.
-     * @return value of the attribute
-     *
-     * @throws IOException exception
-     */
-    public String retrieveManifestAttribute(String attributeName) throws IOException {
-        List<URL> manifestResourceURLs = getManifestResourceURLs();
-        if (manifestResourceURLs.size() != 1) {
-            throw new IllegalStateException("Only one MANIFEST.MF expected, but found " + manifestResourceURLs.size());
-        }
-        try (InputStream inputStream = manifestResourceURLs.get(0).openStream()) {
-            // Attribute looks like: Attribute-Name: package.Resource1; package.Resource2
-            return new Manifest(inputStream).getMainAttributes().getValue(attributeName);
-        }
-    }
-
-    /**
-     * Scans the class path for MANIFEST.MF files (in JARs), in case the manifest file contains the given attribute,
      * parses the attribute and returns the values as a list of string.
      *
      * This allows to e.g. denote certain classes or resources of the JAR files to be exposed.

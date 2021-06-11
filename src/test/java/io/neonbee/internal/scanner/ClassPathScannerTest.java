@@ -107,19 +107,4 @@ class ClassPathScannerTest {
         assertThat(cps.scanForAnnotation(List.of(Transient.class, Deprecated.class), METHOD))
                 .containsExactly("method.Hodor2", "method.Hodor");
     }
-
-    @Test
-    @DisplayName("Should find passed attribute in all Manifest files")
-    void retrieveManifestAttribute() throws IOException {
-        String attribute1Name = "Attr1";
-        String attribute2Name = "Attr2";
-        String manifest1Attribute1Value = "M1A1V1";
-        BasicJar jarWithManifest1 = new BasicJar(Map.of(attribute1Name, manifest1Attribute1Value), Map.of());
-        URLClassLoader urlClassLoader =
-                new URLClassLoader(new URL[] { jarWithManifest1.writeToTempPath().toUri().toURL() }, null);
-        ClassPathScanner classPathScanner = new ClassPathScanner(urlClassLoader);
-
-        assertThat(classPathScanner.retrieveManifestAttribute(attribute1Name)).isEqualTo(manifest1Attribute1Value);
-        assertThat(classPathScanner.retrieveManifestAttribute(attribute2Name)).isNull();
-    }
 }

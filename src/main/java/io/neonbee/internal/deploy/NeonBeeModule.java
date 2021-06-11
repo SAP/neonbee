@@ -263,6 +263,7 @@ public class NeonBeeModule {
             try {
                 if (!Files.exists(pathOfJar)) {
                     promise.fail(new IOException("JAR path does not exist: " + pathOfJar.toString()));
+                    return;
                 }
                 URL[] jarUrl = { pathOfJar.toUri().toURL() };
 
@@ -270,15 +271,22 @@ public class NeonBeeModule {
                 // contains this JAR is needed.
                 try (URLClassLoader classLoader = new URLClassLoader(jarUrl, null)) {
                     ClassPathScanner cps = new ClassPathScanner(classLoader);
-                    String moduleName = cps.retrieveManifestAttribute(NEONBEE_MODULE);
+                    List<String> moduleName = cps.scanManifestFiles(NEONBEE_MODULE);
+                    if (moduleName.isEmpty()) {
+                        promise.fail("Invalid NeonBee-Module: No " + NEONBEE_MODULE + "attribute found.");
+                        return;
+                    } else if (moduleName.size() > 1) {
+                        promise.fail("Invalid NeonBee-Module: Too many " + NEONBEE_MODULE + "attributes found.");
+                        return;
+                    }
                     Map<String, byte[]> models = loadModelPayloads(classLoader, cps.scanManifestFiles(NEONBEE_MODELS));
                     Map<String, byte[]> extensionModels =
                             loadModelPayloads(classLoader, cps.scanManifestFiles(NEONBEE_MODEL_EXTENSIONS));
                     SelfFirstClassLoader moduleClassLoader = new SelfFirstClassLoader(jarUrl,
                             ClassLoader.getSystemClassLoader(), NeonBee.get(vertx).getConfig().getPlatformClasses());
                     verticleClasses.addAll(loadClassesToDeploy(cps, moduleClassLoader));
-                    promise.complete(new NeonBeeModule(vertx, moduleName, correlationId, pathOfJar, verticleClasses,
-                            models, extensionModels));
+                    promise.complete(new NeonBeeModule(vertx, moduleName.get(0), correlationId, pathOfJar,
+                            verticleClasses, models, extensionModels));
                 }
             } catch (RuntimeException | IOException | ClassNotFoundException | LinkageError e) {
                 promise.fail(e);

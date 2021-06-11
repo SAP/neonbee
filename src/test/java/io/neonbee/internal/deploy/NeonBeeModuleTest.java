@@ -1,6 +1,7 @@
 package io.neonbee.internal.deploy;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.internal.deploy.NeonBeeModule.NEONBEE_MODULE;
 import static io.neonbee.test.helper.FileSystemHelper.createTempDirectory;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -31,6 +32,7 @@ import io.neonbee.test.base.NeonBeeTestBase;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
+import io.vertx.core.impl.NoStackTraceThrowable;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
@@ -103,7 +105,7 @@ class NeonBeeModuleTest extends NeonBeeTestBase {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Parse JAR should handle exceptions correct")
     void fromJarThrowTest(Vertx vertx, VertxTestContext testContext) throws IOException {
-        Checkpoint checkIOException = testContext.checkpoint(2);
+        Checkpoint checkIOException = testContext.checkpoint(3);
 
         Path nonExistingPath = createTempDirectory().resolve("pathdoesnotexist");
         NeonBeeModule.fromJar(vertx, nonExistingPath, CORRELATION_ID).onComplete(testContext.failing(t -> {
@@ -113,6 +115,17 @@ class NeonBeeModuleTest extends NeonBeeTestBase {
                 checkIOException.flag();
             });
         }));
+
+        BasicJar noNeonBeeModuleAttribute = new BasicJar(Map.of(), Map.of());
+        NeonBeeModule.fromJar(vertx, noNeonBeeModuleAttribute.writeToTempPath(), CORRELATION_ID)
+                .onComplete(testContext.failing(t -> {
+                    testContext.verify(() -> {
+                        assertThat(t).isInstanceOf(NoStackTraceThrowable.class);
+                        assertThat(t).hasMessageThat()
+                                .isEqualTo("Invalid NeonBee-Module: No " + NEONBEE_MODULE + "attribute found.");
+                        checkIOException.flag();
+                    });
+                }));
 
         BasicJar brokenJar = new BasicJar(NeonBeeModuleJar.createManifest("testmodule", List.of("Hodor")), Map.of());
         NeonBeeModule.fromJar(vertx, brokenJar.writeToTempPath(), CORRELATION_ID).onComplete(testContext.failing(t -> {
