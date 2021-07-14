@@ -5,6 +5,7 @@ import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.CONFIG_URI_CONVERSION;
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.CDS;
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.LOOSE;
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.STRICT;
+import static io.neonbee.internal.helper.CollectionsHelper.multiMapToMap;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,6 +36,7 @@ import io.neonbee.data.DataContext;
 import io.neonbee.data.DataException;
 import io.neonbee.data.DataQuery;
 import io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion;
+import io.neonbee.entity.EntityVerticle;
 import io.neonbee.entity.EntityWrapper;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.neonbee.test.base.ODataEndpointTestBase;
@@ -41,6 +44,7 @@ import io.neonbee.test.base.ODataRequest;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
 import io.vertx.core.Verticle;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
@@ -174,6 +178,23 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
                     testContext.verify(() -> assertThat(resp.statusCode()).isEqualTo(statusCode));
                     testContext.completeNow();
                 }));
+    }
+
+    @Test
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("Query parameters should be decoded before being forwarded to an EntityVerticle")
+    void testURLQueryDecoding(VertxTestContext testContext) {
+        FullQualifiedName testUsersFQN = new FullQualifiedName("Service", "TestUsers");
+        MultiMap query = MultiMap.caseInsensitiveMultiMap().add("$filter", "description eq ''");
+        EntityVerticle dummy = createDummyEntityVerticle(testUsersFQN).withDynamicResponse((dataQuery, dataContext) -> {
+            testContext.verify(() -> assertThat(dataQuery.getParameters()).isEqualTo(multiMapToMap(query)));
+            testContext.completeNow();
+            return new EntityWrapper(testUsersFQN, (Entity) null);
+        });
+
+        // requestOData encodes the query parameters before sending them to the ODataV4Endpoint
+        deployVerticle(dummy).compose(v -> requestOData(new ODataRequest(testUsersFQN).setQuery(query)))
+                .onComplete(testContext.succeeding(v -> {}));
     }
 
     private static void assertTS1Handler(Buffer body) {
