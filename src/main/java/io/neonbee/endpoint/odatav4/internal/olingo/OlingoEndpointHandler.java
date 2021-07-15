@@ -138,8 +138,8 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
         /* @formatter:off *//*
          * The OData request is awaiting the following fields:
          *
-         * rawRequestUri = http://localhost/my%20service/sys1/Employees?$format=json,$top=10
-         * rawBaseUri = http://localhost/my%20service
+         * rawRequestUri = http://localhost/odata/sys1/Employees?$format=json,$top=10
+         * rawBaseUri = http://localhost/odata/
          * rawServiceResolutionUri = sys1
          * rawODataPath = /Employees
          * rawQueryPath = $format=json,$top=10

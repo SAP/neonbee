@@ -53,6 +53,9 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class ODataV4EndpointTest extends ODataEndpointTestBase {
+
+    private static final FullQualifiedName TEST_USERS = new FullQualifiedName("Service", "TestUsers");
+
     @Override
     protected List<Path> provideEntityModels() {
         return List.of(TEST_RESOURCES.resolveRelated("TestService1.csn"),
@@ -164,16 +167,15 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("ODataEndpointHandler must forward custom status codes from DataExceptions to the client")
     void testHTTPExceptions(int statusCode, VertxTestContext testContext) {
-        FullQualifiedName testUsersFQN = new FullQualifiedName("Service", "TestUsers");
         Verticle dummyVerticle =
-                createDummyEntityVerticle(testUsersFQN).withDataAdapter(new DataAdapter<EntityWrapper>() {
+                createDummyEntityVerticle(TEST_USERS).withDataAdapter(new DataAdapter<EntityWrapper>() {
                     @Override
                     public Future<EntityWrapper> retrieveData(DataQuery query, DataContext context) {
                         return Future.failedFuture(new DataException(statusCode));
                     }
                 });
 
-        deployVerticle(dummyVerticle).compose(v -> new ODataRequest(testUsersFQN).send(getNeonBee()))
+        deployVerticle(dummyVerticle).compose(v -> new ODataRequest(TEST_USERS).send(getNeonBee()))
                 .onComplete(testContext.succeeding(resp -> {
                     testContext.verify(() -> assertThat(resp.statusCode()).isEqualTo(statusCode));
                     testContext.completeNow();
@@ -184,16 +186,29 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Query parameters should be decoded before being forwarded to an EntityVerticle")
     void testURLQueryDecoding(VertxTestContext testContext) {
-        FullQualifiedName testUsersFQN = new FullQualifiedName("Service", "TestUsers");
         MultiMap query = MultiMap.caseInsensitiveMultiMap().add("$filter", "description eq ''");
-        EntityVerticle dummy = createDummyEntityVerticle(testUsersFQN).withDynamicResponse((dataQuery, dataContext) -> {
+        EntityVerticle dummy = createDummyEntityVerticle(TEST_USERS).withDynamicResponse((dataQuery, dataContext) -> {
             testContext.verify(() -> assertThat(dataQuery.getParameters()).isEqualTo(multiMapToMap(query)));
             testContext.completeNow();
-            return new EntityWrapper(testUsersFQN, (Entity) null);
+            return new EntityWrapper(TEST_USERS, (Entity) null);
         });
 
         // requestOData encodes the query parameters before sending them to the ODataV4Endpoint
-        deployVerticle(dummy).compose(v -> requestOData(new ODataRequest(testUsersFQN).setQuery(query)))
+        deployVerticle(dummy).compose(v -> requestOData(new ODataRequest(TEST_USERS).setQuery(query)))
+                .onComplete(testContext.succeeding(v -> {}));
+    }
+
+    @Test
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("Uri path on Entity request must start with a leading slash")
+    void testURIPathExtraction(VertxTestContext testContext) {
+        EntityVerticle dummy = createDummyEntityVerticle(TEST_USERS).withDynamicResponse((dataQuery, dataContext) -> {
+            testContext.verify(() -> assertThat(dataQuery.getUriPath()).isEqualTo("/Service/TestUsers"));
+            testContext.completeNow();
+            return new EntityWrapper(TEST_USERS, (Entity) null);
+        });
+
+        deployVerticle(dummy).compose(v -> requestOData(new ODataRequest(TEST_USERS)))
                 .onComplete(testContext.succeeding(v -> {}));
     }
 
