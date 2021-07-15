@@ -1,8 +1,7 @@
 package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
 import static io.neonbee.data.DataAction.READ;
-import static io.neonbee.entity.EntityVerticle.requestEntity;
-import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.forwardRequest;
 
 import java.io.InputStream;
 import java.util.List;
@@ -11,8 +10,6 @@ import java.util.Locale;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.Property;
-import org.apache.olingo.commons.api.edm.EdmEntitySet;
-import org.apache.olingo.commons.api.edm.EdmEntityType;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveType;
 import org.apache.olingo.commons.api.edm.EdmProperty;
 import org.apache.olingo.commons.api.format.ContentType;
@@ -30,12 +27,7 @@ import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 import org.apache.olingo.server.api.uri.UriResourceProperty;
 
-import io.neonbee.data.DataAction;
-import io.neonbee.data.DataQuery;
-import io.neonbee.data.DataRequest;
-import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.entity.EntityWrapper;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -73,12 +65,9 @@ public class PrimitiveProcessor extends AsynchronousProcessor
          * See https://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_URLComponents
          * for details about how the OData URL broken down into its component parts.
          */
-        List<UriResource> resourceParts = uriInfo.getUriResourceParts();
-        UriResourceEntitySet uriEntityset = (UriResourceEntitySet) resourceParts.get(0);
-        EdmEntitySet edmEntitySet = uriEntityset.getEntitySet();
-        EdmEntityType edmEntityType = edmEntitySet.getEntityType();
-
-        handleEntity(edmEntityType, request, READ, handleResult(uriEntityset, uriInfo, response, responseFormat));
+        Promise<Void> processPromise = getProcessPromise();
+        forwardRequest(request, READ, uriInfo, vertx, routingContext, processPromise)
+                .onSuccess(handleResult(uriInfo, response, responseFormat, processPromise));
     }
 
     @Override
@@ -94,34 +83,13 @@ public class PrimitiveProcessor extends AsynchronousProcessor
         throw new UnsupportedOperationException("deletePrimitive not implemented");
     }
 
-    private void handleEntity(EdmEntityType edmEntityType, ODataRequest request, DataAction action,
-            Handler<AsyncResult<EntityWrapper>> entityHandler) {
-        handleEntity(edmEntityType, request, action, (Entity) null, entityHandler);
-    }
-
-    void handleEntity(EdmEntityType edmEntityType, ODataRequest request, DataAction action, Entity entity,
-            Handler<AsyncResult<EntityWrapper>> entityHandler) {
-        String uriPath = request.getRawRequestUri().replaceFirst(request.getRawBaseUri(), EMPTY);
-        requestEntity(vertx,
-                new DataRequest(edmEntityType.getFullQualifiedName(),
-                        new DataQuery(action, uriPath, request.getRawQueryPath(), request.getAllHeaders(),
-                                new EntityWrapper(edmEntityType.getFullQualifiedName(), entity).toBuffer(vertx))
-                                        .addHeader("X-HTTP-Method", request.getMethod().name())),
-                new DataContextImpl(routingContext)).onComplete(entityHandler);
-    }
-
-    private Handler<AsyncResult<EntityWrapper>> handleResult(UriResourceEntitySet uriResourceEntitySet, UriInfo uriInfo,
-            ODataResponse response, ContentType responseFormat) {
-        Promise<Void> processPromise = getProcessPromise();
-        return asyncEntity -> {
-            if (asyncEntity.failed()) {
-                processPromise.fail(asyncEntity.cause());
-                return;
-            }
-
+    private Handler<EntityWrapper> handleResult(UriInfo uriInfo, ODataResponse response, ContentType responseFormat,
+            Promise<Void> processPromise) {
+        return ew -> {
             try {
-                Entity entity = EntityProcessor.findEntityByKeyPredicates(routingContext, uriResourceEntitySet,
-                        asyncEntity.result().getEntities());
+                UriResourceEntitySet uriEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0);
+                Entity entity =
+                        EntityProcessor.findEntityByKeyPredicates(routingContext, uriEntitySet, ew.getEntities());
                 if (entity == null) {
                     processPromise.fail(new ODataApplicationException("Entity not found",
                             HttpStatusCode.NOT_FOUND.getStatusCode(), Locale.ENGLISH));
@@ -148,7 +116,7 @@ public class PrimitiveProcessor extends AsynchronousProcessor
                 // Serialize the property's value
                 Object value = property.getValue();
                 if (value != null) {
-                    ContextURL contextUrl = ContextURL.with().entitySet(uriResourceEntitySet.getEntitySet())
+                    ContextURL contextUrl = ContextURL.with().entitySet(uriEntitySet.getEntitySet())
                             .navOrPropertyPath(edmPropertyName).build();
                     PrimitiveSerializerOptions options =
                             PrimitiveSerializerOptions.with().contextURL(contextUrl).build();
