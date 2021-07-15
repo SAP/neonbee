@@ -1,9 +1,10 @@
 package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
+import static io.neonbee.data.DataAction.READ;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.EntityProcessor.findEntityByKeyPredicates;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.chooseEntitySet;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.fetchNavigationTargetEntities;
-import static io.neonbee.entity.EntityVerticle.requestEntity;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.forwardRequest;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 
 import java.io.ByteArrayInputStream;
@@ -41,15 +42,10 @@ import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitEx
 
 import com.google.common.annotations.VisibleForTesting;
 
-import io.neonbee.data.DataQuery;
-import io.neonbee.data.DataRequest;
-import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.endpoint.odatav4.internal.olingo.expression.FilterExpressionVisitor;
 import io.neonbee.endpoint.odatav4.internal.olingo.expression.OrderExpressionExecutor;
-import io.neonbee.entity.EntityWrapper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
@@ -105,9 +101,9 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
         EntityCollection entityCollection = new EntityCollection();
         Promise<List<Entity>> responsePromise = Promise.promise();
 
-        if (resourceParts.size() == 1) {
-            // Fetch the data from backend
-            fetchEntities(request, edmEntityType, ew -> {
+        // Fetch the data from backend
+        forwardRequest(request, READ, uriInfo, vertx, routingContext, processPromise).onSuccess(ew -> {
+            if (resourceParts.size() == 1) {
                 try {
                     List<Entity> resultEntityList = applyFilterQueryOption(uriInfo.getFilterOption(), ew.getEntities());
                     applyCountOption(uriInfo.getCountOption(), resultEntityList, entityCollection);
@@ -122,9 +118,7 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
                 } catch (ODataException e) {
                     processPromise.fail(e);
                 }
-            });
-        } else {
-            fetchEntities(request, edmEntityType, ew -> {
+            } else {
                 try {
                     Entity foundEntity =
                             findEntityByKeyPredicates(routingContext, uriResourceEntitySet, ew.getEntities());
@@ -133,8 +127,8 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
                 } catch (ODataApplicationException e) {
                     processPromise.fail(e);
                 }
-            });
-        }
+            }
+        });
 
         responsePromise.future().onSuccess(finalResultEntities -> {
             entityCollection.getEntities().addAll(finalResultEntities);
@@ -152,12 +146,6 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
                 processPromise.fail(e);
             }
         }).onFailure(processPromise::fail);
-    }
-
-    private void fetchEntities(ODataRequest request, EdmEntityType edmEntityType,
-            Handler<EntityWrapper> resultHandler) {
-        requestEntity(vertx, new DataRequest(edmEntityType.getFullQualifiedName(), odataRequestToQuery(request)),
-                new DataContextImpl(routingContext)).onFailure(getProcessPromise()::fail).onSuccess(resultHandler);
     }
 
     private void applyCountOption(CountOption countOption, List<Entity> filteredEntities,
@@ -289,12 +277,8 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
     public void countEntityCollection(ODataRequest request, ODataResponse response, UriInfo uriInfo) {
         Promise<Void> processPromise = getProcessPromise();
 
-        // Retrieve the requested EntitySet from the uriInfo
-        EdmEntitySet edmEntitySet = ((UriResourceEntitySet) uriInfo.getUriResourceParts().get(0)).getEntitySet();
-        EdmEntityType edmEntityType = edmEntitySet.getEntityType();
-
         // Fetch the data from backend
-        fetchEntities(request, edmEntityType, ew -> {
+        forwardRequest(request, READ, uriInfo, vertx, routingContext, processPromise).onSuccess(ew -> {
             try {
                 /*
                  * The response body MUST contain the exact count of items matching the request after applying any
@@ -315,14 +299,5 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
                 processPromise.fail(e);
             }
         });
-    }
-
-    private DataQuery odataRequestToQuery(ODataRequest request) {
-        // the uriPath without /odata root path and without query path
-        String uriPath =
-                request.getRawRequestUri().replaceFirst(request.getRawBaseUri(), EMPTY).replaceFirst("\\?.*$", EMPTY);
-        // the raw query path
-        String rawQueryPath = request.getRawQueryPath();
-        return new DataQuery(uriPath, rawQueryPath, request.getAllHeaders());
     }
 }

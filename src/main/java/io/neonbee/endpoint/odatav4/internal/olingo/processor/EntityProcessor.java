@@ -6,8 +6,7 @@ import static io.neonbee.data.DataAction.READ;
 import static io.neonbee.data.DataAction.UPDATE;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.chooseEntitySet;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.fetchNavigationTargetEntity;
-import static io.neonbee.entity.EntityVerticle.requestEntity;
-import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.forwardRequest;
 import static org.apache.olingo.commons.api.http.HttpStatusCode.INTERNAL_SERVER_ERROR;
 import static org.apache.olingo.commons.api.http.HttpStatusCode.NOT_FOUND;
 import static org.apache.olingo.commons.api.http.HttpStatusCode.NO_CONTENT;
@@ -44,19 +43,13 @@ import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import io.neonbee.data.DataAction;
-import io.neonbee.data.DataQuery;
-import io.neonbee.data.DataRequest;
-import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmHelper;
 import io.neonbee.endpoint.odatav4.internal.olingo.expression.EntityComparison;
 import io.neonbee.entity.EntityWrapper;
 import io.neonbee.logging.LoggingFacade;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.RoutingContext;
 
 /*
@@ -103,10 +96,8 @@ public class EntityProcessor extends AsynchronousProcessor
         }
 
         Promise<Void> processPromise = getProcessPromise();
-        UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0);
-
-        forwardRequest(request, uriResourceEntitySet, null, READ, processPromise).onSuccess(
-                handleReadEntityResult(uriResourceEntitySet, uriInfo, response, responseFormat, processPromise));
+        forwardRequest(request, READ, uriInfo, vertx, routingContext, processPromise)
+                .onSuccess(handleReadEntityResult(uriInfo, response, responseFormat, processPromise));
     }
 
     @Override
@@ -116,7 +107,7 @@ public class EntityProcessor extends AsynchronousProcessor
         UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0);
         Entity entity = parseBody(request, uriResourceEntitySet, requestFormat);
 
-        forwardRequest(request, uriResourceEntitySet, entity, CREATE, processPromise).onSuccess(ew -> {
+        forwardRequest(request, CREATE, entity, uriInfo, vertx, routingContext, processPromise).onSuccess(ew -> {
             /*
              * TODO: Upon successful completion, the response MUST contain a Location header that contains the edit URL
              * or read URL of the created entity.
@@ -139,7 +130,7 @@ public class EntityProcessor extends AsynchronousProcessor
         Entity entity = parseBody(request, uriResourceEntitySet, requestFormat);
 
         EdmHelper.addKeyPredicateValues(entity, uriResourceEntitySet, routingContext);
-        forwardRequest(request, uriResourceEntitySet, entity, UPDATE, processPromise).onSuccess(ew -> {
+        forwardRequest(request, UPDATE, entity, uriInfo, vertx, routingContext, processPromise).onSuccess(ew -> {
             /*
              * TODO: Upon successful completion, the service responds with either 200 OK (in this case, the response
              * body MUST contain the resource updated), or 204 No Content (in this case the response body is empty). The
@@ -154,9 +145,8 @@ public class EntityProcessor extends AsynchronousProcessor
     @Override
     public void deleteEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo) {
         Promise<Void> processPromise = getProcessPromise();
-        UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0);
 
-        forwardRequest(request, uriResourceEntitySet, null, DELETE, processPromise).onSuccess(ew -> {
+        forwardRequest(request, DELETE, uriInfo, vertx, routingContext, processPromise).onSuccess(ew -> {
             response.setStatusCode(NO_CONTENT.getStatusCode());
             processPromise.complete();
         });
@@ -168,20 +158,11 @@ public class EntityProcessor extends AsynchronousProcessor
         return odata.createDeserializer(requestFormat).entity(request.getBody(), entityType).getEntity();
     }
 
-    private Future<EntityWrapper> forwardRequest(ODataRequest request, UriResourceEntitySet uriResourceEntitySet,
-            Entity entity, DataAction action, Promise<Void> processPromise) {
-        EdmEntityType entityType = uriResourceEntitySet.getEntitySet().getEntityType();
-        Buffer body = new EntityWrapper(entityType.getFullQualifiedName(), entity).toBuffer(vertx);
-        DataQuery query = odataRequestToQuery(request, action, body);
-
-        return requestEntity(vertx, new DataRequest(entityType.getFullQualifiedName(), query),
-                new DataContextImpl(routingContext)).onFailure(processPromise::fail);
-    }
-
-    private Handler<EntityWrapper> handleReadEntityResult(UriResourceEntitySet uriResourceEntitySet, UriInfo uriInfo,
-            ODataResponse response, ContentType responseFormat, Promise<Void> processPromise) {
+    private Handler<EntityWrapper> handleReadEntityResult(UriInfo uriInfo, ODataResponse response,
+            ContentType responseFormat, Promise<Void> processPromise) {
         return ew -> {
             try {
+                UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0);
                 Entity foundEntity = findEntityByKeyPredicates(routingContext, uriResourceEntitySet, ew.getEntities());
                 // Return the OData response
                 if (foundEntity == null) { // No entity with provided key predicates found
@@ -294,15 +275,5 @@ public class EntityProcessor extends AsynchronousProcessor
                     INTERNAL_SERVER_ERROR.getStatusCode(), Locale.ENGLISH);
         }
         return null;
-    }
-
-    private DataQuery odataRequestToQuery(ODataRequest request, DataAction action, Buffer body) {
-        // the uriPath without /odata root path and without query path
-        String uriPath =
-                request.getRawRequestUri().replaceFirst(request.getRawBaseUri(), EMPTY).replaceFirst("\\?.*$", EMPTY);
-        // the raw query path
-        String rawQueryPath = request.getRawQueryPath();
-        return new DataQuery(action, uriPath, rawQueryPath, request.getAllHeaders(), body).addHeader("X-HTTP-Method",
-                request.getMethod().name());
     }
 }
