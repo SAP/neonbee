@@ -4,10 +4,12 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -79,7 +81,8 @@ public class ServerVerticle extends AbstractVerticle {
         Route rootRoute = router.route();
 
         try {
-            rootRoute.failureHandler(getErrorHandler(config()));
+            rootRoute.failureHandler(
+                    createErrorHandler(config.getErrorHandlerClassName(), config.getErrorHandlerTemplate()));
             rootRoute.handler(new LoggerHandler());
             rootRoute.handler(BodyHandler.create(false /* do not handle file uploads */));
             rootRoute.handler(new CorrelationIdHandler(config.getCorrelationStrategy()));
@@ -121,11 +124,26 @@ public class ServerVerticle extends AbstractVerticle {
     }
 
     @VisibleForTesting
-    static ErrorHandler getErrorHandler(JsonObject config) throws ClassNotFoundException, NoSuchMethodException,
-            IllegalAccessException, InvocationTargetException, InstantiationException {
-        String className = config.getString("errorHandler", DEFAULT_ERROR_HANDLER_CLASS_NAME);
-        String errorHandlerClassName = className.isEmpty() ? DEFAULT_ERROR_HANDLER_CLASS_NAME : className;
-        return (ErrorHandler) Class.forName(errorHandlerClassName).getConstructor().newInstance();
+    // reason for PMD.EmptyCatchBlock empty cache block is "path-through" to fallback implementation and for
+    // PMD.SignatureDeclareThrowsException it does not matter, if this private method does not expose any concrete
+    // exceptions as the ServerVerticle start method anyways catches all exceptions in a generic try-catch block
+    @SuppressWarnings({ "PMD.EmptyCatchBlock", "PMD.SignatureDeclareThrowsException" })
+    static ErrorHandler createErrorHandler(String className, String template) throws Exception {
+        Class<?> classObject = Class.forName(Optional.ofNullable(className).filter(Predicate.not(String::isBlank))
+                .orElse(DEFAULT_ERROR_HANDLER_CLASS_NAME));
+        if (template != null) {
+            try {
+                return (ErrorHandler) classObject.getConstructor(String.class).newInstance(template);
+            } catch (InvocationTargetException e) {
+                // check for an IOException when reading the template and rather propagate that for better traceability
+                throw e.getCause() instanceof IOException ? (IOException) e.getCause() : e;
+            } catch (NoSuchMethodException e) {
+                // do nothing here, if there is no such constructor, assume
+                // the custom error handler class doesn't accept templates
+            }
+        }
+
+        return (ErrorHandler) classObject.getConstructor().newInstance();
     }
 
     /**

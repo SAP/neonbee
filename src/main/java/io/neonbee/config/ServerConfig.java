@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableBiMap;
 import io.neonbee.endpoint.metrics.MetricsEndpoint;
 import io.neonbee.endpoint.odatav4.ODataV4Endpoint;
 import io.neonbee.endpoint.raw.RawEndpoint;
+import io.neonbee.internal.handler.DefaultErrorHandler;
 import io.neonbee.internal.json.ImmutableJsonObject;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.vertx.codegen.annotations.DataObject;
@@ -41,6 +42,7 @@ import io.vertx.core.net.SSLEngineOptions;
 import io.vertx.core.net.TrustOptions;
 import io.vertx.core.tracing.TracingPolicy;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.ErrorHandler;
 
 /**
  * Handles the configuration for the {@linkplain ServerVerticle}, extending the {@linkplain HttpServerOptions} providing
@@ -209,6 +211,10 @@ public class ServerConfig extends HttpServerOptions {
     private List<EndpointConfig> endpointConfigs = new ArrayList<>(DEFAULT_ENDPOINT_CONFIGS);
 
     private List<AuthHandlerConfig> authChainConfig;
+
+    private String errorHandlerClassName;
+
+    private String errorHandlerTemplate;
 
     /**
      * Create a default server configuration.
@@ -395,6 +401,61 @@ public class ServerConfig extends HttpServerOptions {
     @Fluent
     public ServerConfig setAuthChainConfig(List<AuthHandlerConfig> authChainConfig) {
         this.authChainConfig = authChainConfig;
+        return this;
+    }
+
+    /**
+     * Returns a custom error handler class name, which is instantiated as failure handler of the
+     * {@link ServerVerticle}. The {@link DefaultErrorHandler} is used in case no value is supplied. The class must
+     * implement the {@link ErrorHandler} interface and must provide either a default constructor, or, in case an error
+     * handler template is defined using {@link #setErrorHandlerTemplate(String)} a constructor accepting one string.
+     * The parameter-less constructor will be used as a fallback, in case no other constructor is found, the set error
+     * template will be ignored in that case.
+     *
+     * @return the class name of the error handler to handle failures in the server verticle or null, in case no custom
+     *         error handler should be used. The server verticle will fall back to {@link DefaultErrorHandler} in the
+     *         latter case
+     */
+    public String getErrorHandlerClassName() {
+        return errorHandlerClassName;
+    }
+
+    /**
+     * Sets a custom error handler class name.
+     *
+     * @see #getErrorHandlerClassName()
+     * @param errorHandlerClassName the class name of a class implementing {@link ErrorHandler} or null
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
+    public ServerConfig setErrorHandlerClassName(String errorHandlerClassName) {
+        this.errorHandlerClassName = errorHandlerClassName;
+        return this;
+    }
+
+    /**
+     * Returns the path to an error handler template to use either in the {@link DefaultErrorHandler} or in any custom
+     * error handler set using {@link #setErrorHandlerClassName(String)}. Note that any custom error handler may ignore
+     * the template specified.
+     *
+     * @return the file name of an error handler template, or null. In the latter case the error handler has the choice
+     *         of the template to use
+     */
+    public String getErrorHandlerTemplate() {
+        return errorHandlerTemplate;
+    }
+
+    /**
+     * Sets the path to an error handler template to use either in the {@link DefaultErrorHandler} or in any custom
+     * error handler set using {@link #setErrorHandlerClassName(String)}.
+     *
+     * @see #getErrorHandlerTemplate()
+     * @param errorHandlerTemplate the file path to an error handler template to use
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
+    public ServerConfig setErrorHandlerTemplate(String errorHandlerTemplate) {
+        this.errorHandlerTemplate = errorHandlerTemplate;
         return this;
     }
 

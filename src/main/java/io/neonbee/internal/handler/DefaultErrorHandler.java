@@ -5,6 +5,7 @@ import static io.neonbee.internal.helper.BufferHelper.readResourceToBuffer;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -40,17 +41,25 @@ public class DefaultErrorHandler implements io.vertx.ext.web.handler.ErrorHandle
      * Returns a new ErrorHandler with the default {@link #DEFAULT_ERROR_HANDLER_TEMPLATE template}.
      */
     public DefaultErrorHandler() {
-        this(DEFAULT_ERROR_HANDLER_TEMPLATE);
+        try {
+            this.errorTemplate = readErrorTemplate(DEFAULT_ERROR_HANDLER_TEMPLATE);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not read default error template", e);
+        }
     }
 
     /**
      * Returns a new ErrorHandler with the passed template.
      *
      * @param errorTemplateName resource path to the template.
+     * @throws IOException in case the template is not found or cannot be read from the current class loader.
      */
-    public DefaultErrorHandler(String errorTemplateName) {
-        Objects.requireNonNull(errorTemplateName);
-        this.errorTemplate = Objects.requireNonNull(readResourceToBuffer(errorTemplateName)).toString();
+    public DefaultErrorHandler(String errorTemplateName) throws IOException {
+        this.errorTemplate = readErrorTemplate(errorTemplateName);
+    }
+
+    private String readErrorTemplate(String errorTemplateName) throws IOException {
+        return readResourceToBuffer(Objects.requireNonNull(errorTemplateName)).toString();
     }
 
     @Override
