@@ -52,8 +52,9 @@ consoleReporter {
         // Set this property to a certain C0 coverage percentage.
         // When the coverage is less than this value and
         // failIfLessThanThresholdError property is set to true,
-        // the build will fail.
-        thresholdError 81
+        // the build will fail. Even if the property is called
+        // failIfLessThan... the build will actually fail at 80.0%
+        thresholdError 80
 
         // Set this property if you want to customize build error message
         // when you use 'failIfLessThanThresholdError' feature.

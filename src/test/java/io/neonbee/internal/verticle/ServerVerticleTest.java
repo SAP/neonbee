@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
@@ -112,13 +113,16 @@ class ServerVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    void testgGetErrorHandlerDefault() throws Exception {
-        JsonObject config = new JsonObject();
-        assertThat(ServerVerticle.getErrorHandler(config)).isInstanceOf(DefaultErrorHandler.class);
+    void testGetErrorHandlerDefault() throws Exception {
+        assertThat(ServerVerticle.createErrorHandler(null, null)).isInstanceOf(DefaultErrorHandler.class);
 
-        ClassNotFoundException exception = assertThrows(ClassNotFoundException.class,
-                () -> ServerVerticle.getErrorHandler(config.put("errorHandler", "Hugo")));
-        assertThat(exception).hasMessageThat().contains("Hugo");
+        NoSuchFileException nsfException =
+                assertThrows(NoSuchFileException.class, () -> ServerVerticle.createErrorHandler(null, "Max"));
+        assertThat(nsfException).hasMessageThat().contains("Max");
+
+        ClassNotFoundException cnfException =
+                assertThrows(ClassNotFoundException.class, () -> ServerVerticle.createErrorHandler("Hugo", null));
+        assertThat(cnfException).hasMessageThat().contains("Hugo");
     }
 
     @Override

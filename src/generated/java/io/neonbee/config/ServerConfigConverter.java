@@ -38,6 +38,16 @@ public class ServerConfigConverter {
                     obj.setEndpointConfigs(list);
                 }
                 break;
+            case "errorHandlerClassName":
+                if (member.getValue() instanceof String) {
+                    obj.setErrorHandlerClassName((String) member.getValue());
+                }
+                break;
+            case "errorHandlerTemplate":
+                if (member.getValue() instanceof String) {
+                    obj.setErrorHandlerTemplate((String) member.getValue());
+                }
+                break;
             case "sessionCookieName":
                 if (member.getValue() instanceof String) {
                     obj.setSessionCookieName((String) member.getValue());
@@ -80,6 +90,12 @@ public class ServerConfigConverter {
             JsonArray array = new JsonArray();
             obj.getEndpointConfigs().forEach(item -> array.add(item.toJson()));
             json.put("endpointConfigs", array);
+        }
+        if (obj.getErrorHandlerClassName() != null) {
+            json.put("errorHandlerClassName", obj.getErrorHandlerClassName());
+        }
+        if (obj.getErrorHandlerTemplate() != null) {
+            json.put("errorHandlerTemplate", obj.getErrorHandlerTemplate());
         }
         if (obj.getSessionCookieName() != null) {
             json.put("sessionCookieName", obj.getSessionCookieName());

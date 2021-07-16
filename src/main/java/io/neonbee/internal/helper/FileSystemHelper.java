@@ -45,7 +45,7 @@ public final class FileSystemHelper {
      * @return Future of {@link List} of {@link String}s
      */
     public static Future<List<Path>> readDir(Vertx vertx, Path path) {
-        return Future.<List<String>>future(handler -> vertx.fileSystem().readDir(path.toString(), handler))
+        return vertx.fileSystem().readDir(path.toString())
                 .map(files -> files.stream().map(Path::of).collect(Collectors.toList()));
     }
 
@@ -59,7 +59,7 @@ public final class FileSystemHelper {
      * @return Future of {@link List} of {@link String}s
      */
     public static Future<List<Path>> readDir(Vertx vertx, Path path, String filter) {
-        return Future.<List<String>>future(handler -> vertx.fileSystem().readDir(path.toString(), filter, handler))
+        return vertx.fileSystem().readDir(path.toString(), filter)
                 .map(files -> files.stream().map(Path::of).collect(Collectors.toList()));
     }
 
@@ -74,7 +74,7 @@ public final class FileSystemHelper {
      * @return Future of {@link AsyncFile}
      */
     public static Future<AsyncFile> openFile(Vertx vertx, OpenOptions options, Path path) {
-        return Future.<AsyncFile>future(promise -> vertx.fileSystem().open(path.toString(), options, promise));
+        return vertx.fileSystem().open(path.toString(), options);
     }
 
     /**
@@ -85,7 +85,7 @@ public final class FileSystemHelper {
      * @return Future of {@link Buffer}
      */
     public static Future<Buffer> readFile(Vertx vertx, Path path) {
-        return Future.<Buffer>future(readFilePromise -> vertx.fileSystem().readFile(path.toString(), readFilePromise));
+        return vertx.fileSystem().readFile(path.toString());
     }
 
     /**
@@ -130,7 +130,7 @@ public final class FileSystemHelper {
      * @return Future of {@link Void}
      */
     public static Future<Void> writeFile(Vertx vertx, Path path, Buffer buffer) {
-        return Future.<Void>future(promise -> vertx.fileSystem().writeFile(path.toString(), buffer, promise));
+        return vertx.fileSystem().writeFile(path.toString(), buffer);
     }
 
     /**
@@ -141,7 +141,7 @@ public final class FileSystemHelper {
      * @return Future of {@link Void}
      */
     public static Future<Void> deleteRecursive(Vertx vertx, Path path) {
-        return Future.<Void>future(promise -> vertx.fileSystem().deleteRecursive(path.toString(), true, promise));
+        return vertx.fileSystem().deleteRecursive(path.toString(), true);
     }
 
     /**
@@ -152,7 +152,7 @@ public final class FileSystemHelper {
      * @return Future of {@link Boolean}
      */
     public static Future<Boolean> exists(Vertx vertx, Path path) {
-        return Future.<Boolean>future(promise -> vertx.fileSystem().exists(path.toString(), promise));
+        return vertx.fileSystem().exists(path.toString());
     }
 
     /**
@@ -163,7 +163,7 @@ public final class FileSystemHelper {
      * @return Future of {@link Void}
      */
     public static Future<Void> createDirs(Vertx vertx, Path path) {
-        return Future.<Void>future(promise -> vertx.fileSystem().mkdirs(path.toString(), promise));
+        return vertx.fileSystem().mkdirs(path.toString());
     }
 
     /**
@@ -174,6 +174,6 @@ public final class FileSystemHelper {
      * @return Future of {@link FileProps}
      */
     public static Future<FileProps> getProperties(Vertx vertx, Path path) {
-        return Future.<FileProps>future(promise -> vertx.fileSystem().props(path.toString(), promise));
+        return vertx.fileSystem().props(path.toString());
     }
 }
