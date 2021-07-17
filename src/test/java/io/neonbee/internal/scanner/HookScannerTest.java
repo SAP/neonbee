@@ -11,14 +11,20 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.neonbee.internal.BasicJar;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 
+@ExtendWith(VertxExtension.class)
 class HookScannerTest {
+    Vertx vertx = Vertx.vertx();
 
     @Test
     @DisplayName("Should find classes which have methods that are annnotaed with @Hook or @Hooks")
-    void scanForHooksTest() throws IOException, URISyntaxException, ClassNotFoundException {
+    void scanForHooksTest(VertxTestContext testContext) throws IOException, URISyntaxException, ClassNotFoundException {
         BasicJar jarWithHookAnnotation = new AnnotatedClassTemplate("HodorHook", "method")
                 .setMethodAnnotation("@Hook(HookType.ONCE_PER_REQUEST)")
                 .setImports(List.of("io.neonbee.hook.Hook", "io.neonbee.hook.HookType")).asJar();
@@ -38,6 +44,9 @@ class HookScannerTest {
         Class<?> expectedHooksClass = loader.loadClass("method.HodorHooks");
         HookScanner hs = new HookScanner(loader);
 
-        assertThat(hs.scanForHooks()).containsExactly(expectedHookClass, expectedHooksClass);
+        hs.scanForHooks(vertx).onComplete(testContext.succeeding(hooks -> testContext.verify(() -> {
+            assertThat(hooks).containsExactly(expectedHookClass, expectedHooksClass);
+            testContext.completeNow();
+        })));
     }
 }

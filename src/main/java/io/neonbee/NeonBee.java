@@ -5,15 +5,12 @@ import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 import static io.neonbee.internal.helper.HostHelper.getHostIp;
 import static io.neonbee.internal.scanner.DeployableScanner.scanForDeployableClasses;
 import static io.vertx.core.CompositeFuture.all;
-import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.lang.System.setProperty;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -272,9 +269,10 @@ public class NeonBee {
             return succeededFuture();
         }
 
-        List<Future<?>> hookRegistrations = new HookScanner().scanForHooks().stream()
-                .map(hookClass -> hookRegistry.registerHooks(hookClass, CORRELATION_ID)).collect(Collectors.toList());
-        return allComposite(hookRegistrations).mapEmpty();
+        return new HookScanner().scanForHooks(vertx)
+                .compose(hookClasses -> allComposite(
+                        hookClasses.stream().map(hookClass -> hookRegistry.registerHooks(hookClass, CORRELATION_ID))
+                                .collect(Collectors.toList())).mapEmpty());
     }
 
     @VisibleForTesting
@@ -350,12 +348,12 @@ public class NeonBee {
         logger.info("Deploying verticle with active profiles: {}",
                 activeProfiles.stream().map(NeonBeeProfile::name).collect(Collectors.joining(",")));
 
-        List<Future<String>> deployFutures = new ArrayList<>(deploySystemVerticles());
+        List<Future<?>> deployFutures = new ArrayList<>(deploySystemVerticles());
         if (NeonBeeProfile.WEB.isActive(activeProfiles)) {
             deployFutures.add(deployServerVerticle());
         }
 
-        deployFutures.addAll(deployClassPathVerticles());
+        deployFutures.add(deployClassPathVerticles());
         return allComposite(deployFutures).map((Void) null);
     }
 
@@ -422,26 +420,23 @@ public class NeonBee {
      *
      * @return a list of futures deploying verticle
      */
-    private List<Future<String>> deployClassPathVerticles() {
+    private Future<Void> deployClassPathVerticles() {
         if (options.shouldIgnoreClassPath()) {
-            return Collections.emptyList();
+            return succeededFuture();
         }
 
-        try {
-            List<Class<? extends Verticle>> deployableClasses = scanForDeployableClasses();
+        return scanForDeployableClasses(vertx).compose(deployableClasses -> {
             List<Class<? extends Verticle>> filteredVerticleClasses = deployableClasses.stream()
                     .filter(verticleClass -> filterByAutoDeployAndProfiles(verticleClass, options.getActiveProfiles()))
                     .collect(Collectors.toList());
             logger.info("Deploy classpath verticle {}.",
                     filteredVerticleClasses.stream().map(Class::getCanonicalName).collect(Collectors.joining(",")));
-            return filteredVerticleClasses.stream()
+            return allComposite(filteredVerticleClasses.stream()
                     .map(verticleClass -> Deployable.fromClass(vertx, verticleClass, CORRELATION_ID, null)
                             .compose(deployable -> deployable.deploy(vertx, CORRELATION_ID).future())
                             .map(Deployment::getDeploymentId))
-                    .collect(Collectors.toList());
-        } catch (IOException | URISyntaxException e) {
-            return List.of(failedFuture(e));
-        }
+                    .collect(Collectors.toList()));
+        }).mapEmpty();
     }
 
     @VisibleForTesting

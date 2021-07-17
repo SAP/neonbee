@@ -28,7 +28,11 @@ import org.objectweb.asm.ClassReader;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Streams;
+
 import io.neonbee.internal.helper.JarHelper;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 
 /**
  * The possible entries for the classpath are defined here [1]:
@@ -41,10 +45,11 @@ import io.neonbee.internal.helper.JarHelper;
  * </pre>
  *
  * This means in short, that there are only entries that represents a directory, a .zip file or a .jar file. For now the
- * {@link ClassPathScanner} only supports scanning directories with the method {@link #scanWithPredicate(Predicate)} and
- * .jar files with the method {@link #scanJarFilesWithPredicate(Predicate)}. It also offers the method
- * {@link ClassPathScanner#scanManifestFiles(String)} to extract the values of a given manifest attribute from every jar
- * file on the classpath.
+ * {@link ClassPathScanner} only supports scanning directories with the method
+ * {@link #scanWithPredicate(Vertx, Predicate)} and .jar files with the method
+ * {@link #scanJarFilesWithPredicate(Vertx, Predicate)}. It also offers the method
+ * {@link ClassPathScanner#scanManifestFiles(Vertx, String)} to extract the values of a given manifest attribute from
+ * every jar file on the classpath.
  * <p>
  * [1] https://docs.oracle.com/javase/7/docs/technotes/tools/windows/classpath.html
  *
@@ -91,53 +96,56 @@ public class ClassPathScanner {
      *
      * This allows to e.g. denote certain classes or resources of the JAR files to be exposed.
      *
+     * @param vertx         the Vert.x instance
      * @param attributeName The name of the attribute in the MANIFEST.MF to search for.
-     * @return a list of strings (separated list of manifest attribute values)
-     * @throws IOException If an I/O error occurs while scanning the class paths
+     * @return a future to a list of strings (separated list of manifest attribute values)
      */
-    public List<String> scanManifestFiles(String attributeName) throws IOException {
-        List<String> resources = new ArrayList<>();
-        for (URL manifestResources : getManifestResourceURLs()) {
-            try (InputStream inputStream = manifestResources.openStream()) {
-                Manifest manifest = new Manifest(inputStream);
-                // Attribute looks like: Attribute-Name: package.Resource1; package.Resource2
-                String attributeValue = manifest.getMainAttributes().getValue(attributeName);
-                if (!Strings.isNullOrEmpty(attributeValue)) {
-                    SEPARATOR_PATTERN.splitAsStream(attributeValue).map(String::trim).forEach(resources::add);
+    public Future<List<String>> scanManifestFiles(Vertx vertx, String attributeName) {
+        return vertx.executeBlocking(promise -> {
+            try {
+                List<String> resources = new ArrayList<>();
+                for (URL manifestResources : getManifestResourceURLs()) {
+                    try (InputStream inputStream = manifestResources.openStream()) {
+                        Manifest manifest = new Manifest(inputStream);
+                        // Attribute looks like: Attribute-Name: package.Resource1; package.Resource2
+                        String attributeValue = manifest.getMainAttributes().getValue(attributeName);
+                        if (!Strings.isNullOrEmpty(attributeValue)) {
+                            SEPARATOR_PATTERN.splitAsStream(attributeValue).map(String::trim).forEach(resources::add);
+                        }
+                    }
                 }
+                promise.complete(resources);
+            } catch (IOException e) {
+                promise.fail(e);
             }
-        }
-        return resources;
+        });
     }
 
     /**
      * Scans the whole class path for annotations on the whole class, shorthand for: <br>
      * {@code scanForAnnotation(Class, ElementType.TYPE)}.
      *
-     * @see #scanForAnnotation(Class, ElementType...)
+     * @see #scanForAnnotation(Vertx, Class, ElementType...)
+     * @param vertx           the Vert.x instance
      * @param annotationClass the annotation to check for
-     * @return a List of resources on the class path
-     * @throws IOException        If operations on the filesystem fail
-     * @throws URISyntaxException If parsing the URI fails
+     * @return a future to a list of resources on the class path
      */
-    public List<String> scanForAnnotation(Class<? extends Annotation> annotationClass)
-            throws IOException, URISyntaxException {
-        return scanForAnnotation(annotationClass, ElementType.TYPE);
+    public Future<List<String>> scanForAnnotation(Vertx vertx, Class<? extends Annotation> annotationClass) {
+        return scanForAnnotation(vertx, annotationClass, ElementType.TYPE);
     }
 
     /**
      * Scans the whole class path (does also recursively dig into JAR files!) for class files which are annotated with a
      * given annotation (either the whole class, methods or fields might be annotated and specified in elementTypes).
      *
+     * @param vertx           the Vert.x instance
      * @param annotationClass the annotation to check for
      * @param elementTypes    the types of annotation to check for (supports TYPE, FIELD and METHOD)
-     * @return a List of resources on the class path
-     * @throws IOException        If operations on the filesystem fail
-     * @throws URISyntaxException If parsing the URI fails
+     * @return a future to a list of resources on the class path
      */
-    public List<String> scanForAnnotation(Class<? extends Annotation> annotationClass, ElementType... elementTypes)
-            throws IOException, URISyntaxException {
-        return scanForAnnotation(List.of(annotationClass), elementTypes);
+    public Future<List<String>> scanForAnnotation(Vertx vertx, Class<? extends Annotation> annotationClass,
+            ElementType... elementTypes) {
+        return scanForAnnotation(vertx, List.of(annotationClass), elementTypes);
 
     }
 
@@ -145,99 +153,123 @@ public class ClassPathScanner {
      * Scans the whole class path (does also recursively dig into JAR files!) for class files which are annotated with a
      * given annotation (either the whole class, methods or fields might be annotated and specified in elementTypes).
      *
+     * @param vertx             the Vert.x instance
      * @param annotationClasses A List of annotations to check for
      * @param elementTypes      the types of annotation to check for (supports TYPE, FIELD and METHOD)
-     * @return a List of resources on the class path
-     * @throws IOException        If operations on the filesystem fail
-     * @throws URISyntaxException If parsing the URI fails
+     * @return a future to a list of resources on the class path
      */
     @SuppressWarnings("PMD.EmptyCatchBlock")
-    public List<String> scanForAnnotation(List<Class<? extends Annotation>> annotationClasses,
-            ElementType... elementTypes) throws IOException, URISyntaxException {
-        List<AnnotationClassVisitor> classVisitors = annotationClasses.stream()
-                .map(annotationClass -> new AnnotationClassVisitor(annotationClass, elementTypes))
-                .collect(Collectors.toList());
-        List<String> classesFromDirectories = scanWithPredicate(ClassPathScanner::isClassFile);
-        List<String> classesFromJars = scanJarFilesWithPredicate(ClassPathScanner::isClassFile).stream()
-                .map(JarHelper::extractFilePath).collect(Collectors.toList());
+    public Future<List<String>> scanForAnnotation(Vertx vertx, List<Class<? extends Annotation>> annotationClasses,
+            ElementType... elementTypes) {
 
-        Streams.concat(classesFromDirectories.stream(), classesFromJars.stream()).forEach(name -> {
-            try {
-                String resourceName = name.replace(".", "/").replaceFirst("/class$", ".class");
-                for (AnnotationClassVisitor acv : classVisitors) {
-                    ClassReader classReader = new ClassReader(classLoader.getResourceAsStream(resourceName));
-                    classReader.accept(acv, 0);
-                }
-            } catch (IOException e) {
-                /*
-                 * nothing to do here, depending on which part of the reading it failed, deployable could be set or not
-                 */
-            }
-        });
+        Future<List<String>> classesFromDirectories = scanWithPredicate(vertx, ClassPathScanner::isClassFile);
+        Future<List<String>> classesFromJars = scanJarFilesWithPredicate(vertx, ClassPathScanner::isClassFile)
+                .map(classes -> classes.stream().map(JarHelper::extractFilePath).collect(Collectors.toList()));
 
-        return classVisitors.stream().flatMap(acv -> acv.getClassNames().stream()).distinct()
-                .collect(Collectors.toList());
+        return CompositeFuture.all(classesFromDirectories, classesFromJars)
+                .compose(compositeResult -> vertx.executeBlocking(promise -> {
+                    List<AnnotationClassVisitor> classVisitors = annotationClasses.stream()
+                            .map(annotationClass -> new AnnotationClassVisitor(annotationClass, elementTypes))
+                            .collect(Collectors.toList());
+                    Streams.concat(classesFromDirectories.result().stream(), classesFromJars.result().stream())
+                            .forEach(name -> {
+                                try {
+                                    String resourceName = name.replace(".", "/").replaceFirst("/class$", ".class");
+                                    for (AnnotationClassVisitor acv : classVisitors) {
+                                        ClassReader classReader =
+                                                new ClassReader(classLoader.getResourceAsStream(resourceName));
+                                        classReader.accept(acv, 0);
+                                    }
+                                } catch (IOException e) {
+                                    /*
+                                     * nothing to do here, depending on which part of the reading it failed, deployable
+                                     * could be set or not
+                                     */
+                                }
+                            });
+
+                    promise.complete(classVisitors.stream().flatMap(acv -> acv.getClassNames().stream()).distinct()
+                            .collect(Collectors.toList()));
+                }));
     }
 
     /**
      * Scans all directories in the classpath for files whose file name matches a certain predicate.
      *
+     * @param vertx     the Vert.x instance
      * @param predicate The predicate to test if a found file matches.
-     * @return the name of the resources on the class path.
-     *
-     * @throws IOException If operations on the filesystem fail
+     * @return a future to a list of names of the resources on the class path.
      */
     @SuppressWarnings("PMD.EmptyCatchBlock")
-    public List<String> scanWithPredicate(Predicate<String> predicate) throws IOException {
-        List<String> resources = new ArrayList<>();
-        Enumeration<URL> rootResources = classLoader.getResources(EMPTY);
-        while (rootResources.hasMoreElements()) {
-            URL resource = rootResources.nextElement();
-            if (!"file".equals(resource.getProtocol())) {
-                continue; // ignore non-files on root (we don't care for bundled JARs or ZIPs)
-
-                // .class files must be handled here
-            }
+    public Future<List<String>> scanWithPredicate(Vertx vertx, Predicate<String> predicate) {
+        return vertx.executeBlocking(promise -> {
             try {
-                Path resourcePath = Paths.get(resource.toURI());
-                // The file must be a directory, because the class path does only contains JARs, ZIPs and directories.
-                if (Files.isDirectory(resourcePath)) {
-                    scanDirectoryWithPredicateRecursive(resourcePath, predicate)
-                            .forEach(path -> resources.add(resourcePath.relativize(path).toString()));
+                List<String> resources = new ArrayList<>();
+                Enumeration<URL> rootResources = classLoader.getResources(EMPTY);
+                while (rootResources.hasMoreElements()) {
+                    URL resource = rootResources.nextElement();
+                    if (!"file".equals(resource.getProtocol())) {
+                        continue; // ignore non-files on root (we don't care for bundled JARs or ZIPs)
+
+                        // .class files must be handled here
+                    }
+                    try {
+                        Path resourcePath = Paths.get(resource.toURI());
+                        // The file must be a directory, because the class path does only contains JARs, ZIPs and
+                        // directories.
+                        if (Files.isDirectory(resourcePath)) {
+                            scanDirectoryWithPredicateRecursive(resourcePath, predicate)
+                                    .forEach(path -> resources.add(resourcePath.relativize(path).toString()));
+                        }
+                    } catch (URISyntaxException e) {
+                        /* nothing to do here, just continue searching */
+                    }
                 }
-            } catch (URISyntaxException e) {
-                /* nothing to do here, just continue searching */
+                promise.complete(resources);
+            } catch (IOException e) {
+                promise.fail(e);
             }
-        }
-        return resources;
+        });
     }
 
     /**
      * Scans all files inside a jar file of all jar files on the class path and test if the file name match the given
      * predicate.
      *
+     * @param vertx     the Vert.x instance
      * @param predicate The predicate to test if a found file matches.
-     * @return A list of URIs representing the files which matches the given predicate
-     *
-     * @throws IOException        If operations on the filesystem fail
-     * @throws URISyntaxException If parsing the URI fails
+     * @return a future to a list of URIs representing the files which matches the given predicate
      */
-    public List<URI> scanJarFilesWithPredicate(Predicate<String> predicate) throws IOException, URISyntaxException {
-        List<URI> resources = new ArrayList<>();
-        for (URL manifestResource : getManifestResourceURLs()) {
-            URI uri = manifestResource.toURI();
-            // filter for manifest files inside of jar files
-            if ("jar".equals(uri.getScheme())) {
-                try (FileSystem fileSystem = FileSystems.newFileSystem(uri, Map.of())) {
-                    Path rootPath = fileSystem.getPath("/");
-                    scanDirectoryWithPredicateRecursive(rootPath, predicate)
-                            .forEach(path -> resources.add(path.toUri()));
+    public Future<List<URI>> scanJarFilesWithPredicate(Vertx vertx, Predicate<String> predicate) {
+        return vertx.executeBlocking(promise -> {
+            try {
+                List<URI> resources = new ArrayList<>();
+                for (URL manifestResource : getManifestResourceURLs()) {
+                    URI uri = manifestResource.toURI();
+                    // filter for manifest files inside of jar files
+                    if ("jar".equals(uri.getScheme())) {
+                        try (FileSystem fileSystem = FileSystems.newFileSystem(uri, Map.of())) {
+                            Path rootPath = fileSystem.getPath("/");
+                            scanDirectoryWithPredicateRecursive(rootPath, predicate)
+                                    .forEach(path -> resources.add(path.toUri()));
+                        }
+                    }
                 }
+                promise.complete(resources);
+            } catch (IOException | URISyntaxException e) {
+                promise.fail(e);
             }
-        }
-        return resources;
+        });
     }
 
+    /**
+     * Blocking method to get all resource URLs from the MANIFEST.MF file(s) on the class loader
+     *
+     * Attention: Blocking! Must only be called inside a executeBlocking block!
+     *
+     * @return a List of URLs of the resources in the MANIFEST.MF file
+     * @throws IOException an I/O error occurs while scanning the class paths
+     */
     private List<URL> getManifestResourceURLs() throws IOException {
         Enumeration<URL> manifestResources = classLoader.getResources("META-INF/MANIFEST.MF");
         List<URL> urls = new ArrayList<>();
@@ -245,6 +277,16 @@ public class ClassPathScanner {
         return urls;
     }
 
+    /**
+     * Blocking inner method that scans a directory and checks file paths against string predicates
+     *
+     * Attention: Blocking! Must only be called inside a executeBlocking block!
+     *
+     * @param basePath  The path to scan
+     * @param predicate the predicate to check against
+     * @return a List of Paths of resources that match the predicate
+     * @throws IOException an I/O error in case the walking fails
+     */
     @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE",
             justification = "Spotbugs isn't telling the truth there is no null check in here")
     private List<Path> scanDirectoryWithPredicateRecursive(Path basePath, Predicate<String> predicate)
