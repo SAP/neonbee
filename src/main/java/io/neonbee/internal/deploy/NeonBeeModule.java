@@ -7,9 +7,10 @@ import static io.vertx.core.Future.succeededFuture;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,11 +25,11 @@ import com.google.common.io.ByteStreams;
 import io.neonbee.NeonBee;
 import io.neonbee.entity.EntityModelManager;
 import io.neonbee.internal.SelfFirstClassLoader;
+import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.scanner.ClassPathScanner;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -79,14 +80,20 @@ public class NeonBeeModule {
 
     private final String correlationId;
 
+    private final URLClassLoader moduleClassLoader;
+
     @VisibleForTesting
-    NeonBeeModule(Vertx vertx, String identifier, String correlationId, Path jarPath,
+    NeonBeeModule(Vertx vertx, String identifier, String correlationId, Path jarPath, URLClassLoader moduleClassLoader,
             List<Class<Verticle>> verticleClasses, Map<String, byte[]> models, Map<String, byte[]> extensionModels) {
         this.vertx = vertx;
         this.identifier = identifier;
         this.correlationId = correlationId;
         this.jarPath = jarPath;
+        this.moduleClassLoader = moduleClassLoader; // could be null, in case the module has no verticles to deploy
         this.verticleClasses = verticleClasses;
+        if (verticleClasses != null && !verticleClasses.isEmpty() && moduleClassLoader == null) {
+            throw new IllegalStateException("Missing module class loader for provided verticle classes");
+        }
         this.models = models;
         this.extensionModels = extensionModels;
     }
@@ -217,12 +224,10 @@ public class NeonBeeModule {
     private Future<CompositeFuture> undeploy(List<Deployment> deployments) {
         return joinComposite(deployments.stream().map(Deployment::undeploy).collect(Collectors.toList()))
                 .compose(compositedUndeployments -> {
-                    if (!verticleClasses.isEmpty()) {
-                        // If verticleClasses is empty the module has no deployable classes and not class loader was
-                        // created.
+                    if (moduleClassLoader != null) {
+                        // if this module has a own moduleClassLoader, close it after the verticles have been undeployed
                         try {
-                            URLClassLoader cl = (URLClassLoader) verticleClasses.get(0).getClassLoader();
-                            cl.close();
+                            moduleClassLoader.close();
                         } catch (IOException e) {
                             return failedFuture(e);
                         }
@@ -252,79 +257,114 @@ public class NeonBeeModule {
      * @param vertx         The Vert.x instance
      * @param pathOfJar     The {@link Path} to the jar file.
      * @param correlationId The correlationId to correlate log messages
-     * @return a Future containing the NeonBeeModule
+     * @return a future to the NeonBeeModule
      */
+    // passing a null moduleClassLoader to the NeonBeeModule constructor is fine as it is checked inside the constructor
+    @SuppressWarnings("PMD.NullAssignment")
     public static Future<NeonBeeModule> fromJar(Vertx vertx, Path pathOfJar, String correlationId) {
-        Promise<NeonBeeModule> jarParsingDonePromise = Promise.promise();
-        // Parsing a JAR and extracting the content takes a lot of time and IO, therefore the logic is executed on the
-        // worker pool.
-        vertx.executeBlocking(promise -> {
-            List<Class<Verticle>> verticleClasses = new ArrayList<>();
-            try {
-                if (!Files.exists(pathOfJar)) {
-                    promise.fail(new IOException("JAR path does not exist: " + pathOfJar.toString()));
-                    return;
-                }
-                URL[] jarUrl = { pathOfJar.toUri().toURL() };
+        return FileSystemHelper.exists(vertx, pathOfJar).compose(jarExists -> {
+            if (!jarExists) {
+                return failedFuture(new NoSuchFileException("JAR path does not exist: " + pathOfJar.toString()));
+            }
 
-                // To ensure that ClassPathScanner finds only models from this JAR manifest, a ClassLoader which only
-                // contains this JAR is needed.
-                try (URLClassLoader classLoader = new URLClassLoader(jarUrl, null)) {
-                    ClassPathScanner cps = new ClassPathScanner(classLoader);
-                    List<String> moduleName = cps.scanManifestFiles(NEONBEE_MODULE);
-                    if (moduleName.isEmpty()) {
-                        promise.fail("Invalid NeonBee-Module: No " + NEONBEE_MODULE + "attribute found.");
-                        return;
-                    } else if (moduleName.size() > 1) {
-                        promise.fail("Invalid NeonBee-Module: Too many " + NEONBEE_MODULE + "attributes found.");
-                        return;
-                    }
-                    Map<String, byte[]> models = loadModelPayloads(classLoader, cps.scanManifestFiles(NEONBEE_MODELS));
-                    Map<String, byte[]> extensionModels =
-                            loadModelPayloads(classLoader, cps.scanManifestFiles(NEONBEE_MODEL_EXTENSIONS));
-                    SelfFirstClassLoader moduleClassLoader = new SelfFirstClassLoader(jarUrl,
-                            ClassLoader.getSystemClassLoader(), NeonBee.get(vertx).getConfig().getPlatformClasses());
-                    verticleClasses.addAll(loadClassesToDeploy(cps, moduleClassLoader));
-                    promise.complete(new NeonBeeModule(vertx, moduleName.get(0), correlationId, pathOfJar,
-                            verticleClasses, models, extensionModels));
+            URL[] jarUrl;
+            try {
+                jarUrl = new URL[] { pathOfJar.toUri().toURL() };
+            } catch (MalformedURLException e) {
+                return failedFuture(e);
+            }
+
+            // To ensure that ClassPathScanner finds only models from this JAR manifest, a ClassLoader which only
+            // contains this JAR is needed.
+            URLClassLoader classLoader = new URLClassLoader(jarUrl, null);
+            ClassPathScanner cps = new ClassPathScanner(classLoader);
+            return cps.scanManifestFiles(vertx, NEONBEE_MODULE).compose(moduleNames -> {
+                if (moduleNames.isEmpty()) {
+                    return failedFuture("Invalid NeonBee-Module: No " + NEONBEE_MODULE + "attribute found.");
+                } else if (moduleNames.size() > 1) {
+                    return failedFuture("Invalid NeonBee-Module: Too many " + NEONBEE_MODULE + "attributes found.");
                 }
-            } catch (RuntimeException | IOException | ClassNotFoundException | LinkageError e) {
+
+                // load the classes to deploy using a new self-first class loader. note that the SelfFirstClassLoader
+                // *stays* open, for however long this module stays either not deployed yet, or is deployed. the class
+                // loader will get closed as soon as the NeonBeeModule is undeployed, as we don't know whether classes
+                // loaded with this class loader might load further classes at any point in time.
+                SelfFirstClassLoader moduleClassLoader = new SelfFirstClassLoader(jarUrl,
+                        ClassLoader.getSystemClassLoader(), NeonBee.get(vertx).getConfig().getPlatformClasses());
+                Future<List<Class<Verticle>>> verticleClassesToDeploy =
+                        loadClassesToDeploy(vertx, cps, moduleClassLoader).onSuccess(verticleClasses -> {
+                            // if there are no verticles to deploy, immediately close the self-first class loader
+                            if (verticleClasses.isEmpty()) {
+                                try {
+                                    moduleClassLoader.close();
+                                } catch (IOException e) {
+                                    LOGGER.error("Cloud not close the modules SelfFirstClassLoader", e);
+                                }
+                            }
+                        });
+
+                // scan for models and model extensions, before then creating the NeonBee module object
+                Future<Map<String, byte[]>> models = cps.scanManifestFiles(vertx, NEONBEE_MODELS)
+                        .compose(modelNames -> loadModelPayloads(vertx, classLoader, modelNames));
+                Future<Map<String, byte[]>> extensionModels = cps.scanManifestFiles(vertx, NEONBEE_MODEL_EXTENSIONS)
+                        .compose(extensionModelNames -> loadModelPayloads(vertx, classLoader, extensionModelNames));
+
+                return CompositeFuture.all(verticleClassesToDeploy, models, extensionModels)
+                        .map(compositeResult -> new NeonBeeModule(vertx, moduleNames.get(0), correlationId, pathOfJar,
+                                verticleClassesToDeploy.result().isEmpty() ? null : moduleClassLoader,
+                                verticleClassesToDeploy.result(), models.result(), extensionModels.result()));
+            }).onComplete(anyResult -> {
+                // after class path scanning completed, close the classLoader
+                try {
+                    classLoader.close();
+                } catch (IOException e) {
+                    LOGGER.error("Cloud not close the URLClassLoader", e);
+                }
+            });
+        });
+    }
+
+    @VisibleForTesting
+    static Future<Map<String, byte[]>> loadModelPayloads(Vertx vertx, URLClassLoader classLoader,
+            List<String> modelPaths) {
+        return vertx.executeBlocking(promise -> {
+            try {
+                Map<String, byte[]> modelData = new HashMap<>(modelPaths.size());
+                for (String modelPath : modelPaths) {
+                    InputStream in = Objects.requireNonNull(classLoader.getResourceAsStream(modelPath),
+                            "Specified model path wasn't found in NeonBee module");
+                    modelData.put(modelPath, ByteStreams.toByteArray(in));
+                }
+                promise.complete(modelData);
+            } catch (IOException e) {
                 promise.fail(e);
             }
-        }, jarParsingDonePromise);
-
-        return jarParsingDonePromise.future();
+        });
     }
 
     @VisibleForTesting
-    static Map<String, byte[]> loadModelPayloads(URLClassLoader classLoader, List<String> modelPaths)
-            throws IOException {
-        Map<String, byte[]> modelData = new HashMap<>(modelPaths.size());
-        for (String modelPath : modelPaths) {
-            InputStream in = Objects.requireNonNull(classLoader.getResourceAsStream(modelPath),
-                    "Specified model path wasn't found in NeonBee module");
-            modelData.put(modelPath, ByteStreams.toByteArray(in));
-        }
-        return modelData;
-    }
+    static Future<List<Class<Verticle>>> loadClassesToDeploy(Vertx vertx, ClassPathScanner cps,
+            SelfFirstClassLoader moduleClassLoader) {
+        return cps.scanManifestFiles(vertx, NEONBEE_DEPLOYABLES)
+                .compose(verticleIdentifiers -> vertx.executeBlocking(promise -> {
+                    try {
+                        List<Class<Verticle>> verticleClasses = new ArrayList<>(verticleIdentifiers.size());
+                        // To load the verticle for which an identifier was found, a ClassLoader which also has access
+                        // to e.g. Vert.x core classes is needed.
+                        for (String identifier : verticleIdentifiers) {
+                            @SuppressWarnings("unchecked")
+                            Class<Verticle> verticleClass = (Class<Verticle>) moduleClassLoader.loadClass(identifier);
+                            // TODO: Check if verticleClass is instance of DataVerticle or JobVerticle
+                            // This check requires a huge change in the test base, because all the verticle which are
+                            // dynamically generated during tests are not instance of DataVerticle or JobVerticle.
+                            verticleClasses.add(verticleClass);
+                        }
 
-    @VisibleForTesting
-    static List<Class<Verticle>> loadClassesToDeploy(ClassPathScanner cps, SelfFirstClassLoader moduleClassLoader)
-            throws IOException, ClassNotFoundException {
-        List<String> verticleIdentifiers = cps.scanManifestFiles(NEONBEE_DEPLOYABLES);
-        List<Class<Verticle>> verticleClasses = new ArrayList<>(verticleIdentifiers.size());
-        // To load the verticle for which an identifier was found, a ClassLoader which also has access
-        // to e.g. Vert.x core classes is needed.
-        for (String identifier : verticleIdentifiers) {
-            @SuppressWarnings("unchecked")
-            Class<Verticle> verticleClass = (Class<Verticle>) moduleClassLoader.loadClass(identifier);
-            // TODO: Check if verticleClass is instance of DataVerticle or JobVerticle
-            // This check requires a huge change in the test base, because all the verticle which are
-            // dynamically generated during tests are not instance of DataVerticle or JobVerticle.
-            verticleClasses.add(verticleClass);
-        }
-
-        return verticleClasses;
+                        promise.complete(verticleClasses);
+                    } catch (ClassNotFoundException e) {
+                        promise.fail(e);
+                    }
+                }));
     }
 
     private LoggingFacade getCorrelatedLogger() {

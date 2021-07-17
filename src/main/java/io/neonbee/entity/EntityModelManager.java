@@ -8,14 +8,12 @@ import static java.util.Collections.unmodifiableMap;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +34,7 @@ import org.apache.olingo.server.core.MetadataParser;
 import org.apache.olingo.server.core.SchemaBasedEdmProvider;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Streams;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.sap.cds.reflect.CdsModel;
@@ -519,25 +518,20 @@ public final class EntityModelManager {
         @VisibleForTesting
         Future<Void> scanClassPath() {
             LOGGER.info("Loading models from class path");
-            return Future.<List<String>>future(blockingHandler -> vertx.executeBlocking(blockingResult -> {
-                try {
-                    // Vert.x FileResolver will actually also work for files only
-                    // available on the class path, so loading the model like any other ordinary file, will just work!
-                    List<String> files = new ArrayList<>();
-                    ClassPathScanner scanner = new ClassPathScanner();
-                    files.addAll(scanner.scanWithPredicate(name -> name.endsWith(CSN)));
-                    files.addAll(scanner.scanManifestFiles(NEONBEE_MODELS));
-                    blockingResult.complete(files);
-                } catch (IOException e) {
-                    blockingResult.fail(e);
-                }
-            }, blockingHandler)).compose(files -> CompositeFuture
+
+            ClassPathScanner scanner = new ClassPathScanner();
+            Future<List<String>> csnFiles = scanner.scanWithPredicate(vertx, name -> name.endsWith(CSN));
+            Future<List<String>> modelFiles = scanner.scanManifestFiles(vertx, NEONBEE_MODELS);
+
+            return CompositeFuture.all(csnFiles, modelFiles).compose(scanResult -> CompositeFuture
                     // Use distinct because models mentioned in the manifest could also exists as file.
-                    .all(files.stream().distinct().map(name -> loadModel(Path.of(name)).otherwise(throwable -> {
-                        // models loaded from the class path are non-vital for NeonBee so continue anyways
-                        LOGGER.warn("Loading model {} from class path failed", throwable, name);
-                        return null;
-                    })).collect(Collectors.toList()))).mapEmpty();
+                    .all(Streams.concat(csnFiles.result().stream(), modelFiles.result().stream()).distinct()
+                            .map(name -> loadModel(Path.of(name)).otherwise(throwable -> {
+                                // models loaded from the class path are non-vital for NeonBee so continue anyways
+                                LOGGER.warn("Loading model {} from class path failed", throwable, name);
+                                return null;
+                            })).collect(Collectors.toList())))
+                    .mapEmpty();
         }
     }
 }

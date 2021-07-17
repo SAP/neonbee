@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import com.google.common.truth.Correspondence;
 import com.google.common.truth.Truth8;
@@ -46,7 +47,7 @@ class NeonBeeModuleTest extends NeonBeeTestBase {
     @DisplayName("test getters")
     void gettersTest(Vertx vertx) {
         NeonBeeModule module =
-                new NeonBeeModule(vertx, "testmodule", CORRELATION_ID, null, List.of(), Map.of(), Map.of());
+                new NeonBeeModule(vertx, "testmodule", CORRELATION_ID, null, null, List.of(), Map.of(), Map.of());
         assertThat(module.getCorrelationId()).isEqualTo(CORRELATION_ID);
     }
 
@@ -170,12 +171,11 @@ class NeonBeeModuleTest extends NeonBeeTestBase {
 
         // Extract classes
         URLClassLoader classLoader =
-                new URLClassLoader(neonBeeModuleJar.writeToTempURL(), ClassLoader.getSystemClassLoader());
+                Mockito.spy(new URLClassLoader(neonBeeModuleJar.writeToTempURL(), ClassLoader.getSystemClassLoader()));
         Class<Verticle> verticleClassA = (Class<Verticle>) classLoader.loadClass(classNameA);
         Class<Verticle> verticleClassB = (Class<Verticle>) classLoader.loadClass(classNameB);
-        classLoader.close();
 
-        NeonBeeModule module = new NeonBeeModule(vertx, "testmodule", CORRELATION_ID, jarPath,
+        NeonBeeModule module = new NeonBeeModule(vertx, "testmodule", CORRELATION_ID, jarPath, classLoader,
                 List.of(verticleClassA, verticleClassB), models, extendedModels);
 
         module.deploy().compose(neonBeeModule -> {
@@ -205,8 +205,13 @@ class NeonBeeModuleTest extends NeonBeeTestBase {
                 };
                 checkModelIsNull.accept("io.neonbee.deploy");
                 checkModelIsNull.accept("io.neonbee.deploymultiple");
+
                 // Check that verticle are undeployed
                 assertThat(vertx.deploymentIDs()).containsNoneIn(deploymentIds);
+
+                // Check that the class loader was closed
+                Mockito.verify(classLoader).close();
+
                 undeployCheck.flag();
             });
             testContext.completeNow();
