@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.5.1 (2021-07-21)
+
+### Bug Fixes
+
+- decode query parameters in odata requests ([38e36e2f](https://github.com/SAP/neonbee/commit/38e36e2fe6ddc1b1463d3fc8857a5456e6061862))
+- prepend uri paths of entity requests with a slash ([ae31b863](https://github.com/SAP/neonbee/commit/ae31b8638dc66b9c4d272b23eeb463760267fe1b))
+
+
+### Code Refactoring
+
+- **processor**: extract common methods into helper ([608ec395](https://github.com/SAP/neonbee/commit/608ec395c195f0197f8210e21a1d272ebbd5ef55))
+- made the ClassPathScanner non-blocking ([dc190210](https://github.com/SAP/neonbee/commit/dc1902100297100511ad59a584a92a4ee60c35a0))
+- move error handler configuration to ServerConfig class ([71e328ff](https://github.com/SAP/neonbee/commit/71e328ff32dfa400ff52d4a29a0e864135f18a64))
+
+
+### Features
+
+- allow multiple MANIFST.MF files when parsing NeonBee-Module ([dec4a91f](https://github.com/SAP/neonbee/commit/dec4a91fcb0ab646486dbeb9a9e332a967eee3f6))
+
+
+### Documentation
+
+- **readme**: add example repository ([2a861f7f](https://github.com/SAP/neonbee/commit/2a861f7f2c2cfc9721b081a04083b6a4ac78ce2b))
+
+
 ## 0.5.0 (2021-06-07)
 
 ### Bug Fixes
