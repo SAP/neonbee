@@ -15,10 +15,13 @@ import static io.vertx.core.Future.succeededFuture;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -488,9 +491,28 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                 // ignore the result of the require data composite future (otherwiseEmpty), the retrieve data method
                 // should decide if it needs to handle success or failure of any of the individual asynchronous results
                 return CompositeFuture.join(Optional.ofNullable(requests).map(Collection::stream).orElse(Stream.empty())
-                        .map(request -> requestResults.computeIfAbsent(request,
-                                mapRequest -> requestData(vertx, request, context.copy())))
-                        .map(Future.class::cast).collect(Collectors.toList())).otherwiseEmpty();
+                        .map(request -> requestResults.computeIfAbsent(request, mapRequest -> {
+                            if (!LOGGER.isDebugEnabled()) {
+                                return requestData(vertx, request, context.copy());
+                            }
+
+                            Instant requestBegin = Instant.now();
+                            String trackingId = UUID.randomUUID().toString();
+                            String address = Optional.ofNullable(request.getQualifiedName())
+                                    .orElse(request.getEntityTypeName().getFullQualifiedNameAsString());
+                            LOGGER.correlateWith(context).debug("{} - Start request to {} with uri path: {}", trackingId,
+                                    address, request.getQuery().getUriPath());
+                            return requestData(vertx, request, context.copy()).onComplete(ar -> {
+                                long elapsed = Duration.between(requestBegin, Instant.now()).toSeconds();
+                                if (ar.succeeded()) {
+                                    LOGGER.correlateWith(context).debug("{} - request succeeded within {}", trackingId,
+                                            elapsed);
+                                } else {
+                                    LOGGER.correlateWith(context).debug("{} - request failed within {}", trackingId,
+                                            elapsed, ar.cause());
+                                }
+                            });
+                        })).map(Future.class::cast).collect(Collectors.toList())).otherwiseEmpty();
             }).compose(requiredCompositeOrNothing -> {
                 try {
                     return retrieveData(query, new DataMap(requestResults), context);
