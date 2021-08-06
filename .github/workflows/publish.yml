@@ -150,7 +150,34 @@ jobs:
       - name: Set Changelog
         id: setChangelog
         run: |
-          echo ::set-output name=releaseBody::"$( jq -rRs 'gsub("\r";"%0D")|gsub("\n";"%0A")' < ./release_changelog.md )"
+          releaseVersion="${{ needs.publishToMavenCentral.outputs.releaseVersion }}"
+          cat <<EOF > body.md
+          ## Artifacts
+
+          Maven Central: [neonbee-core-${releaseVersion}](https://mvnrepository.com/artifact/io.neonbee/neonbee-core/${releaseVersion})
+
+          ### Maven
+
+          \`\`\`xml
+          <!-- https://mvnrepository.com/artifact/io.neonbee/neonbee-core -->
+          <dependency>
+            <groupId>io.neonbee</groupId>
+            <artifactId>neonbee-core</artifactId>
+            <version>${releaseVersion}</version>
+          </dependency>
+          \`\`\`
+
+          ### Gradle
+
+          \`\`\`groovy
+          // https://mvnrepository.com/artifact/io.neonbee/neonbee-core
+          implementation group: 'io.neonbee', name: 'neonbee-core', version: '${releaseVersion}'
+          \`\`\`
+          EOF
+          echo "" >> body.md
+          cat release_changelog.md >> body.md
+
+          echo ::set-output name=releaseBody::"$( jq -rRs 'gsub("\r";"%0D")|gsub("\n";"%0A")' < ./body.md )"
 
       - name: Push changes
         uses: ad-m/github-push-action@master
