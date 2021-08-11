@@ -25,6 +25,8 @@ public abstract class JobVerticle extends AbstractVerticle {
 
     private static final long MINIMUM_DELAY = 100L;
 
+    private static final int SCHEDULE_TEST_EXECUTIONS = 10;
+
     private JobSchedule schedule;
 
     private Instant lastExecution;
@@ -74,10 +76,27 @@ public abstract class JobVerticle extends AbstractVerticle {
     @Override
     public void start() {
         if (!NeonBee.get(getVertx()).getOptions().shouldDisableJobScheduling()) {
-            scheduleJob();
+            if (isScheduleValid()) {
+                scheduleJob();
+            } else {
+                throw new IllegalStateException("The period of a periodic JobSchedule can't be zero");
+            }
         } else {
             finalizeJob();
         }
+    }
+
+    private boolean isScheduleValid() {
+        if (schedule.isPeriodic()) {
+            Instant before = now();
+            for (int x = 0; x < SCHEDULE_TEST_EXECUTIONS; x++) {
+                Instant after = before.with(schedule);
+                if (after.compareTo(before) <= 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**

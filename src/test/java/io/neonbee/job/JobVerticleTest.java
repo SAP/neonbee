@@ -20,11 +20,15 @@ import org.mockito.ArgumentMatcher;
 import io.neonbee.NeonBeeMockHelper;
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.data.DataContext;
+import io.neonbee.test.base.NeonBeeTestBase;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.junit5.Checkpoint;
+import io.vertx.junit5.Timeout;
+import io.vertx.junit5.VertxTestContext;
 
-class JobVerticleTest {
+class JobVerticleTest extends NeonBeeTestBase {
     private static class TestJobVerticle extends JobVerticle {
         public final Vertx vertxMock;
 
@@ -187,6 +191,52 @@ class JobVerticleTest {
         TestJobVerticle testJobVerticle = new TestJobVerticle(new JobSchedule(), true, true);
         assertThat(testJobVerticle.jobExecuted).isEqualTo(0);
         verify(testJobVerticle.vertxMock).undeploy(any());
+    }
+
+    @Test
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("Do not start JobVerticles with invalid JobSchedule")
+    void testStartFailing(VertxTestContext testConetxt) {
+        class DummyJobVerticle extends JobVerticle {
+
+            DummyJobVerticle(JobSchedule schedule) {
+                super(schedule);
+            }
+
+            @Override
+            public Future<?> execute(DataContext context) {
+                return Future.succeededFuture();
+            }
+        }
+
+        DummyJobVerticle dummyJobVerticle = new DummyJobVerticle(new JobSchedule(Duration.ofMinutes(0)));
+        deployVerticle(dummyJobVerticle).onComplete(testConetxt.failing(t -> {
+            testConetxt.verify(() -> assertThat(t).hasMessageThat()
+                    .isEqualTo("The period of a periodic JobSchedule can't be zero"));
+            testConetxt.completeNow();
+        }));
+    }
+
+    @Test
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("Do start JobVerticles with a valid JobSchedule")
+    void testStartSucceeding(VertxTestContext testConetxt) {
+        Checkpoint cp = testConetxt.checkpoint();
+        class DummyJobVerticle extends JobVerticle {
+
+            DummyJobVerticle(JobSchedule schedule) {
+                super(schedule);
+            }
+
+            @Override
+            public Future<?> execute(DataContext context) {
+                cp.flag();
+                return Future.succeededFuture();
+            }
+        }
+
+        DummyJobVerticle dummyJobVerticle = new DummyJobVerticle(new JobSchedule(Duration.ofMinutes(1)));
+        deployVerticle(dummyJobVerticle).onComplete(testConetxt.succeeding(v -> {}));
     }
 
     // the delay must always not be longer than 20 milliseconds from the expected delay

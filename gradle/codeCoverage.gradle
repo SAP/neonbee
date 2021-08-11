@@ -54,7 +54,7 @@ consoleReporter {
         // failIfLessThanThresholdError property is set to true,
         // the build will fail. Even if the property is called
         // failIfLessThan... the build will actually fail at 80.0%
-        thresholdError 80
+        thresholdError 81
 
         // Set this property if you want to customize build error message
         // when you use 'failIfLessThanThresholdError' feature.
