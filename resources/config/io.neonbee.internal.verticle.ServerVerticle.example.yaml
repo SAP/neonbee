@@ -34,7 +34,7 @@ config:
     # the maximum initial line length of the HTTP header (e.g. "GET / HTTP/1.0"), defaults to 4096 bytes
     maxInitialLineLength: 4096
 
-    # configure the error handler. If not specified, defaults to io.neonbee.internal.handler.ErrorHandler
+    # configure the error handler. If not specified, defaults to io.neonbee.internal.handler.DefaultErrorHandler
     errorHandler: io.neonbee.internal.handler.DefaultErrorHandler
 
     # specific endpoint configuration, defaults to the object seen below

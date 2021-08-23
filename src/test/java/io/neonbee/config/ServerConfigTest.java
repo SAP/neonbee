@@ -37,6 +37,9 @@ import io.vertx.core.net.TrustOptions;
 import io.vertx.core.tracing.TracingPolicy;
 
 class ServerConfigTest {
+    private static final String ERROR_HANDLER = "io.neonbee.CustomErrorHandler";
+
+    private static final String ERROR_TEMPLATE = "custom-template.html";
 
     @Test
     @DisplayName("test toJson")
@@ -55,11 +58,13 @@ class ServerConfigTest {
         sc.setTimeout(timeout).setSessionHandling(sessionHandling).setSessionCookieName(sessionCookieName);
         sc.setCorrelationStrategy(correlationStrategy).setTimeoutStatusCode(timeoutStatusCode);
         sc.setEndpointConfigs(endpointConfigs).setAuthChainConfig(authHandlerConfig);
+        sc.setErrorHandlerClassName(ERROR_HANDLER).setErrorHandlerTemplate(ERROR_TEMPLATE);
 
         JsonObject expected = new JsonObject().put("timeout", timeout).put("sessionHandling", sessionHandling.name());
         expected.put("sessionCookieName", sessionCookieName).put("correlationStrategy", correlationStrategy.name());
         expected.put("timeoutStatusCode", timeoutStatusCode).put("endpoints", new JsonArray().add(epc.toJson()));
         expected.put("authenticationChain", new JsonArray().add(ahc.toJson()));
+        expected.put("errorHandler", ERROR_HANDLER).put("errorTemplate", ERROR_TEMPLATE);
 
         assertThat(sc.toJson()).containsAtLeastElementsIn(expected);
     }
@@ -79,6 +84,8 @@ class ServerConfigTest {
         json.put("sessionCookieName", sessionCookieName).put("correlationStrategy", correlationStrategy.name());
         json.put("timeoutStatusCode", timeoutStatusCode).put("endpoints", new JsonArray().add(epc.toJson()));
         json.put("authenticationChain", new JsonArray().add(ahc.toJson()));
+        json.put("errorHandler", ERROR_HANDLER);
+        json.put("errorTemplate", ERROR_TEMPLATE);
 
         ServerConfig sc = new ServerConfig(json);
         assertThat(sc.getTimeout()).isEqualTo(timeout);
@@ -88,6 +95,8 @@ class ServerConfigTest {
         assertThat(sc.getTimeoutStatusCode()).isEqualTo(timeoutStatusCode);
         assertThat(sc.getEndpointConfigs()).contains(epc);
         assertThat(sc.getAuthChainConfig()).contains(ahc);
+        assertThat(sc.getErrorHandlerClassName()).isEqualTo(ERROR_HANDLER);
+        assertThat(sc.getErrorHandlerTemplate()).isEqualTo(ERROR_TEMPLATE);
     }
 
     @Test
@@ -131,6 +140,12 @@ class ServerConfigTest {
         List<AuthHandlerConfig> authHandlerConfig = List.of(new AuthHandlerConfig());
         assertThat(sc.setAuthChainConfig(authHandlerConfig)).isSameInstanceAs(sc);
         assertThat(sc.getAuthChainConfig()).containsExactlyElementsIn(authHandlerConfig);
+
+        assertThat(sc.setErrorHandlerClassName(ERROR_HANDLER)).isSameInstanceAs(sc);
+        assertThat(sc.getErrorHandlerClassName()).isEqualTo(ERROR_HANDLER);
+
+        assertThat(sc.setErrorHandlerTemplate(ERROR_TEMPLATE)).isSameInstanceAs(sc);
+        assertThat(sc.getErrorHandlerTemplate()).isEqualTo(ERROR_TEMPLATE);
     }
 
     @Test
