@@ -196,7 +196,8 @@ public class ServerConfig extends HttpServerOptions {
             .map(endpointClass -> new EndpointConfig().setType(endpointClass.getName())).collect(Collectors.toList()));
 
     private static final ImmutableBiMap<String, String> REPHRASE_MAP =
-            ImmutableBiMap.of("endpointConfigs", "endpoints", "authChainConfig", "authenticationChain");
+            ImmutableBiMap.of("endpointConfigs", "endpoints", "authChainConfig", "authenticationChain",
+                    "errorHandlerClassName", "errorHandler", "errorHandlerTemplate", "errorTemplate");
 
     private int timeout = DEFAULT_TIMEOUT;
 
