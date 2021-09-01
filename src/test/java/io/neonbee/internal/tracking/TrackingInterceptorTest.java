@@ -23,7 +23,7 @@ class TrackingInterceptorTest {
 
     @BeforeEach
     void setUp() {
-        DataContextImpl context = new DataContextImpl("correlationId", "bearerToken",
+        DataContextImpl context = new DataContextImpl("correlationId", "sessionId", "bearerToken",
                 new JsonObject().put("username", "Duke"), null, null);
         context.pushVerticleToPath("Data1Verticle");
         context.amendTopVerticleCoordinate("deplymentId1");
