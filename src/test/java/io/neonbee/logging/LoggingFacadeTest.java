@@ -53,7 +53,7 @@ class LoggingFacadeTest {
         when(mockedLoggingFacade.correlateWith(any(DataContext.class))).thenCallRealMethod();
         when(mockedLoggingFacade.correlateWith(any(RoutingContext.class))).thenCallRealMethod();
 
-        mockedLoggingFacade.correlateWith(new DataContextImpl(correlId, null));
+        mockedLoggingFacade.correlateWith(new DataContextImpl(correlId, null, null));
         mockedLoggingFacade.correlateWith(routingContextMock);
 
         verify(mockedLoggingFacade, times(2)).correlateWith(eq(correlId));

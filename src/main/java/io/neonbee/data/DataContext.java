@@ -111,6 +111,13 @@ public interface DataContext {
     String pathAsString();
 
     /**
+     * Returns the value of the session Id as a string.
+     *
+     * @return the session Id as String
+     */
+    String sessionId();
+
+    /**
      * Copy the current {@link DataContext}. This is necessary, since one data verticle might branch to multiple other
      * verticle in parallel. The {@link DataContext}es of the parallel branches must be isolated from each other.
      *

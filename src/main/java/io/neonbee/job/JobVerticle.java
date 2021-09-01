@@ -139,7 +139,8 @@ public abstract class JobVerticle extends AbstractVerticle {
                 ISO_LOCAL_DATE_TIME.format(ZonedDateTime.now(UTC).plus(nextDelay, MILLIS)));
         getVertx().setTimer(nextDelay, timerID -> {
             // initialize the a data context for the job execution
-            DataContext context = new DataContextImpl(UUID.randomUUID().toString(), getUser());
+            DataContext context = new DataContextImpl(UUID.randomUUID().toString(),
+                    "internal-" + UUID.randomUUID().toString(), getUser());
 
             // execute the job and wait for the execution to finish, before starting the next execution
             LOGGER.correlateWith(context).info("Job execution of {} started", getClass().getSimpleName());

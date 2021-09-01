@@ -1,6 +1,7 @@
 package io.neonbee.data.internal;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.data.internal.DataContextImpl.NO_SESSION_ID_AVAILABLE;
 import static io.neonbee.internal.handler.CorrelationIdHandler.CORRELATION_ID;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
@@ -17,11 +18,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Streams;
@@ -29,21 +35,22 @@ import com.google.common.collect.Streams;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataContext.DataVerticleCoordinate;
 import io.neonbee.data.DataException;
-import io.neonbee.data.internal.DataContextImpl.DataVerticleCoordinateImpl;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.Session;
+import io.vertx.junit5.Timeout;
 
 class DataContextImplTest {
     DataContextImpl context;
 
     @BeforeEach
     void setUp() {
-        context = new DataContextImpl("correlationId", "bearerToken", new JsonObject().put("username", "Duke"), null,
-                null);
+        context = new DataContextImpl("correlationId", "sessionId", "bearerToken",
+                new JsonObject().put("username", "Duke"), null, null);
     }
 
     @Test
@@ -60,9 +67,10 @@ class DataContextImplTest {
     @Test
     void testDecodeContextFromString() {
         String json =
-                "{\"correlationId\":\"correlationId\",\"bearerToken\":\"bearerToken\",\"userPrincipal\":{\"username\":\"Duke\"},\"data\":{},\"path\":[{\"qualifiedName\":\"Data1Verticle\",\"deploymentId\":\"deploymentId1\",\"ipAddress\":\"ip1\"},{\"qualifiedName\":\"Data2Verticle\",\"deploymentId\":\"deploymentId2\",\"ipAddress\":\"ip2\"}]}";
+                "{\"correlationId\":\"correlationId\",\"sessionId\":\"sessionId\",\"bearerToken\":\"bearerToken\",\"userPrincipal\":{\"username\":\"Duke\"},\"data\":{},\"path\":[{\"qualifiedName\":\"Data1Verticle\",\"deploymentId\":\"deploymentId1\",\"ipAddress\":\"ip1\"},{\"qualifiedName\":\"Data2Verticle\",\"deploymentId\":\"deploymentId2\",\"ipAddress\":\"ip2\"}]}";
         DataContext context2 = DataContextImpl.decodeContextFromString(json);
         assertEquals(context2.correlationId(), "correlationId");
+        assertEquals(context2.sessionId(), "sessionId");
         assertEquals(context2.bearerToken(), "bearerToken");
         assertEquals(context2.userPrincipal(), new JsonObject().put("username", "Duke"));
         assertEquals(2, contextPathSize(context2));
@@ -162,7 +170,7 @@ class DataContextImplTest {
      */
     @Test
     void testSpecialCasesWerePathsList() {
-        DataContextImpl initialContext = new DataContextImpl("correlationId", "bearerToken",
+        DataContextImpl initialContext = new DataContextImpl("correlationId", "sessionId", "bearerToken",
                 new JsonObject().put("username", "Duke"), Map.of(), null);
         assertThat(initialContext.path().hasNext()).isFalse();
 
@@ -240,7 +248,7 @@ class DataContextImplTest {
     @Test
     @DisplayName("it should be fine to create a empty context with null values for the constructor")
     void testNullValueContextConstructor() {
-        testEmptyContext(new DataContextImpl(null, null, null, null));
+        testEmptyContext(new DataContextImpl(null, null, null, null, (Map<String, Object>) null));
     }
 
     private void testEmptyContext(DataContext context) {
@@ -253,55 +261,68 @@ class DataContextImplTest {
     @Test
     @DisplayName("the context should accept any correlation id (incl. null)")
     void testCorrelationId() {
-        assertThat(new DataContextImpl("expected1", null, null, null).correlationId()).isEqualTo("expected1");
-        assertThat(new DataContextImpl("expected2", null, null, null).correlationId()).isEqualTo("expected2");
-        assertThat(new DataContextImpl(null, null, null, null).correlationId()).isNull();
+        assertThat(new DataContextImpl("expected1", null, null, null, (Map<String, Object>) null).correlationId())
+                .isEqualTo("expected1");
+        assertThat(new DataContextImpl("expected2", null, null, null, (Map<String, Object>) null).correlationId())
+                .isEqualTo("expected2");
+        assertThat(new DataContextImpl(null, null, null, null, (Map<String, Object>) null).correlationId()).isNull();
     }
 
     @Test
     @DisplayName("the context should accept any bearer token (incl. null)")
     void testBearerToken() {
-        assertThat(new DataContextImpl(null, "expected1", null, null).bearerToken()).isEqualTo("expected1");
-        assertThat(new DataContextImpl(null, "expected2", null, null).bearerToken()).isEqualTo("expected2");
-        assertThat(new DataContextImpl(null, null, null, null).bearerToken()).isNull();
+        assertThat(new DataContextImpl(null, null, "expected1", null, null).bearerToken()).isEqualTo("expected1");
+        assertThat(new DataContextImpl(null, null, "expected2", null, null).bearerToken()).isEqualTo("expected2");
+        assertThat(new DataContextImpl(null, null, null, null, (Map<String, Object>) null).bearerToken()).isNull();
     }
 
     @Test
     @DisplayName("the context should accept any user principal (incl. null)")
     void testUserPrincipal() {
-        assertThat(new DataContextImpl(null, null, new JsonObject(), null).userPrincipal())
+        assertThat(new DataContextImpl(null, null, null, new JsonObject(), null).userPrincipal())
                 .isInstanceOf(JsonObject.class);
-        assertThat(new DataContextImpl(null, null, new JsonObject().put("anyAttribute", "anyExpectedValue"), null)
+        assertThat(new DataContextImpl(null, null, null, new JsonObject().put("anyAttribute", "anyExpectedValue"), null)
                 .userPrincipal().getString("anyAttribute")).isEqualTo("anyExpectedValue");
-        assertThat(new DataContextImpl(null, null, null, null).userPrincipal()).isNull();
+        assertThat(new DataContextImpl(null, null, null, null, (Map<String, Object>) null).userPrincipal()).isNull();
     }
 
     @Test
     @DisplayName("the user principal of a context should be immutable")
     void testUserPrincipalImmutable() {
-        assertThrows(UnsupportedOperationException.class, () -> new DataContextImpl(null, null, new JsonObject(), null)
-                .userPrincipal().put("anyAttribute", "anyValue"));
         assertThrows(UnsupportedOperationException.class,
-                () -> new DataContextImpl(null, null, new JsonObject(), null).userPrincipal().remove("anyAttribute"));
+                () -> new DataContextImpl(null, null, null, new JsonObject(), null).userPrincipal().put("anyAttribute",
+                        "anyValue"));
+        assertThrows(UnsupportedOperationException.class,
+                () -> new DataContextImpl(null, null, null, new JsonObject(), null).userPrincipal()
+                        .remove("anyAttribute"));
     }
 
     @Test
     @DisplayName("the user arbitrary data of a context")
     void testArbitraryData() {
-        assertThat(new DataContextImpl(null, null, null, null).data()).isEmpty();
+        assertThat(new DataContextImpl(null, null, null, null, (Map<String, Object>) null).data()).isEmpty();
         // should create a mutable map
-        assertDoesNotThrow(() -> new DataContextImpl(null, null, null, Collections.emptyMap()).data()
+        assertDoesNotThrow(() -> new DataContextImpl(null, null, null, null, Collections.emptyMap()).data()
                 .put("anyAttribute", "anyValue"));
-        assertThat(
-                new DataContextImpl(null, null, null, Collections.singletonMap("expectedKey", "expectedValue")).data())
-                        .containsExactly("expectedKey", "expectedValue");
-        assertThat(new DataContextImpl(null, null, null, Collections.singletonMap("expectedKey", "expectedValue"))
+        assertThat(new DataContextImpl(null, null, null, null, Collections.singletonMap("expectedKey", "expectedValue"))
+                .data()).containsExactly("expectedKey", "expectedValue");
+        assertThat(new DataContextImpl(null, null, null, null, Collections.singletonMap("expectedKey", "expectedValue"))
                 .setData(null).data()).isEmpty();
     }
 
-    @Test
-    @DisplayName("test passing a routing context instead")
-    void testWithRoutingContext() {
+    static Stream<Arguments> withSessions() {
+        String expectedSessionValue = "expectedSessId";
+        Session sessionMock = mock(Session.class);
+        when(sessionMock.id()).thenReturn(expectedSessionValue);
+        return Stream.of(Arguments.of(sessionMock, expectedSessionValue), Arguments.of(null, NO_SESSION_ID_AVAILABLE));
+    }
+
+    @ParameterizedTest(name = "{index}: with session: {0}")
+    @MethodSource("withSessions")
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @SuppressWarnings("PMD.UnusedFormalParameter") // Required for display name
+    @DisplayName("Constructor that accepts RoutingContext works correct")
+    void testWithRoutingContext(Session sessionMock, String expectedSessionValue) {
         RoutingContext routingContextMock = mock(RoutingContext.class);
         HttpServerRequest requestMock = mock(HttpServerRequest.class);
         User userMock = mock(User.class);
@@ -309,11 +330,13 @@ class DataContextImplTest {
         when(requestMock.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer anyExpectedToken123");
         when(userMock.principal()).thenReturn(new JsonObject().put("expectedKey", "expectedValue"));
         when(routingContextMock.get(CORRELATION_ID)).thenReturn("expectedCorrId");
+        when(routingContextMock.session()).thenReturn(sessionMock);
         when(routingContextMock.user()).thenReturn(userMock);
         when(routingContextMock.request()).thenReturn(requestMock);
 
         DataContextImpl dataContext = new DataContextImpl(routingContextMock);
         assertThat(dataContext.correlationId()).isEqualTo("expectedCorrId");
+        assertThat(dataContext.sessionId()).isEqualTo(expectedSessionValue);
         assertThat(dataContext.bearerToken()).isEqualTo("anyExpectedToken123");
         assertThat(dataContext.userPrincipal().getString("expectedKey")).isEqualTo("expectedValue");
     }
@@ -321,9 +344,10 @@ class DataContextImplTest {
     @Test
     @DisplayName("test encoding / decoding null context")
     void testNullEncodeDecode() {
-        DataContext dataContext = DataContextImpl.decodeContextFromString(
-                DataContextImpl.encodeContextToString(new DataContextImpl(null, null, null, null)));
+        DataContext dataContext = DataContextImpl.decodeContextFromString(DataContextImpl
+                .encodeContextToString(new DataContextImpl(null, null, null, null, (Map<String, Object>) null)));
         assertThat(dataContext.correlationId()).isNull();
+        assertThat(dataContext.sessionId()).isNull();
         assertThat(dataContext.bearerToken()).isNull();
         assertThat(dataContext.userPrincipal()).isNull();
         assertThat(dataContext.data()).isEmpty();
@@ -332,11 +356,13 @@ class DataContextImplTest {
     @Test
     @DisplayName("test encoding / decoding context")
     void testEncodeDecode() {
-        DataContext dataContext = DataContextImpl.decodeContextFromString(DataContextImpl.encodeContextToString(
-                new DataContextImpl("expected1", "expected2", new JsonObject().put("expectedKey", "expectedValue"),
+        DataContext dataContext = DataContextImpl
+                .decodeContextFromString(DataContextImpl.encodeContextToString(new DataContextImpl("expected1",
+                        "expectedSessionId", "expected2", new JsonObject().put("expectedKey", "expectedValue"),
                         new JsonObject().put("expected1", "expected2").put("expectedArray", new JsonArray().add(0))
                                 .put("expectedNull", (Object) null).getMap())));
         assertThat(dataContext.correlationId()).isEqualTo("expected1");
+        assertThat(dataContext.sessionId()).isEqualTo("expectedSessionId");
         assertThat(dataContext.bearerToken()).isEqualTo("expected2");
         assertThat(dataContext.userPrincipal()).isEqualTo(new JsonObject().put("expectedKey", "expectedValue"));
         assertThat(new JsonObject(dataContext.data())).isEqualTo(new JsonObject().put("expected1", "expected2")

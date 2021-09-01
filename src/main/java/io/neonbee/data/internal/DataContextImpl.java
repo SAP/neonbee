@@ -5,8 +5,6 @@ import static io.neonbee.internal.handler.CorrelationIdHandler.CORRELATION_ID;
 import static io.neonbee.internal.helper.CollectionsHelper.mutableCopyOf;
 import static io.neonbee.internal.helper.HostHelper.getHostIp;
 
-import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
@@ -21,8 +19,6 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 
@@ -35,8 +31,13 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.Session;
 
+@SuppressWarnings("PMD.GodClass") // Can be removed after deprecated constructors are removed
 public class DataContextImpl implements DataContext {
+    @VisibleForTesting
+    static final String NO_SESSION_ID_AVAILABLE = "noSessionIdAvailable";
+
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     private static final String USER_PRINCIPAL = "userPrincipal";
@@ -49,11 +50,15 @@ public class DataContextImpl implements DataContext {
 
     private static final Pattern BEARER_AUTHENTICATION_PATTERN = Pattern.compile("Bearer\\s(.+)");
 
+    private static final String SESSION_ID = "sessionId";
+
     private final String correlationId;
 
     private final String bearerToken;
 
     private final JsonObject userPrincipal;
+
+    private final String sessionId;
 
     private Map<String, Object> data;
 
@@ -61,30 +66,49 @@ public class DataContextImpl implements DataContext {
 
     public DataContextImpl() {
         // initialize an empty context (w/ will also create an empty path stack)
-        this(null, null, null, null, null);
+        this(null, null, null, null, null, null);
     }
 
     public DataContextImpl(RoutingContext routingContext) {
         this(CorrelationIdHandler.getCorrelationId(routingContext),
+                Optional.ofNullable(routingContext.session()).map(Session::id).orElse(NO_SESSION_ID_AVAILABLE),
                 Optional.ofNullable(routingContext.request().getHeader(HttpHeaders.AUTHORIZATION))
                         .map(BEARER_AUTHENTICATION_PATTERN::matcher).filter(Matcher::matches)
                         .map(matcher -> matcher.group(1)).orElse(null),
                 Optional.ofNullable(routingContext.user()).map(User::principal).orElse(null), null, null);
     }
 
+    @Deprecated
     public DataContextImpl(String correlationId, JsonObject userPrincipal) {
-        this(correlationId, null, userPrincipal, null, null);
+        this(correlationId, null, null, userPrincipal, null, null);
     }
 
+    public DataContextImpl(String correlationId, String sessionId, JsonObject userPrincipal) {
+        this(correlationId, sessionId, null, userPrincipal, null, null);
+    }
+
+    @Deprecated
     public DataContextImpl(String correlationId, String bearerToken, JsonObject userPrincipal,
             Map<String, Object> data) {
-        this(correlationId, bearerToken, userPrincipal, data, null);
+        this(correlationId, null, bearerToken, userPrincipal, data, null);
+    }
+
+    public DataContextImpl(String correlationId, String sessionId, String bearerToken, JsonObject userPrincipal,
+            Map<String, Object> data) {
+        this(correlationId, sessionId, bearerToken, userPrincipal, data, null);
+    }
+
+    @Deprecated
+    public DataContextImpl(String correlationId, String bearerToken, JsonObject userPrincipal, Map<String, Object> data,
+            Deque<DataVerticleCoordinate> paths) {
+        this(correlationId, null, bearerToken, userPrincipal, data, paths);
     }
 
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
-    public DataContextImpl(String correlationId, String bearerToken, JsonObject userPrincipal, Map<String, Object> data,
-            Deque<DataVerticleCoordinate> paths) {
+    public DataContextImpl(String correlationId, String sessionId, String bearerToken, JsonObject userPrincipal,
+            Map<String, Object> data, Deque<DataVerticleCoordinate> paths) {
         this.correlationId = correlationId;
+        this.sessionId = sessionId;
         this.bearerToken = bearerToken;
         // actually create a read only user principal object, so that no one can tamper with the data
         this.userPrincipal = Optional.ofNullable(userPrincipal).map(JsonObject::getMap)
@@ -102,6 +126,7 @@ public class DataContextImpl implements DataContext {
     @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     protected DataContextImpl(DataContext original) {
         this.correlationId = original.correlationId();
+        this.sessionId = original.sessionId();
         this.bearerToken = original.bearerToken();
         this.userPrincipal = original.userPrincipal();
         this.setData(original.data());
@@ -214,9 +239,9 @@ public class DataContextImpl implements DataContext {
             // actually it's fine for the context to be null, so also a null should be set as header
             return null;
         }
-        return new JsonObject().put(CORRELATION_ID, context.correlationId()).put(BEARER_TOKEN, context.bearerToken())
-                .put(USER_PRINCIPAL, context.userPrincipal()).put(DATA, context.data())
-                .put(PATH, pathToJson(context.path())).toString();
+        return new JsonObject().put(CORRELATION_ID, context.correlationId()).put(SESSION_ID, context.sessionId())
+                .put(BEARER_TOKEN, context.bearerToken()).put(USER_PRINCIPAL, context.userPrincipal())
+                .put(DATA, context.data()).put(PATH, pathToJson(context.path())).toString();
     }
 
     private static JsonArray pathToJson(Iterator<DataVerticleCoordinate> path) {
@@ -236,8 +261,8 @@ public class DataContextImpl implements DataContext {
         }
 
         JsonObject contextJson = new JsonObject(contextString);
-        return new DataContextImpl(contextJson.getString(CORRELATION_ID), contextJson.getString(BEARER_TOKEN),
-                contextJson.getJsonObject(USER_PRINCIPAL),
+        return new DataContextImpl(contextJson.getString(CORRELATION_ID), contextJson.getString(SESSION_ID),
+                contextJson.getString(BEARER_TOKEN), contextJson.getJsonObject(USER_PRINCIPAL),
                 Optional.ofNullable(contextJson.getJsonObject(DATA)).map(JsonObject::getMap).orElse(null),
                 Optional.ofNullable(contextJson.getJsonArray(PATH)).map(DataContextImpl::pathFromJson).orElse(null));
     }
@@ -301,6 +326,14 @@ public class DataContextImpl implements DataContext {
                 .collect(Collectors.joining(System.lineSeparator()));
     }
 
+    /**
+     * @return the session as String
+     */
+    @Override
+    public String sessionId() {
+        return sessionId;
+    }
+
     static Stream<DataVerticleCoordinate> streamPath(Iterator<DataVerticleCoordinate> path) {
         return Optional.ofNullable(path).map(Streams::stream).orElseGet(Stream::empty);
     }
@@ -314,83 +347,5 @@ public class DataContextImpl implements DataContext {
     public void updateResponseTimestamp() {
         Optional.ofNullable(pathStack.peek()).map(DataVerticleCoordinateImpl.class::cast)
                 .ifPresent(DataVerticleCoordinateImpl::updateResponseTimestamp);
-    }
-
-    @VisibleForTesting
-    static class DataVerticleCoordinateImpl implements DataVerticleCoordinate {
-        private final String qualifiedName;
-
-        private final String requestTimestamp;
-
-        private String deploymentId;
-
-        private String ipAddress;
-
-        private String responseTimestamp;
-
-        @JsonCreator
-        DataVerticleCoordinateImpl(@JsonProperty("qualifiedName") String qualifiedName) {
-            this.qualifiedName = qualifiedName;
-            this.requestTimestamp = LocalTime.now(ZoneId.systemDefault()).toString();
-        }
-
-        @Override
-        public String getRequestTimestamp() {
-            return requestTimestamp;
-        }
-
-        @Override
-        public String getResponseTimestamp() {
-            return responseTimestamp;
-        }
-
-        @Override
-        public String getQualifiedName() {
-            return qualifiedName;
-        }
-
-        @Override
-        public String getIpAddress() {
-            return ipAddress;
-        }
-
-        public DataVerticleCoordinateImpl updateResponseTimestamp() {
-            this.responseTimestamp = LocalTime.now(ZoneId.systemDefault()).toString();
-            return this;
-        }
-
-        public DataVerticleCoordinateImpl setDeploymentId(String instanceId) {
-            this.deploymentId = instanceId;
-            return this;
-        }
-
-        public DataVerticleCoordinateImpl setIpAddress(String ipAddress) {
-            this.ipAddress = ipAddress;
-            return this;
-        }
-
-        @Override
-        public String getDeploymentId() {
-            return deploymentId;
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder builder = new StringBuilder();
-            if (requestTimestamp != null) {
-                builder.append(requestTimestamp).append(' ');
-            }
-            builder.append(qualifiedName);
-            if (deploymentId != null) {
-                builder.append('[').append(deploymentId).append(']');
-            }
-            if (ipAddress != null) {
-                builder.append('@').append(ipAddress);
-            }
-            if (responseTimestamp != null) {
-                builder.append(' ').append(responseTimestamp);
-            }
-            return builder.toString();
-        }
     }
 }
