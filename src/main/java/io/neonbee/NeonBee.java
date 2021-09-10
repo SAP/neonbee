@@ -34,8 +34,10 @@ import io.neonbee.hook.HookRegistry;
 import io.neonbee.hook.HookType;
 import io.neonbee.hook.internal.DefaultHookRegistry;
 import io.neonbee.internal.SharedDataAccessor;
+import io.neonbee.internal.buffer.ImmutableBuffer;
 import io.neonbee.internal.codec.DataQueryMessageCodec;
 import io.neonbee.internal.codec.EntityWrapperMessageCodec;
+import io.neonbee.internal.codec.ImmutableBufferMessageCodec;
 import io.neonbee.internal.codec.ImmutableJsonArrayMessageCodec;
 import io.neonbee.internal.codec.ImmutableJsonObjectMessageCodec;
 import io.neonbee.internal.deploy.Deployable;
@@ -309,6 +311,7 @@ public class NeonBee {
         // add any default system codecs (bundled w/ NeonBee) here
         vertx.eventBus().registerDefaultCodec(DataQuery.class, new DataQueryMessageCodec())
                 .registerDefaultCodec(EntityWrapper.class, new EntityWrapperMessageCodec(vertx))
+                .registerDefaultCodec(ImmutableBuffer.class, new ImmutableBufferMessageCodec())
                 .registerDefaultCodec(ImmutableJsonArray.class, new ImmutableJsonArrayMessageCodec())
                 .registerDefaultCodec(ImmutableJsonObject.class, new ImmutableJsonObjectMessageCodec());
 

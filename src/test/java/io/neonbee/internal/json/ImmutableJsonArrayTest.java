@@ -85,7 +85,12 @@ class ImmutableJsonArrayTest {
     }
 
     @Test
-    void testCopyIsMutable() {
-        assertDoesNotThrow(() -> new ImmutableJsonArray().copy().add(true));
+    void testMutableCopyIsMutable() {
+        assertDoesNotThrow(() -> new ImmutableJsonArray().mutableCopy().add(true));
+    }
+
+    @Test
+    void testCopyIsAlsoNotMutable() {
+        assertThrows(UnsupportedOperationException.class, () -> new ImmutableJsonArray().copy().add(true));
     }
 }

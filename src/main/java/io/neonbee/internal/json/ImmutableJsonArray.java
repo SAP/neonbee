@@ -80,4 +80,17 @@ public final class ImmutableJsonArray extends JsonArray {
         return val;
     }
 
+    @Override
+    public ImmutableJsonArray copy() {
+        return this;
+    }
+
+    /**
+     * Creates a mutable copy of this array.
+     *
+     * @return The mutable copy of this array
+     */
+    public JsonArray mutableCopy() {
+        return new JsonArray(getList()).copy();
+    }
 }
