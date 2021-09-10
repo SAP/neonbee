@@ -102,4 +102,18 @@ public final class ImmutableJsonObject extends JsonObject {
         }
         return val;
     }
+
+    @Override
+    public ImmutableJsonObject copy() {
+        return this;
+    }
+
+    /**
+     * Creates a mutable copy of this object.
+     *
+     * @return The mutable copy of this object
+     */
+    public JsonObject mutableCopy() {
+        return new JsonObject(getMap()).copy();
+    }
 }

@@ -89,7 +89,12 @@ class ImmutableJsonObjectTest {
     }
 
     @Test
-    void testCopyIsMutable() {
-        assertDoesNotThrow(() -> new ImmutableJsonObject().copy().put("keyX", true));
+    void testMutableCopyIsMutable() {
+        assertDoesNotThrow(() -> new ImmutableJsonObject().mutableCopy().put("keyX", true));
+    }
+
+    @Test
+    void testCopyIsAlsoNotMutable() {
+        assertThrows(UnsupportedOperationException.class, () -> new ImmutableJsonObject().copy().put("keyY", true));
     }
 }
