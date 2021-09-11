@@ -26,8 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
 
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.data.DataQuery;
@@ -233,13 +231,12 @@ public class NeonBee {
         if (!options.isClustered()) {
             return succeededFuture(Vertx.vertx(vertxOptions));
         } else {
-            HazelcastInstance hzInstance = Hazelcast.newHazelcastInstance(options.getClusterConfig());
-            vertxOptions.setClusterManager(new HazelcastClusterManager(hzInstance)).getEventBusOptions()
+            vertxOptions.setClusterManager(new HazelcastClusterManager(options.getClusterConfig())).getEventBusOptions()
                     .setPort(options.getClusterPort());
             Optional.ofNullable(getHostIp()).filter(Predicate.not(String::isEmpty))
                     .ifPresent(currentIp -> vertxOptions.getEventBusOptions().setHost(currentIp));
             return Vertx.clusteredVertx(vertxOptions).onFailure(throwable -> {
-                logger.error("Failed to start Vertx cluster", throwable); // NOPMD slf4j
+                logger.error("Failed to start clustered Vert.x", throwable); // NOPMD slf4j
             });
         }
     }
