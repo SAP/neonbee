@@ -47,7 +47,7 @@ jobs:
     - name: Build and analyze
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: ./gradlew --no-daemon build test
+      run: ./gradlew --no-daemon --debug build test
 
     - name: Run Sonarqube
       if: github.event_name != 'pull_request'
