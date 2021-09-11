@@ -24,6 +24,7 @@ import io.vertx.junit5.VertxTestContext;
 class LoggerManagerVerticleTest extends DataVerticleTestBase {
 
     @BeforeEach
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         deployVerticle(new LoggerManagerVerticle()).onComplete(testContext.succeedingThenComplete());
     }

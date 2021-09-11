@@ -47,6 +47,7 @@ class ODataReadEntityTest extends ODataEndpointTestBase {
     }
 
     @BeforeEach
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         CompositeFuture
                 .all(deployVerticle(new TestService1EntityVerticle()), deployVerticle(new TestService3EntityVerticle()))

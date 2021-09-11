@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
@@ -53,6 +54,7 @@ import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.handler.AuthenticationHandler;
+import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
@@ -66,6 +68,7 @@ public class NeonBeeTestBase {
     private boolean isDummyServerVerticleDeployed;
 
     @BeforeEach
+    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @SuppressWarnings("unchecked")
     public void setUp(TestInfo testInfo, Vertx vertx, VertxTestContext testContext) throws Exception {
         // Build working directory
@@ -118,6 +121,7 @@ public class NeonBeeTestBase {
     }
 
     @AfterEach
+    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     void afterEach(Vertx vertx, VertxTestContext testContext) throws IOException {
         FileSystemHelper.deleteRecursive(vertx, workingDirPath).recover(throwable -> {
             if (throwable.getCause() instanceof DirectoryNotEmptyException) {

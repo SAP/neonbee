@@ -29,6 +29,7 @@ class DataVerticleTest extends DataVerticleTestBase {
     private DataVerticleImpl2 dataVerticleImpl2;
 
     @BeforeEach
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void deployEntityVerticles(VertxTestContext testContext) {
         this.dataVerticleImpl0 = new DataVerticleImpl0();
         this.dataVerticleImpl1 = new DataVerticleImpl1();

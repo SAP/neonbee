@@ -117,6 +117,7 @@ class ODataFilterTest extends ODataEndpointTestBase {
     }
 
     @BeforeEach
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         deployVerticle(new TestService1EntityVerticle()).onComplete(testContext.succeedingThenComplete());
         oDataRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN);

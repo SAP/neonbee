@@ -49,6 +49,7 @@ class WatchVerticleTest {
     }
 
     @AfterEach
+    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     void afterEach(Vertx vertx, VertxTestContext testContext) throws IOException {
         deleteRecursive(vertx, watchDir).recover(throwable -> {
             if (throwable.getCause() instanceof DirectoryNotEmptyException) {

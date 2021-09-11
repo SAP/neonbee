@@ -13,6 +13,7 @@ import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,6 +27,7 @@ import io.neonbee.internal.BasicJar;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.Checkpoint;
+import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
@@ -34,6 +36,7 @@ class ClassPathScannerTest {
     Vertx vertx = Vertx.vertx();
 
     @Test
+    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find passed attribute in all Manifest files")
     void scanManifestFilesTest(VertxTestContext testContext) throws IOException {
         String attribute1Name = "Attr1";
@@ -64,6 +67,7 @@ class ClassPathScannerTest {
     }
 
     @Test
+    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find files on the class path that match the passed prediction")
     void scanWithPredicateTest(VertxTestContext testContext) throws IOException {
         List<String> expected = List.of(ClassPathScanner.class.getName().replace(".", "/") + ".class",
@@ -81,6 +85,7 @@ class ClassPathScannerTest {
     }
 
     @Test
+    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find files on the class path that are inside of a JAR file")
     void scanWithPredicateJarFile(VertxTestContext testContext) throws IOException, URISyntaxException {
         String ressourceToFind = "MyCoolResource";
@@ -98,6 +103,7 @@ class ClassPathScannerTest {
     }
 
     @Test
+    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find classes which the class or any field or method within is annotated with a given annotation")
     void scanForAnnotation(VertxTestContext testContext) throws IOException, URISyntaxException {
         BasicJar jarWithTypeAnnotatedClass =

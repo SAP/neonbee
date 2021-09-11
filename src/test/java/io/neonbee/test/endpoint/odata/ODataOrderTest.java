@@ -33,6 +33,7 @@ class ODataOrderTest extends ODataEndpointTestBase {
     }
 
     @BeforeEach
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         request = new ODataRequest(TEST_ENTITY_SET_FQN);
         deployVerticle(new TestService1EntityVerticle()).onComplete(testContext.succeedingThenComplete());

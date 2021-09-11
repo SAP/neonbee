@@ -48,6 +48,7 @@ class ODataExpandEntityCollectionTest extends ODataEndpointTestBase {
     }
 
     @BeforeEach
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         CompositeFuture
                 .all(deployVerticle(new NavPropsProductsEntityVerticle()),
@@ -81,7 +82,7 @@ class ODataExpandEntityCollectionTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.HOURS)
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Expand property 'products' in Categories")
     void testExpandProductsInCategory(VertxTestContext testContext) {
         ODataRequest oDataRequest = new ODataRequest(CATEGORIES_ENTITY_SET_FQN).setExpandQuery(PROPERTY_NAME_PRODUCTS);
