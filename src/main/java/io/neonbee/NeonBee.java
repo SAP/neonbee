@@ -233,9 +233,8 @@ public class NeonBee {
         if (!options.isClustered()) {
             return succeededFuture(Vertx.vertx(vertxOptions));
         } else {
-            HazelcastInstance hzInstance = Hazelcast.newHazelcastInstance(options.getClusterConfig());
-            vertxOptions.setClusterManager(new HazelcastClusterManager(hzInstance)).getEventBusOptions()
-                    .setPort(options.getClusterPort());
+            vertxOptions.setClusterManager(new HazelcastClusterManager(options.getClusterConfig()))
+                    .getEventBusOptions().setPort(options.getClusterPort());
             Optional.ofNullable(getHostIp()).filter(Predicate.not(String::isEmpty))
                     .ifPresent(currentIp -> vertxOptions.getEventBusOptions().setHost(currentIp));
             return Vertx.clusteredVertx(vertxOptions).onFailure(throwable -> {
