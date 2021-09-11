@@ -23,16 +23,15 @@ class NeonBeeTestBaseTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.HOURS)
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("test that the dummy user principal is available in the DataContext")
     void testProvideUserPrincipal(VertxTestContext testContext) {
         DataVerticle<Void> dummy = createDummyDataVerticle("test/Dummy").withDynamicResponse((query, context) -> {
             testContext.verify(() -> assertThat(context.userPrincipal()).isEqualTo(PRINCIPAL));
-            testContext.completeNow();
             return null;
         });
 
         deployVerticle(dummy).compose(v -> createRequest(HttpMethod.GET, "/raw/test/Dummy").send())
-                .onComplete(testContext.succeeding(v -> {}));
+                .onComplete(testContext.succeedingThenComplete());
     }
 }

@@ -58,12 +58,13 @@ class LocalPreferredClusterTest {
     }
 
     @AfterEach
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     void tearDown(VertxTestContext testContext) {
         localNode.getVertx().close(testContext.succeedingThenComplete());
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that localPreferred requests are always dispatched to local consumer")
     void testLocalPreferredRequest(VertxTestContext testContext) {
         // Create a localPreferred request
@@ -88,7 +89,7 @@ class LocalPreferredClusterTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that non localPreferred requests are dispatched to local and remote consumers")
     void testNonLocalPreferredRequest(VertxTestContext testContext) {
         Range<Long> expectedRange = Range.closed(REPETITION / 2 - 1, REPETITION / 2 + 1);
@@ -108,7 +109,7 @@ class LocalPreferredClusterTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that data verticle are registered and deregistered properly as local consumer")
     void testLocalConsumerRegistration(VertxTestContext testContext) {
         String verticleAddress = "DataVerticle[" + ConsumerVerticle.NAME + "]";

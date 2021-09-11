@@ -58,6 +58,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     }
 
     @BeforeEach
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void deployEntityVerticles(VertxTestContext testContext) {
         entityVerticleImpl1 = new EntityVerticleImpl1();
         entityVerticleImpl2 = new EntityVerticleImpl2();
