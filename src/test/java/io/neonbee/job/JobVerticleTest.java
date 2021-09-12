@@ -240,9 +240,9 @@ class JobVerticleTest extends NeonBeeTestBase {
     }
 
     // the delay must always not be longer than 20 milliseconds from the expected delay
-    // (the 50ms is the amount of time the test execution might take until the verify statement)
+    // (the 75ms some leeway granted that the test execution might take until the verify statement)
     @SuppressWarnings("PMD")
     private static ArgumentMatcher<Long> isApproximately(long expectedDelay) {
-        return delay -> (delay <= expectedDelay) && (delay >= (expectedDelay - 50));
+        return delay -> (delay <= expectedDelay) && (delay >= (expectedDelay - 75));
     }
 }

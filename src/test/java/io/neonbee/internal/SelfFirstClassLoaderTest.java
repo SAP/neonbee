@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import io.neonbee.test.helper.FileSystemHelper;
 import io.vertx.core.DeploymentOptions;
@@ -32,6 +33,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
+@Isolated("all tests are modifying the current threads class-loader")
 class SelfFirstClassLoaderTest {
     private static final String CLASS_NAME = "CoolTestClassWithUniqueName";
 

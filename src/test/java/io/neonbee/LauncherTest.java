@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import com.hazelcast.config.ClasspathXmlConfig;
 
@@ -25,6 +26,7 @@ import io.neonbee.test.helper.FileSystemHelper;
 import io.vertx.core.cli.InvalidValueException;
 import io.vertx.core.cli.MissingValueException;
 
+@Isolated("some tests modify the global ProcessEnvironment using SystemHelper.withEnvironment")
 class LauncherTest {
     private static Path tempDirPath;
 
