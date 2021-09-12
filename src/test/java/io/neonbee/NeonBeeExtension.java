@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -34,11 +35,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
+import com.hazelcast.core.LifecycleService;
 
 import io.neonbee.test.helper.SystemHelper;
+import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
+import io.vertx.core.impl.VertxImpl;
+import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
+import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 @SuppressWarnings("rawtypes")
 public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionCallback, AfterTestExecutionCallback,
@@ -273,10 +279,34 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         throw new VertxException("NeonBee initialization failed.");
     }
 
+    @SuppressWarnings("FutureReturnValueIgnored")
     private ThrowingConsumer<NeonBee> closeNeonBee() {
         return neonBee -> {
             CountDownLatch latch = new CountDownLatch(1);
             AtomicReference<Throwable> errorBox = new AtomicReference<>();
+
+            // additional logic for tests, due to Hazelcast clusters tend to get stuck, after test execution finishes
+            Vertx vertx = neonBee.getVertx();
+            if (vertx instanceof VertxImpl) {
+                ClusterManager clusterManager = ((VertxImpl) vertx).getClusterManager();
+                if (clusterManager instanceof HazelcastClusterManager) {
+                    LifecycleService clusterLifecycleService =
+                            ((HazelcastClusterManager) clusterManager).getHazelcastInstance().getLifecycleService();
+                    Executors.newSingleThreadScheduledExecutor(runnable -> {
+                        Thread thread = new Thread(runnable, "neonbee-cluster-terminator");
+                        thread.setDaemon(true);
+                        return thread;
+                    }).schedule(() -> {
+                        if (clusterLifecycleService.isRunning()) {
+                            LOGGER.warn("Forcefully terminating Hazelcast cluster after test");
+                        }
+
+                        // terminate the cluster in any case, if already terminated, this call will do nothing
+                        clusterLifecycleService.terminate();
+                    }, 10, TimeUnit.SECONDS);
+                }
+            }
+
             neonBee.getVertx().close(ar -> {
                 if (ar.failed()) {
                     errorBox.set(ar.cause());
