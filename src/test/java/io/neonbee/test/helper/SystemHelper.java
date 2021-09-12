@@ -48,8 +48,11 @@ public final class SystemHelper {
     public static void withEnvironment(Map<String, String> newEnvironment, Runnable runnable) throws Exception {
         Map<String, String> oldEnvironment = Map.copyOf(System.getenv());
         setEnvironment(newEnvironment);
-        runnable.run();
-        SystemHelper.setEnvironment(oldEnvironment);
+        try {
+            runnable.run();
+        } finally {
+            setEnvironment(oldEnvironment);
+        }
     }
 
     private SystemHelper() {

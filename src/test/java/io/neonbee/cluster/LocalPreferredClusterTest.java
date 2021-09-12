@@ -16,8 +16,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import com.google.common.collect.Range;
 
@@ -36,7 +34,6 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(NeonBeeExtension.class)
-@Execution(ExecutionMode.SAME_THREAD)
 class LocalPreferredClusterTest {
     private static final String LOCAL = "local";
 
