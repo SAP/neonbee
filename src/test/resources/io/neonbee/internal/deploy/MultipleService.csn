@@ -4,7 +4,7 @@
     "io.neonbee.deploymultiple.CarService": {
       "kind": "service"
     },
-    "io.neonbee.deploymultiple.CarService.Carss": {
+    "io.neonbee.deploymultiple.CarService.Cars": {
       "kind": "entity",
       "elements": {
         "ID": {

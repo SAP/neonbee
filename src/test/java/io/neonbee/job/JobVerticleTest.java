@@ -158,7 +158,7 @@ class JobVerticleTest extends NeonBeeTestBase {
     @Test
     @DisplayName("Verify that jobs executed when scheduled")
     void verifyJobExecuted() {
-        // if a one time job was scheduled, handler should be called once and undeploay should be called
+        // if a one time job was scheduled, handler should be called once and undeploy should be called
         TestJobVerticle testJobVerticle = new TestJobVerticle(new JobSchedule(), true, false, 100);
         assertThat(testJobVerticle.jobExecuted).isEqualTo(1);
         verify(testJobVerticle.vertxMock).undeploy(any());
@@ -196,7 +196,7 @@ class JobVerticleTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Do not start JobVerticles with invalid JobSchedule")
-    void testStartFailing(VertxTestContext testConetxt) {
+    void testStartFailing(VertxTestContext testContext) {
         class DummyJobVerticle extends JobVerticle {
 
             DummyJobVerticle(JobSchedule schedule) {
@@ -210,18 +210,18 @@ class JobVerticleTest extends NeonBeeTestBase {
         }
 
         DummyJobVerticle dummyJobVerticle = new DummyJobVerticle(new JobSchedule(Duration.ofMinutes(0)));
-        deployVerticle(dummyJobVerticle).onComplete(testConetxt.failing(t -> {
-            testConetxt.verify(() -> assertThat(t).hasMessageThat()
+        deployVerticle(dummyJobVerticle).onComplete(testContext.failing(t -> {
+            testContext.verify(() -> assertThat(t).hasMessageThat()
                     .isEqualTo("The period of a periodic JobSchedule can't be zero"));
-            testConetxt.completeNow();
+            testContext.completeNow();
         }));
     }
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Do start JobVerticles with a valid JobSchedule")
-    void testStartSucceeding(VertxTestContext testConetxt) {
-        Checkpoint cp = testConetxt.checkpoint();
+    void testStartSucceeding(VertxTestContext testContext) {
+        Checkpoint cp = testContext.checkpoint();
         class DummyJobVerticle extends JobVerticle {
 
             DummyJobVerticle(JobSchedule schedule) {
@@ -236,7 +236,7 @@ class JobVerticleTest extends NeonBeeTestBase {
         }
 
         DummyJobVerticle dummyJobVerticle = new DummyJobVerticle(new JobSchedule(Duration.ofMinutes(1)));
-        deployVerticle(dummyJobVerticle).onComplete(testConetxt.succeeding(v -> {}));
+        deployVerticle(dummyJobVerticle).onComplete(testContext.succeeding(v -> {}));
     }
 
     // the delay must always not be longer than 20 milliseconds from the expected delay

@@ -22,8 +22,8 @@ class DataQueryMessageCodecTest {
     void testEncode() throws JSONException {
         Buffer buffer = Buffer.buffer();
         codec.encodeToWire(buffer, query);
-        DataQuery deocded = codec.decodeFromWire(0, buffer);
-        assertThat(deocded).isEqualTo(query);
+        DataQuery decoded = codec.decodeFromWire(0, buffer);
+        assertThat(decoded).isEqualTo(query);
     }
 
     @Test

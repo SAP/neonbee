@@ -83,13 +83,13 @@ class ClassPathScannerTest {
     @Test
     @DisplayName("Should find files on the class path that are inside of a JAR file")
     void scanWithPredicateJarFile(VertxTestContext testContext) throws IOException, URISyntaxException {
-        String ressourceToFind = "MyCoolResource";
+        String resourceToFind = "MyCoolResource";
         byte[] dummyContent = "lol".getBytes(StandardCharsets.UTF_8);
-        BasicJar bj = new BasicJar(Map.of(ressourceToFind, dummyContent, "somethingElse", dummyContent));
+        BasicJar bj = new BasicJar(Map.of(resourceToFind, dummyContent, "somethingElse", dummyContent));
         URLClassLoader urlc = new URLClassLoader(bj.writeToTempURL(), ClassLoader.getSystemClassLoader());
 
-        String expectedUriString = urlc.getResource(ressourceToFind).toURI().toString().replace("file:/", "file:///");
-        new ClassPathScanner(urlc).scanJarFilesWithPredicate(vertx, name -> name.startsWith(ressourceToFind))
+        String expectedUriString = urlc.getResource(resourceToFind).toURI().toString().replace("file:/", "file:///");
+        new ClassPathScanner(urlc).scanJarFilesWithPredicate(vertx, name -> name.startsWith(resourceToFind))
                 .onComplete(testContext.succeeding(uris -> testContext.verify(() -> {
                     assertThat(uris).hasSize(1);
                     assertThat(uris.get(0).toString()).isEqualTo(expectedUriString);

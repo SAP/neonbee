@@ -65,7 +65,7 @@
                     <![CDATA[
                     //ClassOrInterfaceBodyDeclaration
                     [./Annotation/MarkerAnnotation[@AnnotationName = "Test"]]
-                    [./MethodDeclaration[@Public=true() or @Private=true() or @Protcted=true()]]
+                    [./MethodDeclaration[@Public=true() or @Private=true() or @Protected=true()]]
                     ]]>
                 </value>
             </property>

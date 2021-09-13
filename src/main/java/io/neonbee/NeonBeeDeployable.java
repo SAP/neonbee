@@ -40,7 +40,7 @@ public @interface NeonBeeDeployable {
     NeonBeeProfile profile() default NeonBeeProfile.INCUBATOR;
 
     /**
-     * Whether the verticle should be auto deployed. A system or an instable verticle should set this flag to false.
+     * Whether the verticle should be auto deployed. A system or an unstable verticle should set this flag to false.
      *
      * @return true if auto-deploy is active
      */

@@ -38,7 +38,7 @@ import io.vertx.junit5.VertxTestContext;
  * <br>
  *
  * <pre>
- * http://baseUrl/odata/io.neonbee.test.NavProbs/Categories?$expand=products
+ * http://baseUrl/odata/io.neonbee.test.NavProps/Categories?$expand=products
  * </pre>
  */
 class ODataExpandEntityCollectionTest extends ODataEndpointTestBase {

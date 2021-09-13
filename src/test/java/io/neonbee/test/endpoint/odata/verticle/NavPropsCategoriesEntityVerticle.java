@@ -23,7 +23,7 @@ import io.vertx.core.json.JsonObject;
 
 public class NavPropsCategoriesEntityVerticle extends EntityVerticle {
     public static final FullQualifiedName CATEGORIES_ENTITY_SET_FQN =
-            new FullQualifiedName("io.neonbee.test.NavProbs", "Categories");
+            new FullQualifiedName("io.neonbee.test.NavProps", "Categories");
 
     public static final String PROPERTY_NAME_ID = "ID";
 
@@ -61,8 +61,8 @@ public class NavPropsCategoriesEntityVerticle extends EntityVerticle {
         return new JsonObject().put(PROPERTY_NAME_ID, id).put(PROPERTY_NAME_NAME, name);
     }
 
-    public static JsonObject addProductsToCategory(JsonObject category, List<JsonObject> expanedProducts) {
-        return category.copy().put(PROPERTY_NAME_PRODUCTS, expanedProducts);
+    public static JsonObject addProductsToCategory(JsonObject category, List<JsonObject> expandedProducts) {
+        return category.copy().put(PROPERTY_NAME_PRODUCTS, expandedProducts);
     }
 
     public static Path getDeclaredEntityModel() {

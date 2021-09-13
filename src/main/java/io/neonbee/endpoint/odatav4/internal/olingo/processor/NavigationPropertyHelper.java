@@ -157,8 +157,8 @@ public final class NavigationPropertyHelper {
         if (resourceParts.size() == 1) {
             return resourceEntitySet;
         } else {
-            EdmNavigationProperty navProb = ((UriResourceNavigation) resourceParts.get(1)).getProperty();
-            return getNavigationTargetEntitySet(resourceEntitySet, navProb, routingContext);
+            EdmNavigationProperty navProp = ((UriResourceNavigation) resourceParts.get(1)).getProperty();
+            return getNavigationTargetEntitySet(resourceEntitySet, navProp, routingContext);
         }
     }
 

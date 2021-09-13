@@ -23,7 +23,7 @@ class HookScannerTest {
     Vertx vertx = Vertx.vertx();
 
     @Test
-    @DisplayName("Should find classes which have methods that are annnotaed with @Hook or @Hooks")
+    @DisplayName("Should find classes which have methods that are annotated with @Hook or @Hooks")
     void scanForHooksTest(VertxTestContext testContext) throws IOException, URISyntaxException, ClassNotFoundException {
         BasicJar jarWithHookAnnotation = new AnnotatedClassTemplate("HodorHook", "method")
                 .setMethodAnnotation("@Hook(HookType.ONCE_PER_REQUEST)")

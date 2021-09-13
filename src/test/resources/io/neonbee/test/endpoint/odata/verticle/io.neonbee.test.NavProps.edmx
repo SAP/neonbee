@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
   <edmx:DataServices>
-    <Schema Namespace="io.neonbee.test.NavProbs" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+    <Schema Namespace="io.neonbee.test.NavProps" xmlns="http://docs.oasis-open.org/odata/ns/edm">
 
       <EntityContainer Name="EntityContainer">
-        <EntitySet Name="Categories" EntityType="io.neonbee.test.NavProbs.Categories">
+        <EntitySet Name="Categories" EntityType="io.neonbee.test.NavProps.Categories">
           <NavigationPropertyBinding Path="products" Target="Products"/>
         </EntitySet>
-        <EntitySet Name="Products" EntityType="io.neonbee.test.NavProbs.Products">
+        <EntitySet Name="Products" EntityType="io.neonbee.test.NavProps.Products">
           <NavigationPropertyBinding Path="category" Target="Categories"/>
         </EntitySet>
       </EntityContainer>
@@ -18,7 +18,7 @@
         </Key>
         <Property Name="ID" Type="Edm.Int32" Nullable="false"/>
         <Property Name="name" Type="Edm.String"/>
-        <NavigationProperty Name="products" Type="Collection(io.neonbee.test.NavProbs.Products)" Partner="category"/>
+        <NavigationProperty Name="products" Type="Collection(io.neonbee.test.NavProps.Products)" Partner="category"/>
       </EntityType>
 
       <EntityType Name="Products">
@@ -27,7 +27,7 @@
         </Key>
         <Property Name="ID" Type="Edm.Int32" Nullable="false"/>
         <Property Name="name" Type="Edm.String"/>
-        <NavigationProperty Name="category" Type="io.neonbee.test.NavProbs.Categories" Partner="products">
+        <NavigationProperty Name="category" Type="io.neonbee.test.NavProps.Categories" Partner="products">
           <ReferentialConstraint Property="category_ID" ReferencedProperty="ID"/>
         </NavigationProperty>
         <Property Name="category_ID" Type="Edm.Int32"/>

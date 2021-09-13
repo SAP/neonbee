@@ -60,7 +60,7 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
 
     @Test
     @DisplayName("should read the trackingDataHandlingStrategy correctly")
-    void readtrackingDataHandlingStrategy() {
+    void readTrackingDataHandlingStrategy() {
         NeonBeeConfig config = new NeonBeeConfig(new JsonObject().put("trackingDataHandlingStrategy", "ABC"));
         assertThat(config.getTrackingDataHandlingStrategy()).isEqualTo("ABC");
     }

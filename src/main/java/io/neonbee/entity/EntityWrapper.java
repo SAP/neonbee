@@ -61,7 +61,7 @@ public class EntityWrapper {
     }
 
     /**
-     * Returns the full qualified type name of the entiteis in this entity wrapper.
+     * Returns the full qualified type name of the entities in this entity wrapper.
      *
      * @return the full qualified type name
      */

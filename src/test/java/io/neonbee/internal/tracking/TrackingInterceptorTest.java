@@ -26,9 +26,9 @@ class TrackingInterceptorTest {
         DataContextImpl context = new DataContextImpl("correlationId", "sessionId", "bearerToken",
                 new JsonObject().put("username", "Duke"), null, null);
         context.pushVerticleToPath("Data1Verticle");
-        context.amendTopVerticleCoordinate("deplymentId1");
+        context.amendTopVerticleCoordinate("deploymentId1");
         context.pushVerticleToPath("Data2Verticle");
-        context.amendTopVerticleCoordinate("deplymentId2");
+        context.amendTopVerticleCoordinate("deploymentId2");
         String dataContextJson = DataContextImpl.encodeContextToString(context);
 
         message = new TestMessage<>("address", "replyAddress",

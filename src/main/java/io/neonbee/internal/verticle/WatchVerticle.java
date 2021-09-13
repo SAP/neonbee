@@ -71,11 +71,11 @@ public class WatchVerticle extends AbstractVerticle {
      *
      * <p>
      * Due to the implementation of WatchVerticle and the underlying WatchService from the JDK it is not possible to get
-     * all events for one file and then decide what to to.
+     * all events for one file and then decide what to do.
      *
      * <p>
      * A workaround for this problem could be, that a concrete implementation of a WatchVerticle is only listening to
-     * CREATE or MODIFY events. But both options have a down side:
+     * CREATE or MODIFY events. But both options have a downside:
      * <ol>
      * <li>Listen to CREATE only: This would have the benefit, that in case of a copied file only the CREATE is called.
      * But in case that a watched resource gets updated (e.g. content change) the concrete WatchVerticle would ignore
@@ -86,9 +86,9 @@ public class WatchVerticle extends AbstractVerticle {
      * </ol>
      *
      * <p>
-     * Due to the fact that both options have a down side, it should be configurable how a concrete WatchVerticle should
-     * behave. This method could be use to parse the configuration of a concrete WatchVerticle implementation and
-     * returns the specified behavior. This functionality is not directly added to the WacthVerticle, because there are
+     * Due to the fact that both options have a downside, it should be configurable how a concrete WatchVerticle should
+     * behave. This method could be used to parse the configuration of a concrete WatchVerticle implementation and
+     * returns the specified behavior. This functionality is not directly added to the WatchVerticle, because there are
      * so many complex and specific scenarios which must be handled separately. So every WatchVerticle implementation
      * can use this method, but must implement its own logic if it should support this option.
      *

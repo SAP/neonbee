@@ -1,11 +1,11 @@
 {
   "namespace": "io.neonbee.test",
   "definitions": {
-    "io.neonbee.test.NavProbs": {
+    "io.neonbee.test.NavProps": {
       "@source": "NavigationProperty.cds",
       "kind": "service"
     },
-    "io.neonbee.test.NavProbs.Categories": {
+    "io.neonbee.test.NavProps.Categories": {
       "kind": "entity",
       "elements": {
         "ID": {
@@ -20,7 +20,7 @@
           "cardinality": {
             "max": "*"
           },
-          "target": "io.neonbee.test.NavProbs.Products",
+          "target": "io.neonbee.test.NavProps.Products",
           "on": [
             {
               "ref": [
@@ -38,7 +38,7 @@
         }
       }
     },
-    "io.neonbee.test.NavProbs.Products": {
+    "io.neonbee.test.NavProps.Products": {
       "kind": "entity",
       "elements": {
         "ID": {
@@ -50,7 +50,7 @@
         },
         "category": {
           "type": "cds.Association",
-          "target": "io.neonbee.test.NavProbs.Categories",
+          "target": "io.neonbee.test.NavProps.Categories",
           "keys": [
             {
               "ref": [

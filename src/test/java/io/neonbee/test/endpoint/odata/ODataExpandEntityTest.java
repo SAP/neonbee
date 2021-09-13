@@ -42,7 +42,7 @@ import io.vertx.junit5.VertxTestContext;
  * <br>
  *
  * <pre>
- * http://baseUrl/odata/io.neonbee.test.NavProbs/Categories(2)?$expand=products
+ * http://baseUrl/odata/io.neonbee.test.NavProps/Categories(2)?$expand=products
  * </pre>
  *
  */

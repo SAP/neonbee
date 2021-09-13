@@ -14,7 +14,7 @@ import io.vertx.ext.web.RoutingContext;
 class EntityComparatorTest {
     @Test
     void compareTest() throws ODataApplicationException {
-        // Sorty by ID asc order
+        // Sort by ID asc order
         EntityComparator comparator =
                 new EntityComparator(Mockito.mock(RoutingContext.class), "ID", false, "Edm.Int32");
 

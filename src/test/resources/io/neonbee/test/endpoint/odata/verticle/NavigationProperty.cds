@@ -1,6 +1,6 @@
 namespace io.neonbee.test;
 
-service NavProbs {
+service NavProps {
     entity Products {
         key ID : Integer;
         name : String;

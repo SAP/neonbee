@@ -65,7 +65,7 @@ class WatchVerticleTest {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Constructor should set / calculate interval correct")
-    void testConstrcutor() {
+    void testConstructor() {
         WatchVerticle watchVerticle = new WatchVerticle(watchDir);
         assertThat(watchVerticle.watchPeriodMillis).isEqualTo(500);
         watchVerticle = new WatchVerticle(watchDir, 2, TimeUnit.SECONDS, false, false);
@@ -178,7 +178,7 @@ class WatchVerticleTest {
     @DisplayName("CycleTest: WatchVerticle should detect recursively that a file was created, modified and deleted")
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
-    void testRecursivly(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {
+    void testRecursively(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {
 
         WatchVerticle watchVerticleSpy = Mockito.spy(new WatchVerticle(watchDir, 10, TimeUnit.MINUTES, false, true));
         Path watchedSubDir = watchDir.resolve("subDir");
@@ -243,10 +243,10 @@ class WatchVerticleTest {
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    @DisplayName("CycleTest: WatchVerticle should detect existiting files recursively that a file was created and modified")
+    @DisplayName("CycleTest: WatchVerticle should detect existing files recursively that a file was created and modified")
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
-    void testHandleExistingRecursivly(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {
+    void testHandleExistingRecursively(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {
         WatchVerticle watchVerticleSpy = Mockito.spy(new WatchVerticle(watchDir, 10, TimeUnit.MINUTES, false, true));
         // Root Directory Content
         Path watchedFile = watchDir.resolve("watchedFile");

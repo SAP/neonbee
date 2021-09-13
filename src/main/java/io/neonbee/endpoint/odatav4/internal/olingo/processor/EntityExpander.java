@@ -49,9 +49,9 @@ public final class EntityExpander {
             List<EdmNavigationProperty> navigationProperties = getNavigationProperties(expandOption);
             Map<EdmEntityType, List<Entity>> fetchedEntities = new HashMap<>();
 
-            List<Future<?>> fetchFutures = navigationProperties.stream().distinct().map(navProb -> {
-                return fetchReferencedEntities(navProb, vertx, routingContext)
-                        .map(entities -> fetchedEntities.put(navProb.getType(), entities));
+            List<Future<?>> fetchFutures = navigationProperties.stream().distinct().map(navProp -> {
+                return fetchReferencedEntities(navProp, vertx, routingContext)
+                        .map(entities -> fetchedEntities.put(navProp.getType(), entities));
             }).collect(toList());
             return allComposite(fetchFutures).map(v -> new EntityExpander(navigationProperties, fetchedEntities));
         } else {

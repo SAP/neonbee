@@ -19,7 +19,7 @@ Imagine in NeonBee every node or verticle (in the mathematical, not the Vert.x s
 
 ## Data Resolution Strategies
 
-For retrieving data from the verticles, multiple so called resolution strategies can be used, however in one data stream, only one strategy is allowed. Mixing strategies is not possible, however in each phase of data processing, new requests can be sent. This might decrease the performance of the whole stream though. Imagine resolution strategies determining the order or process in which the graph of verticles is traversed. Each strategy comes with different traits and benefits, such as whether the strategy guarantees a deterministic order when certain verticles are executed, or wether different stages of verticles are called sequentially or not.
+For retrieving data from the verticles, multiple so called resolution strategies can be used, however in one data stream, only one strategy is allowed. Mixing strategies is not possible, however in each phase of data processing, new requests can be sent. This might decrease the performance of the whole stream though. Imagine resolution strategies determining the order or process in which the graph of verticles is traversed. Each strategy comes with different traits and benefits, such as whether the strategy guarantees a deterministic order when certain verticles are executed, or whether different stages of verticles are called sequentially or not.
 
 ### Recursive Strategy
 
@@ -56,5 +56,5 @@ This strategy allows for an much more optimal data resolution. However the dedup
 | | |
 | --- | --- |
 | **Deterministic** | ❌ verticles will be called as soon as all its required data is ready |
-| **Deduplication** | ✔️ if the same request is sent to the same verticle multiple times, the verticle will only be called once and the result will be provided to both requestors |
+| **Deduplication** | ✔️ if the same request is sent to the same verticle multiple times, the verticle will only be called once and the result will be provided to both requesters |
 | **Sequential Calls** | only one execution of one require and retrieve phase in total |

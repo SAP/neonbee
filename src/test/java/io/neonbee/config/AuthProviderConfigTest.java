@@ -19,7 +19,7 @@ import io.vertx.core.json.JsonObject;
 class AuthProviderConfigTest {
 
     @Test
-    @DisplayName("Throw error if AuthProvderType is undupported")
+    @DisplayName("Throw error if AuthProviderType is unsupported")
     void testUnsupportedAuthProviderTypes() {
         BiConsumer<AuthProviderType, String> checkUnsupported = (type, msg) -> {
             UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {

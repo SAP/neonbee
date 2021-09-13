@@ -6,9 +6,9 @@ import io.vertx.core.eventbus.impl.MessageImpl;
 
 public class TestMessage<T> extends MessageImpl<T, T> {
 
-    public TestMessage(String address, String replyAddrss, MultiMap headers, T sentBody) {
+    public TestMessage(String address, String replyAddress, MultiMap headers, T sentBody) {
         super(address, headers, sentBody, null, false, null);
-        this.replyAddress = replyAddrss;
+        this.replyAddress = replyAddress;
     }
 
     @Override

@@ -73,8 +73,8 @@ public class NeonBeeTestBase {
         provideWorkingDirectoryBuilder(testInfo, testContext).build(workingDirPath);
         NeonBeeOptions opts = new NeonBeeOptions.Mutable().setWorkingDirectory(workingDirPath).setIgnoreClassPath(true);
 
-        URL defaulLogbackConfig = Resources.getResource(NeonBeeTestBase.class, "NeonBeeTestBase-Logback.xml");
-        try (InputStream is = Resources.asByteSource(defaulLogbackConfig).openStream()) {
+        URL defaultLogbackConfig = Resources.getResource(NeonBeeTestBase.class, "NeonBeeTestBase-Logback.xml");
+        try (InputStream is = Resources.asByteSource(defaultLogbackConfig).openStream()) {
             Files.copy(is, opts.getConfigDirectory().resolve("logback.xml"));
         }
 

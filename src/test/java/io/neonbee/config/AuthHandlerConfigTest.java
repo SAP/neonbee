@@ -27,7 +27,7 @@ import io.vertx.junit5.VertxExtension;
 class AuthHandlerConfigTest {
 
     @Test
-    @DisplayName("Throw error if auth provder type does not match auth handler type")
+    @DisplayName("Throw error if auth provider type does not match auth handler type")
     void testUnsupportedAuthProviderTypes() {
         Vertx vertx = NeonBeeMockHelper.defaultVertxMock();
         BiConsumer<AuthHandlerType, AuthProviderType> checkUnsupported = (handler, provider) -> {

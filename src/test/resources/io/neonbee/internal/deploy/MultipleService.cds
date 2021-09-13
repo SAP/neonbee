@@ -14,7 +14,7 @@ service UserService {
 
 service CarService {
 
-    entity Carss {
+    entity Cars {
         key ID : String;
         make : String not null;
         year : Integer;
