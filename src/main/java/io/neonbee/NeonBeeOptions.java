@@ -11,6 +11,7 @@ import java.util.UUID;
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
 
+import io.neonbee.internal.verticle.WatchVerticle;
 import io.neonbee.job.JobVerticle;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.EventBusOptions;
@@ -99,6 +100,13 @@ public interface NeonBeeOptions {
     boolean shouldDisableJobScheduling();
 
     /**
+     * Check if NeonBee should disable watching files via {@link WatchVerticle}s.
+     *
+     * @return true if NeonBee should not watch files, otherwise false.
+     */
+    boolean doNotWatchFiles();
+
+    /**
      * Get the port number of the event bus. If not set, a random port will be selected.
      *
      * @return the port number of the event bus
@@ -162,6 +170,8 @@ public interface NeonBeeOptions {
         private boolean ignoreClassPath;
 
         private boolean disableJobScheduling;
+
+        private boolean doNotWatchFiles;
 
         private Integer serverPort;
 
@@ -281,6 +291,22 @@ public interface NeonBeeOptions {
          */
         public Mutable setDisableJobScheduling(boolean disableJobScheduling) {
             this.disableJobScheduling = disableJobScheduling;
+            return this;
+        }
+
+        @Override
+        public boolean doNotWatchFiles() {
+            return doNotWatchFiles;
+        }
+
+        /**
+         * Sets whether NeonBee should watch files or not.
+         *
+         * @param doNotWatchFiles flag true/false
+         * @return a reference to this, so the API can be used fluently
+         */
+        public Mutable setDoNotWatchFiles(boolean doNotWatchFiles) {
+            this.doNotWatchFiles = doNotWatchFiles;
             return this;
         }
 
