@@ -33,12 +33,10 @@ import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
 class ClassPathScannerTest {
-    Vertx vertx = Vertx.vertx();
-
     @Test
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find passed attribute in all Manifest files")
-    void scanManifestFilesTest(VertxTestContext testContext) throws IOException {
+    void scanManifestFilesTest(Vertx vertx, VertxTestContext testContext) throws IOException {
         String attribute1Name = "Attr1";
         String attribute2Name = "Attr2";
         List<String> manifest1Attribute1Values = List.of("M1A1V1", "M1A1V2");
@@ -69,7 +67,7 @@ class ClassPathScannerTest {
     @Test
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find files on the class path that match the passed prediction")
-    void scanWithPredicateTest(VertxTestContext testContext) throws IOException {
+    void scanWithPredicateTest(Vertx vertx, VertxTestContext testContext) throws IOException {
         List<String> expected = List.of(ClassPathScanner.class.getName().replace(".", "/") + ".class",
                 ClassPathScannerTest.class.getName().replace(".", "/") + ".class");
 
@@ -87,7 +85,7 @@ class ClassPathScannerTest {
     @Test
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find files on the class path that are inside of a JAR file")
-    void scanWithPredicateJarFile(VertxTestContext testContext) throws IOException, URISyntaxException {
+    void scanWithPredicateJarFile(Vertx vertx, VertxTestContext testContext) throws IOException, URISyntaxException {
         String ressourceToFind = "MyCoolResource";
         byte[] dummyContent = "lol".getBytes(StandardCharsets.UTF_8);
         BasicJar bj = new BasicJar(Map.of(ressourceToFind, dummyContent, "somethingElse", dummyContent));
@@ -105,7 +103,7 @@ class ClassPathScannerTest {
     @Test
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find classes which the class or any field or method within is annotated with a given annotation")
-    void scanForAnnotation(VertxTestContext testContext) throws IOException, URISyntaxException {
+    void scanForAnnotation(Vertx vertx, VertxTestContext testContext) throws IOException, URISyntaxException {
         BasicJar jarWithTypeAnnotatedClass =
                 new AnnotatedClassTemplate("Hodor", "type").setTypeAnnotation("@Deprecated").asJar();
         BasicJar jarWithFieldAnnotatedClass =

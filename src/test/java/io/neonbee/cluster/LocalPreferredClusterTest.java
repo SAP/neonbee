@@ -11,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -52,12 +51,6 @@ class LocalPreferredClusterTest {
         deployVerticle(localNode.getVertx(), new ConsumerVerticle(LOCAL))
                 .compose(v -> deployVerticle(remoteNode.getVertx(), new ConsumerVerticle(REMOTE)))
                 .onComplete(testContext.succeedingThenComplete());
-    }
-
-    @AfterEach
-    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
-    void tearDown(VertxTestContext testContext) {
-        localNode.getVertx().close(testContext.succeedingThenComplete());
     }
 
     @Test
