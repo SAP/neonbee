@@ -6,12 +6,10 @@ import static io.neonbee.NeonBeeProfile.CORE;
 import static io.neonbee.NeonBeeProfile.INCUBATOR;
 import static io.neonbee.NeonBeeProfile.STABLE;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
-import static org.mockito.Mockito.mock;
+import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -79,7 +77,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Vert.x should start in non-clustered mode. ")
     void testStandaloneInitialization(VertxTestContext testContext) {
-        NeonBee.newVertx(new NeonBeeOptions.Mutable()).onComplete(testContext.succeeding(vertx -> {
+        NeonBee.newVertx(defaultOptions()).onComplete(testContext.succeeding(vertx -> {
             assertThat(vertx.isClustered()).isFalse();
             testContext.completeNow();
         }));
@@ -89,8 +87,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Vert.x should start in clustered mode.")
     void testClusterInitialization(VertxTestContext testContext) {
-        NeonBee.newVertx(
-                new NeonBeeOptions.Mutable().setClustered(true).setClusterConfigResource("hazelcast-local.xml"))
+        NeonBee.newVertx(defaultOptions().setClustered(true).setClusterConfigResource("hazelcast-local.xml"))
                 .onComplete(testContext.succeeding(vertx -> {
                     assertThat(vertx.isClustered()).isTrue();
                     testContext.completeNow();
@@ -113,7 +110,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     @DisplayName("Vert.x should add eventbus interceptors.")
     void testDecorateEventbus() throws Exception {
         Vertx vertx = NeonBeeMockHelper.defaultVertxMock();
-        NeonBee neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, new NeonBeeOptions.Mutable(),
+        NeonBee neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx,
                 new NeonBeeConfig(new JsonObject().put("trackingDataHandlingStrategy", "wrongvalue")));
         EventBus eventBus = mock(EventBus.class);
         when(vertx.eventBus()).thenReturn(eventBus);

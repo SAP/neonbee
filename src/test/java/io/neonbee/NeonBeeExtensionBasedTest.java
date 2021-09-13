@@ -1,6 +1,10 @@
 package io.neonbee;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeProfile.ALL;
+import static io.neonbee.NeonBeeProfile.CORE;
+import static io.neonbee.NeonBeeProfile.STABLE;
+import static io.neonbee.NeonBeeProfile.WEB;
 import static io.vertx.core.Future.succeededFuture;
 
 import java.util.concurrent.TimeUnit;
@@ -24,21 +28,20 @@ import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(NeonBeeExtension.class)
 class NeonBeeExtensionBasedTest {
-
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with default options / default working directory")
-    void testNeonBeeDefault(@NeonBeeInstanceConfiguration(activeProfiles = NeonBeeProfile.ALL) NeonBee neonBee) {
+    void testNeonBeeDefault(@NeonBeeInstanceConfiguration(activeProfiles = ALL) NeonBee neonBee) {
         assertThat(neonBee).isNotNull();
         assertThat(isClustered(neonBee)).isFalse();
     }
 
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
-    @DisplayName("NeonBee should start with NONE profile. Only system verticle should be deployed")
+    @DisplayName("NeonBee should start with ALL profile by default")
     void testNeonBeeWithNoneProfile(NeonBee neonBee) {
         assertThat(neonBee).isNotNull();
-        assertThat(neonBee.getOptions().getActiveProfiles()).isEmpty();
+        assertThat(neonBee.getOptions().getActiveProfiles()).containsExactly(ALL);
         assertThat(isClustered(neonBee)).isFalse();
     }
 
@@ -53,11 +56,10 @@ class NeonBeeExtensionBasedTest {
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with CORE profile and deploy CoreDataVerticle")
-    void testNeonBeeWithCoreDeployment(
-            @NeonBeeInstanceConfiguration(activeProfiles = NeonBeeProfile.CORE) NeonBee neonBee,
+    void testNeonBeeWithCoreDeployment(@NeonBeeInstanceConfiguration(activeProfiles = CORE) NeonBee neonBee,
             VertxTestContext testContext) {
         assertThat(neonBee).isNotNull();
-        assertThat(neonBee.getOptions().getActiveProfiles()).contains(NeonBeeProfile.CORE);
+        assertThat(neonBee.getOptions().getActiveProfiles()).contains(CORE);
         Vertx vertx = neonBee.getVertx();
         vertx.deployVerticle(new CoreDataVerticle(), testContext.succeeding(id -> {
             assertThat(DeploymentHelper.isVerticleDeployed(vertx, CoreDataVerticle.class)).isTrue();
@@ -68,8 +70,8 @@ class NeonBeeExtensionBasedTest {
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with NONE profile and deploy CoreDataVerticle manually")
-    void testNeonBeeWithNoneDeploymentAndManualDeployment(@NeonBeeInstanceConfiguration() NeonBee neonBee,
-            VertxTestContext testContext) {
+    void testNeonBeeWithNoneDeploymentAndManualDeployment(
+            @NeonBeeInstanceConfiguration(activeProfiles = {}) NeonBee neonBee, VertxTestContext testContext) {
         assertThat(neonBee).isNotNull();
         assertThat(neonBee.getOptions().getActiveProfiles()).isEmpty();
         Vertx vertx = neonBee.getVertx();
@@ -83,29 +85,28 @@ class NeonBeeExtensionBasedTest {
     @Test
     @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
     @DisplayName("3 NeonBee instances with WEB, CORE and STABLE profiles should be started and join one cluster.")
-    void testNeonBeeWithClusters(
-            @NeonBeeInstanceConfiguration(activeProfiles = NeonBeeProfile.WEB, clustered = true) NeonBee web,
-            @NeonBeeInstanceConfiguration(activeProfiles = NeonBeeProfile.CORE, clustered = true) NeonBee core,
-            @NeonBeeInstanceConfiguration(activeProfiles = NeonBeeProfile.STABLE, clustered = true) NeonBee stable) {
+    void testNeonBeeWithClusters(@NeonBeeInstanceConfiguration(activeProfiles = WEB, clustered = true) NeonBee web,
+            @NeonBeeInstanceConfiguration(activeProfiles = CORE, clustered = true) NeonBee core,
+            @NeonBeeInstanceConfiguration(activeProfiles = STABLE, clustered = true) NeonBee stable) {
         assertThat(web).isNotNull();
-        assertThat(web.getOptions().getActiveProfiles()).contains(NeonBeeProfile.WEB);
+        assertThat(web.getOptions().getActiveProfiles()).contains(WEB);
         assertThat(web.getVertx().isClustered()).isTrue();
         assertThat(isClustered(web)).isTrue();
 
         assertThat(core).isNotNull();
-        assertThat(core.getOptions().getActiveProfiles()).contains(NeonBeeProfile.CORE);
+        assertThat(core.getOptions().getActiveProfiles()).contains(CORE);
         assertThat(core.getVertx().isClustered()).isTrue();
         assertThat(isClustered(core)).isTrue();
 
         assertThat(stable).isNotNull();
-        assertThat(stable.getOptions().getActiveProfiles()).contains(NeonBeeProfile.STABLE);
+        assertThat(stable.getOptions().getActiveProfiles()).contains(STABLE);
         assertThat(stable.getVertx().isClustered()).isTrue();
         assertThat(isClustered(stable)).isTrue();
 
         assertThat(Hazelcast.getAllHazelcastInstances().size()).isAtLeast(3);
     }
 
-    @NeonBeeDeployable(profile = NeonBeeProfile.CORE)
+    @NeonBeeDeployable(profile = CORE)
     public static class CoreDataVerticle extends DataVerticle<String> {
         private static final String NAME = "CoreDataVerticle";
 

@@ -23,11 +23,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
+import io.neonbee.NeonBeeOptions;
+import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.DeploymentHelper;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -35,13 +37,16 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
-import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.junit5.VertxTestContext.ExecutionBlock;
 
-@ExtendWith(VertxExtension.class)
-class WatchVerticleTest {
+class WatchVerticleTest extends NeonBeeTestBase {
     private Path watchDir;
+
+    @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.setDoNotWatchFiles(false);
+    }
 
     @BeforeEach
     void beforeEach() throws IOException {
@@ -163,7 +168,6 @@ class WatchVerticleTest {
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
     void testExisting(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {
-
         WatchVerticle watchVerticleSpy = Mockito.spy(new WatchVerticle(watchDir, 10, TimeUnit.MINUTES, false, true));
         Path watchedFile = watchDir.resolve("watchedFile");
 
