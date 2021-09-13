@@ -1,5 +1,7 @@
 package io.neonbee;
 
+import static io.neonbee.NeonBeeProfile.ALL;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -16,9 +18,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.PARAMETER)
 @SuppressWarnings("checkstyle:MissingJavadocMethod")
 public @interface NeonBeeInstanceConfiguration {
-    int eventLoopPoolSize() default 4;
+    int eventLoopPoolSize() default 1;
 
-    int workerPoolSize() default 4;
+    int workerPoolSize() default 1;
 
     int clusterPort() default 0;
 
@@ -34,7 +36,7 @@ public @interface NeonBeeInstanceConfiguration {
 
     boolean doNotWatchFiles() default true;
 
-    boolean disableJobScheduling() default false;
+    boolean disableJobScheduling() default true;
 
-    NeonBeeProfile[] activeProfiles() default {};
+    NeonBeeProfile[] activeProfiles() default { ALL };
 }

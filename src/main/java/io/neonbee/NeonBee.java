@@ -134,7 +134,7 @@ public class NeonBee {
 
     private static final String SHARED_MAP_NAME = "#sharedMap";
 
-    private static final int NUMBER_DEFAULT_INSTANCES = 16;
+    private static final int NUMBER_DEFAULT_INSTANCES = 4;
 
     @VisibleForTesting
     NeonBeeConfig config;

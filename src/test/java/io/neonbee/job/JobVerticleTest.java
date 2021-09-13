@@ -1,6 +1,9 @@
 package io.neonbee.job;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeProfile.ALL;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
+import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.longThat;
@@ -11,10 +14,12 @@ import static org.mockito.Mockito.verify;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.mockito.ArgumentMatcher;
 
 import io.neonbee.NeonBeeMockHelper;
@@ -56,7 +61,7 @@ class JobVerticleTest extends NeonBeeTestBase {
                 int breakExecutionsAfter, boolean disableJobScheduling) {
             super(schedule, undeployWhenDone);
             NeonBeeMockHelper.registerNeonBeeMock(vertxMock = NeonBeeMockHelper.defaultVertxMock(),
-                    new NeonBeeOptions.Mutable().setDisableJobScheduling(disableJobScheduling));
+                    defaultOptions().setDisableJobScheduling(disableJobScheduling));
 
             // calling setTimer on the mock should invoke the handler (once)
             doAnswer(invocation -> {
@@ -91,6 +96,12 @@ class JobVerticleTest extends NeonBeeTestBase {
         public String deploymentID() {
             return "expected_deployment_id";
         }
+    }
+
+    @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.setActiveProfiles(List.of(ALL, NO_WEB));
+        options.setDisableJobScheduling(false);
     }
 
     @Test

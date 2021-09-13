@@ -1,15 +1,12 @@
 package io.neonbee;
 
 import static ch.qos.logback.classic.util.ContextInitializer.CONFIG_FILE_PROPERTY;
+import static io.neonbee.test.helper.OptionsHelper.options;
 import static java.lang.System.setProperty;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -34,10 +31,8 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Strings;
 import com.hazelcast.core.LifecycleService;
 
-import io.neonbee.test.helper.SystemHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.impl.VertxImpl;
@@ -46,7 +41,7 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({ "rawtypes", "PMD.GodClass" })
 public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionCallback, AfterTestExecutionCallback,
         BeforeEachCallback, AfterEachCallback, BeforeAllCallback, AfterAllCallback {
 
@@ -85,14 +80,16 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
             throws ParameterResolutionException {
         Class<?> type = parameterContext.getParameter().getType();
         if (type == NeonBee.class) {
+            NeonBeeOptions options;
+
             try {
-                NeonBeeOptions options = options(parameterContext);
-                return unpack(store(extensionContext).getOrComputeIfAbsent(options.getInstanceName(),
-                        key -> new ScopedObject<NeonBee>(createNeonBee(options), closeNeonBee())));
-            } catch (IOException e) {
-                LOGGER.error("Error while finding a free port for server verticle.", e);
+                options = options(parameterContext.findAnnotation(NeonBeeInstanceConfiguration.class));
+            } catch (RuntimeException e) {
                 throw new ParameterResolutionException("Error while finding a free port for server verticle.", e);
             }
+
+            return unpack(store(extensionContext).getOrComputeIfAbsent(options.getInstanceName(),
+                    key -> new ScopedObject<NeonBee>(createNeonBee(options), closeNeonBee())));
         }
         if (type == VertxTestContext.class) {
             return newTestContext(extensionContext);
@@ -105,28 +102,6 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
             return ((Supplier) object).get();
         }
         return object;
-    }
-
-    private NeonBeeOptions options(ParameterContext parameterContext) throws IOException {
-        NeonBeeOptions.Mutable options = new NeonBeeOptions.Mutable();
-        NeonBeeInstanceConfiguration config =
-                parameterContext.getParameter().getAnnotation(NeonBeeInstanceConfiguration.class);
-        if (config == null) {
-            return options.setWorkingDirectory(Paths.get("./working_dir/")).setServerPort(SystemHelper.getFreePort())
-                    .setActiveProfiles(List.<NeonBeeProfile>of());
-        } else {
-            options.setActiveProfiles(Arrays.<NeonBeeProfile>asList(config.activeProfiles()))
-                    .setClusterConfigResource(config.clusterConfigFile()).setClustered(config.clustered())
-                    .setClusterPort(config.clusterPort()).setDisableJobScheduling(config.disableJobScheduling())
-                    .setDoNotWatchFiles(config.doNotWatchFiles()).setEventLoopPoolSize(config.eventLoopPoolSize())
-                    .setIgnoreClassPath(config.ignoreClassPath()).setServerPort(SystemHelper.getFreePort())
-                    .setWorkerPoolSize(config.workerPoolSize())
-                    .setWorkingDirectory(Paths.get(config.workingDirectoryPath()));
-            if (!Strings.isNullOrEmpty(config.instanceName())) {
-                options.setInstanceName(config.instanceName());
-            }
-        }
-        return options;
     }
 
     private VertxTestContext newTestContext(ExtensionContext extensionContext) {

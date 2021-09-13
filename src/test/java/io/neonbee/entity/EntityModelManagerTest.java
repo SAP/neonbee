@@ -10,6 +10,7 @@ import static io.neonbee.entity.EntityModelManager.getSharedModels;
 import static io.neonbee.entity.EntityModelManager.registerModels;
 import static io.neonbee.entity.EntityModelManager.reloadModels;
 import static io.neonbee.entity.EntityModelManager.unregisterModels;
+import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -28,7 +29,6 @@ import org.junit.jupiter.api.Test;
 import com.sap.cds.reflect.CdsModel;
 
 import io.neonbee.NeonBeeMockHelper;
-import io.neonbee.NeonBeeOptions;
 import io.neonbee.entity.EntityModelManager.Loader;
 import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.FileSystemHelper;
@@ -177,8 +177,7 @@ class EntityModelManagerTest extends NeonBeeTestBase {
         WorkingDirectoryBuilder.hollow().addModel(TEST_RESOURCES.resolveRelated("TestService1.csn"))
                 .addModel(TEST_RESOURCES.resolveRelated("TestService2.csn")).build(workingDir);
 
-        NeonBeeMockHelper.registerNeonBeeMock(vertx,
-                new NeonBeeOptions.Mutable().setIgnoreClassPath(true).setWorkingDirectory(workingDir));
+        NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setWorkingDirectory(workingDir));
 
         // assert that buffered models is null and stays empty when being retrieved w/ getBufferedModels
         assertThat(getBufferedModels(vertx)).isNull();
@@ -223,8 +222,7 @@ class EntityModelManagerTest extends NeonBeeTestBase {
         WorkingDirectoryBuilder.hollow().addModel(TEST_RESOURCES.resolveRelated("TestService1.csn"))
                 .addModel(TEST_RESOURCES.resolveRelated("TestService2.csn")).build(workingDir);
 
-        NeonBeeMockHelper.registerNeonBeeMock(vertx,
-                new NeonBeeOptions.Mutable().setIgnoreClassPath(true).setWorkingDirectory(workingDir));
+        NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setWorkingDirectory(workingDir));
         CompositeFuture.all(getSharedModel(vertx, "io.neonbee.test1"), getSharedModel(vertx, "io.neonbee.test2"))
                 .onComplete(testContext.succeeding(models -> testContext.verify(() -> {
                     assertThat(models.<EntityModel>resultAt(0).getEdmx().getEdm().getEntityContainer().getNamespace())
@@ -266,8 +264,7 @@ class EntityModelManagerTest extends NeonBeeTestBase {
     @DisplayName("register / unregister module models")
     void registerModuleModels(Vertx vertx, VertxTestContext testContext) throws IOException {
         Path workingDirectory = getNeonBee().getOptions().getWorkingDirectory();
-        NeonBeeMockHelper.registerNeonBeeMock(vertx,
-                new NeonBeeOptions.Mutable().setIgnoreClassPath(true).setWorkingDirectory(workingDirectory));
+        NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setWorkingDirectory(workingDirectory));
 
         // Create models
         Map.Entry<String, byte[]> referenceModel = buildModelEntry("ReferenceService.csn");
@@ -292,8 +289,7 @@ class EntityModelManagerTest extends NeonBeeTestBase {
     @DisplayName("register / unregister multiple modules to verify that changing the unmodifiable BUFFERED_MODELS is working correctly.")
     void registerMultipleModuleModels(Vertx vertx, VertxTestContext testContext) throws IOException {
         Path workingDirectory = getNeonBee().getOptions().getWorkingDirectory();
-        NeonBeeMockHelper.registerNeonBeeMock(vertx,
-                new NeonBeeOptions.Mutable().setIgnoreClassPath(true).setWorkingDirectory(workingDirectory));
+        NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setWorkingDirectory(workingDirectory));
 
         // Create 1st models
         Map.Entry<String, byte[]> referenceModel = buildModelEntry("ReferenceService.csn");

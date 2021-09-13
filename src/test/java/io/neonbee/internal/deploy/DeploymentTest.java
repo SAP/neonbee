@@ -15,7 +15,6 @@ import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
 import io.neonbee.NeonBeeMockHelper;
-import io.neonbee.NeonBeeOptions;
 import io.neonbee.internal.DummyVerticleTemplate;
 import io.neonbee.internal.NeonBeeModuleJar;
 import io.neonbee.internal.SelfFirstClassLoader;
@@ -83,7 +82,7 @@ class DeploymentTest {
         Checkpoint undeployedA = testContext.checkpoint();
         Checkpoint undeployedB = testContext.checkpoint();
 
-        NeonBeeMockHelper.registerNeonBeeMock(vertx, new NeonBeeOptions.Mutable());
+        NeonBeeMockHelper.registerNeonBeeMock(vertx);
 
         // Create Deployables
         DummyVerticleTemplate dummyVerticleA = new DummyVerticleTemplate(identifierVerticleA, addressA);
