@@ -43,6 +43,10 @@ public class Launcher {
             .setShortName("no-jobs").setDescription("Sets whether NeonBee should schedule any job verticle")
             .setRequired(false).setFlag(true);
 
+    private static final Option DO_NOT_WATCH_FILES =
+            new Option().setLongName("do-not-watch-files").setShortName("no-watchers")
+                    .setDescription("Sets whether NeonBee should watch any files").setRequired(false).setFlag(true);
+
     private static final Option CLUSTERED = new Option().setLongName("clustered").setShortName("cl")
             .setDescription("Sets whether NeonBee should be started in clustered mode").setRequired(false)
             .setFlag(true);
@@ -62,8 +66,8 @@ public class Launcher {
             .setDescription("Sets the active deployment profiles of NeonBee").setRequired(false);
 
     private static final List<Option> OPTIONS = List.of(WORKING_DIR, INSTANCE_NAME, WORKER_POOL_SIZE,
-            EVENT_LOOP_POOL_SIZE, IGNORE_CLASS_PATH_FLAG, DISABLE_JOB_SCHEDULING_FLAG, CLUSTERED, CLUSTER_PORT,
-            CLUSTER_CONFIG, SERVER_PORT, ACTIVE_PROFILES, HELP_FLAG);
+            EVENT_LOOP_POOL_SIZE, IGNORE_CLASS_PATH_FLAG, DISABLE_JOB_SCHEDULING_FLAG, DO_NOT_WATCH_FILES, CLUSTERED,
+            CLUSTER_PORT, CLUSTER_CONFIG, SERVER_PORT, ACTIVE_PROFILES, HELP_FLAG);
 
     @VisibleForTesting
     static final CLI INTERFACE = CLI.create("neonbee").setSummary("Start a NeonBee instance").addOptions(OPTIONS);
@@ -126,6 +130,7 @@ public class Launcher {
 
         neonBeeOptions.setIgnoreClassPath(getLauncherOptionBooleanValue(commandLine, IGNORE_CLASS_PATH_FLAG));
         neonBeeOptions.setDisableJobScheduling(getLauncherOptionBooleanValue(commandLine, DISABLE_JOB_SCHEDULING_FLAG));
+        neonBeeOptions.setDoNotWatchFiles(getLauncherOptionBooleanValue(commandLine, DO_NOT_WATCH_FILES));
         neonBeeOptions.setClustered(getLauncherOptionBooleanValue(commandLine, CLUSTERED));
 
         return neonBeeOptions;

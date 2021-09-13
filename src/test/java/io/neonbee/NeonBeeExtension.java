@@ -118,8 +118,9 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
             options.setActiveProfiles(Arrays.<NeonBeeProfile>asList(config.activeProfiles()))
                     .setClusterConfigResource(config.clusterConfigFile()).setClustered(config.clustered())
                     .setClusterPort(config.clusterPort()).setDisableJobScheduling(config.disableJobScheduling())
-                    .setEventLoopPoolSize(config.eventLoopPoolSize()).setIgnoreClassPath(config.ignoreClassPath())
-                    .setServerPort(SystemHelper.getFreePort()).setWorkerPoolSize(config.workerPoolSize())
+                    .setDoNotWatchFiles(config.doNotWatchFiles()).setEventLoopPoolSize(config.eventLoopPoolSize())
+                    .setIgnoreClassPath(config.ignoreClassPath()).setServerPort(SystemHelper.getFreePort())
+                    .setWorkerPoolSize(config.workerPoolSize())
                     .setWorkingDirectory(Paths.get(config.workingDirectoryPath()));
             if (!Strings.isNullOrEmpty(config.instanceName())) {
                 options.setInstanceName(config.instanceName());

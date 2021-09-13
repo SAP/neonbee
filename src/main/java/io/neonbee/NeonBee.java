@@ -378,15 +378,16 @@ public class NeonBee {
      * @return a list of futures deploying verticle
      */
     private List<Future<String>> deploySystemVerticles() {
-        logger.info("Deploy system verticle.");
-        List<Future<String>> systemVerticles = new ArrayList<>();
-        // put any non-configurable system verticle here
+        // any non-configurable system verticles may be deployed with a simple vertx.deployVerticle call, while
+        // configurable verticles (that might come with an own config file) have to use the Deployable interface
 
-        systemVerticles.add(Future
-                .<String>future(asyncDeployment -> vertx
-                        .deployVerticle(new ModelRefreshVerticle(options.getModelsDirectory()), asyncDeployment))
-                .otherwise(throwable -> { // non-fatal exception, in case this fails, NeonBee is still able to run!
-                    logger.warn("Could not deploy the ModelRefreshVerticle. Models directory is not being watched!",
+        logger.info("Deploying system verticles...");
+        List<Future<String>> systemVerticles = new ArrayList<>();
+
+        systemVerticles.add(
+                vertx.deployVerticle(new ModelRefreshVerticle(options.getModelsDirectory())).otherwise(throwable -> {
+                    // non-fatal exception, in case this fails, NeonBee is still able to run!
+                    logger.warn("ModelRefreshVerticle was not deployed. Models directory is not being watched!",
                             throwable);
                     return null;
                 }));
@@ -396,7 +397,7 @@ public class NeonBee {
                 .compose(deployable -> deployable.deploy(vertx, CORRELATION_ID).future())
                 .map(Deployment::getDeploymentId).otherwise(throwable -> {
                     // non-fatal exception, in case this fails, NeonBee is still able to run!
-                    logger.warn("Could not deploy the DeployerVerticle. Verticles directory is not being watched!",
+                    logger.warn("DeployerVerticle was not deployed. Verticles directory is not being watched!",
                             throwable);
                     return null;
                 }));
@@ -406,11 +407,8 @@ public class NeonBee {
                 .compose(deployable -> deployable.deploy(vertx, CORRELATION_ID).future())
                 .map(Deployment::getDeploymentId));
 
-        systemVerticles.add(Future.<String>future(
-                asyncDeployment -> vertx.deployVerticle(new MetricsVerticle(1, TimeUnit.SECONDS), asyncDeployment)));
-
-        systemVerticles
-                .add(Future.<String>future(promise -> vertx.deployVerticle(new LoggerManagerVerticle(), promise)));
+        systemVerticles.add(vertx.deployVerticle(new MetricsVerticle(1, TimeUnit.SECONDS)));
+        systemVerticles.add(vertx.deployVerticle(new LoggerManagerVerticle()));
 
         return systemVerticles;
     }

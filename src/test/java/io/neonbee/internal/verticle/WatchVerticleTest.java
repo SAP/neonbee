@@ -66,7 +66,7 @@ class WatchVerticleTest {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Constructor should set / calculate interval correct")
-    void testConstrcutor() {
+    void testConstructor() {
         WatchVerticle watchVerticle = new WatchVerticle(watchDir);
         assertThat(watchVerticle.watchPeriodMillis).isEqualTo(500);
         watchVerticle = new WatchVerticle(watchDir, 2, TimeUnit.SECONDS, false, false);

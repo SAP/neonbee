@@ -32,6 +32,8 @@ public @interface NeonBeeInstanceConfiguration {
 
     boolean ignoreClassPath() default true;
 
+    boolean doNotWatchFiles() default true;
+
     boolean disableJobScheduling() default false;
 
     NeonBeeProfile[] activeProfiles() default {};
