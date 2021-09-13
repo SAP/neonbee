@@ -233,9 +233,8 @@ public class NeonBeeModule {
                         }
                     }
                     return succeededFuture(compositedUndeployments);
-                }).recover(t -> {
+                }).onFailure(t -> {
                     getCorrelatedLogger().error("Unexpected error occurred during undeploy", t);
-                    return failedFuture(t);
                 });
     }
 

@@ -13,6 +13,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,18 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class NeonBeeTest extends NeonBeeTestBase {
+    private Vertx vertx;
+
+    @AfterEach
+    void closeVertx(VertxTestContext testContext) {
+        if (vertx != null) {
+            // important, as otherwise the cluster won't be stopped!
+            vertx.close().onComplete(testContext.succeedingThenComplete());
+            vertx = null;
+        } else {
+            testContext.completeNow();
+        }
+    }
 
     @Override
     protected WorkingDirectoryBuilder provideWorkingDirectoryBuilder(TestInfo testInfo, VertxTestContext testContext) {
@@ -78,8 +91,10 @@ class NeonBeeTest extends NeonBeeTestBase {
     @DisplayName("Vert.x should start in non-clustered mode. ")
     void testStandaloneInitialization(VertxTestContext testContext) {
         NeonBee.newVertx(defaultOptions()).onComplete(testContext.succeeding(vertx -> {
-            assertThat(vertx.isClustered()).isFalse();
-            testContext.completeNow();
+            testContext.verify(() -> {
+                assertThat((this.vertx = vertx).isClustered()).isFalse();
+                testContext.completeNow();
+            });
         }));
     }
 
@@ -89,8 +104,10 @@ class NeonBeeTest extends NeonBeeTestBase {
     void testClusterInitialization(VertxTestContext testContext) {
         NeonBee.newVertx(defaultOptions().setClustered(true).setClusterConfigResource("hazelcast-local.xml"))
                 .onComplete(testContext.succeeding(vertx -> {
-                    assertThat(vertx.isClustered()).isTrue();
-                    testContext.completeNow();
+                    testContext.verify(() -> {
+                        assertThat((this.vertx = vertx).isClustered()).isTrue();
+                        testContext.completeNow();
+                    });
                 }));
     }
 

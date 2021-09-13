@@ -22,12 +22,11 @@ import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
 class HookScannerTest {
-    Vertx vertx = Vertx.vertx();
-
     @Test
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find classes which have methods that are annnotaed with @Hook or @Hooks")
-    void scanForHooksTest(VertxTestContext testContext) throws IOException, URISyntaxException, ClassNotFoundException {
+    void scanForHooksTest(Vertx vertx, VertxTestContext testContext)
+            throws IOException, URISyntaxException, ClassNotFoundException {
         BasicJar jarWithHookAnnotation = new AnnotatedClassTemplate("HodorHook", "method")
                 .setMethodAnnotation("@Hook(HookType.ONCE_PER_REQUEST)")
                 .setImports(List.of("io.neonbee.hook.Hook", "io.neonbee.hook.HookType")).asJar();

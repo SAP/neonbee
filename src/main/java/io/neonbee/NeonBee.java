@@ -5,6 +5,7 @@ import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 import static io.neonbee.internal.helper.HostHelper.getHostIp;
 import static io.neonbee.internal.scanner.DeployableScanner.scanForDeployableClasses;
 import static io.vertx.core.CompositeFuture.all;
+import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.lang.System.setProperty;
 
@@ -18,6 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -197,7 +199,7 @@ public class NeonBee {
     }
 
     @VisibleForTesting
-    @SuppressWarnings("PMD.EmptyCatchBlock")
+    @SuppressWarnings({ "PMD.EmptyCatchBlock", "PMD.AvoidCatchingThrowable" })
     static Future<NeonBee> create(Supplier<Future<Vertx>> vertxFutureSupplier, NeonBeeOptions options) {
         try {
             // create the NeonBee working and logging directory (as the only mandatory directory for NeonBee)
@@ -217,10 +219,26 @@ public class NeonBee {
 
         // create a Vert.x instance (clustered or unclustered)
         return vertxFutureSupplier.get().compose(vertx -> {
-            // create a NeonBee instance, load the configuration and boot it up
-            NeonBee neonBee = new NeonBee(vertx, options);
+            // at this point at any failure that occurs, it is in our responsibility to properly close down the created
+            // Vert.x instance again. we have to be vigilant the fact that a runtime exception could happen anytime!
+            Function<Throwable, Future<Void>> closeVertx = throwable -> {
+                // the instance has been created, but after initialization some post-initialization
+                // tasks went wrong, stop Vert.x again. This will also call the close hook and clean up.
+                logger.error("Failure during bootstrap phase. Shutting down Vert.x instance.", throwable);
+                // we wait for Vert.x to close, before we propagate the reason why booting failed
+                return vertx.close().transform(closeResult -> failedFuture(throwable));
+            };
 
-            return neonBee.loadConfig().compose(config -> neonBee.boot()).map(neonBee);
+            try {
+                // create a NeonBee instance, hook registry and close handler
+                NeonBee neonBee = new NeonBee(vertx, options);
+
+                // load the configuration and boot it up, on failure close Vert.x
+                return neonBee.loadConfig().compose(config -> neonBee.boot()).recover(closeVertx).map(neonBee);
+            } catch (Throwable t) {
+                // on any exception (e.g. during the initialization of a NeonBee object) don't forget to close Vert.x!
+                return closeVertx.apply(t).mapEmpty();
+            }
         });
     }
 
@@ -245,22 +263,17 @@ public class NeonBee {
 
     private Future<Void> boot() {
         return registerHooks().compose(nothing -> hookRegistry.executeHooks(HookType.BEFORE_BOOTSTRAP))
-                .compose(anything -> {
+                .onSuccess(anything -> {
                     // set the default timezone and overwrite any configured user.timezone property
                     TimeZone.setDefault(TimeZone.getTimeZone(config.getTimeZone()));
 
                     // decorate the event bus with in- & outbound interceptors for tracking
                     decorateEventBus();
 
-                    return all(initializeSharedDataAccessor(), registerCodecs()).compose(nothing -> deployVerticles())
-                            .onFailure(throwable -> {
-                                // the instance has been created, but after initialization some post-initialization
-                                // tasks went wrong, stop Vert.x again. This will also call the close hook and clean up
-                                logger.error("Failure during bootstrap phase. Shutting down Vert.x instance.",
-                                        throwable);
-                                vertx.close();
-                            }).compose(nothing -> hookRegistry.executeHooks(HookType.AFTER_STARTUP));
-                }).mapEmpty();
+                    // further asynchronous initializations which should happen before verticles are getting deployed
+                }).compose(nothing -> all(initializeSharedDataAccessor(), registerCodecs()))
+                .compose(nothing -> deployVerticles()) // deployment of (system) verticles
+                .compose(nothing -> hookRegistry.executeHooks(HookType.AFTER_STARTUP)).mapEmpty();
     }
 
     private Future<Void> registerHooks() {

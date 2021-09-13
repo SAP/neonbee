@@ -58,11 +58,10 @@ public class DeployerVerticle extends WatchVerticle {
 
         LOGGER.correlateWith(correlationId).info("Parse NeonBeeModule from JAR file: {}",
                 affectedPath.toAbsolutePath());
-        NeonBeeModule.fromJar(vertx, affectedPath, correlationId).recover(t -> {
+        NeonBeeModule.fromJar(vertx, affectedPath, correlationId).onFailure(t -> {
             // Log errors from inside of method Deployable.fromJarFile
             LOGGER.correlateWith(correlationId).error("An error occurred while parsing jar file {}",
                     affectedPath.toAbsolutePath(), t);
-            return Future.failedFuture(t);
         }).compose(neonBeeModule ->
         // The deploy method automatically cleans up in case of failure.
         neonBeeModule.deploy().compose(v -> {
@@ -70,16 +69,14 @@ public class DeployerVerticle extends WatchVerticle {
             if (Objects.isNull(replacedModule)) {
                 return Future.succeededFuture();
             }
-            return replacedModule.undeploy().recover(t -> {
+            return replacedModule.undeploy().onFailure(t -> {
                 LOGGER.correlateWith(correlationId)
                         .error("Unexpected error occurred during undeploy of the replaced NeonBeeModule", t);
-                return Future.failedFuture(t);
             });
-        }).recover(t -> {
+        }).onFailure(t -> {
             LOGGER.correlateWith(correlationId).error(
                     "Unexpected error occurred during deployment of NeonBeeModule from JAR file: {}",
                     affectedPath.toAbsolutePath(), t);
-            return Future.failedFuture(t);
         })).onComplete(finishPromise);
     }
 
@@ -90,10 +87,9 @@ public class DeployerVerticle extends WatchVerticle {
             return;
         }
         Optional.ofNullable(modules.remove(affectedPath))
-                .ifPresentOrElse(moduleToUndeploy -> moduleToUndeploy.undeploy().recover(t -> {
+                .ifPresentOrElse(moduleToUndeploy -> moduleToUndeploy.undeploy().onFailure(t -> {
                     LOGGER.correlateWith(moduleToUndeploy.getCorrelationId())
                             .error("Unexpected error occurred during undeploy", t);
-                    return Future.failedFuture(t);
                 }).onComplete(finishPromise), () -> finishPromise.complete());
     }
 }
