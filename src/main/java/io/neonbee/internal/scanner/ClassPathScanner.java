@@ -79,7 +79,7 @@ public class ClassPathScanner {
     }
 
     /**
-     * Retrieves the current threads context class loader or the class loader the {@link ClassPathScanner} was loaded
+     * Retrieves the current thread's context class loader or the class loader the {@link ClassPathScanner} was loaded
      * with, in case the current thread has no context class loader to retrieve.
      *
      * @return A class loader
