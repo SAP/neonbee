@@ -100,6 +100,7 @@ dependencies {
 
     // Required for Eclipse to run Unit tests.
     testImplementation group: 'org.junit.platform', name: 'junit-platform-commons', version: '1.7.0'
+    testImplementation group: 'org.junit.platform', name: 'junit-platform-launcher', version: '1.7.0'
 
     // Gradle plugin dependencies
     errorprone group: 'com.google.errorprone', name: 'error_prone_core', version: '2.5.1'
