@@ -1,6 +1,6 @@
 jacoco {
-    toolVersion = '0.8.5'
-    reportsDir = file("${buildDir}/reports/jacoco")
+    toolVersion = '0.8.7'
+    reportsDirectory = file("${buildDir}/reports/jacoco")
 }
 
 consoleReporter {
