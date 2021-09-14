@@ -1,1 +1,1 @@
-io.neonbee.NeonBeeTestExecutionListener
+io.neonbee.test.listeners.StaleVertxChecker
