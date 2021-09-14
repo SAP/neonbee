@@ -66,7 +66,6 @@ import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
 public class NeonBeeTestBase {
-
     private Path workingDirPath;
 
     private NeonBee neonBee;
@@ -92,8 +91,11 @@ public class NeonBeeTestBase {
 
         Future<NeonBee> future = NeonBeeMockHelper.createNeonBee(vertx, options);
 
-        // For some reason the BeforeEach method in the subclass is called before testContext of this class
-        // is completed. Therefore this CountDownLatch is needed.
+        // as documented here [1] in case there are multiple @BeforeEach methods (like in this test base and in
+        // sub-classes of this test base) asynchronous operations will be executed in parallel, because other
+        // @BeforeEach methods will not wait for this testContext to finish. rather JUnit will wait for the test to be
+        // called for Vert.x to join all the testContexts together. for this reason we have to use a latch here.
+        // [1] https://vertx.io/docs/vertx-junit5/java/#_warning_on_multiple_methods_for_the_same_lifecycle_events
         CountDownLatch latch = new CountDownLatch(1);
         future.onComplete(asyncNeonBee -> {
             if (asyncNeonBee.failed()) {
