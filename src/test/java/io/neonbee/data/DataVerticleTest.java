@@ -2,6 +2,7 @@ package io.neonbee.data;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.vertx.core.Future.succeededFuture;
+import static java.lang.Boolean.parseBoolean;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -158,7 +159,7 @@ class DataVerticleTest extends DataVerticleTestBase {
 
         @Override
         public Future<String> retrieveData(DataQuery query, DataMap require, DataContext context) {
-            if ("true".equalsIgnoreCase(query.getParameter("ping"))) {
+            if (parseBoolean(query.getParameter("ping"))) {
                 return succeededFuture("Pong");
             }
             throw new DataException(400, "Bad Request");

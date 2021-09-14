@@ -45,6 +45,7 @@ import io.neonbee.test.helper.DummyVerticleHelper.DummyDataVerticleFactory;
 import io.neonbee.test.helper.DummyVerticleHelper.DummyEntityVerticleFactory;
 import io.neonbee.test.helper.FileSystemHelper;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
+import io.neonbee.test.listeners.StaleVertxChecker;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
@@ -74,8 +75,12 @@ public class NeonBeeTestBase {
 
     @BeforeEach
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
-    public void setUp(TestInfo testInfo, Vertx vertx, VertxTestContext testContext) throws Exception {
-        // Build working directory
+    public void setUp(Vertx vertx, VertxTestContext testContext, TestInfo testInfo) throws Exception {
+        // associate the Vert.x instance to the current test (unfortunately the only "identifier" that is shared between
+        // TestInfo and TestIdentifier is the display name)
+        StaleVertxChecker.VERTX_TEST_MAP.put(vertx, testInfo.getDisplayName());
+
+        // build working directory
         workingDirPath = FileSystemHelper.createTempDirectory();
         provideWorkingDirectoryBuilder(testInfo, testContext).build(workingDirPath);
 
