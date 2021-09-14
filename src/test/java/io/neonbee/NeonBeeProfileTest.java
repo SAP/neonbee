@@ -1,6 +1,13 @@
 package io.neonbee;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeProfile.ALL;
+import static io.neonbee.NeonBeeProfile.CORE;
+import static io.neonbee.NeonBeeProfile.INCUBATOR;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
+import static io.neonbee.NeonBeeProfile.STABLE;
+import static io.neonbee.NeonBeeProfile.WEB;
+import static io.neonbee.NeonBeeProfile.parseProfiles;
 
 import java.util.List;
 
@@ -15,40 +22,44 @@ class NeonBeeProfileTest {
     @Test
     @DisplayName("is profile active")
     void isActive() {
-        assertThat(NeonBeeProfile.CORE.isActive(List.<NeonBeeProfile>of(NeonBeeProfile.ALL))).isTrue();
-        assertThat(NeonBeeProfile.STABLE.isActive(List.<NeonBeeProfile>of(NeonBeeProfile.ALL))).isTrue();
-        assertThat(NeonBeeProfile.CORE.isActive(List.<NeonBeeProfile>of(NeonBeeProfile.CORE))).isTrue();
-        assertThat(NeonBeeProfile.STABLE.isActive(List.<NeonBeeProfile>of(NeonBeeProfile.STABLE, NeonBeeProfile.CORE)))
-                .isTrue();
-        assertThat(
-                NeonBeeProfile.INCUBATOR.isActive(List.<NeonBeeProfile>of(NeonBeeProfile.STABLE, NeonBeeProfile.ALL)))
-                        .isTrue();
-        assertThat(
-                NeonBeeProfile.CORE.isActive(List.<NeonBeeProfile>of(NeonBeeProfile.STABLE, NeonBeeProfile.INCUBATOR)))
-                        .isFalse();
-        assertThat(NeonBeeProfile.ALL.isActive(List.<NeonBeeProfile>of(NeonBeeProfile.STABLE))).isTrue();
+        assertThat(CORE.isActive(List.<NeonBeeProfile>of(ALL))).isTrue();
+        assertThat(STABLE.isActive(List.<NeonBeeProfile>of(ALL))).isTrue();
+        assertThat(WEB.isActive(List.<NeonBeeProfile>of(ALL))).isTrue();
+
+        // NO_WEB should always take precedence
+        assertThat(WEB.isActive(List.<NeonBeeProfile>of(ALL, NO_WEB))).isFalse();
+        assertThat(WEB.isActive(List.<NeonBeeProfile>of(NO_WEB, ALL))).isFalse();
+        assertThat(CORE.isActive(List.<NeonBeeProfile>of(NO_WEB))).isFalse();
+        assertThat(STABLE.isActive(List.<NeonBeeProfile>of(NO_WEB, ALL))).isTrue();
+
+        assertThat(CORE.isActive(List.<NeonBeeProfile>of(CORE))).isTrue();
+        assertThat(STABLE.isActive(List.<NeonBeeProfile>of(STABLE, CORE))).isTrue();
+        assertThat(INCUBATOR.isActive(List.<NeonBeeProfile>of(STABLE, ALL))).isTrue();
+        assertThat(CORE.isActive(List.<NeonBeeProfile>of(STABLE, INCUBATOR))).isFalse();
+
+        assertThat(ALL.isActive(List.<NeonBeeProfile>of(STABLE))).isTrue();
     }
 
     @Test
     void parseActiveProfile() {
-        List<NeonBeeProfile> profiles = NeonBeeProfile.parseProfiles("");
-        assertThat(profiles).contains(NeonBeeProfile.ALL);
+        List<NeonBeeProfile> profiles = parseProfiles("");
+        assertThat(profiles).contains(ALL);
         assertThat(profiles).hasSize(1);
-        profiles = NeonBeeProfile.parseProfiles("CORE");
-        assertThat(profiles).contains(NeonBeeProfile.CORE);
+        profiles = parseProfiles("CORE");
+        assertThat(profiles).contains(CORE);
         assertThat(profiles).hasSize(1);
-        profiles = NeonBeeProfile.parseProfiles("CORE,STABLE");
-        assertThat(profiles).contains(NeonBeeProfile.CORE);
-        assertThat(profiles).contains(NeonBeeProfile.STABLE);
+        profiles = parseProfiles("CORE,STABLE");
+        assertThat(profiles).contains(CORE);
+        assertThat(profiles).contains(STABLE);
         assertThat(profiles).hasSize(2);
-        profiles = NeonBeeProfile.parseProfiles("CORE,anything");
-        assertThat(profiles).contains(NeonBeeProfile.CORE);
+        profiles = parseProfiles("CORE,anything");
+        assertThat(profiles).contains(CORE);
         assertThat(profiles).hasSize(1);
-        profiles = NeonBeeProfile.parseProfiles("anything");
-        assertThat(profiles).contains(NeonBeeProfile.ALL);
+        profiles = parseProfiles("anything");
+        assertThat(profiles).contains(ALL);
         assertThat(profiles).hasSize(1);
-        profiles = NeonBeeProfile.parseProfiles("");
-        assertThat(profiles).contains(NeonBeeProfile.ALL);
+        profiles = parseProfiles("");
+        assertThat(profiles).contains(ALL);
         assertThat(profiles).hasSize(1);
     }
 }
