@@ -15,7 +15,7 @@ import com.google.common.base.Strings;
  */
 @SuppressWarnings("checkstyle:JavadocVariable")
 public enum NeonBeeProfile {
-    WEB, CORE, STABLE, INCUBATOR, ALL;
+    WEB, CORE, STABLE, INCUBATOR, NO_WEB, ALL;
 
     /**
      * Returns true if this profile is inside the passed active profiles.
@@ -24,6 +24,10 @@ public enum NeonBeeProfile {
      * @return true if this profile is active
      */
     public boolean isActive(List<NeonBeeProfile> activeProfiles) {
+        if (activeProfiles.contains(NO_WEB) && this == WEB) {
+            return false;
+        }
+
         return activeProfiles.contains(ALL) || activeProfiles.contains(this) || this == ALL;
     }
 
