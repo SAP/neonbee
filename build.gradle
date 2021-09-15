@@ -194,6 +194,8 @@ test {
         ]
     }
 
+    environment 'vertx.parameter.filename', file('src/test/resources/vertx-parameters.json').absolutePath
+
     // Later, if the violations plugin supports JUNIT5 we have to ignore the issues
     // during SpotBugs run, because the violations plugin will display the issues
     // and let the build fail later. But currently we have to fail directly.
