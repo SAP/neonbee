@@ -60,23 +60,14 @@ public class StaleThreadChecker implements TestExecutionListener {
     private static void checkForStaleThreads(String name, String namePrefix) {
         LOGGER.info("Checking for stale {} threads with '{}' prefix", name, namePrefix);
         List<Thread> staleThreads = findStaleThreads(namePrefix).collect(Collectors.toList());
-        if (!staleThreads.isEmpty()) {
-            if (LOGGER.isErrorEnabled()) {
-                LOGGER.error(
-                        "Stale {} thread(s) detected!! Not closing the thread {} "
-                                + "could result in the test runner not signaling completion",
-                        name, staleThreads.get(0));
-            }
-
-            if (LOGGER.isDebugEnabled()) {
-                staleThreads.forEach(staleThread -> {
-                    LOGGER.debug("Stale thread info: {} ({})", staleThread.getName(), staleThread.getId());
-                });
-            }
+        if (!staleThreads.isEmpty() && LOGGER.isErrorEnabled()) {
+            LOGGER.error("Stale {} thread(s) detected!! Not closing the thread {} "
+                    + "could result in the test runner not signaling completion", name, staleThreads.get(0));
         }
     }
 
     protected static Stream<Thread> findStaleThreads(String namePrefix) {
-        return Thread.getAllStackTraces().keySet().stream().filter(thread -> thread.getName().startsWith(namePrefix));
+        return Thread.getAllStackTraces().keySet().stream().filter(Thread::isAlive)
+                .filter(thread -> thread.getName().startsWith(namePrefix));
     }
 }

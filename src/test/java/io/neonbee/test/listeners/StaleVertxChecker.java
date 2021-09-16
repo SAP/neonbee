@@ -7,6 +7,9 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -31,6 +34,23 @@ import io.vertx.core.impl.VertxThread;
 public class StaleVertxChecker extends StaleThreadChecker {
     public static final SetMultimap<Vertx, String> VERTX_TEST_MAP = HashMultimap.create();
 
+    // the thread pool should at least contain *some* threads, because we would like to execute the threads as quickly
+    // as possible after they are done, as checking for stale threads should happen more or less immediately. if tests
+    // are running concurrently in threads (there is options where Gradle spins up own JVMs, we are not talking about
+    // that), there should be at least as many threads in th thread pool, as parallel tests running.
+    private static final int STALE_CHECK_THREAD_POOL_SIZE = 5;
+
+    private static final ExecutorService STALE_CHECK_EXECUTOR;
+
+    static {
+        AtomicInteger threadIndex = new AtomicInteger();
+        STALE_CHECK_EXECUTOR = Executors.newFixedThreadPool(STALE_CHECK_THREAD_POOL_SIZE, runnable -> {
+            Thread thread = new Thread(runnable, "neonbee-stale-vertx-thread-checker-" + threadIndex.getAndIncrement());
+            thread.setDaemon(true);
+            return thread;
+        });
+    }
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StaleVertxChecker.class);
 
     private static final Method CONTEXT_METHOD;
@@ -47,11 +67,20 @@ public class StaleVertxChecker extends StaleThreadChecker {
     }
 
     @Override
+    @SuppressWarnings("FutureReturnValueIgnored")
     public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
-        super.executionFinished(testIdentifier, testExecutionResult);
-        if (CONTEXT_METHOD != null) {
-            checkForStaleVertxInstances(testIdentifier);
-        }
+        // special case for the StaleVertxChecker, we actually must *execute* the checking on a separate thread, because
+        // finishing execution will actually be blocked due to waiting for shutting down all involved Vert.x instances.
+        // Vert.x will signal completion on the *last* event loop thread available to it, in order to execute the Future
+        // returned by the close method. to unblock this thread before checking for stale threads, we must dispatch the
+        // work to an own thread pool, in case dealing with Vert.x. See https://github.com/netty/netty/issues/11686 for
+        // more details about this, and also insights into how the Netty event loops treat shutdown.
+        STALE_CHECK_EXECUTOR.submit(() -> {
+            super.executionFinished(testIdentifier, testExecutionResult);
+            if (CONTEXT_METHOD != null) {
+                checkForStaleVertxInstances(testIdentifier);
+            }
+        });
     }
 
     @SuppressWarnings({ "PMD.EmptyIfStmt", "checkstyle:MultipleVariableDeclarations" })
@@ -64,20 +93,19 @@ public class StaleVertxChecker extends StaleThreadChecker {
                     try {
                         Context context = (Context) CONTEXT_METHOD.invoke(thread);
                         if (context == null) {
-                            LOGGER.debug("Vert.x thread {} is current not associated to any context", thread);
-                            return null;
+                            return null; // default case, if the Vert.x thread is ideling
                         }
 
                         Vertx vertx = context.owner();
                         if (vertx == null) {
-                            LOGGER.debug("Vert.x thread {} has a context {} with no owner, is this a bug?!", context,
+                            LOGGER.error("Vert.x thread {} has a context {} with no owner, is this a bug?!", context,
                                     thread);
                             return null;
                         }
 
                         return vertx;
                     } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                        LOGGER.debug("Failed to determine Vert.x context for thread {}", thread);
+                        LOGGER.error("Failed to determine Vert.x context for thread {}", thread);
                         return null;
                     }
                 }).collect(Collectors.toSet());
