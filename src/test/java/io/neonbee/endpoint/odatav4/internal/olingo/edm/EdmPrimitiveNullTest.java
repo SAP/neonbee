@@ -21,7 +21,7 @@ class EdmPrimitiveNullTest {
     @Test
     @DisplayName("Test equals method")
     @SuppressWarnings({ "EqualsIncompatibleType", "TruthSelfEquals" })
-    void equalsTest() throws ClassNotFoundException {
+    void testEquals() throws ClassNotFoundException {
         assertThat(edmPrimitiveNull).isEqualTo(edmPrimitiveNull);
         assertThat(edmPrimitiveNull).isEqualTo(new EdmPrimitiveNull());
         assertThat(edmPrimitiveNull).isEqualTo(EdmPrimitiveNull.getInstance());
@@ -30,7 +30,7 @@ class EdmPrimitiveNullTest {
 
     @Test
     @DisplayName("Test fromUriLiteral method")
-    void fromUriLiteralTest() throws EdmPrimitiveTypeException {
+    void testFromUriLiteral() throws EdmPrimitiveTypeException {
         assertThat(edmPrimitiveNull.fromUriLiteral("null")).isEqualTo("null");
         assertThat(edmPrimitiveNull.fromUriLiteral(null)).isNull();
     }

@@ -201,7 +201,9 @@ public class LoggerConfiguration implements Comparable<LoggerConfiguration> {
      * @return the LoggerConfiguration for chaining
      */
     public LoggerConfiguration setEffectiveLevel(Level effectiveLevel) {
-        LOGGER.info("Changing log level for {} from {} to {}.", getName(), getEffectiveLevel(), effectiveLevel);
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Changing log level for {} from {} to {}.", getName(), getEffectiveLevel(), effectiveLevel);
+        }
         Optional.ofNullable(getLogger()).ifPresent(logger -> logger.setLevel(effectiveLevel));
         return this;
     }

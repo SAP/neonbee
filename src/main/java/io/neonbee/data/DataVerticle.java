@@ -119,7 +119,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
             try {
                 vertx.eventBus().registerCodec(codec);
             } catch (IllegalStateException e) {
-                if (e.getMessage().startsWith("Already a codec registered with name")) {
+                if (LOGGER.isDebugEnabled() && e.getMessage().startsWith("Already a codec registered with name")) {
                     LOGGER.debug("Codec {} is already registered. Ignore the exception.", codec.name());
                 }
             }

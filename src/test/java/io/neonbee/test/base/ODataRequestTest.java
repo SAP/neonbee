@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 class ODataRequestTest {
     private final Map<String, Object> compositeMap = new HashMap<>();
 
-    private final String expectedServiceRootURL = "my-namespace";
+    private static final String EXPECTED_SERVICE_ROOT_URL = "my-namespace";
 
     private ODataRequest odataRequest;
 
@@ -30,45 +30,45 @@ class ODataRequestTest {
     @DisplayName("with $metadata set")
     void testGetUriWithMetadata() {
         odataRequest.setMetadata();
-        assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/$metadata");
+        assertThat(odataRequest.getUri()).isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/$metadata");
         odataRequest.setMetadata().setKey(1).setProperty("ignore");
-        assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/$metadata");
+        assertThat(odataRequest.getUri()).isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/$metadata");
     }
 
     @Test
     @DisplayName("with $count set")
     void testGetUriWithCount() {
         odataRequest.setCount();
-        assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity/$count");
+        assertThat(odataRequest.getUri()).isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/my-entity/$count");
         odataRequest.setCount().setKey(1).setProperty("ignore");
-        assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity/$count");
+        assertThat(odataRequest.getUri()).isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/my-entity/$count");
     }
 
     @Test
     @DisplayName("with namespace and entity name")
     void testGetUriNamespace() {
-        assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity");
+        assertThat(odataRequest.getUri()).isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/my-entity");
     }
 
     @Test
     @DisplayName("with single string key")
     void testGetUriSingleStringKey() {
         odataRequest.setKey("0123");
-        assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity('0123')");
+        assertThat(odataRequest.getUri()).isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/my-entity('0123')");
     }
 
     @Test
     @DisplayName("with single long key")
     void testGetUriSingleLongKey() {
         odataRequest.setKey(1234);
-        assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity(1234)");
+        assertThat(odataRequest.getUri()).isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/my-entity(1234)");
     }
 
     @Test
     @DisplayName("with single date key")
     void testGetUriSingleDateKey() {
         odataRequest.setKey(LocalDate.of(2020, 2, 22));
-        assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity(2020-02-22)");
+        assertThat(odataRequest.getUri()).isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/my-entity(2020-02-22)");
     }
 
     @Test
@@ -120,20 +120,21 @@ class ODataRequestTest {
     void testGetUriMultipleInvocationsOfSetKey() {
         compositeMap.put("ID", 123L);
         odataRequest.setKey(compositeMap).setKey(123L).setKey("surprise");
-        assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity('surprise')");
+        assertThat(odataRequest.getUri()).isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/my-entity('surprise')");
     }
 
     @Test
     @DisplayName("with property set")
     void testGetUriWithProperty() {
         odataRequest.setProperty("my-property");
-        assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity/my-property");
+        assertThat(odataRequest.getUri()).isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/my-entity/my-property");
     }
 
     @Test
     @DisplayName("with expand single attribute")
     void testExpand() {
         odataRequest.setKey("0123").setExpandQuery("ExpandItem");
-        assertThat(odataRequest.getUri()).isEqualTo(expectedServiceRootURL + "/my-entity('0123')?$expand=ExpandItem");
+        assertThat(odataRequest.getUri())
+                .isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/my-entity('0123')?$expand=ExpandItem");
     }
 }

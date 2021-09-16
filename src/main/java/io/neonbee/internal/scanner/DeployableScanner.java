@@ -43,7 +43,9 @@ public class DeployableScanner {
                     List<String> deployableFQNs = Streams.concat(deployablesFromClassPath.result().stream(),
                             deployablesFromManifest.result().stream()).distinct().collect(Collectors.toList());
 
-                    LOGGER.info("Found Deployables {}.", deployableFQNs.stream().collect(Collectors.joining(",")));
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info("Found Deployables {}.", deployableFQNs.stream().collect(Collectors.joining(",")));
+                    }
                     promise.complete(deployableFQNs.stream().map(className -> {
                         try {
                             return (Class<? extends Verticle>) classLoader.loadClass(className)

@@ -24,6 +24,7 @@ tasks.withType(JavaCompile).configureEach {
     options.failOnError = true
     options.compilerArgs << '-Xlint:deprecation'
     options.errorprone.errorproneArgs.add('-Xep:TypeParameterUnusedInFormals:OFF')
+    options.errorprone.errorproneArgs.add('-Xep:InlineMeSuggester:OFF')
 }
 
 import org.gradle.internal.logging.events.OutputEvent
@@ -53,7 +54,7 @@ spotbugs {
     // Ignore the issues during SpotBugs run, because the violations plugin
     // will display the issues and let the build fail later.
     ignoreFailures = true
-    toolVersion = '4.2.1'
+    toolVersion = '4.4.1'
     effort = 'max'
     reportLevel = 'medium'
     excludeFilter = file("${projectDir}/gradle/findbugs/excludeFilter.xml")
@@ -62,8 +63,8 @@ spotbugs {
 spotbugsMain {
     // Only one report can be configured at a time.
     reports {
-        xml.enabled = true
-        html.enabled = false
+        xml.required = true
+        html.required = false
     }
 }
 compileJava.finalizedBy spotbugsMain // Checks src/main/java
@@ -72,8 +73,8 @@ spotbugsTest.enabled = false
 spotbugsTest {
     // Only one report can be configured at a time.
     reports {
-        xml.enabled = true
-        html.enabled = false
+        xml.required = true
+        html.required = false
     }
 }
 compileTestJava.finalizedBy spotbugsTest // Checks src/test/java
@@ -85,7 +86,7 @@ pmd {
     ignoreFailures = true
     sourceSets = [sourceSets.main, sourceSets.test]
     ruleSets = []
-    toolVersion = '6.32.0'
+    toolVersion = '6.38.0'
 }
 
 pmdMain {
@@ -101,7 +102,7 @@ compileTestJava.finalizedBy pmdTest
 // ############ CheckStyle
 checkstyle {
     ignoreFailures = true
-    toolVersion = '8.40'
+    toolVersion = '9.0'
     sourceSets = [sourceSets.main, sourceSets.test]
     configDirectory = file("${rootDir}/gradle/checkstyle")
 }

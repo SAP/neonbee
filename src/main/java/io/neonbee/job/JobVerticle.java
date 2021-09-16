@@ -135,8 +135,10 @@ public abstract class JobVerticle extends AbstractVerticle {
         // schedule the job for the delay defined and remember the last execution time
         // use a minimum delay to not run jobs in a immediate succession
         long nextDelay = max(MINIMUM_DELAY, now.until(lastExecution = nextExecution, MILLIS));
-        LOGGER.info("Scheduling job execution of {} in {}ms ({})", getName(), nextDelay,
-                ISO_LOCAL_DATE_TIME.format(ZonedDateTime.now(UTC).plus(nextDelay, MILLIS)));
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Scheduling job execution of {} in {}ms ({})", getName(), nextDelay,
+                    ISO_LOCAL_DATE_TIME.format(ZonedDateTime.now(UTC).plus(nextDelay, MILLIS)));
+        }
         getVertx().setTimer(nextDelay, timerID -> {
             // initialize the a data context for the job execution
             DataContext context = new DataContextImpl(UUID.randomUUID().toString(),
@@ -167,9 +169,10 @@ public abstract class JobVerticle extends AbstractVerticle {
      * Finalize the job execution by eventually undeploying the own verticle.
      */
     private void finalizeJob() {
-        LOGGER.info("Finalizing job {}", getName());
+        String name = getName();
+        LOGGER.info("Finalizing job {}", name);
         if (undeployWhenDone) {
-            LOGGER.info("Undeploying job {}, as processing finished", getName());
+            LOGGER.info("Undeploying job {}, as processing finished", name);
             getVertx().undeploy(deploymentID());
         }
     }

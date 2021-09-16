@@ -44,7 +44,7 @@ class NeonBeeTest extends NeonBeeTestBase {
         if (vertx != null) {
             // important, as otherwise the cluster won't be stopped!
             vertx.close().onComplete(testContext.succeedingThenComplete());
-            vertx = null;
+            vertx = null; // NOPMD
         } else {
             testContext.completeNow();
         }

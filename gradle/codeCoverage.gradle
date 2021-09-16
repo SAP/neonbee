@@ -1,6 +1,6 @@
 jacoco {
-    toolVersion = '0.8.5'
-    reportsDir = file("${buildDir}/reports/jacoco")
+    toolVersion = '0.8.7'
+    reportsDirectory = file("${buildDir}/reports/jacoco")
 }
 
 consoleReporter {
@@ -54,7 +54,7 @@ consoleReporter {
         // failIfLessThanThresholdError property is set to true,
         // the build will fail. Even if the property is called
         // failIfLessThan... the build will actually fail at 80.0%
-        thresholdError 81
+        thresholdError 80
 
         // Set this property if you want to customize build error message
         // when you use 'failIfLessThanThresholdError' feature.
@@ -88,15 +88,15 @@ jacocoTestReport {
 
     reports {
         csv {
-            enabled true
+            required = true
             destination file("${buildDir}/reports/jacoco/csv/jacoco.csv")
         }
         xml {
-            enabled true
+            required = true
             destination file("${buildDir}/reports/jacoco/xml/jacoco.xml")
         }
         html {
-            enabled true
+            required = true
             destination file("${buildDir}/reports/jacoco/html")
         }
     }
