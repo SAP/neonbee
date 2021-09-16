@@ -62,10 +62,12 @@ public class HookScanner {
 
         return CompositeFuture.all(hookClassesWithAnnotations, hooksFromManifest)
                 .compose(compositeResult -> vertx.executeBlocking(promise -> {
-                    LOGGER.info("Annotated hook classes on classpath {}.",
-                            String.join(",", hookClassesWithAnnotations.result()));
-                    LOGGER.info("Hook classes from manifest files on classpath {}.",
-                            String.join(", ", hooksFromManifest.result()));
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info("Annotated hook classes on classpath {}.",
+                                String.join(",", hookClassesWithAnnotations.result()));
+                        LOGGER.info("Hook classes from manifest files on classpath {}.",
+                                String.join(", ", hooksFromManifest.result()));
+                    }
 
                     // Use distinct because the hook mentioned in the manifest could also exist as file.
                     promise.complete(Streams

@@ -295,8 +295,10 @@ public class NeonBee {
             strategy = (TrackingDataHandlingStrategy) Class.forName(config.getTrackingDataHandlingStrategy())
                     .getConstructor().newInstance();
         } catch (Exception e) {
-            logger.warn("Failed to load configured tracking handling strategy {}. Use default.",
-                    config.getTrackingDataHandlingStrategy(), e);
+            if (logger.isWarnEnabled()) {
+                logger.warn("Failed to load configured tracking handling strategy {}. Use default.",
+                        config.getTrackingDataHandlingStrategy(), e);
+            }
             strategy = new TrackingDataLoggingStrategy();
         }
 
@@ -358,8 +360,10 @@ public class NeonBee {
      */
     private Future<Void> deployVerticles() {
         List<NeonBeeProfile> activeProfiles = options.getActiveProfiles();
-        logger.info("Deploying verticle with active profiles: {}",
-                activeProfiles.stream().map(NeonBeeProfile::name).collect(Collectors.joining(",")));
+        if (logger.isInfoEnabled()) {
+            logger.info("Deploying verticle with active profiles: {}",
+                    activeProfiles.stream().map(NeonBeeProfile::name).collect(Collectors.joining(",")));
+        }
 
         List<Future<?>> deployFutures = new ArrayList<>(deploySystemVerticles());
         if (NeonBeeProfile.WEB.isActive(activeProfiles)) {
@@ -440,8 +444,10 @@ public class NeonBee {
             List<Class<? extends Verticle>> filteredVerticleClasses = deployableClasses.stream()
                     .filter(verticleClass -> filterByAutoDeployAndProfiles(verticleClass, options.getActiveProfiles()))
                     .collect(Collectors.toList());
-            logger.info("Deploy classpath verticle {}.",
-                    filteredVerticleClasses.stream().map(Class::getCanonicalName).collect(Collectors.joining(",")));
+            if (logger.isInfoEnabled()) {
+                logger.info("Deploy classpath verticle {}.",
+                        filteredVerticleClasses.stream().map(Class::getCanonicalName).collect(Collectors.joining(",")));
+            }
             return allComposite(filteredVerticleClasses.stream()
                     .map(verticleClass -> Deployable.fromClass(vertx, verticleClass, CORRELATION_ID, null)
                             .compose(deployable -> deployable.deploy(vertx, CORRELATION_ID).future())

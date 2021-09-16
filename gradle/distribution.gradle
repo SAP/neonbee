@@ -91,9 +91,10 @@ task testSourcesJar(type: Jar) {
 }
 
 task testJavadoc(type: Javadoc) {
-  classpath += sourceSets.test.compileClasspath
-  classpath += sourceSets.main.compileClasspath
-  source = sourceSets.test.allJava
+    destinationDir = file("${docsDir}/testJavadoc")
+    classpath += sourceSets.test.compileClasspath
+    classpath += sourceSets.main.compileClasspath
+    source = sourceSets.test.allJava
 }
 
 /** Builds the test JavaDoc JAR */

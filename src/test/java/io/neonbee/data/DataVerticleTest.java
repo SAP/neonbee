@@ -61,7 +61,7 @@ class DataVerticleTest extends DataVerticleTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Get the correct namespace for verticle with and without the @NeonBeeDeployable annotation")
-    void getNamespaceTest() {
+    void testGetNamespace() {
         // No annotation available, therefore the namespace has to be null
         assertThat(dataVerticleImpl0.getNamespace()).isNull();
 

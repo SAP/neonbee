@@ -43,7 +43,7 @@ class LoggerConfigurationTest {
 
     @Test
     void testBasics() {
-        ROOT.hashCode();
+        assertThat(ROOT.hashCode()).isNotEqualTo(0);
         assertThat(ROOT.toString()).isEqualTo("LoggerConfiguration [name=ROOT, configuredLevel=INFO]");
         assertThat(ROOT.getName()).isEqualTo(Logger.ROOT_LOGGER_NAME);
         assertThat(ROOT.getConfiguredLevel()).isEqualTo(INFO);

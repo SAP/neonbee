@@ -108,7 +108,9 @@ public class ServerVerticle extends AbstractVerticle {
                                 .exceptionHandler(throwable -> {
                                     LOGGER.error("HTTP Socket Exception", throwable);
                                 }).requestHandler(router).listen().onSuccess(httpServer -> {
-                                    LOGGER.info("HTTP server started on port {}", httpServer.actualPort());
+                                    if (LOGGER.isInfoEnabled()) {
+                                        LOGGER.info("HTTP server started on port {}", httpServer.actualPort());
+                                    }
                                     if (LOGGER.isDebugEnabled()) {
                                         LOGGER.debug("HTTP server configured with routes: {}", router.getRoutes()
                                                 .stream().map(Route::toString).collect(Collectors.joining(",")));
@@ -165,8 +167,10 @@ public class ServerVerticle extends AbstractVerticle {
         for (EndpointConfig endpointConfig : endpointConfigs) {
             String endpointType = endpointConfig.getType();
             if (Strings.isNullOrEmpty(endpointType)) {
-                LOGGER.error("Endpoint with configuration {} is missing the 'type' field",
-                        endpointConfig.toJson().encode());
+                if (LOGGER.isErrorEnabled()) {
+                    LOGGER.error("Endpoint with configuration {} is missing the 'type' field",
+                            endpointConfig.toJson().encode());
+                }
                 return failedFuture(new IllegalArgumentException("Endpoint is missing the 'type' field"));
             }
 
@@ -178,7 +182,9 @@ public class ServerVerticle extends AbstractVerticle {
                 LOGGER.error("No class for endpoint type {}", endpointType, e);
                 return failedFuture(new IllegalArgumentException("Endpoint class not found", e));
             } catch (ClassCastException e) {
-                LOGGER.error("Endpoint type {} must implement {}", endpointType, Endpoint.class.getName(), e);
+                if (LOGGER.isErrorEnabled()) {
+                    LOGGER.error("Endpoint type {} must implement {}", endpointType, Endpoint.class.getName(), e);
+                }
                 return failedFuture(
                         new IllegalArgumentException("Endpoint does not implement the Endpoint interface", e));
             } catch (NoSuchMethodException e) {
@@ -186,7 +192,7 @@ public class ServerVerticle extends AbstractVerticle {
                 return failedFuture(new IllegalArgumentException("Endpoint does not expose an empty constructor", e));
             } catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
                 LOGGER.error("Endpoint type {} could not be instantiated or threw an exception", endpointType, e);
-                return failedFuture(Optional.of((Exception) e.getCause()).orElse(e));
+                return failedFuture(Optional.ofNullable((Exception) e.getCause()).orElse(e));
             }
 
             EndpointConfig defaultEndpointConfig = endpoint.getDefaultConfig();
@@ -252,7 +258,7 @@ public class ServerVerticle extends AbstractVerticle {
     @VisibleForTesting
     static Optional<SessionStore> createSessionStore(Vertx vertx, SessionHandling sessionHandling) {
         switch (sessionHandling) {
-        case LOCAL: // sessions are stored locally in memory in a shared local map and only available on this instance
+        case LOCAL: // sessions are stored locally in a shared local map and only available on this instance
             return Optional.of(LocalSessionStore.create(vertx));
         case CLUSTERED: // sessions are stored in a distributed map which is accessible across the Vert.x cluster
             if (!vertx.isClustered()) { // Behaves like clustered in case that instance isn't clustered

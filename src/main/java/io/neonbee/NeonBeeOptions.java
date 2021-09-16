@@ -177,6 +177,9 @@ public interface NeonBeeOptions {
 
         private List<NeonBeeProfile> activeProfiles = List.of(NeonBeeProfile.ALL);
 
+        /**
+         * Instantiates a mutable {@link NeonBeeOptions} instance.
+         */
         public Mutable() {
             instanceName = generateName();
         }
@@ -328,26 +331,56 @@ public interface NeonBeeOptions {
             return clusterConfig;
         }
 
+        /**
+         * Set the cluster config file.
+         *
+         * @param clusterConfigFile the cluster config file
+         * @return this instance for chaining
+         */
         public Mutable setClusterConfigResource(String clusterConfigFile) {
             this.clusterConfig = new ClasspathXmlConfig(clusterConfigFile);
             return this;
         }
 
+        /**
+         * Set the cluster config.
+         *
+         * @param config the cluster config
+         * @return this instance for chaining
+         */
         public Mutable setClusterConfig(Config config) {
             this.clusterConfig = config;
             return this;
         }
 
+        /**
+         * Set the cluster port.
+         *
+         * @param clusterPort the cluster port
+         * @return this instance for chaining
+         */
         public Mutable setClusterPort(int clusterPort) {
             this.clusterPort = clusterPort;
             return this;
         }
 
+        /**
+         * Set clustered.
+         *
+         * @param clustered true if clustered
+         * @return this instance for chaining
+         */
         public Mutable setClustered(boolean clustered) {
             this.clustered = clustered;
             return this;
         }
 
+        /**
+         * Set the server port.
+         *
+         * @param serverPort the server port
+         * @return this instance for chaining
+         */
         public Mutable setServerPort(Integer serverPort) {
             this.serverPort = serverPort;
             return this;
@@ -363,11 +396,23 @@ public interface NeonBeeOptions {
             return this.activeProfiles;
         }
 
+        /**
+         * Set active profiles.
+         *
+         * @param activeProfiles the active profiles
+         * @return this instance for chaining
+         */
         public Mutable setActiveProfiles(List<NeonBeeProfile> activeProfiles) {
             this.activeProfiles = activeProfiles;
             return this;
         }
 
+        /**
+         * Set the active profile values.
+         *
+         * @param profileValues the profile values
+         * @return this instance for chaining
+         */
         public Mutable setActiveProfileValues(String profileValues) {
             this.activeProfiles = NeonBeeProfile.parseProfiles(profileValues);
             return this;

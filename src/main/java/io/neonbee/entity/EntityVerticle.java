@@ -227,7 +227,7 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
     public void start(Promise<Void> promise) {
         vertx.eventBus().consumer(EVENT_BUS_MODELS_LOADED_ADDRESS, message -> {
             announceEntityVerticle(vertx, asyncResult -> {
-                if (asyncResult.failed()) {
+                if (asyncResult.failed() && LOGGER.isErrorEnabled()) {
                     LOGGER.error("Updating announcements of entity verticle {} failed", getQualifiedName(),
                             asyncResult.cause());
                 }

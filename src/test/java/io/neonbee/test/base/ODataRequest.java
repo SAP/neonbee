@@ -297,7 +297,7 @@ public class ODataRequest {
      * @return An {@link ODataRequest} which contains the passed query options
      */
     public ODataRequest setQuery(Map<String, String> query) {
-        setQuery(Objects.isNull(query) ? null : MultiMap.caseInsensitiveMultiMap().addAll(query));
+        setQuery(Objects.isNull(query) ? null : MultiMap.caseInsensitiveMultiMap().addAll(query)); // NOPMD
         return this;
     }
 
@@ -333,7 +333,7 @@ public class ODataRequest {
      * @return An {@link ODataRequest} which contains the passed header
      */
     public ODataRequest setHeaders(Map<String, String> headers) {
-        setHeaders(Objects.isNull(headers) ? null : MultiMap.caseInsensitiveMultiMap().addAll(headers));
+        setHeaders(Objects.isNull(headers) ? null : MultiMap.caseInsensitiveMultiMap().addAll(headers)); // NOPMD
         return this;
     }
 

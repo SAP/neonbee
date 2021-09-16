@@ -270,15 +270,20 @@ public class ODataV4Endpoint implements Endpoint {
                                 })
                                 // TODO depending on the config either create Olingo or CDS based OData V4 handlers here
                                 .handler(new OlingoEndpointHandler(edmxModel));
-                        LOGGER.info("Serving OData service endpoint for {} at {}{} ({} URI mapping)", schemaNamespace,
-                                basePath, uriPath, uriConversion.name().toLowerCase(Locale.getDefault()));
+                        if (LOGGER.isInfoEnabled()) {
+                            LOGGER.info("Serving OData service endpoint for {} at {}{} ({} URI mapping)",
+                                    schemaNamespace, basePath, uriPath,
+                                    uriConversion.name().toLowerCase(Locale.getDefault()));
+                        }
                     }));
 
             // remove any of the old routes, so the old models will stop serving
             existingRoutes.forEach(Route::remove);
 
-            LOGGER.info("Refreshed OData endpoint router, populated {} models, removed {} existing routes",
-                    models.size(), existingRoutes.size());
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info("Refreshed OData endpoint router, populated {} models, removed {} existing routes",
+                        models.size(), existingRoutes.size());
+            }
             return succeededFuture();
         });
     }
