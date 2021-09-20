@@ -42,8 +42,9 @@ class LocalRequestClusterTest {
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that setLocalOnly works as expected")
-    void testLocalRequest(@NeonBeeInstanceConfiguration(clustered = true) NeonBee source,
-            @NeonBeeInstanceConfiguration(clustered = true) NeonBee target, VertxTestContext testContext) {
+    void testLocalRequest(@NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee source,
+            @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee target,
+            VertxTestContext testContext) {
         Checkpoint nonLocalRequest = testContext.checkpoint();
         Checkpoint localRequest = testContext.checkpoint();
 

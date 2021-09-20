@@ -41,8 +41,9 @@ class LoggerManagerVerticleClusterTest {
 
     @Test
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
-    void testSetLoggerLevelInCluster(@NeonBeeInstanceConfiguration(clustered = true) NeonBee node1,
-            @NeonBeeInstanceConfiguration(clustered = true) NeonBee node2, VertxTestContext testContext) {
+    void testSetLoggerLevelInCluster(@NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee node1,
+            @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee node2,
+            VertxTestContext testContext) {
         expectLogLevels(node1, "DEBUG", node2, "DEBUG", null, testContext);
     }
 
@@ -51,8 +52,10 @@ class LoggerManagerVerticleClusterTest {
     // cannot be tested currently, as setting the log level for one logger always applies to the JVM (as loggers are
     // static entities, cluster test starts no separate JVM though, so log levels are shared)
     @Disabled
-    void testSetLoggerLevelOnOneClusterNodeOnly(@NeonBeeInstanceConfiguration(clustered = true) NeonBee node1,
-            @NeonBeeInstanceConfiguration(clustered = true) NeonBee node2, VertxTestContext testContext) {
+    void testSetLoggerLevelOnOneClusterNodeOnly(
+            @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee node1,
+            @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee node2,
+            VertxTestContext testContext) {
         expectLogLevels(node1, "DEBUG", node2, "ERROR", query -> {
             query.setParameter(QUERY_PARAMETER_LOCAL, Boolean.toString(true));
         }, testContext);

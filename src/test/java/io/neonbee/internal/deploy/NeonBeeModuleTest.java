@@ -1,6 +1,7 @@
 package io.neonbee.internal.deploy;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.internal.deploy.NeonBeeModule.NEONBEE_MODULE;
 import static io.neonbee.test.helper.FileSystemHelper.createTempDirectory;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
@@ -19,11 +20,13 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.mockito.Mockito;
 
 import com.google.common.truth.Correspondence;
 import com.google.common.truth.Truth8;
 
+import io.neonbee.NeonBeeOptions;
 import io.neonbee.entity.EntityModel;
 import io.neonbee.entity.EntityModelManager;
 import io.neonbee.internal.BasicJar;
@@ -41,6 +44,11 @@ import io.vertx.junit5.VertxTestContext;
 @SuppressWarnings("StreamResourceLeak") // Ignore in Errorprone -> Because it is just a test
 class NeonBeeModuleTest extends NeonBeeTestBase {
     private static final String CORRELATION_ID = "correlId";
+
+    @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.addActiveProfile(NO_WEB);
+    }
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)

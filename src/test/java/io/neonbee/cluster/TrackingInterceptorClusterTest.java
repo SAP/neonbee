@@ -50,8 +50,9 @@ class TrackingInterceptorClusterTest {
     @Test
     @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Body of messages over distributed eventbus should be non-empty.")
-    void testNeonBeeWithClusters(@NeonBeeInstanceConfiguration(clustered = true) NeonBee core,
-            @NeonBeeInstanceConfiguration(clustered = true) NeonBee stable, VertxTestContext testContext) {
+    void testNeonBeeWithClusters(@NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee core,
+            @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee stable,
+            VertxTestContext testContext) {
 
         stable.getVertx().eventBus().addInboundInterceptor(new TrackingInterceptor(MessageDirection.INBOUND, strategy))
                 .addOutboundInterceptor(new TrackingInterceptor(MessageDirection.OUTBOUND, strategy));

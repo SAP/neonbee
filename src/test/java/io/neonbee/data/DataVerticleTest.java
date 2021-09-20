@@ -1,6 +1,7 @@
 package io.neonbee.data;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.vertx.core.Future.succeededFuture;
 import static java.lang.Boolean.parseBoolean;
 
@@ -10,8 +11,10 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import io.neonbee.NeonBeeDeployable;
+import io.neonbee.NeonBeeOptions;
 import io.neonbee.test.base.DataVerticleTestBase;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -28,6 +31,11 @@ class DataVerticleTest extends DataVerticleTestBase {
     // Data Verticle that has the @NeonBeeDeployable(namespace = "DataVerticleTestNamespace2") annotation but w/ the
     // effective namespace dataverticletestnamespace2
     private DataVerticleImpl2 dataVerticleImpl2;
+
+    @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.addActiveProfile(NO_WEB);
+    }
 
     @BeforeEach
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)

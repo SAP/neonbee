@@ -6,6 +6,7 @@ import static io.neonbee.NeonBeeMockHelper.registerNeonBeeMock;
 import static io.neonbee.NeonBeeProfile.ALL;
 import static io.neonbee.NeonBeeProfile.CORE;
 import static io.neonbee.NeonBeeProfile.INCUBATOR;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.NeonBeeProfile.STABLE;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
@@ -51,6 +52,11 @@ import io.vertx.junit5.VertxTestContext;
 
 class NeonBeeTest extends NeonBeeTestBase {
     private Vertx vertx;
+
+    @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.addActiveProfile(NO_WEB);
+    }
 
     @AfterEach
     void closeVertx(VertxTestContext testContext) {
@@ -103,7 +109,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Vert.x should start in non-clustered mode. ")
     void testStandaloneInitialization(VertxTestContext testContext) {
-        NeonBee.newVertx(defaultOptions()).onComplete(testContext.succeeding(vertx -> {
+        NeonBee.newVertx(defaultOptions().clearActiveProfiles()).onComplete(testContext.succeeding(vertx -> {
             testContext.verify(() -> {
                 assertThat((this.vertx = vertx).isClustered()).isFalse();
                 testContext.completeNow();
@@ -115,8 +121,8 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Vert.x should start in clustered mode.")
     void testClusterInitialization(VertxTestContext testContext) {
-        NeonBee.newVertx(defaultOptions().setClustered(true).setClusterConfigResource("hazelcast-local.xml"))
-                .onComplete(testContext.succeeding(vertx -> {
+        NeonBee.newVertx(defaultOptions().clearActiveProfiles().setClustered(true)
+                .setClusterConfigResource("hazelcast-local.xml")).onComplete(testContext.succeeding(vertx -> {
                     testContext.verify(() -> {
                         assertThat((this.vertx = vertx).isClustered()).isTrue();
                         testContext.completeNow();
@@ -189,14 +195,15 @@ class NeonBeeTest extends NeonBeeTestBase {
                 vertxSupplier = () -> succeededFuture(failingVertxMock);
             }
 
-            NeonBee.create(vertxSupplier, defaultOptions()).onComplete(testContext.failing(throwable -> {
-                testContext.verify(() -> {
-                    // assert hat it is always
-                    assertThat(throwable.getMessage()).isEqualTo("Failing Vert.x!");
-                    verify(failingVertxMock, times(ownVertx ? 1 : 0)).close();
-                    checkpoint.flag();
-                });
-            }));
+            NeonBee.create(vertxSupplier, defaultOptions().clearActiveProfiles())
+                    .onComplete(testContext.failing(throwable -> {
+                        testContext.verify(() -> {
+                            // assert that the original message why the boot failed to start is propagated
+                            assertThat(throwable.getMessage()).isEqualTo("Failing Vert.x!");
+                            verify(failingVertxMock, times(ownVertx ? 1 : 0)).close();
+                            checkpoint.flag();
+                        });
+                    }));
         };
 
         // fail the boot, but close Vert.x fine and ensure a Vert.x that is NOT owned by the outside is closed

@@ -1,6 +1,7 @@
 package io.neonbee.internal.codec;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 
 import java.util.concurrent.TimeUnit;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import io.neonbee.NeonBeeOptions;
 import io.neonbee.entity.EntityModelManager;
 import io.neonbee.entity.EntityWrapper;
 import io.neonbee.test.base.NeonBeeTestBase;
@@ -30,6 +32,11 @@ class EntityWrapperMessageCodecTest extends NeonBeeTestBase {
     private final EntityWrapper wrapper = new EntityWrapper("io.neonbee.codec.CodecService.TestUsers", entity);
 
     private EntityWrapperMessageCodec codec;
+
+    @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.addActiveProfile(NO_WEB);
+    }
 
     @Override
     protected WorkingDirectoryBuilder provideWorkingDirectoryBuilder(TestInfo testInfo, VertxTestContext testContext) {
