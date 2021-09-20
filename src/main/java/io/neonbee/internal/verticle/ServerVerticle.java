@@ -36,6 +36,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
@@ -68,6 +69,8 @@ public class ServerVerticle extends AbstractVerticle {
     static final String DEFAULT_ERROR_HANDLER_CLASS_NAME = DefaultErrorHandler.class.getName();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+    private HttpServer httpServer;
 
     @Override
     public void start(Promise<Void> startPromise) {
@@ -108,6 +111,7 @@ public class ServerVerticle extends AbstractVerticle {
                                 .exceptionHandler(throwable -> {
                                     LOGGER.error("HTTP Socket Exception", throwable);
                                 }).requestHandler(router).listen().onSuccess(httpServer -> {
+                                    this.httpServer = httpServer;
                                     if (LOGGER.isInfoEnabled()) {
                                         LOGGER.info("HTTP server started on port {}", httpServer.actualPort());
                                     }
@@ -123,6 +127,14 @@ public class ServerVerticle extends AbstractVerticle {
             LOGGER.error("Server could not be started", e);
             startPromise.fail(e);
         }
+    }
+
+    @Override
+    public void stop(Promise<Void> stopPromise) throws Exception {
+        // Vert.x would close the HTTP server for us, however we would like to do some additional logging
+        (httpServer != null ? httpServer.close().onComplete(result -> {
+            LOGGER.info("HTTP server was stopped");
+        }) : succeededFuture().<Void>mapEmpty()).onComplete(stopPromise);
     }
 
     @VisibleForTesting
