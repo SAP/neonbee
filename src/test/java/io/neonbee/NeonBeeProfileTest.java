@@ -10,6 +10,7 @@ import static io.neonbee.NeonBeeProfile.WEB;
 import static io.neonbee.NeonBeeProfile.parseProfiles;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,11 +38,15 @@ class NeonBeeProfileTest {
         assertThat(CORE.isActive(List.<NeonBeeProfile>of(STABLE, INCUBATOR))).isFalse();
 
         assertThat(ALL.isActive(List.<NeonBeeProfile>of(STABLE))).isTrue();
+
+        assertThat(ALL.isActive(Set.of())).isFalse();
+        assertThat(CORE.isActive(Set.of())).isFalse();
+        assertThat(NO_WEB.isActive(Set.of())).isFalse();
     }
 
     @Test
     void parseActiveProfile() {
-        List<NeonBeeProfile> profiles = parseProfiles("");
+        Set<NeonBeeProfile> profiles = parseProfiles("");
         assertThat(profiles).contains(ALL);
         assertThat(profiles).hasSize(1);
         profiles = parseProfiles("CORE");

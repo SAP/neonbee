@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -118,6 +119,19 @@ class NeonBeeOptionsTest {
         assertThat(opts.getActiveProfiles()).containsExactly(CORE, WEB);
         opts = new NeonBeeOptions.Mutable().setActiveProfileValues("anything");
         assertThat(opts.getActiveProfiles()).containsExactly(ALL);
+
+        opts = new NeonBeeOptions.Mutable().setActiveProfiles(List.of(CORE, WEB, WEB, CORE));
+        assertThat(opts.getActiveProfiles()).containsExactly(CORE, WEB);
+        Set<NeonBeeProfile> profiles = opts.getActiveProfiles();
+        assertThrows(UnsupportedOperationException.class, () -> profiles.add(WEB));
+
+        opts.addActiveProfile(ALL).addActiveProfile(ALL);
+        assertThat(opts.getActiveProfiles()).containsExactly(CORE, WEB, ALL);
+        opts.removeActiveProfile(CORE).removeActiveProfile(CORE).removeActiveProfile(WEB);
+        assertThat(opts.getActiveProfiles()).containsExactly(ALL);
+
+        opts.clearActiveProfiles();
+        assertThat(opts.getActiveProfiles()).isEmpty();
     }
 
     @Test

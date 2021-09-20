@@ -32,7 +32,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 
 import io.neonbee.NeonBee;
@@ -119,8 +118,7 @@ public class NeonBeeTestBase {
 
             // add the NO_WEB profile to the active profiles list, this way we won't have to undeploy the ServerVerticle
             // again later on and can deploy our dummy ServerVerticle right away
-            options.setActiveProfiles(new ImmutableList.Builder<NeonBeeProfile>().add(NO_WEB)
-                    .addAll(options.getActiveProfiles()).build());
+            options.addActiveProfile(NO_WEB);
             customUserPrincipal.set(true);
         }
 
@@ -204,9 +202,9 @@ public class NeonBeeTestBase {
      * scanning, watching files and job scheduling. It does however apply all profiles by default. Some examples how to
      * use this method:
      *
-     * - In case your test is not requiring any HTTP connectivity via the {@link ServerVerticle}, set the
-     * {@link NeonBeeProfile#NO_WEB} profile: {@code options.setActiveProfiles(List.of(ALL, NO_WEB));} to improve
-     * performance of your tests.
+     * - In case your test is not requiring any HTTP connectivity via the {@link ServerVerticle}, add the
+     * {@link NeonBeeProfile#NO_WEB} profile to improve performance of your tests:
+     * {@code options.addActiveProfile(NO_WEB);}.
      *
      * - In case your test is requiring job scheduling / you want to test {@link JobVerticle}, use
      * {@link NeonBeeOptions.Mutable#setDisableJobScheduling(boolean)} and change the default to {@code true} instead.
