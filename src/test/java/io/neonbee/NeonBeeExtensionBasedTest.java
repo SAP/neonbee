@@ -31,15 +31,7 @@ class NeonBeeExtensionBasedTest {
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with default options / default working directory")
-    void testNeonBeeDefault(@NeonBeeInstanceConfiguration(activeProfiles = ALL) NeonBee neonBee) {
-        assertThat(neonBee).isNotNull();
-        assertThat(isClustered(neonBee)).isFalse();
-    }
-
-    @Test
-    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
-    @DisplayName("NeonBee should start with ALL profile by default")
-    void testNeonBeeWithNoneProfile(NeonBee neonBee) {
+    void testNeonBeeDefault(@NeonBeeInstanceConfiguration NeonBee neonBee) {
         assertThat(neonBee).isNotNull();
         assertThat(neonBee.getOptions().getActiveProfiles()).containsExactly(ALL);
         assertThat(isClustered(neonBee)).isFalse();
@@ -48,8 +40,9 @@ class NeonBeeExtensionBasedTest {
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Instances with the same name should return the same NeonBee instance")
-    void testSameNeonBeeInstance(@NeonBeeInstanceConfiguration(instanceName = "node1") NeonBee instance1,
-            @NeonBeeInstanceConfiguration(instanceName = "node1") NeonBee instance2) {
+    void testSameNeonBeeInstance(
+            @NeonBeeInstanceConfiguration(instanceName = "node1", activeProfiles = {}) NeonBee instance1,
+            @NeonBeeInstanceConfiguration(instanceName = "node1", activeProfiles = {}) NeonBee instance2) {
         assertThat(instance1).isSameInstanceAs(instance2);
     }
 
@@ -59,7 +52,7 @@ class NeonBeeExtensionBasedTest {
     void testNeonBeeWithCoreDeployment(@NeonBeeInstanceConfiguration(activeProfiles = CORE) NeonBee neonBee,
             VertxTestContext testContext) {
         assertThat(neonBee).isNotNull();
-        assertThat(neonBee.getOptions().getActiveProfiles()).contains(CORE);
+        assertThat(neonBee.getOptions().getActiveProfiles()).containsExactly(CORE);
         Vertx vertx = neonBee.getVertx();
         vertx.deployVerticle(new CoreDataVerticle(), testContext.succeeding(id -> {
             assertThat(DeploymentHelper.isVerticleDeployed(vertx, CoreDataVerticle.class)).isTrue();

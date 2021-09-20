@@ -59,7 +59,7 @@ class JobVerticleTest extends NeonBeeTestBase {
                 int breakExecutionsAfter, boolean disableJobScheduling) {
             super(schedule, undeployWhenDone);
             NeonBeeMockHelper.registerNeonBeeMock(vertxMock = NeonBeeMockHelper.defaultVertxMock(),
-                    defaultOptions().setDisableJobScheduling(disableJobScheduling));
+                    defaultOptions().clearActiveProfiles().setDisableJobScheduling(disableJobScheduling));
 
             // calling setTimer on the mock should invoke the handler (once)
             doAnswer(invocation -> {

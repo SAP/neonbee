@@ -45,8 +45,9 @@ class LocalPreferredClusterTest {
     @BeforeEach
     @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Setup the cluster nodes and deploy the consumers")
-    void setUp(@NeonBeeInstanceConfiguration(clustered = true) NeonBee localNode,
-            @NeonBeeInstanceConfiguration(clustered = true) NeonBee remoteNode, VertxTestContext testContext) {
+    void setUp(@NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee localNode,
+            @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee remoteNode,
+            VertxTestContext testContext) {
         this.localNode = localNode;
         deployVerticle(localNode.getVertx(), new ConsumerVerticle(LOCAL))
                 .compose(v -> deployVerticle(remoteNode.getVertx(), new ConsumerVerticle(REMOTE)))

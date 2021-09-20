@@ -1,6 +1,7 @@
 package io.neonbee.entity;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.entity.EntityModelManager.BUFFERED_MODELS;
 import static io.neonbee.entity.EntityModelManager.getBufferedModel;
 import static io.neonbee.entity.EntityModelManager.getBufferedModels;
@@ -25,10 +26,12 @@ import java.util.concurrent.TimeUnit;
 import org.apache.olingo.server.api.OData;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import com.sap.cds.reflect.CdsModel;
 
 import io.neonbee.NeonBeeMockHelper;
+import io.neonbee.NeonBeeOptions;
 import io.neonbee.entity.EntityModelManager.Loader;
 import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.FileSystemHelper;
@@ -45,6 +48,11 @@ class EntityModelManagerTest extends NeonBeeTestBase {
     private static final Path TEST_SERVICE_2_MODEL_PATH = TEST_RESOURCES.resolveRelated("TestService2.csn");
 
     private static final Path REFERENCE_SERVICE_MODEL_PATH = TEST_RESOURCES.resolveRelated("ReferenceService.csn");
+
+    @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.addActiveProfile(NO_WEB);
+    }
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
@@ -177,7 +185,8 @@ class EntityModelManagerTest extends NeonBeeTestBase {
         WorkingDirectoryBuilder.hollow().addModel(TEST_RESOURCES.resolveRelated("TestService1.csn"))
                 .addModel(TEST_RESOURCES.resolveRelated("TestService2.csn")).build(workingDir);
 
-        NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setWorkingDirectory(workingDir));
+        NeonBeeMockHelper.registerNeonBeeMock(vertx,
+                defaultOptions().clearActiveProfiles().setWorkingDirectory(workingDir));
 
         // assert that buffered models is null and stays empty when being retrieved w/ getBufferedModels
         assertThat(getBufferedModels(vertx)).isNull();
@@ -222,7 +231,8 @@ class EntityModelManagerTest extends NeonBeeTestBase {
         WorkingDirectoryBuilder.hollow().addModel(TEST_RESOURCES.resolveRelated("TestService1.csn"))
                 .addModel(TEST_RESOURCES.resolveRelated("TestService2.csn")).build(workingDir);
 
-        NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setWorkingDirectory(workingDir));
+        NeonBeeMockHelper.registerNeonBeeMock(vertx,
+                defaultOptions().clearActiveProfiles().setWorkingDirectory(workingDir));
         CompositeFuture.all(getSharedModel(vertx, "io.neonbee.test1"), getSharedModel(vertx, "io.neonbee.test2"))
                 .onComplete(testContext.succeeding(models -> testContext.verify(() -> {
                     assertThat(models.<EntityModel>resultAt(0).getEdmx().getEdm().getEntityContainer().getNamespace())
@@ -264,7 +274,8 @@ class EntityModelManagerTest extends NeonBeeTestBase {
     @DisplayName("register / unregister module models")
     void registerModuleModels(Vertx vertx, VertxTestContext testContext) throws IOException {
         Path workingDirectory = getNeonBee().getOptions().getWorkingDirectory();
-        NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setWorkingDirectory(workingDirectory));
+        NeonBeeMockHelper.registerNeonBeeMock(vertx,
+                defaultOptions().clearActiveProfiles().setWorkingDirectory(workingDirectory));
 
         // Create models
         Map.Entry<String, byte[]> referenceModel = buildModelEntry("ReferenceService.csn");
@@ -289,7 +300,8 @@ class EntityModelManagerTest extends NeonBeeTestBase {
     @DisplayName("register / unregister multiple modules to verify that changing the unmodifiable BUFFERED_MODELS is working correctly.")
     void registerMultipleModuleModels(Vertx vertx, VertxTestContext testContext) throws IOException {
         Path workingDirectory = getNeonBee().getOptions().getWorkingDirectory();
-        NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setWorkingDirectory(workingDirectory));
+        NeonBeeMockHelper.registerNeonBeeMock(vertx,
+                defaultOptions().clearActiveProfiles().setWorkingDirectory(workingDirectory));
 
         // Create 1st models
         Map.Entry<String, byte[]> referenceModel = buildModelEntry("ReferenceService.csn");

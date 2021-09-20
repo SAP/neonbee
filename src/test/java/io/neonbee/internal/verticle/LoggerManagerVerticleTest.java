@@ -2,6 +2,7 @@ package io.neonbee.internal.verticle;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
 
 import java.util.List;
 import java.util.Optional;
@@ -10,7 +11,9 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
+import io.neonbee.NeonBeeOptions;
 import io.neonbee.data.DataAction;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
@@ -22,6 +25,10 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class LoggerManagerVerticleTest extends DataVerticleTestBase {
+    @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.addActiveProfile(NO_WEB);
+    }
 
     @BeforeEach
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)

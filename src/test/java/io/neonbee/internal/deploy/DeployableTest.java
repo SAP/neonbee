@@ -1,6 +1,7 @@
 package io.neonbee.internal.deploy;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static org.junit.jupiter.api.condition.OS.WINDOWS;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
@@ -20,6 +22,7 @@ import org.mockito.stubbing.Answer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
+import io.neonbee.NeonBeeOptions;
 import io.neonbee.internal.DummyVerticleTemplate;
 import io.neonbee.internal.NeonBeeModuleJar;
 import io.neonbee.internal.verticle.MetricsVerticle;
@@ -49,6 +52,11 @@ class DeployableTest extends NeonBeeTestBase {
     private static final String IDENTIFIER_COMPANY_3 = "io.verticle.Company3Verticle";
 
     private static final String CORRELATION_ID = "correlId";
+
+    @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.addActiveProfile(NO_WEB);
+    }
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)

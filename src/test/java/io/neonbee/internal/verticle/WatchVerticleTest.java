@@ -1,7 +1,6 @@
 package io.neonbee.internal.verticle;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.NeonBeeProfile.ALL;
 import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.internal.helper.FileSystemHelper.createDirs;
 import static io.neonbee.internal.helper.FileSystemHelper.deleteRecursive;
@@ -26,7 +25,6 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -57,7 +55,7 @@ class WatchVerticleTest extends NeonBeeTestBase {
     protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
         options.setDoNotWatchFiles(
                 "testDontWatchFiles".equals(testInfo.getTestMethod().map(Method::getName).orElse(null)));
-        options.setActiveProfiles(List.of(ALL, NO_WEB));
+        options.addActiveProfile(NO_WEB);
     }
 
     @BeforeEach
