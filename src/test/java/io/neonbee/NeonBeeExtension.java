@@ -45,11 +45,11 @@ import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionCallback, AfterTestExecutionCallback,
         BeforeEachCallback, AfterEachCallback, BeforeAllCallback, AfterAllCallback {
 
+    public static final int DEFAULT_TIMEOUT_DURATION = 60;
+
+    public static final TimeUnit DEFAULT_TIMEOUT_UNIT = TimeUnit.SECONDS;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(NeonBeeExtension.class);
-
-    private static final int DEFAULT_TIMEOUT_DURATION = 60;
-
-    private static final TimeUnit DEFAULT_TIMEOUT_UNIT = TimeUnit.SECONDS;
 
     private static class ContextList extends ArrayList<VertxTestContext> {
 
@@ -225,34 +225,39 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         }
     }
 
-    private NeonBee createNeonBee(NeonBeeOptions neonBeeOptions) {
+    private NeonBee createNeonBee(NeonBeeOptions options) {
         CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<NeonBee> neonBeeHolder = new AtomicReference<>();
-        LOGGER.info("Before NeonBee init.");
-        NeonBee.create(neonBeeOptions).onComplete(ar -> {
-            LOGGER.info("NeonBee AsyncResult Handler. {}", ar.succeeded());
+        AtomicReference<NeonBee> neonBeeBox = new AtomicReference<>();
+        AtomicReference<Throwable> errorBox = new AtomicReference<>();
+
+        NeonBee.create(options).onComplete(ar -> {
             if (ar.succeeded()) {
-                neonBeeHolder.set(ar.result());
+                neonBeeBox.set(ar.result());
             } else {
-                LOGGER.error("Error while initializing NeonBee.", ar.cause()); // NOPMD slf4j
+                errorBox.set(ar.cause());
             }
+
             latch.countDown();
         });
 
         try {
-            LOGGER.info("Before CountDownLatch wait.");
-            if (latch.await(DEFAULT_TIMEOUT_DURATION, DEFAULT_TIMEOUT_UNIT)) {
-                LOGGER.info("After CountDownLatch wait.");
-                NeonBee neonBee = neonBeeHolder.get();
-                LOGGER.info("NeonBee Result {}.", neonBee);
-                if (neonBee != null) {
-                    return neonBee;
-                }
+            if (!latch.await(DEFAULT_TIMEOUT_DURATION, DEFAULT_TIMEOUT_UNIT)) {
+                throw new VertxException(new TimeoutException("Failed to initialize NeonBee in time"));
             }
         } catch (InterruptedException e) {
-            LOGGER.error("NeonBee initialization failed.", e);
+            throw new VertxException("Got interrupted when initializing NeonBee", e);
         }
-        throw new VertxException("NeonBee initialization failed.");
+
+        Throwable throwable = errorBox.get();
+        if (throwable != null) {
+            if (throwable instanceof RuntimeException) {
+                throw (RuntimeException) throwable;
+            } else {
+                throw new VertxException("Could not create NeonBee", throwable);
+            }
+        }
+
+        return neonBeeBox.get();
     }
 
     @SuppressWarnings("FutureReturnValueIgnored")
@@ -289,9 +294,11 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
                 }
                 latch.countDown();
             });
+
             if (!latch.await(DEFAULT_TIMEOUT_DURATION, DEFAULT_TIMEOUT_UNIT)) {
                 throw new TimeoutException("Closing the Vertx context timed out");
             }
+
             Throwable throwable = errorBox.get();
             if (throwable != null) {
                 if (throwable instanceof Exception) {
