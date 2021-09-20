@@ -23,6 +23,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.io.Resources;
 
@@ -67,6 +69,8 @@ import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
 public class NeonBeeTestBase {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NeonBeeTestBase.class);
+
     private Path workingDirPath;
 
     private NeonBee neonBee;
@@ -212,7 +216,9 @@ public class NeonBeeTestBase {
      */
     public Future<Deployment> deployVerticle(Verticle verticle) {
         return Deployable.fromVerticle(neonBee.getVertx(), verticle, "", null)
-                .compose(deployable -> deployable.deploy(neonBee.getVertx(), "").future());
+                .compose(deployable -> deployable.deploy(neonBee.getVertx(), "").future())
+                .onSuccess(result -> LOGGER.info("Successfully deployed verticle {}", verticle))
+                .onFailure(throwable -> LOGGER.error("Failed to deploy verticle {}", verticle, throwable));
     }
 
     /**
@@ -223,7 +229,9 @@ public class NeonBeeTestBase {
      * @return A succeeded future with the Deployment, or a failed future with the cause.
      */
     public Future<Deployment> deployVerticle(Verticle verticle, DeploymentOptions options) {
-        return new Deployable(verticle, options).deploy(neonBee.getVertx(), "").future();
+        return new Deployable(verticle, options).deploy(neonBee.getVertx(), "").future()
+                .onSuccess(result -> LOGGER.info("Successfully deployed verticle {}", verticle))
+                .onFailure(throwable -> LOGGER.error("Failed to deploy verticle {}", verticle, throwable));
     }
 
     /**
@@ -234,7 +242,11 @@ public class NeonBeeTestBase {
      */
     public Future<Deployment> deployVerticle(Class<? extends Verticle> verticleClass) {
         return Deployable.fromClass(neonBee.getVertx(), verticleClass, "", null)
-                .compose(deployable -> deployable.deploy(neonBee.getVertx(), "").future());
+                .compose(deployable -> deployable.deploy(neonBee.getVertx(), "").future())
+                .onSuccess(
+                        result -> LOGGER.info("Successfully deployed verticle with class {}", verticleClass.getName()))
+                .onFailure(throwable -> LOGGER.error("Failed to deploy verticle with class {}", verticleClass.getName(),
+                        throwable));
     }
 
     /**
@@ -245,27 +257,38 @@ public class NeonBeeTestBase {
      * @return A succeeded future with the Deployment, or a failed future with the cause.
      */
     public Future<Deployment> deployVerticle(Class<? extends Verticle> verticleClass, DeploymentOptions options) {
-        return new Deployable(verticleClass, options).deploy(neonBee.getVertx(), "").future();
+        return new Deployable(verticleClass, options).deploy(neonBee.getVertx(), "").future()
+                .onSuccess(
+                        result -> LOGGER.info("Successfully deployed verticle with class {}", verticleClass.getName()))
+                .onFailure(throwable -> LOGGER.error("Failed to deploy verticle with class {}", verticleClass.getName(),
+                        throwable));
     }
 
     /**
-     * Undeploys the verticle assigned to the passed deploymentID.
+     * Undeploy the verticle assigned to the passed deploymentID.
      *
-     * @param deploymentID The deploymentID to undeploy
+     * @param deploymentId The deploymentID to undeploy
      * @return A succeeded future, or a failed future with the cause.
      */
-    public Future<Void> undeployVerticle(String deploymentID) {
-        return DeploymentHelper.undeployVerticle(neonBee.getVertx(), deploymentID);
+    public Future<Void> undeployVerticle(String deploymentId) {
+        return DeploymentHelper.undeployVerticle(neonBee.getVertx(), deploymentId)
+                .onSuccess(
+                        result -> LOGGER.info("Successfully undeployed verticle with deployment ID {}", deploymentId))
+                .onFailure(throwable -> LOGGER.error("Failed to undeployed verticle with deployment ID {}",
+                        deploymentId, throwable));
     }
 
     /**
-     * Undeploys all verticle of the passed class
+     * Undeploy all verticle of the passed class
      *
      * @param verticleClass The class of the verticle which should become undeployed.
      * @return A succeeded future, or a failed future with the cause.
      */
     public Future<Void> undeployVerticles(Class<? extends Verticle> verticleClass) {
-        return DeploymentHelper.undeployAllVerticlesOfClass(neonBee.getVertx(), verticleClass);
+        return DeploymentHelper.undeployAllVerticlesOfClass(neonBee.getVertx(), verticleClass).onSuccess(
+                result -> LOGGER.info("Successfully undeployed verticle(s) with class {}", verticleClass.getName()))
+                .onFailure(throwable -> LOGGER.error("Failed to undeployed verticle(s) with class {}",
+                        verticleClass.getName(), throwable));
     }
 
     /**
