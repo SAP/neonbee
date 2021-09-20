@@ -1,13 +1,17 @@
 package io.neonbee;
 
+import static io.neonbee.NeonBeeProfile.ALL;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Collection;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
 
@@ -140,7 +144,7 @@ public interface NeonBeeOptions {
      *
      * @return the currently active profiles.
      */
-    List<NeonBeeProfile> getActiveProfiles();
+    Set<NeonBeeProfile> getActiveProfiles();
 
     /**
      * Create a mutable NeonBeeOptions similar to VertxOptions, but as NeonBeeOptions are exposed only the interface
@@ -175,7 +179,7 @@ public interface NeonBeeOptions {
 
         private Integer serverPort;
 
-        private List<NeonBeeProfile> activeProfiles = List.of(NeonBeeProfile.ALL);
+        private Set<NeonBeeProfile> activeProfiles = Set.of(ALL);
 
         /**
          * Instantiates a mutable {@link NeonBeeOptions} instance.
@@ -392,30 +396,61 @@ public interface NeonBeeOptions {
         }
 
         @Override
-        public List<NeonBeeProfile> getActiveProfiles() {
+        public Set<NeonBeeProfile> getActiveProfiles() {
             return this.activeProfiles;
         }
 
         /**
-         * Set active profiles.
+         * Set the active profiles.
          *
-         * @param activeProfiles the active profiles
+         * @param profiles the active profiles
          * @return this instance for chaining
          */
-        public Mutable setActiveProfiles(List<NeonBeeProfile> activeProfiles) {
-            this.activeProfiles = activeProfiles;
+        public Mutable setActiveProfiles(Collection<NeonBeeProfile> profiles) {
+            this.activeProfiles = ImmutableSet.copyOf(requireNonNull(profiles));
+            return this;
+        }
+
+        /**
+         * Add an active profile.
+         *
+         * @param profile the active profile to add
+         * @return this instance for chaining
+         */
+        public Mutable addActiveProfile(NeonBeeProfile profile) {
+            this.activeProfiles = Sets.union(this.activeProfiles, Set.of(profile)).immutableCopy();
+            return this;
+        }
+
+        /**
+         * Remove an active profile.
+         *
+         * @param profile the active profile to remove
+         * @return this instance for chaining
+         */
+        public Mutable removeActiveProfile(NeonBeeProfile profile) {
+            this.activeProfiles = Sets.difference(this.activeProfiles, Set.of(profile)).immutableCopy();
+            return this;
+        }
+
+        /**
+         * Remove all active profiles. Equivalent of setting an empty set.
+         *
+         * @return this instance for chaining
+         */
+        public Mutable clearActiveProfiles() {
+            this.activeProfiles = Set.of();
             return this;
         }
 
         /**
          * Set the active profile values.
          *
-         * @param profileValues the profile values
+         * @param values the profile values
          * @return this instance for chaining
          */
-        public Mutable setActiveProfileValues(String profileValues) {
-            this.activeProfiles = NeonBeeProfile.parseProfiles(profileValues);
-            return this;
+        public Mutable setActiveProfileValues(String values) {
+            return this.setActiveProfiles(NeonBeeProfile.parseProfiles(values));
         }
 
         private String generateName() {

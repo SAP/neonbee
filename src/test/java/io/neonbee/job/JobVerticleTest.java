@@ -1,7 +1,6 @@
 package io.neonbee.job;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.NeonBeeProfile.ALL;
 import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,7 +13,6 @@ import static org.mockito.Mockito.verify;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
@@ -100,7 +98,7 @@ class JobVerticleTest extends NeonBeeTestBase {
 
     @Override
     protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
-        options.setActiveProfiles(List.of(ALL, NO_WEB));
+        options.addActiveProfile(NO_WEB);
         options.setDisableJobScheduling(false);
     }
 

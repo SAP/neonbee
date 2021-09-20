@@ -2,9 +2,9 @@ package io.neonbee;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -23,8 +23,8 @@ public enum NeonBeeProfile {
      * @param activeProfiles The active profiles
      * @return true if this profile is active
      */
-    public boolean isActive(List<NeonBeeProfile> activeProfiles) {
-        if (activeProfiles.contains(NO_WEB) && this == WEB) {
+    public boolean isActive(Collection<NeonBeeProfile> activeProfiles) {
+        if (activeProfiles.isEmpty() || (activeProfiles.contains(NO_WEB) && this == WEB)) {
             return false;
         }
 
@@ -37,7 +37,7 @@ public enum NeonBeeProfile {
      * @param values string with profile values
      * @return a List with the parsed {@link NeonBeeProfile}s
      */
-    public static List<NeonBeeProfile> parseProfiles(String values) {
+    public static Set<NeonBeeProfile> parseProfiles(String values) {
         return Optional.ofNullable(values).map(Strings::emptyToNull)
                 .map(nonEmptyValues -> Arrays.stream(nonEmptyValues.split(",")).map(value -> {
                     try {
@@ -45,7 +45,7 @@ public enum NeonBeeProfile {
                     } catch (Exception e) {
                         return null;
                     }
-                }).filter(Objects::nonNull).collect(Collectors.toList())).filter(Predicate.not(Collection::isEmpty))
-                .orElse(List.of(ALL));
+                }).filter(Objects::nonNull).collect(Collectors.toSet())).filter(Predicate.not(Collection::isEmpty))
+                .orElse(Set.of(ALL));
     }
 }

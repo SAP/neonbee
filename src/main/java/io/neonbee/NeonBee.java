@@ -12,6 +12,7 @@ import static java.lang.System.setProperty;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -366,7 +367,7 @@ public class NeonBee {
      * @return a composite future about the result of the deployment
      */
     private Future<Void> deployVerticles() {
-        List<NeonBeeProfile> activeProfiles = options.getActiveProfiles();
+        Set<NeonBeeProfile> activeProfiles = options.getActiveProfiles();
         if (logger.isInfoEnabled()) {
             logger.info("Deploying verticle with active profiles: {}",
                     activeProfiles.stream().map(NeonBeeProfile::name).collect(Collectors.joining(",")));
@@ -465,7 +466,7 @@ public class NeonBee {
 
     @VisibleForTesting
     static boolean filterByAutoDeployAndProfiles(Class<? extends Verticle> verticleClass,
-            List<NeonBeeProfile> activeProfiles) {
+            Collection<NeonBeeProfile> activeProfiles) {
         NeonBeeDeployable annotation = verticleClass.getAnnotation(NeonBeeDeployable.class);
         return annotation.autoDeploy() && annotation.profile().isActive(activeProfiles);
     }
