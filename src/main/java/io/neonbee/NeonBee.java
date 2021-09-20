@@ -195,7 +195,7 @@ public class NeonBee {
      * @return the future to a new NeonBee instance initialized with default options and a new Vert.x instance
      */
     public static Future<NeonBee> create(NeonBeeOptions options) {
-        return create(() -> newVertx(options), options);
+        return create((OwnVertxSupplier) () -> newVertx(options), options);
     }
 
     @VisibleForTesting
@@ -222,9 +222,16 @@ public class NeonBee {
             // at this point at any failure that occurs, it is in our responsibility to properly close down the created
             // Vert.x instance again. we have to be vigilant the fact that a runtime exception could happen anytime!
             Function<Throwable, Future<Void>> closeVertx = throwable -> {
+                if (!(vertxFutureSupplier instanceof OwnVertxSupplier)) {
+                    // the Vert.x instance is *not* owned by us, thus don't close it either
+                    logger.error("Failure during bootstrap phase.", throwable); // NOPMD slf4j
+                    return failedFuture(throwable);
+                }
+
                 // the instance has been created, but after initialization some post-initialization
                 // tasks went wrong, stop Vert.x again. This will also call the close hook and clean up.
                 logger.error("Failure during bootstrap phase. Shutting down Vert.x instance.", throwable);
+
                 // we wait for Vert.x to close, before we propagate the reason why booting failed
                 return vertx.close().transform(closeResult -> failedFuture(throwable));
             };
@@ -583,4 +590,11 @@ public class NeonBee {
     public void unregisterLocalConsumer(String verticleAddress) {
         localConsumers.remove(verticleAddress);
     }
+
+    /**
+     * Hidden marker supplier interface, that indicates to the boot-stage that an own Vert.x instance was created and we
+     * must be held responsible responsible to close it again.
+     */
+    @VisibleForTesting
+    interface OwnVertxSupplier extends Supplier<Future<Vertx>> {}
 }

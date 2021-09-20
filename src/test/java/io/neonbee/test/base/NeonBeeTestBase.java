@@ -1,10 +1,14 @@
 package io.neonbee.test.base;
 
+import static io.neonbee.NeonBeeExtension.DEFAULT_TIMEOUT_DURATION;
+import static io.neonbee.NeonBeeExtension.DEFAULT_TIMEOUT_UNIT;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
+import static io.neonbee.NeonBeeProfile.WEB;
 import static io.neonbee.internal.helper.ConfigHelper.readConfig;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static io.neonbee.test.helper.WorkingDirectoryBuilder.readDeploymentOptions;
+import static io.neonbee.test.helper.WorkingDirectoryBuilder.writeDeploymentOptions;
 import static io.vertx.core.Future.failedFuture;
-import static io.vertx.core.Future.succeededFuture;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +21,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.junit.jupiter.api.AfterEach;
@@ -26,6 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 
 import io.neonbee.NeonBee;
@@ -46,6 +53,7 @@ import io.neonbee.test.helper.DummyVerticleHelper;
 import io.neonbee.test.helper.DummyVerticleHelper.DummyDataVerticleFactory;
 import io.neonbee.test.helper.DummyVerticleHelper.DummyEntityVerticleFactory;
 import io.neonbee.test.helper.FileSystemHelper;
+import io.neonbee.test.helper.SystemHelper;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.neonbee.test.listeners.StaleVertxChecker;
 import io.vertx.core.DeploymentOptions;
@@ -71,6 +79,12 @@ import io.vertx.junit5.VertxTestContext;
 public class NeonBeeTestBase {
     private static final Logger LOGGER = LoggerFactory.getLogger(NeonBeeTestBase.class);
 
+    // create a dummy JsonObject indicating that the provideUserPrincipal method was not overridden. depending on the
+    // test case the provideUserPrincipal method maybe should return null in some cases, thus we need another way to
+    // check if we should deploy the dummy verticle. this private object can never be returned by anyone overriding the
+    // method, thus if any other value than this is returned, we can be sure a sub-class overrode the method
+    private static final JsonObject NO_USER_PRINCIPAL = new JsonObject();
+
     private Path workingDirPath;
 
     private NeonBee neonBee;
@@ -79,6 +93,7 @@ public class NeonBeeTestBase {
 
     @BeforeEach
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
+    @SuppressWarnings("ReferenceEquality")
     public void setUp(Vertx vertx, VertxTestContext testContext, TestInfo testInfo) throws Exception {
         // associate the Vert.x instance to the current test (unfortunately the only "identifier" that is shared between
         // TestInfo and TestIdentifier is the display name)
@@ -92,6 +107,22 @@ public class NeonBeeTestBase {
         NeonBeeOptions.Mutable options = defaultOptions();
         adaptOptions(testInfo, options);
         options.setWorkingDirectory(workingDirPath);
+
+        // probe for a custom user principal
+        AtomicBoolean customUserPrincipal = new AtomicBoolean(false);
+        if (provideUserPrincipal(testInfo) != NO_USER_PRINCIPAL) { // do NOT use equals here! compare references!
+            if (!WEB.isActive(options.getActiveProfiles())) {
+                testContext.failNow(new IllegalStateException(
+                        "A custom user principal can only be set, if the WEB profile is active!"));
+                return;
+            }
+
+            // add the NO_WEB profile to the active profiles list, this way we won't have to undeploy the ServerVerticle
+            // again later on and can deploy our dummy ServerVerticle right away
+            options.setActiveProfiles(new ImmutableList.Builder<NeonBeeProfile>().add(NO_WEB)
+                    .addAll(options.getActiveProfiles()).build());
+            customUserPrincipal.set(true);
+        }
 
         URL defaultLogbackConfig = Resources.getResource(NeonBeeTestBase.class, "NeonBeeTestBase-Logback.xml");
         try (InputStream is = Resources.asByteSource(defaultLogbackConfig).openStream()) {
@@ -113,26 +144,43 @@ public class NeonBeeTestBase {
             } else {
                 neonBee = asyncNeonBee.result();
 
-                DeploymentOptions serverVerticleOptions = readDeploymentOptions(ServerVerticle.class, workingDirPath);
+                if (customUserPrincipal.get()) {
+                    // use a dummy ServerVerticle that returns the principal by calling the provideUserPrincipal method
+                    DeploymentOptions serverVerticleOptions =
+                            readDeploymentOptions(ServerVerticle.class, workingDirPath);
 
-                Optional.ofNullable(provideUserPrincipal(testInfo)).map(userPrincipal -> {
-                    // Replace current ServerVerticle with a dummy ServerVerticle that also has a dummy AuthHandler to
-                    // provide the user principal specified in the provideUserPrincipal method
+                    try {
+                        // just to be sure, try to fetch a new port to use
+                        options.setServerPort(SystemHelper.getFreePort());
+                    } catch (IOException e) { // NOPMD
+                        // let's continue with the old port which should be still free (hopefully)
+                    }
+
                     ServerVerticle dummyServerVerticle = createDummyServerVerticle(testInfo);
-
+                    serverVerticleOptions.getConfig().put("port", options.getServerPort());
                     serverVerticleOptions.getConfig().put("authenticationChain", new JsonArray());
+                    writeDeploymentOptions(ServerVerticle.class, serverVerticleOptions, workingDirPath);
 
-                    isDummyServerVerticleDeployed = true;
-                    return undeployVerticles(ServerVerticle.class)
-                            .compose(nothing -> deployVerticle(dummyServerVerticle, serverVerticleOptions));
-                }).orElse(succeededFuture()).onComplete(testContext.succeeding(v -> {
-                    latch.countDown();
+                    undeployVerticles(ServerVerticle.class) // just to be sure, NO_WEB should not deploy a server
+                            .compose(nothing -> deployVerticle(dummyServerVerticle, serverVerticleOptions))
+                            .onComplete(result -> {
+                                if (result.succeeded()) {
+                                    isDummyServerVerticleDeployed = true;
+                                }
+
+                                testContext.succeedingThenComplete().handle(result.mapEmpty());
+                                latch.countDown();
+                            });
+                } else {
                     testContext.completeNow();
-                }));
+                    latch.countDown();
+                }
             }
         });
 
-        latch.await();
+        if (!latch.await(DEFAULT_TIMEOUT_DURATION, DEFAULT_TIMEOUT_UNIT)) {
+            throw new TimeoutException("Preparing NeonBee timed out");
+        }
     }
 
     @AfterEach
@@ -183,7 +231,7 @@ public class NeonBeeTestBase {
      */
     @SuppressWarnings("PMD.UnusedFormalParameter")
     protected JsonObject provideUserPrincipal(TestInfo testInfo) {
-        return null;
+        return NO_USER_PRINCIPAL;
     }
 
     /**

@@ -1,17 +1,27 @@
 package io.neonbee;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeMockHelper.defaultVertxMock;
+import static io.neonbee.NeonBeeMockHelper.registerNeonBeeMock;
 import static io.neonbee.NeonBeeProfile.ALL;
 import static io.neonbee.NeonBeeProfile.CORE;
 import static io.neonbee.NeonBeeProfile.INCUBATOR;
 import static io.neonbee.NeonBeeProfile.STABLE;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
+import static io.vertx.core.Future.failedFuture;
+import static io.vertx.core.Future.succeededFuture;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
@@ -21,6 +31,7 @@ import org.junit.jupiter.api.TestInfo;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import io.neonbee.NeonBee.OwnVertxSupplier;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.internal.tracking.MessageDirection;
 import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
@@ -28,11 +39,13 @@ import io.neonbee.internal.tracking.TrackingInterceptor;
 import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryContext;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
@@ -126,8 +139,8 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Test
     @DisplayName("Vert.x should add eventbus interceptors.")
     void testDecorateEventbus() throws Exception {
-        Vertx vertx = NeonBeeMockHelper.defaultVertxMock();
-        NeonBee neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx,
+        Vertx vertx = defaultVertxMock();
+        NeonBee neonBee = registerNeonBeeMock(vertx,
                 new NeonBeeConfig(new JsonObject().put("trackingDataHandlingStrategy", "wrongvalue")));
         EventBus eventBus = mock(EventBus.class);
         when(vertx.eventBus()).thenReturn(eventBus);
@@ -156,6 +169,44 @@ class NeonBeeTest extends NeonBeeTestBase {
         assertThat(NeonBee.filterByAutoDeployAndProfiles(IncubatorVerticle.class, List.of(INCUBATOR))).isTrue();
         assertThat(NeonBee.filterByAutoDeployAndProfiles(SystemVerticle.class, List.of(CORE))).isFalse();
         assertThat(NeonBee.filterByAutoDeployAndProfiles(SystemVerticle.class, List.of(ALL))).isFalse();
+    }
+
+    @Test
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("NeonBee should close only self-owned Vert.x instances if boot fails")
+    void testCloseVertxOnError(VertxTestContext testContext) {
+        Checkpoint checkpoint = testContext.checkpoint(3);
+
+        BiConsumer<Boolean, Boolean> check = (ownVertx, closeFails) -> {
+            Vertx failingVertxMock = mock(Vertx.class);
+            when(failingVertxMock.fileSystem()).thenThrow(new RuntimeException("Failing Vert.x!"));
+            when(failingVertxMock.close()).thenReturn(closeFails ? failedFuture("ANY FAILURE!!") : succeededFuture());
+
+            Supplier<Future<Vertx>> vertxSupplier;
+            if (ownVertx) {
+                vertxSupplier = (OwnVertxSupplier) () -> succeededFuture(failingVertxMock);
+            } else {
+                vertxSupplier = () -> succeededFuture(failingVertxMock);
+            }
+
+            NeonBee.create(vertxSupplier, defaultOptions()).onComplete(testContext.failing(throwable -> {
+                testContext.verify(() -> {
+                    // assert hat it is always
+                    assertThat(throwable.getMessage()).isEqualTo("Failing Vert.x!");
+                    verify(failingVertxMock, times(ownVertx ? 1 : 0)).close();
+                    checkpoint.flag();
+                });
+            }));
+        };
+
+        // fail the boot, but close Vert.x fine and ensure a Vert.x that is NOT owned by the outside is closed
+        check.accept(true, false);
+
+        // fail the boot and assure that Vert.x is not closed for an instance that is provided from the outside
+        check.accept(false, false);
+
+        // fail the boot and also the Vert.x close
+        check.accept(true, true);
     }
 
     @NeonBeeDeployable(profile = CORE)
