@@ -171,10 +171,13 @@ class EntityModelManagerTest extends NeonBeeTestBase {
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    @DisplayName("test if loading models doesn't fail for non-existing working directories")
+    @DisplayName("loading models doesn't fail for non-existing working directories")
     void dontFailModelLoadingOnNonExistingWorkingDir(Vertx vertx, VertxTestContext testContext) {
         new EntityModelManager.Loader(vertx).loadDir(Path.of("non-existing"))
-                .onComplete(testContext.succeeding(models -> testContext.completeNow()));
+                .onComplete(testContext.succeeding(models -> {
+                    assertThat(models).isNull();
+                    testContext.completeNow();
+                }));
     }
 
     @Test

@@ -36,21 +36,21 @@ import io.vertx.ext.web.Session;
 @SuppressWarnings("PMD.GodClass") // Can be removed after deprecated constructors are removed
 public class DataContextImpl implements DataContext {
     @VisibleForTesting
-    static final String NO_SESSION_ID_AVAILABLE = "noSessionIdAvailable";
+    static final String NO_SESSION_ID_AVAILABLE_KEY = "noSessionIdAvailable";
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
-    private static final String USER_PRINCIPAL = "userPrincipal";
+    private static final String USER_PRINCIPAL_KEY = "userPrincipal";
 
-    private static final String BEARER_TOKEN = "bearerToken";
+    private static final String BEARER_TOKEN_KEY = "bearerToken";
 
-    private static final String DATA = "data";
+    private static final String DATA_KEY = "data";
 
-    private static final String PATH = "path";
+    private static final String PATH_KEY = "path";
+
+    private static final String SESSION_ID_KEY = "sessionId";
 
     private static final Pattern BEARER_AUTHENTICATION_PATTERN = Pattern.compile("Bearer\\s(.+)");
-
-    private static final String SESSION_ID = "sessionId";
 
     private final String correlationId;
 
@@ -71,7 +71,7 @@ public class DataContextImpl implements DataContext {
 
     public DataContextImpl(RoutingContext routingContext) {
         this(CorrelationIdHandler.getCorrelationId(routingContext),
-                Optional.ofNullable(routingContext.session()).map(Session::id).orElse(NO_SESSION_ID_AVAILABLE),
+                Optional.ofNullable(routingContext.session()).map(Session::id).orElse(NO_SESSION_ID_AVAILABLE_KEY),
                 Optional.ofNullable(routingContext.request().getHeader(HttpHeaders.AUTHORIZATION))
                         .map(BEARER_AUTHENTICATION_PATTERN::matcher).filter(Matcher::matches)
                         .map(matcher -> matcher.group(1)).orElse(null),
@@ -239,9 +239,9 @@ public class DataContextImpl implements DataContext {
             // actually it's fine for the context to be null, so also a null should be set as header
             return null;
         }
-        return new JsonObject().put(CORRELATION_ID, context.correlationId()).put(SESSION_ID, context.sessionId())
-                .put(BEARER_TOKEN, context.bearerToken()).put(USER_PRINCIPAL, context.userPrincipal())
-                .put(DATA, context.data()).put(PATH, pathToJson(context.path())).toString();
+        return new JsonObject().put(CORRELATION_ID, context.correlationId()).put(SESSION_ID_KEY, context.sessionId())
+                .put(BEARER_TOKEN_KEY, context.bearerToken()).put(USER_PRINCIPAL_KEY, context.userPrincipal())
+                .put(DATA_KEY, context.data()).put(PATH_KEY, pathToJson(context.path())).toString();
     }
 
     private static JsonArray pathToJson(Iterator<DataVerticleCoordinate> path) {
@@ -261,10 +261,11 @@ public class DataContextImpl implements DataContext {
         }
 
         JsonObject contextJson = new JsonObject(contextString);
-        return new DataContextImpl(contextJson.getString(CORRELATION_ID), contextJson.getString(SESSION_ID),
-                contextJson.getString(BEARER_TOKEN), contextJson.getJsonObject(USER_PRINCIPAL),
-                Optional.ofNullable(contextJson.getJsonObject(DATA)).map(JsonObject::getMap).orElse(null),
-                Optional.ofNullable(contextJson.getJsonArray(PATH)).map(DataContextImpl::pathFromJson).orElse(null));
+        return new DataContextImpl(contextJson.getString(CORRELATION_ID), contextJson.getString(SESSION_ID_KEY),
+                contextJson.getString(BEARER_TOKEN_KEY), contextJson.getJsonObject(USER_PRINCIPAL_KEY),
+                Optional.ofNullable(contextJson.getJsonObject(DATA_KEY)).map(JsonObject::getMap).orElse(null),
+                Optional.ofNullable(contextJson.getJsonArray(PATH_KEY)).map(DataContextImpl::pathFromJson)
+                        .orElse(null));
     }
 
     private static Deque<DataVerticleCoordinate> pathFromJson(JsonArray array) {
