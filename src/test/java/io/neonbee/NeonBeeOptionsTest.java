@@ -59,14 +59,6 @@ class NeonBeeOptionsTest {
     }
 
     @Test
-    @DisplayName("should set workingDirectory, if working directory does exist on the file system")
-    void checkThatWorkingDirExists() throws IOException {
-        Path tempDirPath = createTempDirectory();
-        new NeonBeeOptions.Mutable().setWorkingDirectory(tempDirPath);
-        FileSystemHelper.deleteRecursiveBlocking(tempDirPath);
-    }
-
-    @Test
     @DisplayName("should resolve working directory subfolders according to the working directory path")
     void checkThatSubfoldersExist() throws IOException {
         Path tempDirPath = createTempDirectory();

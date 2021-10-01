@@ -80,13 +80,13 @@ class PendingDeploymentTest {
         Throwable error = assertThrows(IllegalStateException.class, () -> deployment.complete(null));
         assertThat(error).hasMessageThat().isEqualTo(errorMessage);
 
-        error = assertThrows(IllegalStateException.class, () -> deployment.complete());
+        error = assertThrows(IllegalStateException.class, deployment::complete);
         assertThat(error).hasMessageThat().isEqualTo(errorMessage);
 
         error = assertThrows(IllegalStateException.class, () -> deployment.tryComplete(null));
         assertThat(error).hasMessageThat().isEqualTo(errorMessage);
 
-        error = assertThrows(IllegalStateException.class, () -> deployment.tryComplete());
+        error = assertThrows(IllegalStateException.class, deployment::tryComplete);
         assertThat(error).hasMessageThat().isEqualTo(errorMessage);
     }
 
