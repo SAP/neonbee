@@ -1,6 +1,8 @@
 package io.neonbee.internal.verticle;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeMockHelper.defaultVertxMock;
+import static io.neonbee.NeonBeeMockHelper.registerNeonBeeMock;
 import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.internal.helper.FileSystemHelper.createDirs;
 import static io.neonbee.internal.helper.FileSystemHelper.deleteRecursive;
@@ -13,6 +15,7 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.future;
 import static io.vertx.core.Future.succeededFuture;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doAnswer;
@@ -22,7 +25,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
@@ -53,8 +55,7 @@ class WatchVerticleTest extends NeonBeeTestBase {
 
     @Override
     protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
-        options.setDoNotWatchFiles(
-                "testDontWatchFiles".equals(testInfo.getTestMethod().map(Method::getName).orElse(null)));
+        options.setDoNotWatchFiles(false);
         options.addActiveProfile(NO_WEB);
     }
 
@@ -92,13 +93,18 @@ class WatchVerticleTest extends NeonBeeTestBase {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test to do not watch files")
     @SuppressWarnings("unchecked")
-    void testDontWatchFiles(Vertx vertx) {
+    void testDontWatchFiles() {
+        Vertx vertxMock = defaultVertxMock();
+        registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setDoNotWatchFiles(true));
+
         WatchVerticle watchVerticle = new WatchVerticle(watchDir);
-        watchVerticle.init(vertx, null); // set the Vert.x instance
+        watchVerticle.init(vertxMock, vertxMock.getOrCreateContext()); // set the Vert.x instance
 
         Promise<Void> promiseMock = mock(Promise.class);
         watchVerticle.start(promiseMock);
-        verify(promiseMock).fail("Should not watch files");
+        verify(promiseMock).complete();
+
+        verify(vertxMock).undeploy(anyString());
     }
 
     @Test
