@@ -2,7 +2,6 @@ package io.neonbee.internal.buffer;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.buffer.ImmutableBuffer.EMPTY;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.ByteBuffer;
@@ -11,44 +10,39 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.core.buffer.Buffer;
 
-class ImmutableBufferTest {
+class CompositeBufferTest {
     @Test
-    void testStaticConstructors() {
-        // test assumptions made in JavaDoc
-        assertThat(ImmutableBuffer.buffer()).isInstanceOf(ImmutableBuffer.class);
-        assertThat(ImmutableBuffer.buffer()).isEqualTo(EMPTY);
-        assertThat(ImmutableBuffer.buffer()).isSameInstanceAs(EMPTY);
-        assertThat(ImmutableBuffer.buffer()).isSameInstanceAs(ImmutableBuffer.buffer());
+    void testStaticConstructor() {
+        Buffer buffer1 = Buffer.buffer("foo");
+        Buffer buffer2 = Buffer.buffer("bar");
+        Buffer buffer3 = Buffer.buffer("baz");
 
-        Buffer anyBuffer = Buffer.buffer("any");
-        ImmutableBuffer anyImmutableBuffer = ImmutableBuffer.buffer(Buffer.buffer("anyOther"));
-        assertThat(ImmutableBuffer.buffer(anyBuffer)).isInstanceOf(ImmutableBuffer.class);
-        assertThat(ImmutableBuffer.buffer(anyImmutableBuffer)).isSameInstanceAs(anyImmutableBuffer);
-        assertThat(ImmutableBuffer.buffer(anyBuffer)).isNotSameInstanceAs(anyBuffer);
-        assertThat(ImmutableBuffer.buffer(anyBuffer)).isEqualTo(anyBuffer);
+        assertThat(CompositeBuffer.buffer(new Buffer[0])).isSameInstanceAs(EMPTY);
 
-        assertThrows(NullPointerException.class, () -> ImmutableBuffer.buffer(null));
-    }
+        Buffer compositeBuffer1 = CompositeBuffer.buffer(new Buffer[] { buffer1 });
+        assertThat(compositeBuffer1).isEqualTo(buffer1);
+        assertThat(compositeBuffer1).isNotSameInstanceAs(buffer1);
+        assertThat(compositeBuffer1).isInstanceOf(ImmutableBuffer.class);
 
-    @Test
-    void testGetBuffer() {
-        Buffer anyBuffer = Buffer.buffer("any");
-        Buffer anyImmutableBuffer = ImmutableBuffer.buffer(anyBuffer).getBuffer();
-        assertThat(anyBuffer).isEqualTo(anyImmutableBuffer);
-        assertThat(anyBuffer.getByteBuf().isReadOnly()).isFalse();
-        assertThat(anyImmutableBuffer.getByteBuf().isReadOnly()).isTrue();
-        assertThrows(UnsupportedOperationException.class, () -> anyImmutableBuffer.getByteBuf().writeInt(1));
-    }
+        ImmutableBuffer immutableBuffer1 = (ImmutableBuffer) compositeBuffer1;
+        compositeBuffer1 = CompositeBuffer.buffer(new Buffer[] { immutableBuffer1 });
+        assertThat(compositeBuffer1).isSameInstanceAs(immutableBuffer1);
 
-    @Test
-    void testEmptyBuffer() {
-        assertThat(EMPTY.length()).isEqualTo(0);
-        assertThat(EMPTY.getBytes().length).isEqualTo(0);
+        Buffer buffer12 = CompositeBuffer.buffer(buffer1, buffer2);
+        assertThat(buffer12.length()).isEqualTo(buffer1.length() + buffer2.length());
+        assertThat(buffer12.toString()).isEqualTo(buffer1.toString() + buffer2.toString());
+
+        Buffer buffer123 = CompositeBuffer.buffer(buffer1, buffer2, buffer3);
+        assertThat(buffer123.getClass()).isEqualTo(ImmutableBuffer.class);
+        assertThat(buffer123.toString()).isEqualTo("foobarbaz");
+
+        Buffer buffer12plus3 = CompositeBuffer.buffer(buffer12, buffer3);
+        assertThat(buffer12plus3).isEqualTo(buffer123);
     }
 
     @Test
     void testImmutable() {
-        ImmutableBuffer buffer = new ImmutableBuffer();
+        Buffer buffer = CompositeBuffer.buffer(Buffer.buffer("foo"), Buffer.buffer("bar"));
 
         assertThrows(UnsupportedOperationException.class, () -> buffer.writeToBuffer(Buffer.buffer()));
         assertThrows(UnsupportedOperationException.class, () -> buffer.appendBuffer(Buffer.buffer()));
@@ -96,46 +90,5 @@ class ImmutableBufferTest {
         assertThrows(UnsupportedOperationException.class, () -> buffer.setBytes(0, new byte[] { (byte) 11 }, 1, 1));
         assertThrows(UnsupportedOperationException.class, () -> buffer.setString(0, "foo"));
         assertThrows(UnsupportedOperationException.class, () -> buffer.setString(0, "foo", "UTF-8"));
-    }
-
-    @Test
-    void testImmutableConstruction() {
-        assertThrows(UnsupportedOperationException.class, () -> new ImmutableBuffer().setString(0, "keyX"));
-        assertThrows(UnsupportedOperationException.class,
-                () -> new ImmutableBuffer(Buffer.buffer("test")).setString(0, "keyX"));
-    }
-
-    @Test
-    void testGetPrimitives() {
-        ImmutableBuffer buffer = new ImmutableBuffer(Buffer.buffer(new byte[] { 1, 2, 3, 4, 5 }));
-        assertThat(buffer.getByte(0)).isEqualTo(1);
-        assertThat(buffer.getBytes()).isEqualTo(new byte[] { 1, 2, 3, 4, 5 });
-        assertThat(buffer.getBytes(1, 4)).isEqualTo(new byte[] { 2, 3, 4 });
-    }
-
-    @Test
-    void testMutableCopyIsMutable() {
-        assertDoesNotThrow(() -> new ImmutableBuffer().mutableCopy().appendMedium(1));
-        assertDoesNotThrow(() -> new ImmutableBuffer(Buffer.buffer("foo")).mutableCopy().appendString("bar"));
-    }
-
-    @Test
-    void testCopyIsAlsoNotMutable() {
-        assertThrows(UnsupportedOperationException.class, () -> new ImmutableBuffer().copy().setInt(0, 1));
-    }
-
-    @Test
-    void testStandardMethods() {
-        Buffer buffer = Buffer.buffer(new byte[] { 1, 2, 3, 4, 5 });
-        ImmutableBuffer immutableBuffer = new ImmutableBuffer(buffer);
-
-        assertThat(immutableBuffer.toString()).isEqualTo(buffer.toString());
-        assertThat(immutableBuffer.hashCode()).isEqualTo(buffer.hashCode());
-
-        assertThat(immutableBuffer).isEqualTo(buffer);
-        assertThat(immutableBuffer).isEqualTo(new ImmutableBuffer(buffer));
-        assertThat(immutableBuffer).isEqualTo(Buffer.buffer(new byte[] { 1, 2, 3, 4, 5 }));
-        assertThat(immutableBuffer).isEqualTo(new ImmutableBuffer(Buffer.buffer(new byte[] { 1, 2, 3, 4, 5 })));
-        assertThat(immutableBuffer).isNotEqualTo(EMPTY);
     }
 }

@@ -1,5 +1,7 @@
 package io.neonbee.internal.buffer;
 
+import static io.netty.buffer.Unpooled.EMPTY_BUFFER;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Objects;
@@ -18,15 +20,15 @@ import io.vertx.core.json.JsonObject;
  * {@code buffer.appendBuffer(immutableBuffer);} or {@code buffer.setBuffer(immutableBuffer);} on any other buffer, to
  * instead be calling {@code buffer.appendBuffer(immutableBuffer.getBuffer());} or
  * {@code buffer.setBuffer(immutableBuffer.getBuffer());}. Other attempts will result in a {@link ClassCastException}.
+ *
+ * This issue gets fixed with https://github.com/eclipse-vertx/vert.x/pull/4111.
  */
 @SuppressWarnings({ "PMD.ExcessivePublicCount", "PMD.CyclomaticComplexity", "PMD.TooManyMethods", "PMD.GodClass" })
-public class ImmutableBuffer implements Buffer {
+public final class ImmutableBuffer implements Buffer {
     /**
      * An empty immutable buffer.
      */
     public static final ImmutableBuffer EMPTY;
-
-    private static final Buffer EMPTY_BUFFER = Buffer.buffer();
 
     static {
         EMPTY = new ImmutableBuffer();
@@ -58,8 +60,7 @@ public class ImmutableBuffer implements Buffer {
     }
 
     /**
-     * Creates a new empty immutable buffer instance. In case no new instance is needed it is best to use {@link #EMPTY}
-     * instead.
+     * Creates a new empty immutable {@link Buffer}. In case no new instance is required use {@link #EMPTY} instead.
      */
     ImmutableBuffer() {
         this(EMPTY_BUFFER);
@@ -71,16 +72,36 @@ public class ImmutableBuffer implements Buffer {
      * @param buffer the buffer to wrap
      */
     ImmutableBuffer(Buffer buffer) {
-        this.buffer = Objects.requireNonNull(buffer);
+        this(Objects.requireNonNull(buffer), buffer.getByteBuf());
     }
 
     /**
-     * Attention: this method <em>violates</em> the immutable nature of this class, however it is necessary in order to
-     * use this buffer when for instance calling {@link Buffer#appendBuffer(Buffer)} or
-     * {@link Buffer#setBuffer(int, Buffer)} on any other buffer. See the JavaDoc of {@link ImmutableBuffer} for a more
-     * detailed explanation. The violation <em>is</em> tolerated however, in order to not neglect the performance
-     * benefit of the class, of not having to copy the buffer when sending it via the event bus, as in order to not
-     * violate the immutable nature this method would actually have to copy the buffer before returning it.
+     * Wraps an existing Netty {@link ByteBuf} into an immutable facade.
+     *
+     * @param byteBuffer the Netty byte buffer to wrap
+     */
+    ImmutableBuffer(ByteBuf byteBuffer) {
+        this(Buffer.buffer(byteBuffer), byteBuffer);
+    }
+
+    /**
+     * Small optimization, as calling {@link Buffer#getByteBuf} will duplicate the underlying buffer.
+     *
+     * @param buffer     the buffer to wrap
+     * @param byteBuffer the associated Netty byte-buffer
+     */
+    private ImmutableBuffer(Buffer buffer, ByteBuf byteBuffer) {
+        // if the underlying byte buffer is read-only already, there is no need to make it any more immutable
+        this.buffer = byteBuffer.isReadOnly() ? buffer : Buffer.buffer(byteBuffer.asReadOnly());
+    }
+
+    /**
+     * This method is necessary in order to use this buffer when for instance calling
+     * {@link Buffer#appendBuffer(Buffer)} or {@link Buffer#setBuffer(int, Buffer)} on any other buffer. See the JavaDoc
+     * of {@link ImmutableBuffer} for a more detailed explanation. The underlying {@link Buffer} is still immutable, as
+     * the underlying Netty {@link ByteBuf} was casted to an immutable instance by the benefit of the class, of not
+     * having to copy the buffer when sending it via the event bus, as in order to not violate the immutable nature this
+     * method would actually have to copy the buffer before returning it.
      *
      * @return the internal {@link Buffer} which can (likely) be cast into a {@link BufferImpl}
      */
@@ -532,6 +553,6 @@ public class ImmutableBuffer implements Buffer {
      * @return the mutable copy
      */
     public Buffer mutableCopy() {
-        return buffer.copy();
+        return buffer.length() == 0 ? Buffer.buffer() : buffer.copy();
     }
 }
