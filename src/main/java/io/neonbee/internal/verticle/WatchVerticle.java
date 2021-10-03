@@ -49,6 +49,8 @@ public class WatchVerticle extends AbstractVerticle {
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
+    private static final long UNDEPLOY_DELAY = 50L;
+
     @VisibleForTesting
     final long watchPeriodMillis;
 
@@ -154,7 +156,13 @@ public class WatchVerticle extends AbstractVerticle {
     public void start(Promise<Void> startPromise) {
         Vertx vertx = getVertx();
         if (NeonBee.get(vertx).getOptions().doNotWatchFiles()) {
-            startPromise.fail("Should not watch files");
+            // edge case: signal completion to Vert.x before undeploying ourself after a small delay
+            startPromise.complete();
+            vertx.setTimer(UNDEPLOY_DELAY, timerId -> {
+                vertx.undeploy(deploymentID()).onFailure(throwable -> {
+                    LOGGER.error("Failed to undeploy watch verticle", throwable);
+                });
+            });
             return;
         }
 
@@ -166,13 +174,13 @@ public class WatchVerticle extends AbstractVerticle {
         }
 
         (handleExisting ? handleExistingFiles(watchPath) : registerWatchKey(watchPath)).compose(
-                v -> Future.<Counter>future(promise -> getVertx().sharedData().getLocalCounter(counterName, promise)))
+                v -> Future.<Counter>future(promise -> vertx.sharedData().getLocalCounter(counterName, promise)))
                 .onComplete(asyncCounter -> {
                     if (asyncCounter.failed()) {
                         startPromise.fail(asyncCounter.cause());
                     } else {
                         counter = asyncCounter.result();
-                        getVertx().setPeriodic(watchPeriodMillis, l -> {
+                        vertx.setPeriodic(watchPeriodMillis, l -> {
                             if (parallelProcessing) {
                                 checkForChanges();
                             } else {

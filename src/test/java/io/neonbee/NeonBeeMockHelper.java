@@ -2,18 +2,27 @@ package io.neonbee;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.test.helper.OptionsHelper;
 import io.neonbee.test.helper.ReflectionHelper;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.FileSystem;
@@ -30,18 +39,73 @@ public final class NeonBeeMockHelper {
      *
      * @return a mocked Vertx object
      */
+    @SuppressWarnings({ "unchecked", "ReturnValueIgnored" })
     public static Vertx defaultVertxMock() {
         Vertx vertxMock = mock(Vertx.class);
+
+        // mock deployment and undeployment of verticles
+        when(vertxMock.deployVerticle((Verticle) any())).thenReturn(succeededFuture());
+        when(vertxMock.deployVerticle((Verticle) any(), (DeploymentOptions) any())).thenReturn(succeededFuture());
+        when(vertxMock.deployVerticle((Class<? extends Verticle>) any(), (DeploymentOptions) any()))
+                .thenReturn(succeededFuture());
+        doAnswer(invocation -> {
+            ((Supplier<Verticle>) invocation.getArgument(0)).get();
+            return succeededFuture();
+        }).when(vertxMock).deployVerticle((Supplier<Verticle>) any(), (DeploymentOptions) any());
+        when(vertxMock.deployVerticle((String) any())).thenReturn(succeededFuture());
+        when(vertxMock.deployVerticle((String) any(), (DeploymentOptions) any())).thenReturn(succeededFuture());
+        when(vertxMock.undeploy((String) any())).thenReturn(succeededFuture());
+
+        Answer<?> handleAnswer = invocation -> {
+            invocation.<Handler<AsyncResult<?>>>getArgument(invocation.getArguments().length - 1)
+                    .handle(succeededFuture());
+            return null;
+        };
+        doAnswer(handleAnswer).when(vertxMock).deployVerticle((Verticle) any(), (Handler<AsyncResult<String>>) any());
+        doAnswer(handleAnswer).when(vertxMock).deployVerticle((Verticle) any(), (DeploymentOptions) any(),
+                (Handler<AsyncResult<String>>) any());
+        doAnswer(handleAnswer).when(vertxMock).deployVerticle((Class<? extends Verticle>) any(),
+                (DeploymentOptions) any(), (Handler<AsyncResult<String>>) any());
+        doAnswer(invocation -> {
+            ((Supplier<Verticle>) invocation.getArgument(0)).get();
+            return handleAnswer.answer(invocation);
+        }).when(vertxMock).deployVerticle((Supplier<Verticle>) any(), (DeploymentOptions) any(),
+                (Handler<AsyncResult<String>>) any());
+        doAnswer(handleAnswer).when(vertxMock).deployVerticle((String) any(), (Handler<AsyncResult<String>>) any());
+        doAnswer(handleAnswer).when(vertxMock).deployVerticle((String) any(), (DeploymentOptions) any(),
+                (Handler<AsyncResult<String>>) any());
+        doAnswer(handleAnswer).when(vertxMock).undeploy((String) any(), (Handler<AsyncResult<Void>>) any());
+
+        // mock context creation
+        Context contextMock = mock(Context.class);
+        when(vertxMock.getOrCreateContext()).thenReturn(contextMock);
+        when(contextMock.deploymentID()).thenReturn("any-deployment-guid");
+
+        // mock file system
         FileSystem fileSystemMock = mock(FileSystem.class);
-        doAnswer(invocation -> fileSystemMock).when(vertxMock).fileSystem();
+        when(vertxMock.fileSystem()).thenReturn(fileSystemMock);
 
         // TODO: The result of readFileBlocking is always a string with an empty JSON object.
         // This will be evaluated to an empty object for both JSON and YAML object. This is useful
         // e.g. when the NeonBeeConfig object is initialized. If other strings are needed, a more
         // sophisticated implementation of this answer is needed.
-        doAnswer(invocation -> Buffer.buffer("{}")).when(fileSystemMock).readFileBlocking(any());
+        when(fileSystemMock.readFileBlocking(any())).thenReturn(Buffer.buffer("{}"));
+
+        // mock timers by handling them immediately, just that code in timers gets executed
+        doAnswer(timerAnswer(1)).when(vertxMock).setTimer(anyLong(), any());
+        doAnswer(timerAnswer(3)).when(vertxMock).setPeriodic(anyLong(), any());
 
         return vertxMock;
+    }
+
+    private static Answer<?> timerAnswer(int repeat) {
+        return invocation -> {
+            Handler<Long> handler = invocation.getArgument(1);
+            for (int attempt = 0; attempt < repeat; attempt++) {
+                handler.handle(4711L);
+            }
+            return null;
+        };
     }
 
     /**
