@@ -22,7 +22,7 @@ plugins {
 }
 
 group = 'io.neonbee'
-version = '0.5.2-SNAPSHOT'
+version = '0.6.0'
 mainClassName = 'io.neonbee.Launcher'
 archivesBaseName = 'neonbee-core'
 sourceCompatibility = 11
@@ -314,12 +314,12 @@ tasks.withType(Javadoc) {
 task release(type: Exec) {
     workingDir projectDir
     if (project.hasProperty('nextVersion')) {
-        nextVersion = project.getProperty('nextVersion')
+        def nextVersion = project.getProperty('nextVersion')
         println 'Releasing next version ' + nextVersion
         if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')) {
-            commandLine 'cmd', '/c', 'gradle/release.sh' nextVersion
+            commandLine 'cmd', '/c', 'gradle/release.sh', nextVersion
         } else {
-            commandLine 'sh', '-c', "./gradle/release.sh ${nextVersion}"
+            commandLine 'sh', '-c', './gradle/release.sh', nextVersion
         }
     }
 }
