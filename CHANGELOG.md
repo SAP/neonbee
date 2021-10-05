@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1 (2021-10-05)
+
+### Bug Fixes
+
+- make `ImmutableJsonArray/Object.equals` behave better ([6cd3cf4a](https://github.com/SAP/neonbee/commit/6cd3cf4a8e918f28079b982900d1c8eb45e7c600))
+
+
 ## 0.6.0 (2021-10-04)
 
 ### Bug Fixes
