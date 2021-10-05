@@ -1,6 +1,7 @@
 package io.neonbee.internal.json;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.internal.json.ImmutableJsonArray.EMPTY;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -18,6 +19,13 @@ class ImmutableJsonArrayTest {
     @Test
     void testImmutableClass() {
         assertThat(new ImmutableJsonArray().getList().getClass()).isEqualTo(unmodifiableList(emptyList()).getClass());
+    }
+
+    @Test
+    void testEmpty() {
+        assertThat(EMPTY).isEmpty();
+        assertThat(EMPTY.getList()).isEmpty();
+        assertThat(new ImmutableJsonArray()).isEqualTo(EMPTY);
     }
 
     @SuppressWarnings("unchecked")
@@ -91,6 +99,25 @@ class ImmutableJsonArrayTest {
 
     @Test
     void testCopyIsAlsoNotMutable() {
-        assertThrows(UnsupportedOperationException.class, () -> new ImmutableJsonArray().copy().add(true));
+        ImmutableJsonArray array = new ImmutableJsonArray();
+        assertThrows(UnsupportedOperationException.class, () -> array.copy().add(true));
+        assertThat(array.copy()).isSameInstanceAs(array);
+    }
+
+    @Test
+    void testStandardMethods() {
+        JsonArray array = new JsonArray().add(1).add("foo").add(new JsonObject());
+        ImmutableJsonArray immutableArray = new ImmutableJsonArray(array);
+
+        assertThat(immutableArray.toString()).isEqualTo(array.toString());
+        assertThat(immutableArray.hashCode()).isEqualTo(array.hashCode());
+
+        assertThat(immutableArray).isEqualTo(array);
+        assertThat(immutableArray).isEqualTo(new ImmutableJsonArray(array));
+        assertThat(immutableArray).isEqualTo(new ImmutableJsonArray(immutableArray));
+        assertThat(immutableArray).isEqualTo(new JsonArray().add(1).add("foo").add(new JsonObject()));
+        assertThat(immutableArray)
+                .isEqualTo(new ImmutableJsonArray(new JsonArray().add(1).add("foo").add(new JsonObject())));
+        assertThat(immutableArray).isNotEqualTo(EMPTY);
     }
 }

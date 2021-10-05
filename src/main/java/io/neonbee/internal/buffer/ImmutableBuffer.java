@@ -523,8 +523,8 @@ public final class ImmutableBuffer implements Buffer {
     // implements equal, it is impossible to fulfill this property. our aim is that buffers with the same content equal
     // each other, regardless of it's content, so buffer.equal(immutableBuffer) will never be true, while
     // immutableBuffer.equal(buffer) and immutableBuffer.equal(immutableBuffer) will, as long as the content is equal
-    public boolean equals(Object object) {
-        return buffer.equals(object instanceof ImmutableBuffer ? ((ImmutableBuffer) object).buffer : object);
+    public boolean equals(Object other) {
+        return buffer.equals(other instanceof ImmutableBuffer ? ((ImmutableBuffer) other).buffer : other);
     }
 
     @Override

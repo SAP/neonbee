@@ -18,6 +18,16 @@ public final class ImmutableJsonObject extends JsonObject {
      */
     public static final ImmutableJsonObject EMPTY = new ImmutableJsonObject();
 
+    // store the source object to be able to compare it
+    private final JsonObject object;
+
+    /**
+     * Create a new, empty instance.
+     */
+    public ImmutableJsonObject() {
+        this(emptyMap());
+    }
+
     /**
      * Create an instance from a string of JSON.
      *
@@ -28,19 +38,12 @@ public final class ImmutableJsonObject extends JsonObject {
     }
 
     /**
-     * Create a new, empty instance.
-     */
-    public ImmutableJsonObject() {
-        this(emptyMap());
-    }
-
-    /**
      * Create an instance from a Map. The Map is not copied.
      *
      * @param map the map to create the instance from.
      */
     public ImmutableJsonObject(Map<String, Object> map) {
-        super(Collections.unmodifiableMap(map));
+        this(new JsonObject(map));
     }
 
     /**
@@ -58,7 +61,8 @@ public final class ImmutableJsonObject extends JsonObject {
      * @param obj the existing JSON object
      */
     public ImmutableJsonObject(JsonObject obj) {
-        this(obj.getMap());
+        super(Collections.unmodifiableMap(obj.getMap()));
+        this.object = obj instanceof ImmutableJsonObject ? ((ImmutableJsonObject) obj).object : obj;
     }
 
     @Override
@@ -106,6 +110,20 @@ public final class ImmutableJsonObject extends JsonObject {
     @Override
     public ImmutableJsonObject copy() {
         return this;
+    }
+
+    @Override
+    // this method violates the symmetric property of how equal should be implement, because as of how JsonObject
+    // implements equal, it is impossible to fulfill this property. our aim is that object with the same content equal
+    // each other, so object.equal(immutableObject) will never be true, while immutableObject.equal(object) and
+    // immutableObject.equal(immutableObject) will, as long as the content is equal
+    public boolean equals(Object other) {
+        return object.equals(other instanceof ImmutableJsonObject ? ((ImmutableJsonObject) other).object : other);
+    }
+
+    @Override
+    public int hashCode() {
+        return object.hashCode();
     }
 
     /**

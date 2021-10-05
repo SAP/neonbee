@@ -1,6 +1,7 @@
 package io.neonbee.internal.json;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.internal.json.ImmutableJsonObject.EMPTY;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.unmodifiableMap;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -18,6 +19,13 @@ class ImmutableJsonObjectTest {
     @Test
     void testImmutableClass() {
         assertThat(new ImmutableJsonObject().getMap().getClass()).isEqualTo(unmodifiableMap(emptyMap()).getClass());
+    }
+
+    @Test
+    void testEmpty() {
+        assertThat(EMPTY).isEmpty();
+        assertThat(EMPTY.getMap()).isEmpty();
+        assertThat(new ImmutableJsonObject()).isEqualTo(EMPTY);
     }
 
     @Test
@@ -95,6 +103,26 @@ class ImmutableJsonObjectTest {
 
     @Test
     void testCopyIsAlsoNotMutable() {
-        assertThrows(UnsupportedOperationException.class, () -> new ImmutableJsonObject().copy().put("keyY", true));
+        ImmutableJsonObject object = new ImmutableJsonObject();
+        assertThrows(UnsupportedOperationException.class, () -> object.copy().put("keyY", true));
+        assertThat(object.copy()).isSameInstanceAs(object);
+    }
+
+    @Test
+    void testStandardMethods() {
+        JsonObject array = new JsonObject().put("foo", 1).put("bar", "baz").put("bam", new JsonObject());
+        ImmutableJsonObject immutableArray = new ImmutableJsonObject(array);
+
+        assertThat(immutableArray.toString()).isEqualTo(array.toString());
+        assertThat(immutableArray.hashCode()).isEqualTo(array.hashCode());
+
+        assertThat(immutableArray).isEqualTo(array);
+        assertThat(immutableArray).isEqualTo(new ImmutableJsonObject(array));
+        assertThat(immutableArray).isEqualTo(new ImmutableJsonObject(immutableArray));
+        assertThat(immutableArray)
+                .isEqualTo(new JsonObject().put("foo", 1).put("bar", "baz").put("bam", new JsonObject()));
+        assertThat(immutableArray).isEqualTo(
+                new ImmutableJsonObject(new JsonObject().put("foo", 1).put("bar", "baz").put("bam", new JsonObject())));
+        assertThat(immutableArray).isNotEqualTo(EMPTY);
     }
 }

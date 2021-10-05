@@ -15,6 +15,16 @@ public final class ImmutableJsonArray extends JsonArray {
      */
     public static final ImmutableJsonArray EMPTY = new ImmutableJsonArray();
 
+    // store the source array to be able to compare it
+    private final JsonArray array;
+
+    /**
+     * Create an empty instance.
+     */
+    public ImmutableJsonArray() {
+        this(emptyList());
+    }
+
     /**
      * Create a new instance with the given string.
      *
@@ -25,20 +35,13 @@ public final class ImmutableJsonArray extends JsonArray {
     }
 
     /**
-     * Create an empty instance.
-     */
-    public ImmutableJsonArray() {
-        this(emptyList());
-    }
-
-    /**
      * Create an instance from a List. The List is not copied.
      *
      * @param list The list to be converted to an {@link ImmutableJsonArray}
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings("rawtypes")
     public ImmutableJsonArray(List list) {
-        super(Collections.unmodifiableList(list));
+        this(new JsonArray(list));
     }
 
     /**
@@ -55,8 +58,10 @@ public final class ImmutableJsonArray extends JsonArray {
      *
      * @param arr the existing JSON array
      */
+    @SuppressWarnings("unchecked")
     public ImmutableJsonArray(JsonArray arr) {
-        this(arr.getList());
+        super(Collections.unmodifiableList(arr.getList()));
+        this.array = arr instanceof ImmutableJsonArray ? ((ImmutableJsonArray) arr).array : arr;
     }
 
     @Override
@@ -83,6 +88,20 @@ public final class ImmutableJsonArray extends JsonArray {
     @Override
     public ImmutableJsonArray copy() {
         return this;
+    }
+
+    @Override
+    // this method violates the symmetric property of how equal should be implement, because as of how JsonArray
+    // implements equal, it is impossible to fulfill this property. our aim is that arrays with the same content equal
+    // each other, so array.equal(immutableArray) will never be true, while immutableArray.equal(array) and
+    // immutableArray.equal(immutableArray) will, as long as the content is equal
+    public boolean equals(Object other) {
+        return array.equals(other instanceof ImmutableJsonArray ? ((ImmutableJsonArray) other).array : other);
+    }
+
+    @Override
+    public int hashCode() {
+        return array.hashCode();
     }
 
     /**
