@@ -515,6 +515,7 @@ public final class ImmutableBuffer implements Buffer {
 
     @Override
     public ImmutableBuffer copy() {
+
         return this;
     }
 
@@ -553,6 +554,6 @@ public final class ImmutableBuffer implements Buffer {
      * @return the mutable copy
      */
     public Buffer mutableCopy() {
-        return buffer.length() == 0 ? Buffer.buffer() : buffer.copy();
+        return buffer.length() == 0 ? Buffer.buffer() : Buffer.buffer(buffer.getBytes());
     }
 }
