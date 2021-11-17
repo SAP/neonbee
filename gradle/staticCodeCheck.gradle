@@ -25,6 +25,7 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << '-Xlint:deprecation'
     options.errorprone.errorproneArgs.add('-Xep:TypeParameterUnusedInFormals:OFF')
     options.errorprone.errorproneArgs.add('-Xep:InlineMeSuggester:OFF')
+    options.errorprone.errorproneArgs.add("-XepExcludedPaths:${rootDir}/src/generated/.*")
 }
 
 import org.gradle.internal.logging.events.OutputEvent

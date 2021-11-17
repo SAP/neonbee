@@ -1,13 +1,20 @@
 package io.neonbee.config;
 
+import java.util.Base64;
+
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.impl.JsonUtil;
 
 /**
  * Converter and mapper for {@link io.neonbee.config.EndpointConfig}. NOTE: This class has been automatically generated
  * from the {@link io.neonbee.config.EndpointConfig} original class using Vert.x codegen.
  */
 public class EndpointConfigConverter {
+
+    private static final Base64.Decoder BASE64_DECODER = JsonUtil.BASE64_DECODER;
+
+    private static final Base64.Encoder BASE64_ENCODER = JsonUtil.BASE64_ENCODER;
 
     static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, EndpointConfig obj) {
         for (java.util.Map.Entry<String, Object> member : json) {
