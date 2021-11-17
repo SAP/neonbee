@@ -4,7 +4,6 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
@@ -25,6 +24,7 @@ import io.neonbee.config.EndpointConfig;
 import io.neonbee.config.ServerConfig;
 import io.neonbee.config.ServerConfig.SessionHandling;
 import io.neonbee.endpoint.Endpoint;
+import io.neonbee.handler.ErrorHandler;
 import io.neonbee.internal.handler.CacheControlHandler;
 import io.neonbee.internal.handler.CorrelationIdHandler;
 import io.neonbee.internal.handler.DefaultErrorHandler;
@@ -44,7 +44,6 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.AuthenticationHandler;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ChainAuthHandler;
-import io.vertx.ext.web.handler.ErrorHandler;
 import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.handler.TimeoutHandler;
 import io.vertx.ext.web.sstore.ClusteredSessionStore;
@@ -57,6 +56,12 @@ import io.vertx.ext.web.sstore.SessionStore;
  * This verticle handles the {@linkplain #config()} JSON object and parses it as a {@linkplain ServerConfig}.
  */
 public class ServerVerticle extends AbstractVerticle {
+
+    /**
+     * Key where the ServerConfig is stored, if NeonBee is started with WEB profile.
+     */
+    public static final String SERVER_CONFIG_KEY = "__ServerVerticleConfig__";
+
     @VisibleForTesting
     static final AuthenticationHandler NOOP_AUTHENTICATION_HANDLER = new AuthenticationHandler() {
         @Override
@@ -74,8 +79,28 @@ public class ServerVerticle extends AbstractVerticle {
 
     @Override
     public void start(Promise<Void> startPromise) {
-        ServerConfig config = new ServerConfig(config());
+        NeonBee.get(vertx).getLocalMap().put(SERVER_CONFIG_KEY, config());
 
+        ServerConfig config = new ServerConfig(config());
+        createRouter(config).compose(router -> {
+            Optional<AuthenticationHandler> ach = createAuthChainHandler(config.getAuthChainConfig());
+            return mountEndpoints(router, config.getEndpointConfigs(), ach, new HooksHandler()).onSuccess(v -> {
+                // the NotFoundHandler fails the routing context finally.
+                // To ensure that no handler will be added after it, it is added here.
+                router.route().handler(new NotFoundHandler());
+            }).compose(v -> createHttpServer(router, config));
+        }).<Void>mapEmpty().onComplete(startPromise);
+    }
+
+    @Override
+    public void stop(Promise<Void> stopPromise) throws Exception {
+        // Vert.x would close the HTTP server for us, however we would like to do some additional logging
+        (httpServer != null ? httpServer.close().onComplete(result -> {
+            LOGGER.info("HTTP server was stopped");
+        }) : succeededFuture().<Void>mapEmpty()).onComplete(stopPromise);
+    }
+
+    private Future<Router> createRouter(ServerConfig config) {
         // the main router of the server verticle
         Router router = Router.router(vertx);
 
@@ -83,9 +108,8 @@ public class ServerVerticle extends AbstractVerticle {
         // sequence issues, block scope the variable to prevent using it after the endpoints have been mounted
         Route rootRoute = router.route();
 
-        try {
-            rootRoute.failureHandler(
-                    createErrorHandler(config.getErrorHandlerClassName(), config.getErrorHandlerTemplate()));
+        return createErrorHandler(config.getErrorHandlerClassName(), vertx).compose(errorHandler -> {
+            rootRoute.failureHandler(errorHandler);
             rootRoute.handler(new LoggerHandler());
             rootRoute.handler(BodyHandler.create(false /* do not handle file uploads */));
             rootRoute.handler(new CorrelationIdHandler(config.getCorrelationStrategy()));
@@ -98,43 +122,8 @@ public class ServerVerticle extends AbstractVerticle {
                     .ifPresent(sessionHandler -> rootRoute
                             .handler(sessionHandler.setSessionCookieName(config.getSessionCookieName())));
 
-            // add all endpoint handlers as sub-routes here
-            mountEndpoints(router, config.getEndpointConfigs(), createAuthChainHandler(config.getAuthChainConfig()),
-                    new HooksHandler()).onFailure(startPromise::fail).onSuccess(nothing -> {
-                        // the NotFoundHandler fails the routing context finally
-                        router.route().handler(new NotFoundHandler());
-
-                        // Use the port passed via command line options, instead the configured one.
-                        Optional.ofNullable(NeonBee.get(vertx).getOptions().getServerPort()).ifPresent(config::setPort);
-
-                        vertx.createHttpServer(config /* ServerConfig is a HttpServerOptions subclass */)
-                                .exceptionHandler(throwable -> {
-                                    LOGGER.error("HTTP Socket Exception", throwable);
-                                }).requestHandler(router).listen().onSuccess(httpServer -> {
-                                    this.httpServer = httpServer;
-                                    if (LOGGER.isInfoEnabled()) {
-                                        LOGGER.info("HTTP server started on port {}", httpServer.actualPort());
-                                    }
-                                    if (LOGGER.isDebugEnabled()) {
-                                        LOGGER.debug("HTTP server configured with routes: {}", router.getRoutes()
-                                                .stream().map(Route::toString).collect(Collectors.joining(",")));
-                                    }
-                                }).onFailure(cause -> {
-                                    LOGGER.error("HTTP server could not be started", cause);
-                                }).<Void>mapEmpty().onComplete(startPromise);
-                    });
-        } catch (Exception e) {
-            LOGGER.error("Server could not be started", e);
-            startPromise.fail(e);
-        }
-    }
-
-    @Override
-    public void stop(Promise<Void> stopPromise) throws Exception {
-        // Vert.x would close the HTTP server for us, however we would like to do some additional logging
-        (httpServer != null ? httpServer.close().onComplete(result -> {
-            LOGGER.info("HTTP server was stopped");
-        }) : succeededFuture().<Void>mapEmpty()).onComplete(stopPromise);
+            return succeededFuture(router);
+        }).onFailure(e -> LOGGER.error("Router could not be created", e));
     }
 
     @VisibleForTesting
@@ -142,22 +131,40 @@ public class ServerVerticle extends AbstractVerticle {
     // PMD.SignatureDeclareThrowsException it does not matter, if this private method does not expose any concrete
     // exceptions as the ServerVerticle start method anyways catches all exceptions in a generic try-catch block
     @SuppressWarnings({ "PMD.EmptyCatchBlock", "PMD.SignatureDeclareThrowsException" })
-    static ErrorHandler createErrorHandler(String className, String template) throws Exception {
-        Class<?> classObject = Class.forName(Optional.ofNullable(className).filter(Predicate.not(String::isBlank))
-                .orElse(DEFAULT_ERROR_HANDLER_CLASS_NAME));
-        if (template != null) {
-            try {
-                return (ErrorHandler) classObject.getConstructor(String.class).newInstance(template);
-            } catch (InvocationTargetException e) {
-                // check for an IOException when reading the template and rather propagate that for better traceability
-                throw e.getCause() instanceof IOException ? (IOException) e.getCause() : e;
-            } catch (NoSuchMethodException e) {
-                // do nothing here, if there is no such constructor, assume
-                // the custom error handler class doesn't accept templates
-            }
+    static Future<ErrorHandler> createErrorHandler(String className, Vertx vertx) {
+        try {
+            Class<?> classObject = Class.forName(Optional.ofNullable(className).filter(Predicate.not(String::isBlank))
+                    .orElse(DEFAULT_ERROR_HANDLER_CLASS_NAME));
+            ErrorHandler eh = (ErrorHandler) classObject.getConstructor().newInstance();
+            return eh.initialize(NeonBee.get(vertx))
+                    .onFailure(t -> LOGGER.error("ErrorHandler could not be initialized", t));
+        } catch (NoSuchMethodException e) {
+            // do nothing here, if there is no such constructor, assume
+            // the custom error handler class doesn't accept templates
+            LOGGER.error("The custom ErrorHandler must offer a default constructor.", e);
+            return failedFuture(e);
+        } catch (Exception e) {
+            return failedFuture(e);
         }
+    }
 
-        return (ErrorHandler) classObject.getConstructor().newInstance();
+    private Future<HttpServer> createHttpServer(Router router, ServerConfig config) {
+        // Use the port passed via command line options, instead the configured one.
+        Optional.ofNullable(NeonBee.get(vertx).getOptions().getServerPort()).ifPresent(config::setPort);
+
+        return vertx.createHttpServer(config /* ServerConfig is a HttpServerOptions subclass */)
+                .exceptionHandler(throwable -> {
+                    LOGGER.error("HTTP Socket Exception", throwable);
+                }).requestHandler(router).listen().onSuccess(httpServer -> {
+                    this.httpServer = httpServer;
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info("HTTP server started on port {}", httpServer.actualPort());
+                    }
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("HTTP server configured with routes: {}",
+                                router.getRoutes().stream().map(Route::toString).collect(Collectors.joining(",")));
+                    }
+                }).onFailure(cause -> LOGGER.error("HTTP server could not be started", cause));
     }
 
     /**

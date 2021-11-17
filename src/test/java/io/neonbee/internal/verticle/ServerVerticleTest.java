@@ -2,13 +2,11 @@ package io.neonbee.internal.verticle;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.verticle.ServerVerticle.createSessionStore;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
@@ -113,16 +111,20 @@ class ServerVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    void testGetErrorHandlerDefault() throws Exception {
-        assertThat(ServerVerticle.createErrorHandler(null, null)).isInstanceOf(DefaultErrorHandler.class);
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    void testGetErrorHandlerDefault(Vertx vertx, VertxTestContext testCtx) throws Exception {
+        Checkpoint cp = testCtx.checkpoint(2);
 
-        NoSuchFileException nsfException =
-                assertThrows(NoSuchFileException.class, () -> ServerVerticle.createErrorHandler(null, "Max"));
-        assertThat(nsfException).hasMessageThat().contains("Max");
+        ServerVerticle.createErrorHandler(null, vertx).onComplete(testCtx.succeeding(clazz -> testCtx.verify(() -> {
+            assertThat(clazz).isInstanceOf(DefaultErrorHandler.class);
+            cp.flag();
+        })));
 
-        ClassNotFoundException cnfException =
-                assertThrows(ClassNotFoundException.class, () -> ServerVerticle.createErrorHandler("Hugo", null));
-        assertThat(cnfException).hasMessageThat().contains("Hugo");
+        ServerVerticle.createErrorHandler("Hugo", vertx).onComplete(testCtx.failing(t -> testCtx.verify(() -> {
+            assertThat(t).isInstanceOf(ClassNotFoundException.class);
+            assertThat(t).hasMessageThat().contains("Hugo");
+            cp.flag();
+        })));
     }
 
     @Override
