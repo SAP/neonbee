@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.annotations.VisibleForTesting;
 
 import io.neonbee.config.NeonBeeConfig;
+import io.neonbee.config.ServerConfig;
 import io.neonbee.data.DataQuery;
 import io.neonbee.entity.EntityWrapper;
 import io.neonbee.hook.HookRegistry;
@@ -590,6 +591,15 @@ public class NeonBee {
      */
     public void unregisterLocalConsumer(String verticleAddress) {
         localConsumers.remove(verticleAddress);
+    }
+
+    /**
+     * Returns the ServerConfig if NeonBee is started with WEB profile.
+     *
+     * @return the ServerConfig or null if ServerVerticle is not started.
+     */
+    public ServerConfig getServerConfig() {
+        return new ServerConfig((JsonObject) getLocalMap().get(ServerVerticle.SERVER_CONFIG_KEY));
     }
 
     /**

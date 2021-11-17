@@ -191,7 +191,8 @@ clean {
 // ############ Test Phase
 
 test {
-    if (!org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX()) {
+    // deactivate parallel execution of tests temporary until parallel execution works again
+    if (false && !org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX()) {
         systemProperties = [
             'junit.jupiter.execution.parallel.enabled' : 'true',
             'junit.jupiter.execution.parallel.mode.default' : 'concurrent',
