@@ -22,7 +22,7 @@ plugins {
 }
 
 group = 'io.neonbee'
-version = '0.6.2-SNAPSHOT'
+version = '0.6.2'
 mainClassName = 'io.neonbee.Launcher'
 archivesBaseName = 'neonbee-core'
 sourceCompatibility = 11
@@ -320,7 +320,7 @@ task release(type: Exec) {
         if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')) {
             commandLine 'cmd', '/c', 'gradle/release.sh', nextVersion
         } else {
-            commandLine 'sh', '-c', './gradle/release.sh', nextVersion
+            commandLine 'sh', '-c', "./gradle/release.sh ${nextVersion}"
         }
     }
 }
