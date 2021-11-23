@@ -1,10 +1,22 @@
 # Changelog
 
+## 0.6.2 (2021-11-23)
+
+### Bug Fixes
+
+- solve static code issues ([e3be538d](https://github.com/SAP/neonbee/commit/e3be538d8e1a8f1070e475870f1c157e738337ad))
+
+
+### Features
+
+- offer a new ErrorHandler which can be initialized asynchronously ([597f2575](https://github.com/SAP/neonbee/commit/597f257532583d66672ce8b69b1937eca4fb319e))
+
+
 ## 0.6.1 (2021-10-05)
 
 ### Bug Fixes
 
-- make `ImmutableJsonArray/Object.equals` behave better ([6cd3cf4a](https://github.com/SAP/neonbee/commit/6cd3cf4a8e918f28079b982900d1c8eb45e7c600))
+- make `ImmutableJsonArray/Object.equals` behave better ([7b4338cc](https://github.com/SAP/neonbee/commit/7b4338ccd5f4a09be02f54b18372bf4fc574e8e7))
 
 
 ## 0.6.0 (2021-10-04)
