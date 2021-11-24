@@ -1,0 +1,11 @@
+<package>
+
+import io.vertx.core.Promise;
+
+
+
+public class <ClassName> {
+
+    public void doNothing(Promise<Void> promise) {
+    }
+}
