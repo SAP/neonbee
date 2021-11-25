@@ -6,7 +6,7 @@ import io.neonbee.internal.BasicJar;
 import io.neonbee.logging.LoggingFacade;
 import io.neonbee.test.helper.ResourceHelper;
 
-public class NonVertxTest {
+class NonVertxTest {
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
