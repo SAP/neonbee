@@ -7,20 +7,18 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
-
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
+import javax.tools.ToolProvider;
 
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.impl.verticle.CompilingClassLoader;
 import io.vertx.core.impl.verticle.JavaSourceContext;
-
-import javax.tools.Diagnostic;
-import javax.tools.DiagnosticCollector;
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.StandardLocation;
 
 public class NeonbeeCompilingClassLoader extends ClassLoader {
 
