@@ -9,7 +9,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import javax.tools.*;
+import javax.tools.FileObject;
+import javax.tools.ForwardingJavaFileManager;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
 
 import io.vertx.core.impl.verticle.CustomJavaFileObject;
 
@@ -21,7 +25,7 @@ public class NeonbeeMemoryFileManager extends ForwardingJavaFileManager<JavaFile
     }
 
     @Override
-    public JavaFileObject getJavaFileForOutput(Location location, final String className, JavaFileObject.Kind kind,
+    public JavaFileObject getJavaFileForOutput(Location location, String className, JavaFileObject.Kind kind,
             FileObject sibling) throws IOException {
         try {
             return new SimpleJavaFileObject(new URI(""), kind) {
