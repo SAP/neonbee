@@ -1,5 +1,7 @@
 package io.neonbee.test.endpoint.odata;
 
+import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.test.base.ODataRequest.escapeODataString;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_1;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_2;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_3;
@@ -134,7 +136,23 @@ class ODataFilterTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 3, timeUnit = TimeUnit.SECONDS)
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("Test $filter with special char")
+    void testFilterWithSpecialCharacters(VertxTestContext testContext) {
+        String key =
+                "abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"{}$%& /() =?* '<> #|; 23~ @`<.";
+        String encodedKey = escapeODataString(key);
+
+        // TODO test is red because olingo (or Neonbee?) can't handle the single quote
+        Map<String, String> filter = filterOf("PropertyString100 eq '" + encodedKey + "'");
+        oDataRequest.setQuery(filter);
+        assertODataEntitySet(requestOData(oDataRequest), entities -> {
+            assertThat(entities).hasSize(1);
+        }, testContext).onComplete(testContext.succeedingThenComplete());
+    }
+
+    @Test
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test /$count with $filter")
     void testCountWithFilter(VertxTestContext testContext) {
         oDataRequest.setQuery(Map.of("$filter", "KeyPropertyString eq 'id-1'")).setCount();

@@ -410,4 +410,14 @@ public class ODataRequest {
 
         return decorateParentheses.apply(Joiner.on(',').withKeyValueSeparator('=').join(keys.entrySet()));
     }
+
+    public static String escapeODataString(String str) {
+        // "'", "''"
+        Map<String, String> mapping = Map.of("+", "%2B", "/", "%2F", "?", "%3F", "#", "%23", "&", "%26", "'", "''");
+        String replaced = str.replace("%", "%25"); // must be replaced first
+        for (Map.Entry<String, String> entry : mapping.entrySet()) {
+            replaced = replaced.replace(entry.getKey(), entry.getValue());
+        }
+        return replaced;
+    }
 }
