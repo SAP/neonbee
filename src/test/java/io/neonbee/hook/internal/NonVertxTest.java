@@ -11,7 +11,7 @@ public class NonVertxTest {
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     @Test
-    public void classCompile() throws Exception {
+    void classCompile() throws Exception {
 
         BasicJar jarWithHookAnnotation =
                 new HookClassTemplate(ResourceHelper.TEST_RESOURCES.resolveRelated("CompileClassTest.java.template"),

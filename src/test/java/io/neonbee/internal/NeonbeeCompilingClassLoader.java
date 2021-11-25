@@ -16,9 +16,9 @@ import io.vertx.core.impl.verticle.JavaSourceContext;
 
 public class NeonbeeCompilingClassLoader extends ClassLoader {
 
-    private static final Logger log = LoggerFactory.getLogger(CompilingClassLoader.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CompilingClassLoader.class);
 
-    private final static List<String> COMPILER_OPTIONS = Collections.EMPTY_LIST;
+    private static final List<String> COMPILER_OPTIONS = Collections.EMPTY_LIST;
     /* Arrays.asList("-classpath", System.getProperty("java.class.path"), "-target", "11", "-verbose"); */
 
     private final JavaSourceContext javaSourceContext;
@@ -33,7 +33,7 @@ public class NeonbeeCompilingClassLoader extends ClassLoader {
         }
         // Need to urldecode it too, since bug in JDK URL class which does not url decode it, so if it contains spaces
         // you are screwed
-        final File sourceFile = new File(decodeURIComponent(resource.getFile(), false));
+        File sourceFile = new File(decodeURIComponent(resource.getFile(), false));
         if (!sourceFile.canRead()) {
             throw new RuntimeException("File not found: " + sourceFile.getAbsolutePath() + " current dir is: "
                     + new File(".").getAbsolutePath());
@@ -41,8 +41,9 @@ public class NeonbeeCompilingClassLoader extends ClassLoader {
 
         this.javaSourceContext = new JavaSourceContext(sourceFile);
 
+        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
         try {
-            DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+
             JavaCompiler javaCompiler = ToolProvider.getSystemJavaCompiler();
             if (javaCompiler == null) {
                 throw new RuntimeException("Unable to detect java compiler, make sure you're using a JDK not a JRE!");
@@ -66,12 +67,12 @@ public class NeonbeeCompilingClassLoader extends ClassLoader {
                     String code = d.getCode();
                     if (code == null || (!code.startsWith("compiler.warn.annotation.method.not.found")
                             && !"compiler.warn.proc.processor.incompatible.source.version".equals(code))) {
-                        log.info(d);
+                        LOGGER.info(d);
                     }
                 }
             } else {
                 for (Diagnostic<?> d : diagnostics.getDiagnostics()) {
-                    log.warn(d);
+                    LOGGER.warn(d);
                 }
                 throw new RuntimeException("Compilation failed!");
             }
@@ -80,7 +81,7 @@ public class NeonbeeCompilingClassLoader extends ClassLoader {
         }
     }
 
-    public String resolveMainClassName() {
+    private String resolveMainClassName() {
         return javaSourceContext.getClassName();
     }
 
