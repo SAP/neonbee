@@ -2,6 +2,7 @@ package io.neonbee.internal;
 
 import static io.neonbee.test.helper.FileSystemHelper.createTempDirectory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -9,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.google.common.base.Strings;
+import io.vertx.core.impl.verticle.CompilingClassLoader;
 
 /**
  * The purpose of this interface is offering a tool to transform a class template into compiled byte code. A class
@@ -81,9 +83,10 @@ public interface ClassTemplate {
         Files.writeString(sourceFile, reifyTemplate());
 
         try (URLClassLoader urlc =
-                new URLClassLoader(new URL[] { tempDir.toUri().toURL() }, ClassLoader.getSystemClassLoader())) {
+                new URLClassLoader(new URL[] { tempDir.toUri().toURL()}, ClassLoader.getSystemClassLoader())) {
 
-            NeonbeeCompilingClassLoader compilingLoader = new NeonbeeCompilingClassLoader(urlc, resourcePath());
+            //NeonbeeCompilingClassLoader compilingLoader = new NeonbeeCompilingClassLoader(urlc, resourcePath());
+            CompilingClassLoader compilingLoader = new CompilingClassLoader(urlc, resourcePath());
             return compilingLoader.getClassBytes(getClassName());
         }
     }
