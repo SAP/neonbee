@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.google.common.base.Strings;
-import io.vertx.core.impl.verticle.CompilingClassLoader;
 
 /**
  * The purpose of this interface is offering a tool to transform a class template into compiled byte code. A class
@@ -83,7 +82,8 @@ public interface ClassTemplate {
 
         try (URLClassLoader urlc =
                 new URLClassLoader(new URL[] { tempDir.toUri().toURL() }, ClassLoader.getSystemClassLoader())) {
-            CompilingClassLoader compilingLoader = new CompilingClassLoader(urlc, resourcePath());
+
+            NeonbeeCompilingClassLoader compilingLoader = new NeonbeeCompilingClassLoader(urlc, resourcePath());
             return compilingLoader.getClassBytes(getClassName());
         }
     }

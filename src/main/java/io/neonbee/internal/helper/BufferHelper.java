@@ -1,7 +1,10 @@
 package io.neonbee.internal.helper;
 
+import static io.neonbee.internal.scanner.ClassPathScanner.getClassLoader;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.NoSuchFileException;
 
 import io.vertx.core.buffer.Buffer;
 
@@ -42,6 +45,26 @@ public final class BufferHelper {
         }
 
         return buffer;
+    }
+
+    /**
+     * Read a given resource into a buffer.
+     *
+     * @param resource The resource to read
+     * @return a Vert.x {@link Buffer}
+     * @throws IOException in case of an issue whilst reading the resource
+     */
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE",
+            justification = "False positive in Spotbugs, see https://github.com/spotbugs/spotbugs/issues/1338")
+    public static Buffer readResourceToBuffer(String resource) throws IOException {
+        ClassLoader classLoader = getClassLoader();
+        try (InputStream input = classLoader.getResourceAsStream(resource)) {
+            if (input == null) {
+                throw new NoSuchFileException(resource);
+            }
+
+            return inputStreamToBuffer(input);
+        }
     }
 
     /**

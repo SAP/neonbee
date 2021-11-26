@@ -10,6 +10,8 @@
 .pmd
 .idea
 .iml
+/src/main/generated/
+*.orig
 
 ######################
 /gen/
