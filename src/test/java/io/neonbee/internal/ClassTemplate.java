@@ -85,8 +85,8 @@ public interface ClassTemplate {
         try (URLClassLoader urlc =
                 new URLClassLoader(new URL[] { tempDir.toUri().toURL()}, ClassLoader.getSystemClassLoader())) {
 
-            //NeonbeeCompilingClassLoader compilingLoader = new NeonbeeCompilingClassLoader(urlc, resourcePath());
-            CompilingClassLoader compilingLoader = new CompilingClassLoader(urlc, resourcePath());
+            NeonbeeCompilingClassLoader compilingLoader = new NeonbeeCompilingClassLoader(urlc, resourcePath());
+            //CompilingClassLoader compilingLoader = new CompilingClassLoader(urlc, resourcePath());
             return compilingLoader.getClassBytes(getClassName());
         }
     }
