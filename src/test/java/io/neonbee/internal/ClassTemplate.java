@@ -1,15 +1,28 @@
 package io.neonbee.internal;
 
 import static io.neonbee.test.helper.FileSystemHelper.createTempDirectory;
+import static javax.tools.JavaFileObject.Kind.CLASS;
+import static javax.tools.JavaFileObject.Kind.SOURCE;
+import static javax.tools.StandardLocation.CLASS_OUTPUT;
+import static javax.tools.StandardLocation.SOURCE_PATH;
 
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
+
+import javax.tools.DiagnosticCollector;
+import javax.tools.FileObject;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 
 import com.google.common.base.Strings;
-import io.vertx.core.impl.verticle.CompilingClassLoader;
+import com.google.common.io.ByteStreams;
 
 /**
  * The purpose of this interface is offering a tool to transform a class template into compiled byte code. A class
@@ -79,12 +92,31 @@ public interface ClassTemplate {
         Path tempDir = createTempDirectory();
         Path sourceFile = tempDir.resolve(resourcePath());
         Files.createDirectories(sourceFile.getParent());
+
         Files.writeString(sourceFile, reifyTemplate());
 
-        try (URLClassLoader urlc =
-                new URLClassLoader(new URL[] { tempDir.toUri().toURL() }, ClassLoader.getSystemClassLoader())) {
-            CompilingClassLoader compilingLoader = new CompilingClassLoader(urlc, resourcePath());
-            return compilingLoader.getClassBytes(getClassName());
+        JavaCompiler javaCompiler = ToolProvider.getSystemJavaCompiler();
+        if (javaCompiler == null) {
+            throw new RuntimeException("Unable to detect Java compiler, make sure you're using a JDK not a JRE!");
         }
+
+        StandardJavaFileManager standardFileManager = javaCompiler.getStandardFileManager(null, null, null);
+        standardFileManager.setLocation(SOURCE_PATH, Collections.singleton(tempDir.toFile()));
+        standardFileManager.setLocation(CLASS_OUTPUT, Collections.singleton(tempDir.toFile()));
+
+        JavaFileObject javaFileToCompile = standardFileManager.getJavaFileForInput(SOURCE_PATH, getClassName(), SOURCE);
+
+        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+        JavaCompiler.CompilationTask task =
+                javaCompiler.getTask(null, standardFileManager, diagnostics, null, null, List.of(javaFileToCompile));
+
+        if (!task.call()) {
+            String msgs = diagnostics.getDiagnostics().stream().map(d -> d.getMessage(Locale.getDefault()))
+                    .collect(Collectors.joining("\n"));
+            throw new RuntimeException("Compilation Failed: \n" + msgs);
+        }
+
+        FileObject compiledClassFile = standardFileManager.getJavaFileForInput(CLASS_OUTPUT, getClassName(), CLASS);
+        return ByteStreams.toByteArray(compiledClassFile.openInputStream());
     }
 }

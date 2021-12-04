@@ -1,5 +1,6 @@
 package io.neonbee.handler;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.neonbee.NeonBee;
 import io.vertx.core.Future;
 
@@ -7,7 +8,7 @@ import io.vertx.core.Future;
  * The class which implements this interface MUST have a default constructor. Otherwise NeonBee can't instantiate the
  * class during bootstrap phase.
  */
-@SuppressWarnings("NM_SAME_SIMPLE_NAME_AS_INTERFACE")
+@SuppressFBWarnings("NM_SAME_SIMPLE_NAME_AS_INTERFACE")
 public interface ErrorHandler extends io.vertx.ext.web.handler.ErrorHandler {
 
     /**
