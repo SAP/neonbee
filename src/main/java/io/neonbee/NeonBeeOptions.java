@@ -19,8 +19,18 @@ import io.neonbee.internal.verticle.WatchVerticle;
 import io.neonbee.job.JobVerticle;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.EventBusOptions;
+import io.vertx.core.metrics.MetricsOptions;
+import io.vertx.micrometer.MicrometerMetricsOptions;
+import io.vertx.micrometer.VertxPrometheusOptions;
 
 public interface NeonBeeOptions {
+    /**
+     * Get the {@link MetricsOptions}.
+     *
+     * @return the {@link MetricsOptions}
+     */
+    MetricsOptions getMetricsOptions();
+
     /**
      * Get the maximum number of worker threads to be used by the NeonBee instance.
      * <p>
@@ -181,11 +191,30 @@ public interface NeonBeeOptions {
 
         private Set<NeonBeeProfile> activeProfiles = Set.of(ALL);
 
+        private MetricsOptions metricsOptions = new MicrometerMetricsOptions()
+                .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true)).setEnabled(true);
+
         /**
          * Instantiates a mutable {@link NeonBeeOptions} instance.
          */
         public Mutable() {
             instanceName = generateName();
+        }
+
+        /**
+         * Set the {@link MetricsOptions}.
+         *
+         * @param metricsOptions the {@link MetricsOptions}
+         * @return a reference to this, so the API can be used fluently
+         */
+        public Mutable setMetricsOptions(MetricsOptions metricsOptions) {
+            this.metricsOptions = metricsOptions;
+            return this;
+        }
+
+        @Override
+        public MetricsOptions getMetricsOptions() {
+            return this.metricsOptions;
         }
 
         @Override

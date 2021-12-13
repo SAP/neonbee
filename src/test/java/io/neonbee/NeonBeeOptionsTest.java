@@ -21,6 +21,8 @@ import io.neonbee.NeonBeeOptions.Mutable;
 import io.neonbee.test.helper.FileSystemHelper;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.EventBusOptions;
+import io.vertx.micrometer.MicrometerMetricsOptions;
+import io.vertx.micrometer.VertxPrometheusOptions;
 
 class NeonBeeOptionsTest {
     @Test
@@ -171,5 +173,19 @@ class NeonBeeOptionsTest {
 
         mutable = new NeonBeeOptions.Mutable().setClusterConfig(localConfig);
         assertThat(mutable.getClusterConfig().getNetworkConfig().getPort()).isEqualTo(20000);
+    }
+
+    @Test
+    @DisplayName("Test MetricsOptions getter and setter")
+    void test() {
+        NeonBeeOptions.Mutable mutable = new NeonBeeOptions.Mutable();
+        assertThat(mutable.getMetricsOptions()).isInstanceOf(MicrometerMetricsOptions.class);
+
+        MicrometerMetricsOptions mmo = (MicrometerMetricsOptions) mutable.getMetricsOptions();
+        assertThat(mmo.getPrometheusOptions()).isInstanceOf(VertxPrometheusOptions.class);
+        assertThat(mmo.isEnabled()).isTrue();
+
+        mutable.setMetricsOptions(null);
+        assertThat(mutable.getMetricsOptions()).isNull();
     }
 }

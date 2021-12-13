@@ -73,8 +73,6 @@ import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.LocalMap;
-import io.vertx.micrometer.MicrometerMetricsOptions;
-import io.vertx.micrometer.VertxPrometheusOptions;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 public class NeonBee {
@@ -254,8 +252,7 @@ public class NeonBee {
     @VisibleForTesting
     static Future<Vertx> newVertx(NeonBeeOptions options) {
         VertxOptions vertxOptions = new VertxOptions().setEventLoopPoolSize(options.getEventLoopPoolSize())
-                .setWorkerPoolSize(options.getWorkerPoolSize()).setMetricsOptions(new MicrometerMetricsOptions()
-                        .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true)).setEnabled(true));
+                .setWorkerPoolSize(options.getWorkerPoolSize()).setMetricsOptions(options.getMetricsOptions());
 
         if (!options.isClustered()) {
             return succeededFuture(Vertx.vertx(vertxOptions));
