@@ -1,27 +1,270 @@
 {
   "nextVersion" : {
     "major" : 0,
-    "minor" : 6,
-    "patch" : 3,
+    "minor" : 8,
+    "patch" : 0,
     "preReleaseParts" : [ ],
     "buildMetaDataParts" : [ ],
     "preRelease" : "",
     "buildMetaData" : "",
-    "initialDevelopment" : true,
-    "stable" : true
+    "stable" : true,
+    "initialDevelopment" : true
   },
   "lastVersion" : {
     "major" : 0,
-    "minor" : 6,
-    "patch" : 2,
+    "minor" : 7,
+    "patch" : 0,
     "preReleaseParts" : [ ],
     "buildMetaDataParts" : [ ],
     "preRelease" : "",
     "buildMetaData" : "",
-    "initialDevelopment" : true,
-    "stable" : true
+    "stable" : true,
+    "initialDevelopment" : true
   },
   "tags" : [ {
+    "version" : {
+      "major" : 0,
+      "minor" : 7,
+      "patch" : 0,
+      "preReleaseParts" : [ ],
+      "buildMetaDataParts" : [ ],
+      "preRelease" : "",
+      "buildMetaData" : "",
+      "stable" : true,
+      "initialDevelopment" : true
+    },
+    "releaseDate" : "2021-12-15 11:08:43.000 +0100",
+    "sections" : [ {
+      "title" : "Features",
+      "commits" : [ {
+        "hashFull" : "6286fd1a8ba2da4f428f3a0146f5451c7a05aad3",
+        "hash" : "6286fd1a8ba2da4",
+        "hash7" : "6286fd1",
+        "hash8" : "6286fd1a",
+        "commitTime" : "2021-12-14 09:04:14.000 +0100",
+        "commitTimeLong" : 1639469054,
+        "message" : "feat: move MetricOptions to NeonBeeOptions\n\nBy moving the MetricOptions to the NeonBeeOptions, we are able to change the MetricOptions in a LauncherPreProcessor.\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2021-12-13 17:38:00.000 +0100",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2021-12-14 09:04:14.000 +0100",
+          "name" : "halber",
+          "email" : "michael.halberstadt@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/6286fd1a8ba2da4f428f3a0146f5451c7a05aad3",
+        "commitType" : "feat",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "move MetricOptions to NeonBeeOptions",
+        "commitBody" : "By moving the MetricOptions to the NeonBeeOptions, we are able to change the MetricOptions in a LauncherPreProcessor.",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "feat",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "move MetricOptions to NeonBeeOptions",
+        "messageTitle" : "feat: move MetricOptions to NeonBeeOptions",
+        "messageBody" : "By moving the MetricOptions to the NeonBeeOptions, we are able to change the MetricOptions in a LauncherPreProcessor."
+      }, {
+        "hashFull" : "56a160131e71bb87bda8ad2e948a0e4e57706767",
+        "hash" : "56a160131e71bb8",
+        "hash7" : "56a1601",
+        "hash8" : "56a16013",
+        "commitTime" : "2021-12-15 10:53:41.000 +0100",
+        "commitTimeLong" : 1639562021,
+        "message" : "feat: make usage of createQualifiedName more resilient\n\nWhen defining a name space via annotation, it is automatically casted to\nlower case. Now createQualifiedName follows the same rules by casting\npassed name spaces automatically to lower case.",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2021-12-15 10:28:56.000 +0100",
+          "name" : "Pascal Krause",
+          "email" : "pascal.krause@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2021-12-15 10:53:41.000 +0100",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/56a160131e71bb87bda8ad2e948a0e4e57706767",
+        "commitType" : "feat",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "make usage of createQualifiedName more resilient",
+        "commitBody" : "When defining a name space via annotation, it is automatically casted to\nlower case. Now createQualifiedName follows the same rules by casting\npassed name spaces automatically to lower case.",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "feat",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "make usage of createQualifiedName more resilient",
+        "messageTitle" : "feat: make usage of createQualifiedName more resilient",
+        "messageBody" : "When defining a name space via annotation, it is automatically casted to\nlower case. Now createQualifiedName follows the same rules by casting\npassed name spaces automatically to lower case."
+      } ]
+    }, {
+      "title" : "Code Refactoring",
+      "commits" : [ {
+        "hashFull" : "48e17700a222aaedaffb6e4327e71bbb76c4bfad",
+        "hash" : "48e17700a222aae",
+        "hash7" : "48e1770",
+        "hash8" : "48e17700",
+        "commitTime" : "2021-12-04 17:34:27.000 +0100",
+        "commitTimeLong" : 1638635667,
+        "message" : "refactor: remove dependency to CompilingClassLoader of Vert.x",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2021-12-04 14:03:39.000 +0100",
+          "name" : "Pascal Krause",
+          "email" : "pascal.krause@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2021-12-04 17:34:27.000 +0100",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/48e17700a222aaedaffb6e4327e71bbb76c4bfad",
+        "commitType" : "refactor",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "remove dependency to CompilingClassLoader of Vert.x",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "refactor",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "remove dependency to CompilingClassLoader of Vert.x",
+        "messageTitle" : "refactor: remove dependency to CompilingClassLoader of Vert.x",
+        "messageBody" : ""
+      } ]
+    }, {
+      "title" : "Build System",
+      "commits" : [ {
+        "hashFull" : "c498f707f4d53d05b5c5daafcbe300d52f92d6a3",
+        "hash" : "c498f707f4d53d0",
+        "hash7" : "c498f70",
+        "hash8" : "c498f707",
+        "commitTime" : "2021-12-04 17:34:27.000 +0100",
+        "commitTimeLong" : 1638635667,
+        "message" : "build(deps): bump Vert.x from 4.1.0 to 4.2.1",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2021-11-17 15:04:39.000 +0100",
+          "name" : "Pascal Krause",
+          "email" : "pascal.krause@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2021-12-04 17:34:27.000 +0100",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/c498f707f4d53d05b5c5daafcbe300d52f92d6a3",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump Vert.x from 4.1.0 to 4.2.1",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump Vert.x from 4.1.0 to 4.2.1",
+        "messageTitle" : "build(deps): bump Vert.x from 4.1.0 to 4.2.1",
+        "messageBody" : ""
+      }, {
+        "hashFull" : "db17790568652b9b9dafb85dcefe2e6006b4bc8c",
+        "hash" : "db17790568652b9",
+        "hash7" : "db17790",
+        "hash8" : "db177905",
+        "commitTime" : "2021-12-15 11:08:43.000 +0100",
+        "commitTimeLong" : 1639562923,
+        "message" : "build(deps): bump Vert.x from 4.2.1 to 4.2.2",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2021-12-15 10:44:47.000 +0100",
+          "name" : "Pascal Krause",
+          "email" : "pascal.krause@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2021-12-15 11:08:43.000 +0100",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/db17790568652b9b9dafb85dcefe2e6006b4bc8c",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump Vert.x from 4.2.1 to 4.2.2",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump Vert.x from 4.2.1 to 4.2.2",
+        "messageTitle" : "build(deps): bump Vert.x from 4.2.1 to 4.2.2",
+        "messageBody" : ""
+      } ]
+    } ]
+  }, {
     "version" : {
       "major" : 0,
       "minor" : 6,
@@ -30,10 +273,10 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
-    "releaseDate" : "2021-11-23 12:05:23.000 +0100",
+    "releaseDate" : "2021-11-23 12:25:14.000 +0100",
     "sections" : [ {
       "title" : "Bug Fixes",
       "commits" : [ {
@@ -138,8 +381,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-10-05 13:44:34.000 +0200",
     "sections" : [ {
@@ -199,8 +442,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-10-04 15:47:42.000 +0200",
     "sections" : [ {
@@ -1686,8 +1929,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-07-27 09:22:26.000 +0200",
     "sections" : [ {
@@ -2020,8 +2263,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-06-07 07:52:14.000 +0200",
     "sections" : [ {
@@ -3595,8 +3838,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-03-18 14:45:15.000 +0100",
     "sections" : [ {
@@ -3979,8 +4222,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-03-10 16:24:12.000 +0100",
     "sections" : [ {

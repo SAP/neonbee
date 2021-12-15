@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.7.0 (2021-12-15)
+
+### Features
+
+- move MetricOptions to NeonBeeOptions ([6286fd1a](https://github.com/SAP/neonbee/commit/6286fd1a8ba2da4f428f3a0146f5451c7a05aad3))
+- make usage of createQualifiedName more resilient ([56a16013](https://github.com/SAP/neonbee/commit/56a160131e71bb87bda8ad2e948a0e4e57706767))
+
+
+### Code Refactoring
+
+- remove dependency to CompilingClassLoader of Vert.x ([48e17700](https://github.com/SAP/neonbee/commit/48e17700a222aaedaffb6e4327e71bbb76c4bfad))
+
+
+### Build System
+
+- **deps**: bump Vert.x from 4.1.0 to 4.2.1 ([c498f707](https://github.com/SAP/neonbee/commit/c498f707f4d53d05b5c5daafcbe300d52f92d6a3))
+- **deps**: bump Vert.x from 4.2.1 to 4.2.2 ([db177905](https://github.com/SAP/neonbee/commit/db17790568652b9b9dafb85dcefe2e6006b4bc8c))
+
+
 ## 0.6.2 (2021-11-23)
 
 ### Bug Fixes
