@@ -17,6 +17,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -342,7 +343,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
      * @return Qualified name of namespace and verticle name
      */
     public static String createQualifiedName(String namespace, String verticleName) {
-        return String.format("%s/%s", namespace, verticleName);
+        return String.format("%s/%s", namespace.toLowerCase(Locale.ROOT), verticleName);
     }
 
     /**
