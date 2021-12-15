@@ -121,6 +121,7 @@ class DataVerticleTest extends DataVerticleTestBase {
     @Test
     void createQualifiedName() {
         assertThat(DataVerticle.createQualifiedName("namespace", "verticle")).isEqualTo("namespace/verticle");
+        assertThat(DataVerticle.createQualifiedName("nameSpace", "verticle")).isEqualTo("namespace/verticle");
     }
 
     private static class DataVerticleImpl0 extends DataVerticle<String> {
