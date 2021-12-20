@@ -10,6 +10,7 @@ import static io.vertx.core.Future.succeededFuture;
 import static java.lang.System.setProperty;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,7 +23,6 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.config.ServerConfig;
 import io.neonbee.data.DataQuery;
@@ -73,6 +74,7 @@ import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.LocalMap;
+import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 public class NeonBee {
@@ -153,12 +155,14 @@ public class NeonBee {
 
     private final Set<String> localConsumers = new ConcurrentHashSet<>();
 
+    private final CompositeMeterRegistry compositeMeterRegistry;
+
     /**
      * Convenience method for returning the current NeonBee instance.
      * <p>
      * Important: Will only return a value in case a Vert.x context is available, otherwise returns null. Attention:
      * This method is NOT signature compliant to {@link Vertx#vertx()}! It will NOT create a new NeonBee instance,
-     * please use {@link NeonBee#create(NeonBeeOptions)} or {@link NeonBee#create(Supplier, NeonBeeOptions)} instead.
+     * please use {@link NeonBee#create(NeonBeeOptions)} or {@link NeonBee#create(Function, NeonBeeOptions)} instead.
      *
      * @return A NeonBee instance or null
      */
@@ -195,12 +199,12 @@ public class NeonBee {
      * @return the future to a new NeonBee instance initialized with default options and a new Vert.x instance
      */
     public static Future<NeonBee> create(NeonBeeOptions options) {
-        return create((OwnVertxSupplier) () -> newVertx(options), options);
+        return create((OwnVertxFactory) (vertxOptions) -> newVertx(vertxOptions, options), options);
     }
 
     @VisibleForTesting
     @SuppressWarnings({ "PMD.EmptyCatchBlock", "PMD.AvoidCatchingThrowable" })
-    static Future<NeonBee> create(Supplier<Future<Vertx>> vertxFutureSupplier, NeonBeeOptions options) {
+    static Future<NeonBee> create(Function<VertxOptions, Future<Vertx>> vertxFactory, NeonBeeOptions options) {
         try {
             // create the NeonBee working and logging directory (as the only mandatory directory for NeonBee)
             Files.createDirectories(options.getLogDirectory());
@@ -217,12 +221,19 @@ public class NeonBee {
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
         logger = LoggerFactory.getLogger(NeonBee.class);
 
+        VertxOptions vertxOptions = new VertxOptions().setEventLoopPoolSize(options.getEventLoopPoolSize())
+                .setWorkerPoolSize(options.getWorkerPoolSize());
+
+        CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
+        vertxOptions.setMetricsOptions(
+                new MicrometerMetricsOptions().setMicrometerRegistry(compositeMeterRegistry).setEnabled(true));
+
         // create a Vert.x instance (clustered or unclustered)
-        return vertxFutureSupplier.get().compose(vertx -> {
+        return vertxFactory.apply(vertxOptions).compose(vertx -> {
             // at this point at any failure that occurs, it is in our responsibility to properly close down the created
             // Vert.x instance again. we have to be vigilant the fact that a runtime exception could happen anytime!
             Function<Throwable, Future<Void>> closeVertx = throwable -> {
-                if (!(vertxFutureSupplier instanceof OwnVertxSupplier)) {
+                if (!(vertxFactory instanceof OwnVertxFactory)) {
                     // the Vert.x instance is *not* owned by us, thus don't close it either
                     logger.error("Failure during bootstrap phase.", throwable); // NOPMD slf4j
                     return failedFuture(throwable);
@@ -238,10 +249,18 @@ public class NeonBee {
 
             try {
                 // create a NeonBee instance, hook registry and close handler
-                NeonBee neonBee = new NeonBee(vertx, options);
+                NeonBee neonBee = new NeonBee(vertx, options, compositeMeterRegistry);
 
                 // load the configuration and boot it up, on failure close Vert.x
-                return neonBee.loadConfig().compose(config -> neonBee.boot()).recover(closeVertx).map(neonBee);
+                return neonBee.loadConfig().compose(config -> {
+                    try {
+                        config.createMicrometerRegistries().forEach(neonBee.compositeMeterRegistry::add);
+                        return succeededFuture(config);
+                    } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException
+                            | InstantiationException | IllegalAccessException e) {
+                        return failedFuture(e);
+                    }
+                }).compose(config -> neonBee.boot()).recover(closeVertx).map(neonBee);
             } catch (Throwable t) {
                 // on any exception (e.g. during the initialization of a NeonBee object) don't forget to close Vert.x!
                 return closeVertx.apply(t).mapEmpty();
@@ -250,10 +269,7 @@ public class NeonBee {
     }
 
     @VisibleForTesting
-    static Future<Vertx> newVertx(NeonBeeOptions options) {
-        VertxOptions vertxOptions = new VertxOptions().setEventLoopPoolSize(options.getEventLoopPoolSize())
-                .setWorkerPoolSize(options.getWorkerPoolSize()).setMetricsOptions(options.getMetricsOptions());
-
+    static Future<Vertx> newVertx(VertxOptions vertxOptions, NeonBeeOptions options) {
         if (!options.isClustered()) {
             return succeededFuture(Vertx.vertx(vertxOptions));
         } else {
@@ -470,9 +486,10 @@ public class NeonBee {
     }
 
     @VisibleForTesting
-    NeonBee(Vertx vertx, NeonBeeOptions options) {
+    NeonBee(Vertx vertx, NeonBeeOptions options, CompositeMeterRegistry compositeMeterRegistry) {
         this.vertx = vertx;
         this.options = options;
+        this.compositeMeterRegistry = compositeMeterRegistry;
 
         // to be able to retrieve the NeonBee instance from any point you have a Vert.x instance add it to a global map
         NEONBEE_INSTANCES.put(vertx, this);
@@ -480,7 +497,8 @@ public class NeonBee {
         registerCloseHandler(vertx);
     }
 
-    private Future<NeonBeeConfig> loadConfig() {
+    @VisibleForTesting
+    Future<NeonBeeConfig> loadConfig() {
         return NeonBeeConfig.load(vertx).onSuccess(config -> this.config = config);
     }
 
@@ -600,9 +618,18 @@ public class NeonBee {
     }
 
     /**
-     * Hidden marker supplier interface, that indicates to the boot-stage that an own Vert.x instance was created and we
-     * must be held responsible responsible to close it again.
+     * Get the {@link CompositeMeterRegistry}.
+     *
+     * @return the {@link CompositeMeterRegistry}
+     */
+    public CompositeMeterRegistry getCompositeMeterRegistry() {
+        return compositeMeterRegistry;
+    }
+
+    /**
+     * Hidden marker function interface, that indicates to the boot-stage that an own Vert.x instance was created, and
+     * we must be held responsible to close it again.
      */
     @VisibleForTesting
-    interface OwnVertxSupplier extends Supplier<Future<Vertx>> {}
+    interface OwnVertxFactory extends Function<VertxOptions, Future<Vertx>> {}
 }

@@ -34,6 +34,17 @@ public class NeonBeeConfigConverter {
                     obj.setEventBusTimeout(((Number) member.getValue()).intValue());
                 }
                 break;
+            case "micrometerRegistries":
+                if (member.getValue() instanceof JsonArray) {
+                    java.util.ArrayList<io.neonbee.config.MicrometerRegistryConfig> list = new java.util.ArrayList<>();
+                    ((Iterable<Object>) member.getValue()).forEach(item -> {
+                        if (item instanceof JsonObject)
+                            list.add(new io.neonbee.config.MicrometerRegistryConfig(
+                                    (io.vertx.core.json.JsonObject) item));
+                    });
+                    obj.setMicrometerRegistries(list);
+                }
+                break;
             case "platformClasses":
                 if (member.getValue() instanceof JsonArray) {
                     java.util.ArrayList<java.lang.String> list = new java.util.ArrayList<>();
@@ -69,6 +80,11 @@ public class NeonBeeConfigConverter {
             json.put("eventBusCodecs", map);
         }
         json.put("eventBusTimeout", obj.getEventBusTimeout());
+        if (obj.getMicrometerRegistries() != null) {
+            JsonArray array = new JsonArray();
+            obj.getMicrometerRegistries().forEach(item -> array.add(item.toJson()));
+            json.put("micrometerRegistries", array);
+        }
         if (obj.getPlatformClasses() != null) {
             JsonArray array = new JsonArray();
             obj.getPlatformClasses().forEach(item -> array.add(item));

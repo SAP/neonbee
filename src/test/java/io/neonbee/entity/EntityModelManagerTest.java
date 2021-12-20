@@ -130,9 +130,9 @@ class EntityModelManagerTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if the models from classpath can be loaded ")
-    void loadFromClassPathTest(Vertx vertx, VertxTestContext testContext) throws IOException {
+    void loadFromClassPathTest(Vertx vertx, VertxTestContext testContext) {
         Loader loader = new EntityModelManager.Loader(vertx);
         loader.scanClassPath().onComplete(testContext.succeeding(result -> testContext.verify(() -> {
             assertThat(loader.models.get("io.neonbee.test1").getEdmx().getEdm().getEntityContainer().getNamespace())
