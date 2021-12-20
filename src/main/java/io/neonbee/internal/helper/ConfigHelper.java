@@ -89,7 +89,7 @@ public final class ConfigHelper {
     }
 
     /**
-     * Collects the additional configuration out of an configuration object.
+     * Collects the additional configuration out of a configuration object.
      *
      * What this method actually does is to extract all values of a configuration object, which are not part of a given
      * set of keys. The properties are then returned as a new (additional configuration) JSON object.
