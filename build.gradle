@@ -9,14 +9,14 @@ plugins {
     id 'checkstyle'
 
     // community plugins
-    id 'com.palantir.docker' version '0.28.0'
-    id 'com.diffplug.spotless' version '5.15.0'
+    id 'com.palantir.docker' version '0.31.0'
+    id 'com.diffplug.spotless' version '6.0.5'
     id 'net.ltgt.errorprone' version '2.0.2'
-    id 'com.github.spotbugs' version '4.7.5'
-    id 'org.ajoberstar.grgit' version '4.1.0'
+    id 'com.github.spotbugs' version '5.0.3'
+    id 'org.ajoberstar.grgit' version '4.1.1'
     id 'com.github.ksoichiro.console.reporter' version '0.6.3'
     id 'se.bjurr.violations.violations-gradle-plugin' version '1.50.16'
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.github.johnrengelman.shadow' version '7.1.0'
     id 'org.sonarqube' version '3.3'
     id 'team.yi.semantic-gitlog' version '0.5.17'
 }
@@ -103,8 +103,8 @@ dependencies {
     testImplementation group: 'org.junit.platform', name: 'junit-platform-launcher', version: '1.8.0'
 
     // Gradle plugin dependencies
-    errorprone group: 'com.google.errorprone', name: 'error_prone_core', version: '2.9.0'
-    checkstyle group: 'com.puppycrawl.tools', name: 'checkstyle', version: '9.0'
+    errorprone group: 'com.google.errorprone', name: 'error_prone_core', version: '2.10.0'
+    checkstyle group: 'com.puppycrawl.tools', name: 'checkstyle', version: '9.2'
 }
 
 // we need to define the generated source set first, because it is needed by staticCodeCheck
