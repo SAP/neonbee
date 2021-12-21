@@ -99,8 +99,9 @@ dependencies {
     testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: '1.5.0'
 
     // Required for Eclipse to run Unit tests.
-    testImplementation group: 'org.junit.platform', name: 'junit-platform-commons', version: '1.8.0'
-    testImplementation group: 'org.junit.platform', name: 'junit-platform-launcher', version: '1.8.0'
+    def junit_platform_version = '1.8.2'
+    testImplementation group: 'org.junit.platform', name: 'junit-platform-commons', version: junit_platform_version
+    testImplementation group: 'org.junit.platform', name: 'junit-platform-launcher', version: junit_platform_version
 
     // Gradle plugin dependencies
     errorprone group: 'com.google.errorprone', name: 'error_prone_core', version: '2.10.0'
