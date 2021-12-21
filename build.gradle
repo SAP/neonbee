@@ -40,7 +40,7 @@ repositories {
 
 dependencies {
     // Framework dependencies
-    def vertx_version = '4.2.2'
+    def vertx_version = '4.2.3'
     implementation group: 'io.vertx', name: 'vertx-core', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-web-client', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-web', version: vertx_version
@@ -54,7 +54,7 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-auth-oauth2', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-hazelcast', version: vertx_version
 
-    def jackson_version = '2.11.3'
+    def jackson_version = '2.13.1'
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jackson_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jackson_version
