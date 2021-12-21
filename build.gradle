@@ -87,7 +87,7 @@ dependencies {
     testImplementation group: 'com.google.truth', name: 'truth', version: truth_version
     testImplementation group: 'com.google.truth.extensions', name: 'truth-java8-extension', version: truth_version
 
-    def mockito_version = '3.12.4'
+    def mockito_version = '4.2.0'
     testImplementation group: 'org.mockito', name: 'mockito-core', version: mockito_version
     testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: mockito_version
 
