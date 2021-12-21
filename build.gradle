@@ -91,7 +91,7 @@ dependencies {
     testImplementation group: 'org.mockito', name: 'mockito-core', version: mockito_version
     testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: mockito_version
 
-    def jupiter_version = '5.8.0'
+    def jupiter_version = '5.8.2'
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: jupiter_version
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: jupiter_version
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: jupiter_version
