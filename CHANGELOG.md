@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.8.0 (2022-01-27)
+
+### Features
+
+- add custom micrometer registries via NeonBeeConfig ([6a11d795](https://github.com/SAP/neonbee/commit/6a11d795ae624b16e2a2bb09d2a30f1b3d17434a))
+
+
+### Documentation
+
+- fix typo in github release guide ([33065169](https://github.com/SAP/neonbee/commit/33065169feeedb87c6b7d7579c909b43a9c98acf))
+
+
+### Build System
+
+- **deps**: upgrade `vertx` to 4.2.3 ([ea793306](https://github.com/SAP/neonbee/commit/ea7933067a0c81795932122062c3b72f4ae2bd4c))
+- **deps**: upgrade `micrometer-registry-prometheus` to 1.8.1 ([c1b4168c](https://github.com/SAP/neonbee/commit/c1b4168c320e5db780ee5a7f521eddc8cbd63c90))
+- **deps**: upgrade `cds4j-core` to 1.25.0 ([c1408cbd](https://github.com/SAP/neonbee/commit/c1408cbd1fcd3b72f75fcfcb4d40aae67e51a4b8))
+- **deps**: upgrade `mockito` to 4.2.0 ([b78c3448](https://github.com/SAP/neonbee/commit/b78c3448722553fa19e2c080d27a940b17663d76))
+- **deps**: upgrade `junit` to 5.8.2 ([ac8d9c36](https://github.com/SAP/neonbee/commit/ac8d9c366f1f7823f6bd27b34520d47ad6976c38))
+- **deps**: upgrade `guava` to 31.0.1-jre ([9911f356](https://github.com/SAP/neonbee/commit/9911f35654f68e1a689594e35a1b9046d8ad529b))
+- **deps**: upgrade gradle plugin dependencies ([7e7bdcec](https://github.com/SAP/neonbee/commit/7e7bdcec890f600ec1a96f920eac6fbfe6e30410))
+- **deps**: upgrade `logback-classic` to 1.2.9 ([67fff831](https://github.com/SAP/neonbee/commit/67fff8318103dad71a00bdb0e597bcbdc772bea1))
+- **deps**: upgrade `junit-platform` to 1.8.2 ([18feb6d7](https://github.com/SAP/neonbee/commit/18feb6d7a43794d482473d63ca2df60ff98b84c3))
+- **deps**: upgrade `slf4j-api` to 1.7.32 ([0953e401](https://github.com/SAP/neonbee/commit/0953e4018e7d9d0fca60f83197c5180a8defc4bf))
+
+
+### Continuous Integration
+
+- update commitlint github action to `@v4`, fixes #91 ([#91](https://github.com/SAP/neonbee/issues/91)) ([7803220e](https://github.com/SAP/neonbee/commit/7803220ea87737ce13d87ad2cbe6ebb683586745))
+
+
 ## 0.7.0 (2021-12-15)
 
 ### Features
