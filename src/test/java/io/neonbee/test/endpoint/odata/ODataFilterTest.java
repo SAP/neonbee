@@ -5,6 +5,7 @@ import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_3;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_4;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_5;
+import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_6;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.getDeclaredEntityModel;
 
 import java.nio.file.Path;
@@ -73,10 +74,12 @@ class ODataFilterTest extends ODataEndpointTestBase {
                         List.of(EXPECTED_ENTITY_DATA_5)),
                 Arguments.of(filterOf("trim(PropertyString100) ne 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"),
                         List.of(EXPECTED_ENTITY_DATA_1, EXPECTED_ENTITY_DATA_2, EXPECTED_ENTITY_DATA_3,
-                                EXPECTED_ENTITY_DATA_4)),
+                                EXPECTED_ENTITY_DATA_4, EXPECTED_ENTITY_DATA_6)),
                 Arguments.of(filterOf(
                         "concat(concat(PropertyString100, '-DELIMITER-'), PropertyString) eq '     ABCDEFGHIJKLMNOPQRSTUVWXYZ -DELIMITER-D'"),
-                        List.of(EXPECTED_ENTITY_DATA_5)));
+                        List.of(EXPECTED_ENTITY_DATA_5)),
+                Arguments.of(filterOf("(contains(PropertyString100,'asdf') or contains(PropertyString100,'asdf'))"),
+                        List.of()));
 
         Stream<Arguments> comperatorsDouble = Stream.of(
                 Arguments.of(filterOf("PropertyDouble eq 0.15 or PropertyDouble eq 2.35"),
@@ -85,8 +88,8 @@ class ODataFilterTest extends ODataEndpointTestBase {
                         List.of(EXPECTED_ENTITY_DATA_4, EXPECTED_ENTITY_DATA_5)),
                 Arguments.of(filterOf("PropertyDouble ge 2.35"),
                         List.of(EXPECTED_ENTITY_DATA_3, EXPECTED_ENTITY_DATA_4, EXPECTED_ENTITY_DATA_5)),
-                Arguments.of(filterOf("PropertyDouble le 2.35"),
-                        List.of(EXPECTED_ENTITY_DATA_1, EXPECTED_ENTITY_DATA_2, EXPECTED_ENTITY_DATA_3)));
+                Arguments.of(filterOf("PropertyDouble le 2.35"), List.of(EXPECTED_ENTITY_DATA_1, EXPECTED_ENTITY_DATA_2,
+                        EXPECTED_ENTITY_DATA_3, EXPECTED_ENTITY_DATA_6)));
 
         Stream<Arguments> comperatorsDate = Stream.of(
                 Arguments.of(filterOf("year(PropertyDate) eq 2010"), List.of(EXPECTED_ENTITY_DATA_5)),
@@ -104,13 +107,13 @@ class ODataFilterTest extends ODataEndpointTestBase {
                         List.of(EXPECTED_ENTITY_DATA_2)),
                 Arguments.of(filterOf("PropertyDateTime eq 2010-01-20T11:30:05Z"), List.of(EXPECTED_ENTITY_DATA_5)));
 
-        Stream<Arguments> comperatorsInteger =
-                Stream.of(Arguments.of(filterOf("PropertyInt32 gt 3"), List.of(EXPECTED_ENTITY_DATA_5)),
-                        Arguments.of(filterOf("PropertyInt32 lt 4"), List.of(EXPECTED_ENTITY_DATA_1,
-                                EXPECTED_ENTITY_DATA_2, EXPECTED_ENTITY_DATA_3, EXPECTED_ENTITY_DATA_4)));
+        Stream<Arguments> comperatorsInteger = Stream.of(
+                Arguments.of(filterOf("PropertyInt32 gt 3"), List.of(EXPECTED_ENTITY_DATA_5, EXPECTED_ENTITY_DATA_6)),
+                Arguments.of(filterOf("PropertyInt32 lt 4"), List.of(EXPECTED_ENTITY_DATA_1, EXPECTED_ENTITY_DATA_2,
+                        EXPECTED_ENTITY_DATA_3, EXPECTED_ENTITY_DATA_4)));
 
-        Stream<Arguments> comperatorsBoolean = Stream.of(Arguments.of(filterOf("PropertyBoolean eq false"),
-                List.of(EXPECTED_ENTITY_DATA_1, EXPECTED_ENTITY_DATA_3, EXPECTED_ENTITY_DATA_5)));
+        Stream<Arguments> comperatorsBoolean = Stream.of(Arguments.of(filterOf("PropertyBoolean eq false"), List
+                .of(EXPECTED_ENTITY_DATA_1, EXPECTED_ENTITY_DATA_3, EXPECTED_ENTITY_DATA_5, EXPECTED_ENTITY_DATA_6)));
 
         return Stream.of(inFunction, stringFunctions, comperatorsDouble, comperatorsDate, comperatorsInteger,
                 comperatorsBoolean).flatMap(i -> i);

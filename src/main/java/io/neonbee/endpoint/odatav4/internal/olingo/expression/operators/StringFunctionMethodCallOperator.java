@@ -8,6 +8,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Supplier;
 
 import org.apache.olingo.commons.api.edm.EdmType;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
@@ -99,7 +100,8 @@ public class StringFunctionMethodCallOperator extends MethodCallOperator {
     }
 
     public ExpressionVisitorOperand contains() throws ODataApplicationException {
-        return stringFunction(parameters -> parameters.get(0).contains(parameters.get(1)), PRIMITIVE_BOOLEAN);
+        return stringFunction(parameters -> parameters.get(0).contains(parameters.get(1)), PRIMITIVE_BOOLEAN,
+                () -> new ExpressionVisitorOperand(routingContext, false, PRIMITIVE_BOOLEAN));
     }
 
     private List<String> getParametersAsString() throws ODataApplicationException {
@@ -122,9 +124,15 @@ public class StringFunctionMethodCallOperator extends MethodCallOperator {
 
     private ExpressionVisitorOperand stringFunction(StringFunction stringFunction, EdmType returnValue)
             throws ODataApplicationException {
+        return stringFunction(stringFunction, returnValue,
+                () -> new ExpressionVisitorOperand(routingContext, null, EdmPrimitiveNull.getInstance()));
+    }
+
+    private ExpressionVisitorOperand stringFunction(StringFunction stringFunction, EdmType returnValue,
+            Supplier<ExpressionVisitorOperand> nullParameterOperandSupplier) throws ODataApplicationException {
         List<String> stringParameters = getParametersAsString();
         if (stringParameters.contains(null)) {
-            return new ExpressionVisitorOperand(routingContext, null, EdmPrimitiveNull.getInstance());
+            return nullParameterOperandSupplier.get();
         } else {
             return new ExpressionVisitorOperand(routingContext, stringFunction.perform(stringParameters), returnValue);
         }
