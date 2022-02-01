@@ -11,6 +11,7 @@ import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_3;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_4;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_5;
+import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_6;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.TEST_ENTITY_SET_FQN;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.getDeclaredEntityModel;
 
@@ -46,7 +47,7 @@ import io.vertx.junit5.VertxTestContext;
 
 class ODataReadEntitiesTest extends ODataEndpointTestBase {
     private static final List<JsonObject> ALL_ENTITIES = List.of(EXPECTED_ENTITY_DATA_1, EXPECTED_ENTITY_DATA_2,
-            EXPECTED_ENTITY_DATA_3, EXPECTED_ENTITY_DATA_4, EXPECTED_ENTITY_DATA_5);
+            EXPECTED_ENTITY_DATA_3, EXPECTED_ENTITY_DATA_4, EXPECTED_ENTITY_DATA_5, EXPECTED_ENTITY_DATA_6);
 
     @Override
     protected List<Path> provideEntityModels() {
@@ -112,7 +113,7 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
         Map<String, String> countQuery = Map.of("$count", "true");
         Future<HttpResponse<Buffer>> response =
                 requestOData(new ODataRequest(TEST_ENTITY_SET_FQN).setQuery(countQuery));
-        assertOData(response, body -> assertThat(body.toJsonObject().getMap()).containsAtLeast("@odata.count", 5),
+        assertOData(response, body -> assertThat(body.toJsonObject().getMap()).containsAtLeast("@odata.count", 6),
                 testContext).compose(v -> assertODataEntitySetContainsExactly(response, ALL_ENTITIES, testContext))
                         .onComplete(testContext.succeedingThenComplete());
     }
@@ -134,7 +135,7 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 and the correct count of entities")
     void existingEntitiesCountTest(VertxTestContext testContext) {
-        assertOData(requestOData(new ODataRequest(TEST_ENTITY_SET_FQN).setCount()), "5", testContext)
+        assertOData(requestOData(new ODataRequest(TEST_ENTITY_SET_FQN).setCount()), "6", testContext)
                 .onComplete(testContext.succeedingThenComplete());
     }
 
@@ -174,7 +175,7 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
     // Please note that the test method name contains "LooseUri" and therefore the behavior is different.
     void existingEntitiesCountWithoutFilterLooseUriConversionTest(VertxTestContext testContext) {
         FullQualifiedName looseFQN = new FullQualifiedName("io-neonbee-test-test-service1", "AllPropertiesNullable");
-        assertOData(requestOData(new ODataRequest(looseFQN).setCount()), "5", testContext)
+        assertOData(requestOData(new ODataRequest(looseFQN).setCount()), "6", testContext)
                 .onComplete(testContext.succeedingThenComplete());
     }
 }
