@@ -21,10 +21,10 @@ public class SelfFirstClassLoader extends URLClassLoader {
     private final Map<String, Class<?>> loadedClasses = new ConcurrentHashMap<>();
 
     /**
-     * Creates a SelfFirstClassLoader which tries to load classes from its own classpath first. If a class can't be
-     * found in its own classpath, it tries to load the class from the parent ClassLoader.
+     * Creates a SelfFirstClassLoader which tries to load classes from its own class path first. If a class can't be
+     * found in its own class path, it tries to load the class from the parent ClassLoader.
      *
-     * @param urls   The classpath of the SelfFirstClassLoader
+     * @param urls   The class path of the SelfFirstClassLoader
      * @param parent The parent ClassLoader
      */
     public SelfFirstClassLoader(URL[] urls, ClassLoader parent) {
@@ -33,8 +33,8 @@ public class SelfFirstClassLoader extends URLClassLoader {
     }
 
     /**
-     * Creates a SelfFirstClassLoader which tries to load classes from its own classpath first. If a class can't be
-     * found in its own classpath, it tries to load the class from the parent ClassLoader. With this constructor it is
+     * Creates a SelfFirstClassLoader which tries to load classes from its own class path first. If a class can't be
+     * found in its own class path, it tries to load the class from the parent ClassLoader. With this constructor it is
      * possible to pass a List of classes which should be still loaded from parent ClassLoader. If a passed String is
      * empty or null, it will be filtered out.
      *
@@ -49,7 +49,7 @@ public class SelfFirstClassLoader extends URLClassLoader {
      * *               -&gt; Would load all classes from parent. (If this is required, a normal ClassLoader might fit better)
      * </pre>
      *
-     * @param urls            The classpath of the SelfFirstClassLoader
+     * @param urls            The class path of the SelfFirstClassLoader
      * @param parent          The parent ClassLoader
      * @param parentPreferred The classes which should be loaded from parent, if found.
      */

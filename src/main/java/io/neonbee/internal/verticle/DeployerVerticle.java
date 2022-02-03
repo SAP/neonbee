@@ -3,12 +3,12 @@ package io.neonbee.internal.verticle;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import io.neonbee.internal.deploy.NeonBeeModule;
+import io.neonbee.NeonBee;
+import io.neonbee.internal.deploy.DeployableModule;
+import io.neonbee.internal.deploy.Deployment;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -16,7 +16,7 @@ import io.vertx.core.Promise;
 public class DeployerVerticle extends WatchVerticle {
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
-    private final Map<Path, NeonBeeModule> modules = new ConcurrentHashMap<>();
+    private final Map<Path, Deployment> deployedModules = new ConcurrentHashMap<>();
 
     /**
      * Creates a DeployerVerticle that watches for new NeonBeeModules on the given path.
@@ -54,30 +54,24 @@ public class DeployerVerticle extends WatchVerticle {
             finishPromise.complete();
             return;
         }
-        String correlationId = UUID.randomUUID().toString();
 
-        LOGGER.correlateWith(correlationId).info("Parse NeonBeeModule from JAR file: {}",
-                affectedPath.toAbsolutePath());
-        NeonBeeModule.fromJar(vertx, affectedPath, correlationId).onFailure(t -> {
-            // Log errors from inside of method Deployable.fromJarFile
-            LOGGER.correlateWith(correlationId).error("An error occurred while parsing jar file {}",
-                    affectedPath.toAbsolutePath(), t);
-        }).compose(neonBeeModule ->
-        // The deploy method automatically cleans up in case of failure.
-        neonBeeModule.deploy().compose(v -> {
-            NeonBeeModule replacedModule = modules.put(affectedPath, neonBeeModule);
-            if (Objects.isNull(replacedModule)) {
-                return Future.succeededFuture();
-            }
-            return replacedModule.undeploy().onFailure(t -> {
-                LOGGER.correlateWith(correlationId)
-                        .error("Unexpected error occurred during undeploy of the replaced NeonBeeModule", t);
+        DeployableModule.fromJar(vertx, affectedPath).compose(deployableModule -> {
+            // The deploy method automatically cleans up in case of failure.
+            return deployableModule.deploy(NeonBee.get(vertx)).compose(deployment -> {
+                Deployment replacedModule = deployedModules.put(affectedPath, deployment);
+                if (Objects.isNull(replacedModule)) {
+                    return Future.succeededFuture();
+                }
+                return replacedModule.undeploy().onFailure(t -> {
+                    LOGGER.error("Unexpected error occurred during undeploy of the replaced module", t);
+                });
+            }).onFailure(throwable -> {
+                if (LOGGER.isErrorEnabled()) {
+                    LOGGER.error("Unexpected error occurred during deployment of module from JAR file: {}",
+                            affectedPath.toAbsolutePath(), throwable);
+                }
             });
-        }).onFailure(t -> {
-            LOGGER.correlateWith(correlationId).error(
-                    "Unexpected error occurred during deployment of NeonBeeModule from JAR file: {}",
-                    affectedPath.toAbsolutePath(), t);
-        })).onComplete(finishPromise);
+        }).onComplete(finishPromise);
     }
 
     @Override
@@ -86,10 +80,15 @@ public class DeployerVerticle extends WatchVerticle {
             finishPromise.complete();
             return;
         }
-        Optional.ofNullable(modules.remove(affectedPath))
-                .ifPresentOrElse(moduleToUndeploy -> moduleToUndeploy.undeploy().onFailure(t -> {
-                    LOGGER.correlateWith(moduleToUndeploy.getCorrelationId())
-                            .error("Unexpected error occurred during undeploy", t);
-                }).onComplete(finishPromise), () -> finishPromise.complete());
+
+        Deployment deployedModule = deployedModules.remove(affectedPath);
+        if (deployedModule == null) {
+            finishPromise.complete();
+            return;
+        }
+
+        deployedModule.undeploy().onFailure(t -> {
+            LOGGER.error("Unexpected error occurred during undeploy", t);
+        }).onComplete(finishPromise);
     }
 }

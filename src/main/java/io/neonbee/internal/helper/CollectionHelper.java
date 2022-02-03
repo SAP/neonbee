@@ -22,11 +22,11 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.shareddata.Shareable;
 
-public final class CollectionsHelper {
+public final class CollectionHelper {
     /**
      * This helper class cannot be instantiated.
      */
-    private CollectionsHelper() {}
+    private CollectionHelper() {}
 
     /**
      * Create mutable deep copy of a list by creating a copy of all mutable items and adding them to a new list.
@@ -36,7 +36,7 @@ public final class CollectionsHelper {
      * @return a mutable deep copy of the given list
      */
     public static <T> List<T> mutableCopyOf(List<T> list) {
-        return Optional.ofNullable(list).map(List::stream).orElseGet(Stream::empty).map(CollectionsHelper::copyOf)
+        return Optional.ofNullable(list).map(List::stream).orElseGet(Stream::empty).map(CollectionHelper::copyOf)
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
@@ -48,7 +48,7 @@ public final class CollectionsHelper {
      * @return a mutable deep copy of the given set
      */
     public static <T> Set<T> mutableCopyOf(Set<T> set) {
-        return Optional.ofNullable(set).map(Set::stream).orElseGet(Stream::empty).map(CollectionsHelper::copyOf)
+        return Optional.ofNullable(set).map(Set::stream).orElseGet(Stream::empty).map(CollectionHelper::copyOf)
                 .collect(Collectors.toCollection(HashSet::new));
     }
 
@@ -64,7 +64,7 @@ public final class CollectionsHelper {
      */
     public static <T, C extends Collection<T>> C mutableCopyOf(C collection, Supplier<C> collectionFactory) {
         return Optional.ofNullable(collection).map(Collection::stream).orElseGet(Stream::empty)
-                .map(CollectionsHelper::copyOf).collect(Collectors.toCollection(collectionFactory));
+                .map(CollectionHelper::copyOf).collect(Collectors.toCollection(collectionFactory));
     }
 
     /**
@@ -182,5 +182,4 @@ public final class CollectionsHelper {
             }
         }
     }
-
 }

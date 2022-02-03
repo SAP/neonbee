@@ -1,6 +1,12 @@
 package io.neonbee;
 
 import static ch.qos.logback.classic.util.ContextInitializer.CONFIG_FILE_PROPERTY;
+import static io.neonbee.internal.deploy.DeployableModule.fromJar;
+import static io.neonbee.internal.deploy.DeployableVerticle.fromClass;
+import static io.neonbee.internal.deploy.DeployableVerticle.fromVerticle;
+import static io.neonbee.internal.deploy.Deployables.allTo;
+import static io.neonbee.internal.deploy.Deployables.anyTo;
+import static io.neonbee.internal.deploy.Deployables.fromDeployables;
 import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 import static io.neonbee.internal.helper.HostHelper.getHostIp;
 import static io.neonbee.internal.scanner.DeployableScanner.scanForDeployableClasses;
@@ -10,8 +16,8 @@ import static io.vertx.core.Future.succeededFuture;
 import static java.lang.System.setProperty;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -46,8 +52,9 @@ import io.neonbee.internal.codec.ImmutableBufferMessageCodec;
 import io.neonbee.internal.codec.ImmutableJsonArrayMessageCodec;
 import io.neonbee.internal.codec.ImmutableJsonObjectMessageCodec;
 import io.neonbee.internal.deploy.Deployable;
-import io.neonbee.internal.deploy.Deployment;
+import io.neonbee.internal.deploy.Deployables;
 import io.neonbee.internal.helper.AsyncHelper;
+import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.json.ImmutableJsonArray;
 import io.neonbee.internal.json.ImmutableJsonObject;
 import io.neonbee.internal.scanner.HookScanner;
@@ -64,6 +71,7 @@ import io.neonbee.internal.verticle.ServerVerticle;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import io.vertx.core.Closeable;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
@@ -77,6 +85,7 @@ import io.vertx.core.shareddata.LocalMap;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
+@SuppressWarnings("PMD.CouplingBetweenObjects")
 public class NeonBee {
     /** // @formatter:off
      *
@@ -252,15 +261,7 @@ public class NeonBee {
                 NeonBee neonBee = new NeonBee(vertx, options, compositeMeterRegistry);
 
                 // load the configuration and boot it up, on failure close Vert.x
-                return neonBee.loadConfig().compose(config -> {
-                    try {
-                        config.createMicrometerRegistries().forEach(neonBee.compositeMeterRegistry::add);
-                        return succeededFuture(config);
-                    } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException
-                            | InstantiationException | IllegalAccessException e) {
-                        return failedFuture(e);
-                    }
-                }).compose(config -> neonBee.boot()).recover(closeVertx).map(neonBee);
+                return neonBee.loadConfig().compose(config -> neonBee.boot()).recover(closeVertx).map(neonBee);
             } catch (Throwable t) {
                 // on any exception (e.g. during the initialization of a NeonBee object) don't forget to close Vert.x!
                 return closeVertx.apply(t).mapEmpty();
@@ -289,12 +290,9 @@ public class NeonBee {
                     // set the default timezone and overwrite any configured user.timezone property
                     TimeZone.setDefault(TimeZone.getTimeZone(config.getTimeZone()));
 
-                    // decorate the event bus with in- & outbound interceptors for tracking
-                    decorateEventBus();
-
-                    // further asynchronous initializations which should happen before verticles are getting deployed
-                }).compose(nothing -> all(initializeSharedDataAccessor(), registerCodecs()))
-                .compose(nothing -> deployVerticles()) // deployment of (system) verticles
+                    // further synchronous initializations which should happen before verticles are getting deployed
+                }).compose(nothing -> all(initializeSharedMaps(), decorateEventBus(), createMicrometerRegistries()))
+                .compose(nothing -> all(deployVerticles(), deployModules())) // deployment of verticles & modules
                 .compose(nothing -> hookRegistry.executeHooks(HookType.AFTER_STARTUP)).mapEmpty();
     }
 
@@ -309,53 +307,54 @@ public class NeonBee {
                                 .collect(Collectors.toList())).mapEmpty());
     }
 
+    /**
+     * Initializes a NeonBee local and cluster-wide map for shared usage across NeonBee.
+     *
+     * @return a future to indicate the result getting a shared async. map
+     */
     @VisibleForTesting
-    void decorateEventBus() {
-        TrackingDataHandlingStrategy strategy;
-
-        try {
-            strategy = (TrackingDataHandlingStrategy) Class.forName(config.getTrackingDataHandlingStrategy())
-                    .getConstructor().newInstance();
-        } catch (Exception e) {
-            if (logger.isWarnEnabled()) {
-                logger.warn("Failed to load configured tracking handling strategy {}. Use default.",
-                        config.getTrackingDataHandlingStrategy(), e);
-            }
-            strategy = new TrackingDataLoggingStrategy();
-        }
-
-        vertx.eventBus().addInboundInterceptor(new TrackingInterceptor(MessageDirection.INBOUND, strategy))
-                .addOutboundInterceptor(new TrackingInterceptor(MessageDirection.OUTBOUND, strategy));
-    }
-
-    private Future<Void> initializeSharedDataAccessor() {
-        return succeededFuture(new SharedDataAccessor(vertx, NeonBee.class))
-                .compose(sharedData -> AsyncHelper.executeBlocking(vertx, promise -> {
-                    sharedLocalMap = sharedData.getLocalMap(SHARED_MAP_NAME);
-                    sharedData.<String, Object>getAsyncMap(SHARED_MAP_NAME, asyncResult -> {
-                        sharedAsyncMap = asyncResult.result();
-                        promise.handle(asyncResult.mapEmpty());
-                    });
-                }));
+    Future<Void> initializeSharedMaps() {
+        SharedDataAccessor sharedData = new SharedDataAccessor(vertx, NeonBee.class);
+        sharedLocalMap = sharedData.getLocalMap(SHARED_MAP_NAME);
+        return sharedData.<String, Object>getAsyncMap(SHARED_MAP_NAME).onSuccess(asyncMap -> sharedAsyncMap = asyncMap)
+                .mapEmpty();
     }
 
     /**
-     * Register any codecs (bundled with NeonBee, or configured in the NeonBee options).
+     * Decorates the event bus with in- & outbound interceptors for tracking and register any codecs that come bundled
+     * with NeonBee, or that are configured in the NeonBee configuration.
      *
      * @return a future of the result of the registration (cannot fail currently)
      */
-    private Future<Void> registerCodecs() {
-        // add any default system codecs (bundled w/ NeonBee) here
-        vertx.eventBus().registerDefaultCodec(DataQuery.class, new DataQueryMessageCodec())
-                .registerDefaultCodec(EntityWrapper.class, new EntityWrapperMessageCodec(vertx))
-                .registerDefaultCodec(ImmutableBuffer.class, new ImmutableBufferMessageCodec())
-                .registerDefaultCodec(ImmutableJsonArray.class, new ImmutableJsonArrayMessageCodec())
-                .registerDefaultCodec(ImmutableJsonObject.class, new ImmutableJsonObjectMessageCodec());
+    @VisibleForTesting
+    Future<Void> decorateEventBus() {
+        return AsyncHelper.executeBlocking(vertx, () -> {
+            TrackingDataHandlingStrategy strategy;
 
-        // add any additional default codecs (configured in NeonBeeOptions) here
-        getConfig().getEventBusCodecs().forEach(this::registerCodec);
+            try {
+                strategy = (TrackingDataHandlingStrategy) Class.forName(config.getTrackingDataHandlingStrategy())
+                        .getConstructor().newInstance();
+            } catch (Exception e) {
+                if (logger.isWarnEnabled()) {
+                    logger.warn("Failed to load configured tracking handling strategy {}. Use default.",
+                            config.getTrackingDataHandlingStrategy(), e);
+                }
+                strategy = new TrackingDataLoggingStrategy();
+            }
 
-        return succeededFuture();
+            vertx.eventBus().addInboundInterceptor(new TrackingInterceptor(MessageDirection.INBOUND, strategy))
+                    .addOutboundInterceptor(new TrackingInterceptor(MessageDirection.OUTBOUND, strategy));
+
+            // add any default system codecs (bundled w/ NeonBee) here
+            vertx.eventBus().registerDefaultCodec(DataQuery.class, new DataQueryMessageCodec())
+                    .registerDefaultCodec(EntityWrapper.class, new EntityWrapperMessageCodec(vertx))
+                    .registerDefaultCodec(ImmutableBuffer.class, new ImmutableBufferMessageCodec())
+                    .registerDefaultCodec(ImmutableJsonArray.class, new ImmutableJsonArrayMessageCodec())
+                    .registerDefaultCodec(ImmutableJsonObject.class, new ImmutableJsonObjectMessageCodec());
+
+            // add any additional default codecs configured in NeonBeeConfig
+            config.getEventBusCodecs().forEach(this::registerCodec);
+        });
     }
 
     /**
@@ -376,106 +375,118 @@ public class NeonBee {
     }
 
     /**
+     * Creates configured Micrometer registries and adds them to the composite meter registry of NeonBee.
+     *
+     * @return a future indicating the result of the operation
+     */
+    @VisibleForTesting
+    Future<Void> createMicrometerRegistries() {
+        return AsyncHelper.executeBlocking(vertx, () -> {
+            config.createMicrometerRegistries().forEach(compositeMeterRegistry::add);
+        });
+    }
+
+    /**
      * Deploy any verticle (bundled, class path, etc.).
      *
      * @return a composite future about the result of the deployment
      */
     private Future<Void> deployVerticles() {
-        Set<NeonBeeProfile> activeProfiles = options.getActiveProfiles();
+        Collection<NeonBeeProfile> activeProfiles = options.getActiveProfiles();
         if (logger.isInfoEnabled()) {
             logger.info("Deploying verticle with active profiles: {}",
                     activeProfiles.stream().map(NeonBeeProfile::name).collect(Collectors.joining(",")));
         }
 
-        List<Future<?>> deployFutures = new ArrayList<>(deploySystemVerticles());
+        List<Future<?>> deployFutures = new ArrayList<>();
+
+        // all system verticles (model refresher, deployer verticle, metrics verticle, etc.)
+        deployFutures.add(deploySystemVerticles());
+
+        // the server verticle, if the web profile is active
         if (NeonBeeProfile.WEB.isActive(activeProfiles)) {
             deployFutures.add(deployServerVerticle());
         }
 
+        // verticles from class-path with a @NeonBeeDeployable annotation
         deployFutures.add(deployClassPathVerticles());
-        return allComposite(deployFutures).map((Void) null);
+
+        return allComposite(deployFutures).mapEmpty();
+    }
+
+    /**
+     * Deploy any system verticle (bundled w/ NeonBee).
+     *
+     * @return a future indicating the deployment of all system verticles
+     */
+    @SuppressWarnings("deprecation")
+    private Future<Void> deploySystemVerticles() {
+        List<Future<? extends Deployable>> requiredVerticles = new ArrayList<>();
+        requiredVerticles.add(fromClass(vertx, ConsolidationVerticle.class, new JsonObject().put("instances", 1)));
+        requiredVerticles.add(fromVerticle(vertx, new MetricsVerticle(1, TimeUnit.SECONDS)));
+        requiredVerticles.add(fromClass(vertx, LoggerManagerVerticle.class));
+
+        List<Future<Optional<? extends Deployable>>> optionalVerticles = new ArrayList<>();
+        optionalVerticles.add(deployableWatchVerticle(options.getModelsDirectory(), ModelRefreshVerticle::new));
+        optionalVerticles.add(deployableWatchVerticle(options.getVerticlesDirectory(), DeployerVerticle::new));
+        optionalVerticles.add(deployableWatchVerticle(options.getModulesDirectory(), DeployerVerticle::new));
+
+        logger.info("Deploying system verticles ...");
+        return allComposite(List.of(fromDeployables(requiredVerticles).compose(allTo(this)),
+                allComposite(optionalVerticles).map(CompositeFuture::list).map(optionals -> {
+                    return optionals.stream().map(Optional.class::cast).filter(Optional::isPresent).map(Optional::get)
+                            .map(Deployable.class::cast).collect(Collectors.toList());
+                }).map(Deployables::new).compose(anyTo(this)))).mapEmpty();
+    }
+
+    private Future<Optional<? extends Deployable>> deployableWatchVerticle(Path dirPath,
+            Function<Path, ? extends Verticle> verticleFactory) {
+        if (options.doNotWatchFiles()) {
+            return succeededFuture(Optional.empty());
+        }
+
+        return FileSystemHelper.exists(vertx, dirPath).compose(exists -> {
+            if (!exists) {
+                if (logger.isWarnEnabled()) {
+                    String dirName = dirPath.getFileName().toString();
+                    logger.warn("No " + dirName + " directory, " + dirName + " are not being watched");
+                }
+                return succeededFuture(Optional.empty());
+            }
+            return fromVerticle(vertx, verticleFactory.apply(dirPath)).map(Optional::of);
+        });
     }
 
     /**
      * Deploy the server verticle handling the endpoints.
      *
-     * @return the future deploying the server verticle
+     * @return the future indicating the deployment of the server verticle
      */
-    private Future<String> deployServerVerticle() {
-        logger.info("Deploy server verticle");
-
-        return Deployable
-                .fromClass(vertx, ServerVerticle.class, CORRELATION_ID,
-                        new JsonObject().put("instances", NUMBER_DEFAULT_INSTANCES))
-                .compose(deployable -> deployable.deploy(vertx, CORRELATION_ID).future())
-                .map(Deployment::getDeploymentId);
+    private Future<Void> deployServerVerticle() {
+        logger.info("Deploying server verticle ...");
+        return fromClass(vertx, ServerVerticle.class, new JsonObject().put("instances", NUMBER_DEFAULT_INSTANCES))
+                .compose(deployable -> deployable.deploy(this)).mapEmpty();
     }
 
     /**
-     * Deploy any system verticle (bundled w/ Neonbee).
+     * Deploy any annotated verticle on the class path (not bundled w/ NeonBee, e.g. during development).
      *
-     * @return a list of futures deploying verticle
-     */
-    private List<Future<String>> deploySystemVerticles() {
-        // any non-configurable system verticles may be deployed with a simple vertx.deployVerticle call, while
-        // configurable verticles (that might come with an own config file) have to use the Deployable interface
-
-        logger.info("Deploying system verticles...");
-        List<Future<String>> systemVerticles = new ArrayList<>();
-
-        systemVerticles.add(
-                vertx.deployVerticle(new ModelRefreshVerticle(options.getModelsDirectory())).otherwise(throwable -> {
-                    // non-fatal exception, in case this fails, NeonBee is still able to run!
-                    logger.warn("ModelRefreshVerticle was not deployed. Models directory is not being watched!",
-                            throwable);
-                    return null;
-                }));
-
-        systemVerticles.add(Deployable
-                .fromVerticle(vertx, new DeployerVerticle(options.getVerticlesDirectory()), CORRELATION_ID, null)
-                .compose(deployable -> deployable.deploy(vertx, CORRELATION_ID).future())
-                .map(Deployment::getDeploymentId).otherwise(throwable -> {
-                    // non-fatal exception, in case this fails, NeonBee is still able to run!
-                    logger.warn("DeployerVerticle was not deployed. Verticles directory is not being watched!",
-                            throwable);
-                    return null;
-                }));
-
-        systemVerticles.add(Deployable
-                .fromClass(vertx, ConsolidationVerticle.class, CORRELATION_ID, new JsonObject().put("instances", 1))
-                .compose(deployable -> deployable.deploy(vertx, CORRELATION_ID).future())
-                .map(Deployment::getDeploymentId));
-
-        systemVerticles.add(vertx.deployVerticle(new MetricsVerticle(1, TimeUnit.SECONDS)));
-        systemVerticles.add(vertx.deployVerticle(new LoggerManagerVerticle()));
-
-        return systemVerticles;
-    }
-
-    /**
-     * Deploy any annotated verticle on the class path (not bundled w/ NeonBee, e.g. during development)
-     *
-     * @return a list of futures deploying verticle
+     * @return a future indicating the deployment of the verticles
      */
     private Future<Void> deployClassPathVerticles() {
         if (options.shouldIgnoreClassPath()) {
             return succeededFuture();
         }
 
-        return scanForDeployableClasses(vertx).compose(deployableClasses -> {
-            List<Class<? extends Verticle>> filteredVerticleClasses = deployableClasses.stream()
-                    .filter(verticleClass -> filterByAutoDeployAndProfiles(verticleClass, options.getActiveProfiles()))
-                    .collect(Collectors.toList());
-            if (logger.isInfoEnabled()) {
-                logger.info("Deploy classpath verticle {}.",
-                        filteredVerticleClasses.stream().map(Class::getCanonicalName).collect(Collectors.joining(",")));
-            }
-            return allComposite(filteredVerticleClasses.stream()
-                    .map(verticleClass -> Deployable.fromClass(vertx, verticleClass, CORRELATION_ID, null)
-                            .compose(deployable -> deployable.deploy(vertx, CORRELATION_ID).future())
-                            .map(Deployment::getDeploymentId))
-                    .collect(Collectors.toList()));
-        }).mapEmpty();
+        logger.info("Deploying verticle(s) from class path ...");
+        return scanForDeployableClasses(vertx).compose(deployableClasses -> fromDeployables(deployableClasses.stream()
+                .filter(verticleClass -> filterByAutoDeployAndProfiles(verticleClass, options.getActiveProfiles()))
+                .map(verticleClass -> fromClass(vertx, verticleClass)).collect(Collectors.toList())))
+                .onSuccess(deployables -> {
+                    if (logger.isInfoEnabled()) {
+                        logger.info("Deploy class path verticle(s) {}.", deployables.getIdentifier());
+                    }
+                }).compose(allTo(this)).mapEmpty();
     }
 
     @VisibleForTesting
@@ -483,6 +494,22 @@ public class NeonBee {
             Collection<NeonBeeProfile> activeProfiles) {
         NeonBeeDeployable annotation = verticleClass.getAnnotation(NeonBeeDeployable.class);
         return annotation.autoDeploy() && annotation.profile().isActive(activeProfiles);
+    }
+
+    /**
+     * Deploy any modules defined in the NeonBee options.
+     *
+     * @return a future indicating the deployment of all modules
+     */
+    private Future<Void> deployModules() {
+        List<Path> moduleJarPaths = options.getModuleJarPaths();
+        if (moduleJarPaths.isEmpty()) {
+            return succeededFuture();
+        }
+
+        logger.info("Deploying module(s) ...");
+        return fromDeployables(moduleJarPaths.stream().map(moduleJarPath -> fromJar(vertx, moduleJarPath))
+                .collect(Collectors.toList())).compose(allTo(this)).mapEmpty();
     }
 
     @VisibleForTesting

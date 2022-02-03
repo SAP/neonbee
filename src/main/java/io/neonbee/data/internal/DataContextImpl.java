@@ -2,7 +2,7 @@ package io.neonbee.data.internal;
 
 import static com.google.common.collect.Iterators.unmodifiableIterator;
 import static io.neonbee.internal.handler.CorrelationIdHandler.CORRELATION_ID;
-import static io.neonbee.internal.helper.CollectionsHelper.mutableCopyOf;
+import static io.neonbee.internal.helper.CollectionHelper.mutableCopyOf;
 import static io.neonbee.internal.helper.HostHelper.getHostIp;
 
 import java.util.ArrayDeque;

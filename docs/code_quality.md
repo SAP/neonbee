@@ -5,6 +5,7 @@
 - [Code Quality](#Code-Quality)
   - [Content](#Content)
   - [Purpose](#Purpose)
+  - [Justification](#Justification)
   - [Conventions](#Conventions)
     - [Test Coverage](#Test-Coverage)
     - [Architecture / Code Structure](#Architecture--Code-Structure)
@@ -12,8 +13,7 @@
     - [Code Smells](#Code-Smells)
     - [Code Style](#Code-Style)
       - [Manual Checks](#Manual-Checks)
-  - [Conventions Justification](#Conventions-Justification)
-    - [Avoid final for local variables](#Avoid-final-for-local-variables)
+    - [Development Conventions](development_conventions.md)
 
 ## Purpose
 
@@ -36,6 +36,10 @@ Code quality, or quality in the broader sense, has various manifestations. It is
 In order to benefit from the points mentioned above and **to ensure** that NeonBee will also have a high level of **quality** in the future the **NeonBee community** has **established** some **conventions**.
 
 Any **contribution** to NeonBee **must respect** and comply with **these conventions**.
+
+## Justification
+
+Some developers may be confused about why the NeonBee community has defined some conventions that are very unique. But of course, there is a well thought idea behind every convention. Some of these ideas are obvious, some are not. At this place we explain the less obvious ideas, so that they must not explained to everyone individually.
 
 ## Conventions
 
@@ -145,18 +149,3 @@ These conventions might not be mentioned here, because most of the Java develope
 - **(Code) Constants:** If a static value is used several times or externally, then this **SHOULD** be defined as a constant.
 - **(Docs) Punctuation:** The first line of a method or class comment must be concluded with a '.'. In the documentation of @return, @param, @throws, a single sentence/phrase/expression must not be concluded with a '.', unless the documentation contains more than one sentence. In this case, comma and dot must be used.
 - **(Docs) Capitalization:** First line of each comment must start with a capitalized letter. Documentation of @return, @param, @throws must start with uncapitalized letter.
-
-## Conventions Justification
-
-Some developers may be confused about why the NeonBee community has defined some conventions that are very unique. But of course, there is a well thought idea behind every convention. Some of these ideas are obvious, some are not. At this place we explain the less obvious ideas, so that they must not explained to everyone individually.
-
-### Avoid final for local variables
-
-In our opinion the only advantage of declaring local variables as final arises, when the type is primitive or immutable. In all other situations, the final modifier is worthless.
-
-It is also not required to be thread safe, because Vert.x is handling this. It is not necessary to use variables in lambda expressions, because with Java 8+ these variables implicitly become final.
-
-But adding final to declarations comes with disadvantages:
-
-- More effort when overriding is desired.
-- Increase of complexity, declarations should be short, simple and clean.

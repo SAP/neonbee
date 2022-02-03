@@ -90,7 +90,7 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test MicrometerRegistryLoader with incorrect configuration")
     void testNotImplementingMicrometerRegistryLoader(String className, String exceptionMessage,
-            Class expectedException) {
+            Class<? extends Throwable> expectedException) {
         NeonBeeConfig config = new NeonBeeConfig();
         config.setMicrometerRegistries(List.of(new MicrometerRegistryConfig().setClassName(className)));
         Throwable throwable = assertThrows(expectedException, config::createMicrometerRegistries);

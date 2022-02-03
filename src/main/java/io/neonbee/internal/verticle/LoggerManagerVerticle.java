@@ -1,5 +1,6 @@
 package io.neonbee.internal.verticle;
 
+import static io.neonbee.NeonBeeDeployable.NEONBEE_NAMESPACE;
 import static io.neonbee.internal.verticle.LoggerConfiguration.getLoggerConfigurations;
 import static io.vertx.core.Future.succeededFuture;
 
@@ -28,12 +29,9 @@ import io.vertx.core.json.JsonObject;
  * This verticle is responsible for returning the logging settings of the current NeonBee instance, or setting a new
  * logger value to all instances
  */
+@NeonBeeDeployable(namespace = NEONBEE_NAMESPACE, autoDeploy = false)
 @SuppressWarnings({ "PMD.MoreThanOneLogger", "PMD.AvoidInstantiatingObjectsInLoops" })
-@NeonBeeDeployable(namespace = NeonBeeDeployable.NEONBEE_NAMESPACE)
 public class LoggerManagerVerticle extends DataVerticle<JsonArray> {
-    public static final String QUALIFIED_NAME =
-            DataVerticle.createQualifiedName(NeonBeeDeployable.NEONBEE_NAMESPACE, LoggerManagerVerticle.NAME);
-
     /**
      * Query parameter to only read the configuration of certain the logger names, separated by comma, semicolon or
      * space.
@@ -47,6 +45,8 @@ public class LoggerManagerVerticle extends DataVerticle<JsonArray> {
     public static final String QUERY_PARAMETER_LOCAL = "local";
 
     private static final String NAME = "LogLevel";
+
+    public static final String QUALIFIED_NAME = DataVerticle.createQualifiedName(NEONBEE_NAMESPACE, NAME);
 
     private static final String EVENT_BUS_CHANGE_LOG_LEVEL_ADDRESS =
             LoggerManagerVerticle.class.getSimpleName() + "ChangeLogLevel";

@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 
 import com.google.common.base.MoreObjects;
 
+import io.neonbee.NeonBee;
 import io.neonbee.config.EndpointConfig;
 import io.neonbee.endpoint.Endpoint;
 import io.neonbee.endpoint.odatav4.internal.olingo.OlingoEndpointHandler;
@@ -230,7 +231,7 @@ public class ODataV4Endpoint implements Endpoint {
 
     private static Future<Void> refreshRouter(Vertx vertx, Router router, String basePath, UriConversion uriConversion,
             RegexBlockList exposedEntities, AtomicReference<Map<String, EntityModel>> currentModels) {
-        return getSharedModels(vertx).compose(models -> {
+        return getSharedModels(NeonBee.get(vertx)).compose(models -> {
             if (models == currentModels.get()) {
                 return succeededFuture(); // no update needed
             } else {
@@ -242,7 +243,7 @@ public class ODataV4Endpoint implements Endpoint {
 
             // register new routes first, this will avoid downtimes of already existing services. Register the shortest
             // routes last, this will lead to some routes like the empty namespace / to be registered last.
-            models.values().stream().flatMap(entityModel -> entityModel.getEdmxes().entrySet().stream())
+            models.values().stream().flatMap(entityModel -> entityModel.getAllEdmxMetadata().entrySet().stream())
                     .map(entryFunction(
                             (schemaNamespace, edmxModel) -> Map.entry(uriConversion.apply(schemaNamespace), edmxModel)))
                     .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(String::length).reversed()))

@@ -1,131 +1,130 @@
 package io.neonbee.internal.deploy;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static io.vertx.core.Future.failedFuture;
+import static io.vertx.core.Future.succeededFuture;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
-import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 
+import io.neonbee.internal.deploy.DeployableTest.DeployableThing;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
-import io.vertx.junit5.Checkpoint;
-import io.vertx.junit5.Timeout;
-import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
+import io.vertx.core.impl.future.FutureInternal;
 
-@ExtendWith(VertxExtension.class)
 class PendingDeploymentTest {
-    private static final String CORRELATION_ID = "correlId";
-
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    void undeployTest(VertxTestContext testContext) {
-        Checkpoint checkUnresolved = testContext.checkpoint();
-        Checkpoint checkFailed = testContext.checkpoint();
-        Checkpoint checkSucceeded = testContext.checkpoint();
+    void undeployTest() {
+        PendingDeployment unresolved = new TestPendingDeployment(Promise.<String>promise().future());
+        assertThat(unresolved.undeploy().cause()).isInstanceOf(IllegalStateException.class);
 
-        PendingDeployment unresolved =
-                new PendingDeployment(null, "", CORRELATION_ID, Promise.<String>promise().future());
-        unresolved.undeploy().onComplete(testContext.failing(t -> {
-            testContext.verify(() -> assertThat(t).isInstanceOf(IllegalStateException.class));
-            checkUnresolved.flag();
-        }));
+        PendingDeployment failed = new TestPendingDeployment(failedFuture(""));
+        assertThat(failed.undeploy().succeeded()).isTrue();
 
-        PendingDeployment failed = new PendingDeployment(null, "", CORRELATION_ID, Future.failedFuture(""));
-        failed.undeploy().onComplete(testContext.succeeding(response -> checkFailed.flag()));
-
-        Vertx vertxSpy = Mockito.spy(Vertx.class);
-        PendingDeployment succeeded =
-                new PendingDeployment(vertxSpy, "", CORRELATION_ID, Future.succeededFuture("deploymentId"));
-        Mockito.doNothing().when(vertxSpy).undeploy(Mockito.anyString(), Mockito.any());
-        succeeded.undeploy();
-        // Will work, because at the moment undeploy is complete synchronous
-        testContext.verify(() -> {
-            Mockito.verify(vertxSpy).undeploy(Mockito.anyString(), Mockito.any());
-            checkSucceeded.flag();
-        });
+        TestPendingDeployment succeeded = new TestPendingDeployment(succeededFuture("deploymentId"));
+        assertThat(succeeded.undeploy().succeeded()).isTrue();
+        assertThat(succeeded.undeployDeploymentId).isEqualTo("deploymentId");
     }
 
     @Test
     void getDeploymentIdTest() {
         String deploymentId = "Hodor";
-        PendingDeployment deployment =
-                new PendingDeployment(null, "", CORRELATION_ID, Future.succeededFuture(deploymentId));
+        PendingDeployment deployment = new TestPendingDeployment(succeededFuture(deploymentId));
         assertThat(deployment.getDeploymentId()).isEqualTo(deploymentId);
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    void setHandlerTest(VertxTestContext testContext) {
+    void setHandlerTest() {
         Promise<String> deployPromise = Promise.promise();
-        new PendingDeployment(null, "", CORRELATION_ID, deployPromise.future()).future()
-                .onComplete(testContext.succeedingThenComplete());
-        deployPromise.complete();
+        PendingDeployment deployment = new TestPendingDeployment(deployPromise.future());
+        assertThat(deployment.isComplete()).isFalse();
+        deployPromise.complete("test");
+        assertThat(deployment.isComplete()).isTrue();
+        assertThat(deployment.succeeded()).isTrue();
+        assertThat(deployment.result().getDeploymentId()).isEqualTo("test");
     }
 
     @Test
-    @DisplayName("test complete, succeeded, isComplete and tryComplete methods")
-    void completeMethodsTest() {
-        PendingDeployment deployment = new PendingDeployment(null, "", CORRELATION_ID, Future.succeededFuture());
-        assertThat(deployment.future().isComplete()).isTrue();
-        assertThat(deployment.future().succeeded()).isTrue();
+    @SuppressWarnings("unchecked")
+    void testFutureInterface() {
+        FutureInternal<String> futureMock = mock(FutureInternal.class);
+        doReturn(futureMock).when(futureMock).map((Function<String, ?>) any());
+        doReturn(futureMock).when(futureMock).map((Deployable) any());
+        doReturn(futureMock).when(futureMock).onSuccess(any());
+        doReturn(futureMock).when(futureMock).onFailure(any());
 
-        String errorMessage = "Cannot complete pending deployments.";
+        PendingDeployment deployment = new TestPendingDeployment(futureMock);
+        verify(futureMock).map((Function<String, ?>) any());
+        verify(futureMock).onSuccess(any());
+        verify(futureMock).onFailure(any());
 
-        Throwable error = assertThrows(IllegalStateException.class, () -> deployment.complete(null));
-        assertThat(error).hasMessageThat().isEqualTo(errorMessage);
+        deployment.isComplete();
+        verify(futureMock).isComplete();
 
-        error = assertThrows(IllegalStateException.class, deployment::complete);
-        assertThat(error).hasMessageThat().isEqualTo(errorMessage);
+        deployment.onComplete(null);
+        verify(futureMock).onComplete(any());
 
-        error = assertThrows(IllegalStateException.class, () -> deployment.tryComplete(null));
-        assertThat(error).hasMessageThat().isEqualTo(errorMessage);
+        deployment.result();
+        verify(futureMock).succeeded();
+        clearInvocations(futureMock);
 
-        error = assertThrows(IllegalStateException.class, deployment::tryComplete);
-        assertThat(error).hasMessageThat().isEqualTo(errorMessage);
+        deployment.cause();
+        verify(futureMock).cause();
+
+        deployment.succeeded();
+        verify(futureMock).succeeded();
+
+        deployment.failed();
+        verify(futureMock).failed();
+
+        deployment.compose(null);
+        verify(futureMock).compose(any(), any());
+
+        deployment.transform(null);
+        verify(futureMock).transform(any());
+
+        deployment.eventually(null);
+        verify(futureMock).eventually(any());
+
+        clearInvocations(futureMock);
+        deployment.map((Function<String, ?>) null);
+        verify(futureMock, atLeastOnce()).map(any(Object.class));
+
+        clearInvocations(futureMock);
+        deployment.map((String) null);
+        verify(futureMock, atLeastOnce()).map(any(Object.class));
+
+        deployment.otherwise((Function<Throwable, Deployment>) null);
+        verify(futureMock).otherwise((Function<Throwable, String>) any());
+
+        deployment.otherwise((Deployment) null);
+        verify(futureMock).otherwise((String) any());
+
+        deployment.context();
+        verify(futureMock).context();
+
+        deployment.addListener(null);
+        verify(futureMock).addListener(any());
     }
 
-    @Test
-    @DisplayName("test fail, failed and tryFail methods")
-    void failMethodsTest() {
+    private static class TestPendingDeployment extends PendingDeployment {
+        public String undeployDeploymentId;
 
-        PendingDeployment deployment = new PendingDeployment(null, "", CORRELATION_ID, Future.failedFuture("Hodor"));
-        assertThat(deployment.future().failed()).isTrue();
-        assertThat(deployment.future().cause()).hasMessageThat().isEqualTo("Hodor");
+        protected TestPendingDeployment(Future<String> deployFuture) {
+            super(null, new DeployableThing("foo"), deployFuture);
+        }
 
-        String errorMessage = "Cannot fail pending deployments.";
-
-        Throwable error = assertThrows(IllegalStateException.class, () -> deployment.fail((Throwable) null));
-        assertThat(error).hasMessageThat().isEqualTo(errorMessage);
-
-        error = assertThrows(IllegalStateException.class, () -> deployment.fail((String) null));
-        assertThat(error).hasMessageThat().isEqualTo(errorMessage);
-
-        error = assertThrows(IllegalStateException.class, () -> deployment.tryFail((Throwable) null));
-        assertThat(error).hasMessageThat().isEqualTo(errorMessage);
-
-        error = assertThrows(IllegalStateException.class, () -> deployment.tryFail((String) null));
-        assertThat(error).hasMessageThat().isEqualTo(errorMessage);
-    }
-
-    @Test
-    void resultTest() {
-        PendingDeployment failed = new PendingDeployment(null, "", CORRELATION_ID, Future.failedFuture("Hodor"));
-        assertThat(failed.future().result()).isNull();
-
-        PendingDeployment succeeded = new PendingDeployment(null, "", CORRELATION_ID, Future.succeededFuture());
-        assertThat(succeeded.future().result()).isSameInstanceAs(succeeded);
-    }
-
-    @Test
-    void handleTest() {
-        PendingDeployment deployment = new PendingDeployment(null, "", CORRELATION_ID, Future.succeededFuture());
-        Throwable error = assertThrows(IllegalStateException.class, () -> deployment.handle(null));
-        assertThat(error).hasMessageThat().isEqualTo("Cannot handle pending deployments.");
+        @Override
+        public Future<Void> undeploy(String deploymentId) {
+            undeployDeploymentId = deploymentId;
+            return succeededFuture();
+        }
     }
 }

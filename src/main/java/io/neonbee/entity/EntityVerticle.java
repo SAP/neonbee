@@ -18,8 +18,6 @@ import java.util.stream.Collectors;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.core.uri.parser.Parser;
-import org.apache.olingo.server.core.uri.parser.UriParserException;
-import org.apache.olingo.server.core.uri.validator.UriValidationException;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -29,6 +27,7 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.internal.SharedDataAccessor;
+import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.AsyncResult;
@@ -167,14 +166,11 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
         }
 
         String serviceName = uriMatcher.group(SERVICE_NAMESPACE_GROUP);
-        return getSharedModel(vertx, ModelDefinitionHelper.retrieveNamespace(serviceName)).compose(entityModel -> {
-            try {
-                return succeededFuture(new Parser(entityModel.getEdmx(serviceName).getEdm(), getBufferedOData())
-                        .parseUri(uriMatcher.group(ENTITY_PATH_GROUP), query.getQuery(), EMPTY, EMPTY));
-            } catch (UriParserException | UriValidationException e) {
-                return failedFuture(e);
-            }
-        });
+        return getSharedModel(NeonBee.get(vertx), EntityModelDefinition.retrieveNamespace(serviceName))
+                .compose(entityModel -> AsyncHelper.executeBlocking(vertx, () -> {
+                    return new Parser(entityModel.getEdmxMetadata(serviceName).getEdm(), getBufferedOData())
+                            .parseUri(uriMatcher.group(ENTITY_PATH_GROUP), query.getQuery(), EMPTY, EMPTY);
+                }));
     }
 
     /**

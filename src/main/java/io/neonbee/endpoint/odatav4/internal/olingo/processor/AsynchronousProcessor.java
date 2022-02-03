@@ -1,5 +1,7 @@
 package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -52,7 +54,7 @@ public abstract class AsynchronousProcessor implements Processor {
             // we are in batch processing (somebody has called enterBatchProcessing before and there is an element
             // on the processingStack). Thus create a new subProcessPromise and put it onto the stack
             subProcessPromise = Promise.promise();
-            Objects.requireNonNull(processingStack().peek(), "head of deque is empty").add(subProcessPromise.future());
+            requireNonNull(processingStack().peek(), "head of deque is empty").add(subProcessPromise.future());
             return subProcessPromise;
         }
     }

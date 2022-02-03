@@ -1,25 +1,38 @@
 package io.neonbee;
 
-import static io.neonbee.NeonBeeProfile.ALL;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
 
+import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.verticle.WatchVerticle;
 import io.neonbee.job.JobVerticle;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.cli.annotations.ConvertedBy;
+import io.vertx.core.cli.annotations.DefaultValue;
+import io.vertx.core.cli.annotations.Description;
+import io.vertx.core.cli.annotations.Name;
+import io.vertx.core.cli.annotations.Option;
+import io.vertx.core.cli.annotations.Summary;
+import io.vertx.core.cli.converters.Converter;
 import io.vertx.core.eventbus.EventBusOptions;
 
+@SuppressWarnings("PMD.ExcessivePublicCount")
 public interface NeonBeeOptions {
     /**
      * Get the maximum number of worker threads to be used by the NeonBee instance.
@@ -65,10 +78,22 @@ public interface NeonBeeOptions {
     /**
      * Returns the verticle directory path resolved against the {@link #getWorkingDirectory working directory}.
      *
+     * @deprecated use {@link #getModulesDirectory} instead and place "verticle JARs" in the {@code /modules} directory
+     *             instead of in the {@code /verticles} directory
      * @return the verticle directory path
      */
+    @Deprecated
     default Path getVerticlesDirectory() {
         return getWorkingDirectory().resolve("verticles");
+    }
+
+    /**
+     * Returns the modules directory path resolved against the {@link #getWorkingDirectory working directory}.
+     *
+     * @return the modules directory path
+     */
+    default Path getModulesDirectory() {
+        return getWorkingDirectory().resolve("modules");
     }
 
     /**
@@ -140,17 +165,26 @@ public interface NeonBeeOptions {
     Integer getServerPort();
 
     /**
-     * Gets the currently active profiles.
+     * Gets the active profiles.
      *
-     * @return the currently active profiles.
+     * @return the active profiles
      */
     Set<NeonBeeProfile> getActiveProfiles();
+
+    /**
+     * Returns a list of paths to module JARs, that should be deployed when NeonBee starts.
+     *
+     * @return a list of paths to JAR files
+     */
+    List<Path> getModuleJarPaths();
 
     /**
      * Create a mutable NeonBeeOptions similar to VertxOptions, but as NeonBeeOptions are exposed only the interface
      * shall be used, otherwise configuration changes could cause runtime errors. To initialize a new Vertx instance use
      * this Mutable inner class.
      */
+    @Name("neonbee")
+    @Summary("A command line interface for starting and configuring a NeonBee and its associated Vert.x instance")
     class Mutable implements NeonBeeOptions {
         /**
          * The default cluster configuration file name.
@@ -179,7 +213,9 @@ public interface NeonBeeOptions {
 
         private Integer serverPort;
 
-        private Set<NeonBeeProfile> activeProfiles = Set.of(ALL);
+        private Set<NeonBeeProfile> activeProfiles = Set.of(NeonBeeProfile.ALL);
+
+        private List<Path> moduleJarPaths = Collections.emptyList();
 
         /**
          * Instantiates a mutable {@link NeonBeeOptions} instance.
@@ -200,6 +236,8 @@ public interface NeonBeeOptions {
          * @param eventLoopPoolSize the number of threads
          * @return a reference to this, so the API can be used fluently
          */
+        @Option(longName = "event-loop-pool-size", shortName = "elps")
+        @Description("Set the number of threads for the event loop pool")
         public Mutable setEventLoopPoolSize(int eventLoopPoolSize) {
             if (eventLoopPoolSize < 1) {
                 throw new IllegalArgumentException("eventLoopSize must be > 0");
@@ -220,6 +258,8 @@ public interface NeonBeeOptions {
          * @param workerPoolSize the number of threads
          * @return a reference to this, so the API can be used fluently
          */
+        @Option(longName = "worker-pool-size", shortName = "wps")
+        @Description("Set the number of threads for the worker pool")
         public Mutable setWorkerPoolSize(int workerPoolSize) {
             if (workerPoolSize < 1) {
                 throw new IllegalArgumentException("workerPoolSize must be > 0");
@@ -240,6 +280,8 @@ public interface NeonBeeOptions {
          * @param instanceName the name of the NeonBee instance
          * @return a reference to this, so the API can be used fluently
          */
+        @Option(longName = "instance-name", shortName = "name")
+        @Description("Set the instance name")
         public Mutable setInstanceName(String instanceName) {
             if (Objects.isNull(instanceName)) {
                 this.instanceName = generateName();
@@ -263,6 +305,10 @@ public interface NeonBeeOptions {
          * @param workingDirectory the name of the NeonBee instance
          * @return a reference to this, so the API can be used fluently
          */
+        @Option(longName = "working-directory", shortName = "cwd")
+        @Description("Set the current working directory")
+        @DefaultValue("./working_dir/")
+        @ConvertedBy(PathConverter.class)
         public Mutable setWorkingDirectory(Path workingDirectory) {
             requireNonNull(workingDirectory, "workingDirectory must not be null");
             this.workingDirectoryPath = workingDirectory.toAbsolutePath().normalize();
@@ -280,6 +326,8 @@ public interface NeonBeeOptions {
          * @param ignoreClassPath flag true/false
          * @return a reference to this, so the API can be used fluently
          */
+        @Option(longName = "ignore-class-path", shortName = "no-cp", flag = true)
+        @Description("Set whether to ignore verticle and models on the class path or not")
         public Mutable setIgnoreClassPath(boolean ignoreClassPath) {
             this.ignoreClassPath = ignoreClassPath;
             return this;
@@ -296,6 +344,8 @@ public interface NeonBeeOptions {
          * @param disableJobScheduling flag true/false
          * @return a reference to this, so the API can be used fluently
          */
+        @Option(longName = "disable-job-scheduling", shortName = "no-jobs", flag = true)
+        @Description("Set whether to schedule any job verticles or not")
         public Mutable setDisableJobScheduling(boolean disableJobScheduling) {
             this.disableJobScheduling = disableJobScheduling;
             return this;
@@ -312,8 +362,28 @@ public interface NeonBeeOptions {
          * @param doNotWatchFiles flag true/false
          * @return a reference to this, so the API can be used fluently
          */
+        @Option(longName = "do-not-watch-files", shortName = "no-watchers", flag = true)
+        @Description("Set whether to watch any files")
         public Mutable setDoNotWatchFiles(boolean doNotWatchFiles) {
             this.doNotWatchFiles = doNotWatchFiles;
+            return this;
+        }
+
+        @Override
+        public boolean isClustered() {
+            return clustered;
+        }
+
+        /**
+         * Set clustered.
+         *
+         * @param clustered true if clustered
+         * @return this instance for chaining
+         */
+        @Option(longName = "clustered", shortName = "cl", flag = true)
+        @Description("Set whether to start in clustered mode or not")
+        public Mutable setClustered(boolean clustered) {
+            this.clustered = clustered;
             return this;
         }
 
@@ -322,9 +392,17 @@ public interface NeonBeeOptions {
             return clusterPort;
         }
 
-        @Override
-        public boolean isClustered() {
-            return clustered;
+        /**
+         * Set the port used for clustering.
+         *
+         * @param clusterPort the port
+         * @return this instance for chaining
+         */
+        @Option(longName = "cluster-port", shortName = "clp")
+        @Description("Set the port of cluster event bus")
+        public Mutable setClusterPort(int clusterPort) {
+            this.clusterPort = clusterPort;
+            return this;
         }
 
         @Override
@@ -333,17 +411,6 @@ public interface NeonBeeOptions {
                 setClusterConfigResource(DEFAULT_CLUSTER_CONFIG);
             }
             return clusterConfig;
-        }
-
-        /**
-         * Set the cluster config file.
-         *
-         * @param clusterConfigFile the cluster config file
-         * @return this instance for chaining
-         */
-        public Mutable setClusterConfigResource(String clusterConfigFile) {
-            this.clusterConfig = new ClasspathXmlConfig(clusterConfigFile);
-            return this;
         }
 
         /**
@@ -358,25 +425,20 @@ public interface NeonBeeOptions {
         }
 
         /**
-         * Set the cluster port.
+         * Set a cluster config by loading a resource from the class path (blocking).
          *
-         * @param clusterPort the cluster port
+         * @param resource the resource, an XML configuration file from the class path
          * @return this instance for chaining
          */
-        public Mutable setClusterPort(int clusterPort) {
-            this.clusterPort = clusterPort;
-            return this;
+        @Option(longName = "cluster-config", shortName = "cc")
+        @Description("Set the cluster/Hazelast configuration file path")
+        public Mutable setClusterConfigResource(String resource) {
+            return setClusterConfig(new ClasspathXmlConfig(resource));
         }
 
-        /**
-         * Set clustered.
-         *
-         * @param clustered true if clustered
-         * @return this instance for chaining
-         */
-        public Mutable setClustered(boolean clustered) {
-            this.clustered = clustered;
-            return this;
+        @Override
+        public Integer getServerPort() {
+            return this.serverPort;
         }
 
         /**
@@ -385,30 +447,40 @@ public interface NeonBeeOptions {
          * @param serverPort the server port
          * @return this instance for chaining
          */
+        @Option(longName = "server-port", shortName = "port")
+        @Description("Set the HTTP(S) port of server")
         public Mutable setServerPort(Integer serverPort) {
             this.serverPort = serverPort;
             return this;
         }
 
         @Override
-        public Integer getServerPort() {
-            return this.serverPort;
-        }
-
-        @Override
         public Set<NeonBeeProfile> getActiveProfiles() {
-            return this.activeProfiles;
+            return activeProfiles;
         }
 
         /**
          * Set the active profiles.
          *
-         * @param profiles the active profiles
+         * @param profiles the profiles
          * @return this instance for chaining
          */
         public Mutable setActiveProfiles(Collection<NeonBeeProfile> profiles) {
             this.activeProfiles = ImmutableSet.copyOf(requireNonNull(profiles));
             return this;
+        }
+
+        /**
+         * Set the active profiles.
+         *
+         * @param activeProfiles the profiles
+         * @return this instance for chaining
+         */
+        @Option(longName = "active-profiles", shortName = "ap", acceptMultipleValues = true)
+        @Description("Set the active deployment profiles")
+        public Mutable setActiveProfiles(String... activeProfiles) {
+            return setActiveProfiles(Arrays.stream(activeProfiles).map(NeonBeeProfile::parseProfiles)
+                    .flatMap(Collection::stream).collect(Collectors.toSet()));
         }
 
         /**
@@ -418,7 +490,17 @@ public interface NeonBeeOptions {
          * @return this instance for chaining
          */
         public Mutable addActiveProfile(NeonBeeProfile profile) {
-            this.activeProfiles = Sets.union(this.activeProfiles, Set.of(profile)).immutableCopy();
+            return addActiveProfiles(profile);
+        }
+
+        /**
+         * Add active profiles.
+         *
+         * @param profiles the active profiles to add
+         * @return this instance for chaining
+         */
+        public Mutable addActiveProfiles(NeonBeeProfile... profiles) {
+            this.activeProfiles = Sets.union(this.activeProfiles, Set.of(profiles));
             return this;
         }
 
@@ -429,7 +511,17 @@ public interface NeonBeeOptions {
          * @return this instance for chaining
          */
         public Mutable removeActiveProfile(NeonBeeProfile profile) {
-            this.activeProfiles = Sets.difference(this.activeProfiles, Set.of(profile)).immutableCopy();
+            return removeActiveProfiles(profile);
+        }
+
+        /**
+         * Remove active profiles.
+         *
+         * @param profiles the active profiles to remove
+         * @return this instance for chaining
+         */
+        public Mutable removeActiveProfiles(NeonBeeProfile... profiles) {
+            this.activeProfiles = Sets.difference(this.activeProfiles, Set.of(profiles));
             return this;
         }
 
@@ -443,18 +535,44 @@ public interface NeonBeeOptions {
             return this;
         }
 
+        @Override
+        public List<Path> getModuleJarPaths() {
+            return moduleJarPaths;
+        }
+
         /**
-         * Set the active profile values.
+         * Set paths to modules that will be deployed when NeonBee is starting.
          *
-         * @param values the profile values
+         * @param moduleJarPaths a collection of paths
          * @return this instance for chaining
          */
-        public Mutable setActiveProfileValues(String values) {
-            return this.setActiveProfiles(NeonBeeProfile.parseProfiles(values));
+        public Mutable setModuleJarPaths(List<Path> moduleJarPaths) {
+            this.moduleJarPaths = ImmutableList.copyOf(requireNonNull(moduleJarPaths));
+            return this;
+        }
+
+        /**
+         * Sets a list of module path(s) to be loaded when NeonBee is starting.
+         *
+         * @param moduleJarPaths any number of path strings to JARs
+         * @return this instance for chaining
+         */
+        @Option(longName = "module-jar-paths", shortName = "mjp")
+        @Description("A list of path(s) to module JARs to be loaded during startup")
+        public Mutable setModuleJarPaths(String... moduleJarPaths) {
+            return this.setModuleJarPaths(Arrays.stream(moduleJarPaths).map(FileSystemHelper::parsePaths)
+                    .flatMap(Collection::stream).collect(Collectors.toList()));
         }
 
         private String generateName() {
             return String.format("%s-%s", NeonBee.class.getSimpleName(), UUID.randomUUID().toString());
+        }
+    }
+
+    class PathConverter implements Converter<Path> {
+        @Override
+        public Path fromString(String s) {
+            return Path.of(s);
         }
     }
 }

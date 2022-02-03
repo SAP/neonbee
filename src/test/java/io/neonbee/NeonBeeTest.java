@@ -1,6 +1,7 @@
 package io.neonbee;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
 import static io.neonbee.NeonBeeMockHelper.defaultVertxMock;
 import static io.neonbee.NeonBeeMockHelper.registerNeonBeeMock;
 import static io.neonbee.NeonBeeProfile.ALL;
@@ -18,11 +19,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -38,18 +42,25 @@ import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 
 import io.neonbee.config.NeonBeeConfig;
+import io.neonbee.internal.NeonBeeModuleJar;
 import io.neonbee.internal.tracking.MessageDirection;
 import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
 import io.neonbee.internal.tracking.TrackingInterceptor;
+import io.neonbee.internal.verticle.ConsolidationVerticle;
+import io.neonbee.internal.verticle.LoggerManagerVerticle;
+import io.neonbee.internal.verticle.MetricsVerticle;
 import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.DeliveryContext;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.impl.Deployment;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
@@ -60,6 +71,21 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Override
     protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
         options.addActiveProfile(NO_WEB);
+        switch (testInfo.getTestMethod().get().getName()) {
+        case "testDeployCoreVerticlesFromClassPath":
+            options.addActiveProfile(CORE);
+            options.setIgnoreClassPath(false);
+            break;
+        case "testDeployModule":
+            try {
+                options.setModuleJarPaths(
+                        List.of(NeonBeeModuleJar.create("testmodule").withVerticles().build().writeToTempPath()));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            break;
+        default:
+        }
     }
 
     @AfterEach
@@ -91,6 +117,33 @@ class NeonBeeTest extends NeonBeeTestBase {
     void testStart(Vertx vertx) {
         assertThat(getNeonBee()).isNotNull();
         assertThat(NeonBee.get(vertx)).isNotNull();
+    }
+
+    @Test
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("NeonBee should deploy all system verticles")
+    void testDeploySystemVerticles(Vertx vertx) {
+        assertThat(getDeployedVerticles(vertx)).containsExactly(MetricsVerticle.class, ConsolidationVerticle.class,
+                LoggerManagerVerticle.class);
+    }
+
+    @Test
+    @Timeout(value = 30, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("NeonBee should deploy class path verticles (from NeonBeeExtensionBasedTest)")
+    void testDeployCoreVerticlesFromClassPath(Vertx vertx) {
+        assertThat(getDeployedVerticles(vertx)).contains(NeonBeeExtensionBasedTest.CoreDataVerticle.class);
+    }
+
+    @Test
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("NeonBee should deploy module JAR")
+    void testDeployModule(Vertx vertx) {
+        assertThat(getDeployedVerticles(vertx).stream().map(Class::getName)).containsAtLeast("ClassA", "ClassB");
+    }
+
+    private static Set<Class<? extends Verticle>> getDeployedVerticles(Vertx vertx) {
+        return vertx.deploymentIDs().stream().map(((VertxInternal) vertx)::getDeployment).map(Deployment::getVerticles)
+                .flatMap(Set::stream).map(Verticle::getClass).collect(Collectors.toSet());
     }
 
     @Test

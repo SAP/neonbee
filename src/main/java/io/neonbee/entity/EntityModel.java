@@ -1,6 +1,7 @@
 package io.neonbee.entity;
 
-import java.util.Collections;
+import static java.util.Objects.requireNonNull;
+
 import java.util.Map;
 
 import org.apache.olingo.server.api.ServiceMetadata;
@@ -14,17 +15,63 @@ import com.sap.cds.reflect.CdsModel;
  * as the key.
  */
 public final class EntityModel {
-    private final CdsModel csn;
+    private final CdsModel csnModel;
 
     private final Map<String, ServiceMetadata> edmxMap;
 
-    private EntityModel(CdsModel csn, Map<String, ServiceMetadata> edmxMap) {
-        this.csn = csn;
-        this.edmxMap = edmxMap;
+    private EntityModel(CdsModel csnModel, Map<String, ServiceMetadata> edmxMap) {
+        this.csnModel = requireNonNull(csnModel);
+        // create a copy, so the map cannot be changed afterwards
+        this.edmxMap = Map.copyOf(edmxMap);
     }
 
-    static EntityModel of(CdsModel csn, Map<String, ServiceMetadata> edmxMap) {
-        return new EntityModel(csn, edmxMap);
+    static EntityModel of(CdsModel csmModel, Map<String, ServiceMetadata> edmxMap) {
+        return new EntityModel(csmModel, edmxMap);
+    }
+
+    /**
+     * Returns the CSN model.
+     *
+     * @deprecated use {@link #getCsnModel() instead}
+     * @return CdsModel as CSNModel
+     */
+    @Deprecated(forRemoval = true)
+    public CdsModel getCsn() {
+        return getCsnModel();
+    }
+
+    /**
+     * Returns the first EDMX {@link ServiceMetadata} model of the {@link #getEdmxes}.
+     *
+     * @deprecated use {@link #getEdmxMetadata()} instead
+     * @return the first EDMX model or null
+     */
+    @Deprecated(forRemoval = true)
+    public ServiceMetadata getEdmx() {
+        return getEdmxMetadata();
+    }
+
+    /**
+     * Returns one EDMX model.
+     *
+     * @deprecated use {@link #getEdmxMetadata(String)} instead
+     * @param namespace full-qualified name of the service
+     * @return one EDMX {@link ServiceMetadata} model which is mapped to a namespace or null
+     */
+    @Deprecated(forRemoval = true)
+    public ServiceMetadata getEdmx(String namespace) {
+        return getEdmxMetadata(namespace);
+    }
+
+    /**
+     * Gets a map of all EDMX models which belongs to one service.
+     *
+     * @deprecated use {@link #getAllEdmxMetadata()} instead
+     * @return a map of all EDMX {@link ServiceMetadata} models which belongs to one service
+     */
+    @Deprecated
+    public Map<String, ServiceMetadata> getEdmxes() {
+        return getAllEdmxMetadata();
     }
 
     /**
@@ -32,16 +79,16 @@ public final class EntityModel {
      *
      * @return CdsModel as CSNModel
      */
-    public CdsModel getCsn() {
-        return csn;
+    public CdsModel getCsnModel() {
+        return csnModel;
     }
 
     /**
-     * Returns the first EDMX {@link ServiceMetadata} model of the {@link #edmxMap}.
+     * Returns the first EDMX {@link ServiceMetadata} model of the {@link #getAllEdmxMetadata()}.
      *
-     * @return the first EDMX model
+     * @return the first EDMX model or null
      */
-    public ServiceMetadata getEdmx() {
+    public ServiceMetadata getEdmxMetadata() {
         return edmxMap.values().stream().findFirst().orElse(null);
     }
 
@@ -49,9 +96,9 @@ public final class EntityModel {
      * Returns one EDMX model.
      *
      * @param namespace full-qualified name of the service
-     * @return Returns one EDMX {@link ServiceMetadata} model which is mapped to a namespace
+     * @return one EDMX {@link ServiceMetadata} model which is mapped to a namespace or null
      */
-    public ServiceMetadata getEdmx(String namespace) {
+    public ServiceMetadata getEdmxMetadata(String namespace) {
         return edmxMap.get(namespace);
     }
 
@@ -60,7 +107,7 @@ public final class EntityModel {
      *
      * @return a map of all EDMX {@link ServiceMetadata} models which belongs to one service
      */
-    public Map<String, ServiceMetadata> getEdmxes() {
-        return Collections.unmodifiableMap(edmxMap);
+    public Map<String, ServiceMetadata> getAllEdmxMetadata() {
+        return edmxMap;
     }
 }

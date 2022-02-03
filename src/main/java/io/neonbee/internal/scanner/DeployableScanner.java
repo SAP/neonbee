@@ -1,14 +1,14 @@
 package io.neonbee.internal.scanner;
 
-import static io.neonbee.internal.scanner.ClassPathScanner.getClassLoader;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Streams;
 
 import io.neonbee.NeonBeeDeployable;
-import io.neonbee.internal.deploy.NeonBeeModule;
+import io.neonbee.internal.deploy.DeployableVerticle;
+import io.neonbee.internal.helper.AsyncHelper;
+import io.neonbee.internal.helper.ThreadHelper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -27,7 +27,7 @@ public class DeployableScanner {
      * @return a future to a list with the classes
      */
     public static Future<List<Class<? extends Verticle>>> scanForDeployableClasses(Vertx vertx) {
-        return scanForDeployableClasses(vertx, getClassLoader());
+        return scanForDeployableClasses(vertx, ThreadHelper.getClassLoader()); // NOPMD false positive getClassLoader
     }
 
     private static Future<List<Class<? extends Verticle>>> scanForDeployableClasses(Vertx vertx,
@@ -35,10 +35,10 @@ public class DeployableScanner {
         ClassPathScanner scanner = new ClassPathScanner();
         Future<List<String>> deployablesFromClassPath = scanner.scanForAnnotation(vertx, NeonBeeDeployable.class);
         Future<List<String>> deployablesFromManifest =
-                scanner.scanManifestFiles(vertx, NeonBeeModule.NEONBEE_DEPLOYABLES);
+                scanner.scanManifestFiles(vertx, DeployableVerticle.NEONBEE_DEPLOYABLES);
 
         return CompositeFuture.all(deployablesFromClassPath, deployablesFromManifest)
-                .compose(compositeResult -> vertx.executeBlocking(promise -> {
+                .compose(compositeResult -> AsyncHelper.executeBlocking(vertx, () -> {
                     // Use distinct because the Deployables mentioned in the manifest could also exists as file.
                     List<String> deployableFQNs = Streams.concat(deployablesFromClassPath.result().stream(),
                             deployablesFromManifest.result().stream()).distinct().collect(Collectors.toList());
@@ -46,7 +46,7 @@ public class DeployableScanner {
                     if (LOGGER.isInfoEnabled()) {
                         LOGGER.info("Found Deployables {}.", deployableFQNs.stream().collect(Collectors.joining(",")));
                     }
-                    promise.complete(deployableFQNs.stream().map(className -> {
+                    return deployableFQNs.stream().map(className -> {
                         try {
                             return (Class<? extends Verticle>) classLoader.loadClass(className)
                                     .asSubclass(Verticle.class);
@@ -56,7 +56,7 @@ public class DeployableScanner {
                             // Should never happen, since the class name is read from the class path
                             throw new IllegalStateException(e);
                         }
-                    }).collect(Collectors.toList()));
+                    }).collect(Collectors.toList());
                 }));
     }
 }

@@ -52,7 +52,7 @@ class EntityWrapperMessageCodecTest extends NeonBeeTestBase {
     @DisplayName("Should serialize and deserialize an EntityWrapper correctly.")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void encodeDecode(VertxTestContext testContext) {
-        EntityModelManager.reloadModels(getNeonBee().getVertx()).<Void>compose(map -> {
+        EntityModelManager.reloadModels(getNeonBee()).<Void>compose(map -> {
             Buffer buffer = Buffer.buffer();
             codec.encodeToWire(buffer, wrapper);
             EntityWrapper decodeFromWire = codec.decodeFromWire(0, buffer);

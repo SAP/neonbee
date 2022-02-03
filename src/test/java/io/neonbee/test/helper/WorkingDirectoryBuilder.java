@@ -16,7 +16,7 @@ import com.sap.cds.reflect.CdsModel;
 import io.neonbee.NeonBee;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.config.ServerConfig;
-import io.neonbee.entity.ModelDefinitionHelper;
+import io.neonbee.entity.EntityModelDefinition;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Verticle;
@@ -31,8 +31,16 @@ public final class WorkingDirectoryBuilder {
 
     /**
      * Relative path to the verticle directory
+     *
+     * @deprecated use {@link MODULES_DIR}
      */
+    @Deprecated
     public static final Path VERTICLES_DIR = Path.of("verticles");
+
+    /**
+     * Relative path to the modules directory
+     */
+    public static final Path MODULES_DIR = Path.of("modules");
 
     /**
      * Relative path to the models directory
@@ -184,14 +192,15 @@ public final class WorkingDirectoryBuilder {
         Files.writeString(csnDestination, csnContent);
         CdsModel cdsModel = CdsModel.read(csnContent);
 
-        for (Path edmxPath : ModelDefinitionHelper.resolveEdmxPaths(csnPath, cdsModel)) {
+        for (Path edmxPath : EntityModelDefinition.resolveEdmxPaths(csnPath, cdsModel)) {
             Path edmxDestination = modelsDir.resolve(edmxPath.getFileName());
             Files.copy(edmxPath, edmxDestination);
         }
     }
 
+    @SuppressWarnings("Deprecation")
     private void createHollowDirectory(Path workingDirRoot) throws IOException {
-        for (Path dir : List.of(CONFIG_DIR, VERTICLES_DIR, MODELS_DIR, LOGS_DIR)) {
+        for (Path dir : List.of(CONFIG_DIR, VERTICLES_DIR, MODULES_DIR, MODELS_DIR, LOGS_DIR)) {
             Files.createDirectories(workingDirRoot.resolve(dir));
         }
     }
