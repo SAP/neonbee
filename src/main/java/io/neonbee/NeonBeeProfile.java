@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Strings;
+import com.google.common.base.Enums;
 
 /**
  * NeonBee deployment profile.
@@ -32,20 +32,26 @@ public enum NeonBeeProfile {
     }
 
     /**
-     * Parses a comma separated string of profile values.
+     * Similar to {@link #valueOf(String)}, but returning {@code null} instead of throwing an exception if the profile
+     * is not found.
      *
-     * @param values string with profile values
+     * @param profile the profile to get
+     * @return the {@link NeonBeeProfile} or {@code null}
+     */
+    public static NeonBeeProfile getProfile(String profile) {
+        return Enums.getIfPresent(NeonBeeProfile.class, profile).orNull();
+    }
+
+    /**
+     * Parses a comma separated string of profiles.
+     *
+     * @param profiles a comma separated string of profiles
      * @return a List with the parsed {@link NeonBeeProfile}s
      */
-    public static Set<NeonBeeProfile> parseProfiles(String values) {
-        return Optional.ofNullable(values).map(Strings::emptyToNull)
-                .map(nonEmptyValues -> Arrays.stream(nonEmptyValues.split(",")).map(value -> {
-                    try {
-                        return NeonBeeProfile.valueOf(value);
-                    } catch (Exception e) {
-                        return null;
-                    }
-                }).filter(Objects::nonNull).collect(Collectors.toSet())).filter(Predicate.not(Collection::isEmpty))
-                .orElse(Set.of(ALL));
+    public static Set<NeonBeeProfile> parseProfiles(String profiles) {
+        return Optional.ofNullable(profiles)
+                .map(nonNullProfiles -> Arrays.stream(nonNullProfiles.split(",")).filter(Predicate.not(String::isBlank))
+                        .map(NeonBeeProfile::getProfile).filter(Objects::nonNull).collect(Collectors.toSet()))
+                .filter(Predicate.not(Collection::isEmpty)).orElse(Set.of(ALL));
     }
 }

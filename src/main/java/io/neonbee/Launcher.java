@@ -1,9 +1,7 @@
 package io.neonbee;
 
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.ServiceLoader;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -12,65 +10,15 @@ import io.vertx.core.cli.CLI;
 import io.vertx.core.cli.CLIException;
 import io.vertx.core.cli.CommandLine;
 import io.vertx.core.cli.Option;
-import io.vertx.core.cli.TypedOption;
+import io.vertx.core.cli.annotations.CLIConfigurator;
+import io.vertx.core.cli.impl.DefaultCommandLine;
 
 public class Launcher {
-    private static final Option HELP_FLAG = new Option().setLongName("help").setShortName("h")
-            .setDescription("Shows help").setRequired(false).setFlag(true).setHelp(true);
-
-    private static final Option WORKING_DIR = new Option().setLongName("working-directory").setShortName("cwd")
-            .setDescription("Sets the current working directory of the NeonBee instance").setRequired(false);
-
-    private static final Option INSTANCE_NAME = new Option().setLongName("instance-name").setShortName("name")
-            .setDescription("Sets the instance name for the NeonBee instance").setRequired(false);
-
-    private static final TypedOption<Integer> WORKER_POOL_SIZE =
-            new TypedOption<Integer>().setLongName("worker-pool-size").setShortName("wps")
-                    .setDescription("Sets the number of threads for the worker pool used by the NeonBee instance")
-                    .setRequired(false).setType(Integer.class);
-
-    private static final TypedOption<Integer> EVENT_LOOP_POOL_SIZE =
-            new TypedOption<Integer>().setLongName("event-loop-pool-size").setShortName("elps")
-                    .setDescription("Sets the number of threads for the event loop pool used by the NeonBee instance")
-                    .setRequired(false).setType(Integer.class);
-
-    private static final Option IGNORE_CLASS_PATH_FLAG =
-            new Option().setLongName("ignore-class-path").setShortName("no-cp")
-                    .setDescription("Sets whether NeonBee should ignore verticle and models on the class path")
-                    .setRequired(false).setFlag(true);
-
-    private static final Option DISABLE_JOB_SCHEDULING_FLAG = new Option().setLongName("disable-job-scheduling")
-            .setShortName("no-jobs").setDescription("Sets whether NeonBee should schedule any job verticle")
-            .setRequired(false).setFlag(true);
-
-    private static final Option DO_NOT_WATCH_FILES =
-            new Option().setLongName("do-not-watch-files").setShortName("no-watchers")
-                    .setDescription("Sets whether NeonBee should watch any files").setRequired(false).setFlag(true);
-
-    private static final Option CLUSTERED = new Option().setLongName("clustered").setShortName("cl")
-            .setDescription("Sets whether NeonBee should be started in clustered mode").setRequired(false)
-            .setFlag(true);
-
-    private static final TypedOption<Integer> CLUSTER_PORT = new TypedOption<Integer>().setLongName("cluster-port")
-            .setShortName("clp").setDescription("Sets the port of cluster event bus of the clustered NeonBee instance")
-            .setRequired(false).setType(Integer.class);
-
-    private static final Option CLUSTER_CONFIG = new Option().setLongName("cluster-config").setShortName("cc")
-            .setDescription("Sets the cluster/Hazelast configuration file for NeonBee").setRequired(false);
-
-    private static final TypedOption<Integer> SERVER_PORT = new TypedOption<Integer>().setLongName("server-port")
-            .setShortName("port").setDescription("Sets the HTTP port of server of the clustered NeonBee instance")
-            .setRequired(false).setType(Integer.class);
-
-    private static final Option ACTIVE_PROFILES = new Option().setLongName("active-profiles").setShortName("ap")
-            .setDescription("Sets the active deployment profiles of NeonBee").setRequired(false);
-
-    private static final List<Option> OPTIONS = List.of(WORKING_DIR, INSTANCE_NAME, WORKER_POOL_SIZE,
-            EVENT_LOOP_POOL_SIZE, IGNORE_CLASS_PATH_FLAG, DISABLE_JOB_SCHEDULING_FLAG, DO_NOT_WATCH_FILES, CLUSTERED,
-            CLUSTER_PORT, CLUSTER_CONFIG, SERVER_PORT, ACTIVE_PROFILES, HELP_FLAG);
+    private static final Option HELP_FLAG =
+            new Option().setLongName("help").setShortName("h").setDescription("Show help").setFlag(true).setHelp(true);
 
     @VisibleForTesting
-    static final CLI INTERFACE = CLI.create("neonbee").setSummary("Start a NeonBee instance").addOptions(OPTIONS);
+    static final CLI INTERFACE = CLI.create(NeonBeeOptions.Mutable.class).addOption(HELP_FLAG);
 
     @SuppressWarnings("unused")
     private static NeonBee neonBee;
@@ -79,7 +27,7 @@ public class Launcher {
     public static void main(String[] args) {
         CommandLine commandLine = null;
         try {
-            commandLine = INTERFACE.parse(List.of(args), true);
+            commandLine = parseCommandLine(args);
             List<String> arguments = commandLine.allArguments();
             if (!arguments.isEmpty()) {
                 throw new CLIException("Unknown option '" + arguments.get(0) + "'");
@@ -97,7 +45,8 @@ public class Launcher {
         }
 
         try {
-            NeonBeeOptions options = setOptions(commandLine);
+            NeonBeeOptions.Mutable options = new NeonBeeOptions.Mutable();
+            CLIConfigurator.inject(commandLine, options);
 
             ServiceLoader<LauncherPreProcessor> loader = ServiceLoader.load(LauncherPreProcessor.class);
             loader.forEach(processor -> processor.execute(options));
@@ -114,50 +63,98 @@ public class Launcher {
     }
 
     @VisibleForTesting
-    static NeonBeeOptions setOptions(CommandLine commandLine) {
-        NeonBeeOptions.Mutable neonBeeOptions = new NeonBeeOptions.Mutable();
-
-        getLauncherOptionStringValue(commandLine, WORKING_DIR).or(() -> Optional.of("./working_dir/"))
-                .ifPresent(cwd -> neonBeeOptions.setWorkingDirectory(Paths.get(cwd)));
-        getLauncherOptionStringValue(commandLine, INSTANCE_NAME).ifPresent(neonBeeOptions::setInstanceName);
-        getLauncherOptionIntegerValue(commandLine, EVENT_LOOP_POOL_SIZE)
-                .ifPresent(neonBeeOptions::setEventLoopPoolSize);
-        getLauncherOptionIntegerValue(commandLine, WORKER_POOL_SIZE).ifPresent(neonBeeOptions::setWorkerPoolSize);
-        getLauncherOptionIntegerValue(commandLine, CLUSTER_PORT).ifPresent(neonBeeOptions::setClusterPort);
-        getLauncherOptionStringValue(commandLine, CLUSTER_CONFIG).ifPresent(neonBeeOptions::setClusterConfigResource);
-        getLauncherOptionIntegerValue(commandLine, SERVER_PORT).ifPresent(neonBeeOptions::setServerPort);
-        getLauncherOptionStringValue(commandLine, ACTIVE_PROFILES).ifPresent(neonBeeOptions::setActiveProfileValues);
-
-        neonBeeOptions.setIgnoreClassPath(getLauncherOptionBooleanValue(commandLine, IGNORE_CLASS_PATH_FLAG));
-        neonBeeOptions.setDisableJobScheduling(getLauncherOptionBooleanValue(commandLine, DISABLE_JOB_SCHEDULING_FLAG));
-        neonBeeOptions.setDoNotWatchFiles(getLauncherOptionBooleanValue(commandLine, DO_NOT_WATCH_FILES));
-        neonBeeOptions.setClustered(getLauncherOptionBooleanValue(commandLine, CLUSTERED));
-
-        return neonBeeOptions;
+    @SuppressWarnings("PMD.UseVarargs")
+    static CommandLine parseCommandLine(String[] args) {
+        return new EnvironmentAwareCommandLine(INTERFACE.parse(List.of(args), true));
     }
 
+    /**
+     * An environment-aware {@link CommandLine} facade, that will, if an option is not present on the command line,
+     * check for a {@code NEONBEE_} environment variable that contains the value returned for the option.
+     *
+     * Does not change any of the behavior for CLI arguments.
+     */
     @VisibleForTesting
-    static boolean getLauncherOptionBooleanValue(CommandLine commandLine, Option option) {
-        if (commandLine.isFlagEnabled(option.getName())) {
-            return true;
+    static class EnvironmentAwareCommandLine extends DefaultCommandLine {
+        EnvironmentAwareCommandLine(CommandLine commandLine) {
+            super(commandLine.cli());
+
+            CLI cli = commandLine.cli();
+            DefaultCommandLine defaultCommandLine = (DefaultCommandLine) commandLine;
+            this.allArgs = defaultCommandLine.allArguments();
+            cli.getOptions().forEach(option -> {
+                this.optionValues.put(option, defaultCommandLine.getRawValuesForOption(option));
+                if (defaultCommandLine.isSeenInCommandLine(option)) {
+                    this.optionsSeenInCommandLine.add(option);
+                }
+            });
+            cli.getArguments().forEach(argument -> {
+                this.argumentValues.put(argument, defaultCommandLine.getRawValuesForArgument(argument));
+            });
+            this.valid = defaultCommandLine.isValid();
         }
-        return Optional.ofNullable(System.getenv(transformToEnvName(option.getLongName()))).map(Boolean::parseBoolean)
-                .orElse(false);
-    }
 
-    @VisibleForTesting
-    static Optional<Integer> getLauncherOptionIntegerValue(CommandLine commandLine, Option option) {
-        return Optional.ofNullable(commandLine.<Integer>getOptionValue(option.getName())).or(() -> Optional
-                .ofNullable(System.getenv(transformToEnvName(option.getLongName()))).map(Integer::parseInt));
-    }
+        @Override
+        public boolean isFlagEnabled(String name) {
+            return super.isFlagEnabled(name) || hasEnvArg(cli().getOption(name));
+        }
 
-    @VisibleForTesting
-    static Optional<String> getLauncherOptionStringValue(CommandLine commandLine, Option option) {
-        return Optional.ofNullable(commandLine.<String>getOptionValue(option.getName()))
-                .or(() -> Optional.ofNullable(System.getenv(transformToEnvName(option.getLongName()))));
-    }
+        @Override
+        public boolean isSeenInCommandLine(Option option) {
+            return super.isSeenInCommandLine(option) || hasEnvArg(option);
+        }
 
-    private static String transformToEnvName(String longName) {
-        return "NEONBEE_" + longName.replaceAll("-", "_").toUpperCase(Locale.ROOT);
+        /**
+         * There are two possible implementations for this method:
+         *
+         * - Either return the command line options only, if there are any and otherwise return the single environment
+         * option (if present) - Or return a concatenated list of both options
+         *
+         * This method favours the command line option and only returns the environment option (a list of one entry), if
+         * the command line option is not set. This way it is more deterministic, meaning that if a command line option
+         * was specified it always overrides the environment, same as for the {@link #getRawValueForOption(Option)}
+         * method.
+         */
+        @Override
+        public List<String> getRawValuesForOption(Option option) {
+            List<String> values = super.getRawValuesForOption(option);
+            if (!values.isEmpty()) {
+                return values;
+            }
+
+            return hasEnvArg(option) ? List.of(getEnvArg(option)) : values;
+        }
+
+        /**
+         * Returns the environment argument for a given option.
+         *
+         * @param option The option to return the environment argument for
+         * @return The environment argument as string, or null if it is not present
+         */
+        @VisibleForTesting
+        String getEnvArg(Option option) {
+            return System.getenv(getEnvName(option));
+        }
+
+        /**
+         * Checks if a given option has an environment argument set.
+         *
+         * @param option The option to check the environment argument for
+         * @return True if there is an environment argument set for this option
+         */
+        @VisibleForTesting
+        boolean hasEnvArg(Option option) {
+            return System.getenv().containsKey(getEnvName(option));
+        }
+
+        /**
+         * Converts a given option name into a environment friendly (NeonBee) name.
+         *
+         * @param option The option with the name to convert
+         * @return The converted option name
+         */
+        static String getEnvName(Option option) {
+            return "NEONBEE_" + option.getName().replaceAll("-", "_").toUpperCase(Locale.ROOT);
+        }
     }
 }

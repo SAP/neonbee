@@ -25,8 +25,9 @@ import org.apache.olingo.server.api.serializer.SerializerResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.neonbee.NeonBee;
+import io.neonbee.entity.EntityModelDefinition;
 import io.neonbee.entity.EntityWrapper;
-import io.neonbee.entity.ModelDefinitionHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
@@ -85,8 +86,9 @@ public class EntityWrapperMessageCodec implements MessageCodec<EntityWrapper, En
     }
 
     private ServiceMetadata getServiceMetadata(FullQualifiedName entityTypeName) {
-        return getBufferedModel(vertx, ModelDefinitionHelper.retrieveNamespace(entityTypeName.getNamespace()))
-                .getEdmx(entityTypeName.getNamespace());
+        return getBufferedModel(NeonBee.get(vertx),
+                EntityModelDefinition.retrieveNamespace(entityTypeName.getNamespace()))
+                        .getEdmxMetadata(entityTypeName.getNamespace());
     }
 
     @Override

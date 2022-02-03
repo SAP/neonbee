@@ -9,6 +9,7 @@ import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static io.neonbee.test.helper.WorkingDirectoryBuilder.readDeploymentOptions;
 import static io.neonbee.test.helper.WorkingDirectoryBuilder.writeDeploymentOptions;
 import static io.vertx.core.Future.failedFuture;
+import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,7 +18,6 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +43,7 @@ import io.neonbee.config.AuthHandlerConfig;
 import io.neonbee.config.ServerConfig;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.entity.EntityVerticle;
-import io.neonbee.internal.deploy.Deployable;
+import io.neonbee.internal.deploy.DeployableVerticle;
 import io.neonbee.internal.deploy.Deployment;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.neonbee.job.JobVerticle;
@@ -261,8 +261,8 @@ public class NeonBeeTestBase {
      * @return A succeeded future with the Deployment, or a failed future with the cause.
      */
     public Future<Deployment> deployVerticle(Verticle verticle) {
-        return Deployable.fromVerticle(neonBee.getVertx(), verticle, "", null)
-                .compose(deployable -> deployable.deploy(neonBee.getVertx(), "").future())
+        return DeployableVerticle.fromVerticle(neonBee.getVertx(), verticle, null)
+                .compose(deployable -> deployable.deploy(neonBee))
                 .onSuccess(result -> LOGGER.info("Successfully deployed verticle {}", verticle))
                 .onFailure(throwable -> LOGGER.error("Failed to deploy verticle {}", verticle, throwable));
     }
@@ -275,7 +275,7 @@ public class NeonBeeTestBase {
      * @return A succeeded future with the Deployment, or a failed future with the cause.
      */
     public Future<Deployment> deployVerticle(Verticle verticle, DeploymentOptions options) {
-        return new Deployable(verticle, options).deploy(neonBee.getVertx(), "").future()
+        return new DeployableVerticle(verticle, options).deploy(neonBee)
                 .onSuccess(result -> LOGGER.info("Successfully deployed verticle {}", verticle))
                 .onFailure(throwable -> LOGGER.error("Failed to deploy verticle {}", verticle, throwable));
     }
@@ -287,8 +287,8 @@ public class NeonBeeTestBase {
      * @return A succeeded future with the Deployment, or a failed future with the cause.
      */
     public Future<Deployment> deployVerticle(Class<? extends Verticle> verticleClass) {
-        return Deployable.fromClass(neonBee.getVertx(), verticleClass, "", null)
-                .compose(deployable -> deployable.deploy(neonBee.getVertx(), "").future())
+        return DeployableVerticle.fromClass(neonBee.getVertx(), verticleClass, null)
+                .compose(deployable -> deployable.deploy(neonBee))
                 .onSuccess(
                         result -> LOGGER.info("Successfully deployed verticle with class {}", verticleClass.getName()))
                 .onFailure(throwable -> LOGGER.error("Failed to deploy verticle with class {}", verticleClass.getName(),
@@ -303,7 +303,7 @@ public class NeonBeeTestBase {
      * @return A succeeded future with the Deployment, or a failed future with the cause.
      */
     public Future<Deployment> deployVerticle(Class<? extends Verticle> verticleClass, DeploymentOptions options) {
-        return new Deployable(verticleClass, options).deploy(neonBee.getVertx(), "").future()
+        return new DeployableVerticle(verticleClass, options).deploy(neonBee)
                 .onSuccess(
                         result -> LOGGER.info("Successfully deployed verticle with class {}", verticleClass.getName()))
                 .onFailure(throwable -> LOGGER.error("Failed to deploy verticle with class {}", verticleClass.getName(),
@@ -344,7 +344,7 @@ public class NeonBeeTestBase {
      * @return a future to the server configuration
      */
     public static Future<ServerConfig> readServerConfig(Vertx vertx) {
-        return readServerConfig(Objects.requireNonNull(NeonBee.get(vertx),
+        return readServerConfig(requireNonNull(NeonBee.get(vertx),
                 "Cannot resolve the server port as the provided Vert.x instance is not associated to a NeonBee instance"));
     }
 

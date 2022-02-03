@@ -1,13 +1,15 @@
 package io.neonbee;
 
+import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static io.vertx.core.Future.succeededFuture;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.function.Supplier;
 
 import org.mockito.stubbing.Answer;
@@ -16,16 +18,17 @@ import org.slf4j.LoggerFactory;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.config.NeonBeeConfig;
-import io.neonbee.test.helper.OptionsHelper;
 import io.neonbee.test.helper.ReflectionHelper;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.file.FileSystem;
 
 public final class NeonBeeMockHelper {
@@ -90,11 +93,55 @@ public final class NeonBeeMockHelper {
         // This will be evaluated to an empty object for both JSON and YAML object. This is useful
         // e.g. when the NeonBeeConfig object is initialized. If other strings are needed, a more
         // sophisticated implementation of this answer is needed.
-        when(fileSystemMock.readFileBlocking(any())).thenReturn(Buffer.buffer("{}"));
+        when(fileSystemMock.exists(any())).thenReturn(succeededFuture(true));
+        when(fileSystemMock.exists(any(), any())).thenAnswer(invocation -> {
+            invocation.<Handler<AsyncResult<?>>>getArgument(invocation.getArguments().length - 1)
+                    .handle(succeededFuture(true));
+            return fileSystemMock;
+        });
+        when(fileSystemMock.existsBlocking(any())).thenReturn(true);
+        Buffer dummyBuffer = Buffer.buffer("{}");
+        when(fileSystemMock.readFile(any())).thenReturn(succeededFuture(dummyBuffer));
+        when(fileSystemMock.readFile(any(), any())).thenAnswer(invocation -> {
+            invocation.<Handler<AsyncResult<?>>>getArgument(invocation.getArguments().length - 1)
+                    .handle(succeededFuture(dummyBuffer));
+            return fileSystemMock;
+        });
+        when(fileSystemMock.readFileBlocking(any())).thenReturn(dummyBuffer);
+        when(fileSystemMock.readDir(any())).thenReturn(succeededFuture(List.of()));
+        when(fileSystemMock.readDir(any(), any(Handler.class))).thenAnswer(invocation -> {
+            invocation.<Handler<AsyncResult<?>>>getArgument(invocation.getArguments().length - 1)
+                    .handle(succeededFuture(List.of()));
+            return fileSystemMock;
+        });
+        when(fileSystemMock.readDirBlocking(any())).thenReturn(List.of());
+
+        // mock event bus
+        EventBus eventBusMock = mock(EventBus.class);
+        when(vertxMock.eventBus()).thenReturn(eventBusMock);
 
         // mock timers by handling them immediately, just that code in timers gets executed
         doAnswer(timerAnswer(1)).when(vertxMock).setTimer(anyLong(), any());
         doAnswer(timerAnswer(3)).when(vertxMock).setPeriodic(anyLong(), any());
+
+        // mock execute blocking by invoking the handlers immediately
+        Answer<?> executeHandlerAnswer = invocation -> {
+            Promise<?> promise = Promise.promise();
+            invocation.<Handler<Promise<?>>>getArgument(0).handle(promise);
+            invocation.<Handler<AsyncResult<?>>>getArgument(invocation.getArguments().length - 1)
+                    .handle(promise.future());
+            return null;
+        };
+        doAnswer(executeHandlerAnswer).when(vertxMock).executeBlocking(any(), anyBoolean(), any());
+        doAnswer(executeHandlerAnswer).when(vertxMock).executeBlocking(any(), any());
+
+        Answer<?> executeFutureAnswer = invocation -> {
+            Promise<?> promise = Promise.promise();
+            invocation.<Handler<Promise<?>>>getArgument(0).handle(promise);
+            return promise.future();
+        };
+        doAnswer(executeFutureAnswer).when(vertxMock).executeBlocking(any(), anyBoolean());
+        doAnswer(executeFutureAnswer).when(vertxMock).executeBlocking(any());
 
         return vertxMock;
     }
@@ -149,7 +196,7 @@ public final class NeonBeeMockHelper {
      * @return the mocked NeonBee instance
      */
     public static NeonBee registerNeonBeeMock(Vertx vertx) {
-        return registerNeonBeeMock(vertx, null, null);
+        return registerNeonBeeMock(vertx, defaultOptions());
     }
 
     /**
@@ -164,7 +211,7 @@ public final class NeonBeeMockHelper {
      * @return the mocked NeonBee instance
      */
     public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeOptions options) {
-        return registerNeonBeeMock(vertx, options, null);
+        return registerNeonBeeMock(vertx, options, new NeonBeeConfig());
     }
 
     /**
@@ -179,7 +226,7 @@ public final class NeonBeeMockHelper {
      * @return the mocked NeonBee instance
      */
     public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeConfig config) {
-        return registerNeonBeeMock(vertx, null, config);
+        return registerNeonBeeMock(vertx, defaultOptions(), config);
     }
 
     /**
@@ -197,11 +244,8 @@ public final class NeonBeeMockHelper {
     public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config) {
         createLogger(); // the logger is only created internally, create one manually if required
 
-        NeonBee neonBee = new NeonBee(vertx, Optional.ofNullable(options).orElseGet(OptionsHelper::defaultOptions),
-                new CompositeMeterRegistry());
-        if (config != null) {
-            neonBee.config = config;
-        }
+        NeonBee neonBee = new NeonBee(vertx, options, new CompositeMeterRegistry());
+        neonBee.config = config;
 
         return neonBee;
     }

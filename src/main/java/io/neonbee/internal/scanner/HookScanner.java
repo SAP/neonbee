@@ -1,8 +1,5 @@
 package io.neonbee.internal.scanner;
 
-import static io.neonbee.internal.deploy.NeonBeeModule.NEONBEE_HOOKS;
-import static io.neonbee.internal.scanner.ClassPathScanner.getClassLoader;
-
 import java.lang.annotation.ElementType;
 import java.util.List;
 import java.util.Objects;
@@ -14,12 +11,20 @@ import com.google.common.collect.Streams;
 
 import io.neonbee.hook.Hook;
 import io.neonbee.hook.Hooks;
+import io.neonbee.internal.helper.AsyncHelper;
+import io.neonbee.internal.helper.ThreadHelper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 
 public class HookScanner {
+    /**
+     * The MANIFEST.MF declaration for a NeonBee hook.
+     */
+    @VisibleForTesting
+    public static final String NEONBEE_HOOKS = "NeonBee-Hooks";
+
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     private final ClassLoader classLoader;
@@ -28,7 +33,7 @@ public class HookScanner {
      * Creates a new HookScanner with the current context class loader.
      */
     public HookScanner() {
-        this(getClassLoader());
+        this(ThreadHelper.getClassLoader()); // NOPMD false positive getClassLoader
     }
 
     @VisibleForTesting
@@ -37,7 +42,7 @@ public class HookScanner {
     }
 
     /**
-     * This method will scan for classes containing hook-annotations on the classpath and in jars and will return a set
+     * This method will scan for classes containing hook-annotations on the class path and in jars and will return a set
      * of classes which contains hook.
      *
      * @param vertx the Vert.x instance
@@ -61,16 +66,16 @@ public class HookScanner {
                 .map(names -> names.stream().map(name -> name + ".class").collect(Collectors.toList()));
 
         return CompositeFuture.all(hookClassesWithAnnotations, hooksFromManifest)
-                .compose(compositeResult -> vertx.executeBlocking(promise -> {
+                .compose(compositeResult -> AsyncHelper.executeBlocking(vertx, () -> {
                     if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info("Annotated hook classes on classpath {}.",
+                        LOGGER.info("Annotated hook classes on class path {}.",
                                 String.join(",", hookClassesWithAnnotations.result()));
-                        LOGGER.info("Hook classes from manifest files on classpath {}.",
+                        LOGGER.info("Hook classes from manifest files on class path {}.",
                                 String.join(", ", hooksFromManifest.result()));
                     }
 
                     // Use distinct because the hook mentioned in the manifest could also exist as file.
-                    promise.complete(Streams
+                    return Streams
                             .concat(hookClassesWithAnnotations.result().stream(), hooksFromManifest.result().stream())
                             .filter(Objects::nonNull).distinct().map(className -> {
                                 try {
@@ -79,7 +84,7 @@ public class HookScanner {
                                     // Should never happen, since the class name is read from the class path
                                     throw new IllegalStateException(e);
                                 }
-                            }).collect(Collectors.toSet()));
+                            }).collect(Collectors.toSet());
                 }));
     }
 }

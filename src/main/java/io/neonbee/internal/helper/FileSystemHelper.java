@@ -1,7 +1,12 @@
 package io.neonbee.internal.helper;
 
+import java.io.File;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -175,5 +180,31 @@ public final class FileSystemHelper {
      */
     public static Future<FileProps> getProperties(Vertx vertx, Path path) {
         return vertx.fileSystem().props(path.toString());
+    }
+
+    /**
+     * Parses file system path(s) into {@link Path}, by separating each path by the {@link File#pathSeparatorChar}
+     * before mapping it into a {@link Path}.
+     *
+     * @param paths any number of strings, that may contain one or multiple paths separated by the OS specific
+     *              {@link File#pathSeparatorChar}
+     * @return a list of parsed {@link Path}
+     */
+    public static Collection<Path> parsePaths(String... paths) {
+        return Arrays.stream(paths).flatMap(Pattern.compile(File.pathSeparator)::splitAsStream).map(Path::of)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get a path from a map, ignoring path separators of different platforms.
+     *
+     * @param <V>  value type of map
+     * @param map  any map that maps from string paths to values
+     * @param path the path to get from the map
+     * @return the value associated to the path or null, in case no value is mapped to the path
+     */
+    public static <V> V getPathFromMap(Map<String, V> map, String path) {
+        return map.containsKey(path) ? map.get(path)
+                : map.get(path.replace(File.separatorChar, File.separatorChar == '/' ? '\\' : '/'));
     }
 }

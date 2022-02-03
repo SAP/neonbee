@@ -1,14 +1,66 @@
 package io.neonbee.entity;
 
+import static java.util.Objects.requireNonNull;
+
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.sap.cds.reflect.CdsModel;
 import com.sap.cds.reflect.CdsService;
 
-public final class ModelDefinitionHelper {
-    private static final String EDMX = ".edmx";
+public final class EntityModelDefinition {
+    /**
+     * File extension for CSN model definition files.
+     */
+    public static final String CSN = ".csn";
+
+    /**
+     * File extension for EDMX model files.
+     */
+    public static final String EDMX = ".edmx";
+
+    private final Map<String, byte[]> csnModelDefinitions;
+
+    private final Map<String, byte[]> associatedModelDefinitions;
+
+    /**
+     * Creates a new {@link EntityModelDefinition} based on a CSN and any number of associated model definitions like
+     * EDMX files.
+     *
+     * @param csnModelDefinitions        any number of CSN model definitions
+     * @param associatedModelDefinitions any number of associated model definition files such as EDMX
+     */
+    public EntityModelDefinition(Map<String, byte[]> csnModelDefinitions,
+            Map<String, byte[]> associatedModelDefinitions) {
+        this.csnModelDefinitions = requireNonNull(csnModelDefinitions);
+        this.associatedModelDefinitions = requireNonNull(associatedModelDefinitions);
+    }
+
+    /**
+     * Get all CSN model definitions of this {@link EntityModelDefinition}.
+     *
+     * @return a map of CSN models
+     */
+    public Map<String, byte[]> getCSNModelDefinitions() {
+        return csnModelDefinitions;
+    }
+
+    /**
+     * Get all associated model definitions of this {@link EntityModelDefinition}, such as associated EDMX model files.
+     *
+     * @return a map of associated models
+     */
+    public Map<String, byte[]> getAssociatedModelDefinitions() {
+        return associatedModelDefinitions;
+    }
+
+    @Override
+    public String toString() {
+        return String.join(",", csnModelDefinitions.keySet()) + "$"
+                + String.join(",", associatedModelDefinitions.keySet());
+    }
 
     /**
      * Extracts the prefix of the CSN Model Service to get the Namespace.

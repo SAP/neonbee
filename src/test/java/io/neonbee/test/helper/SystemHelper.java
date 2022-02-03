@@ -1,5 +1,7 @@
 package io.neonbee.test.helper;
 
+import static io.neonbee.test.helper.ReflectionHelper.getValueOfPrivateField;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Iterator;
@@ -56,14 +58,27 @@ public final class SystemHelper {
      * @throws Exception Could not change environment
      */
     public static void setEnvironment(Map<String, String> newEnvironment) throws Exception {
-        Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
-        Map<String, String> theUnmodifiableEnvironment =
-                ReflectionHelper.getValueOfPrivateField(processEnvironmentClass, "theUnmodifiableEnvironment");
+        try {
+            Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
+            // The order of operations is critical here: On some operating systems, theEnvironment is present but
+            // theCaseInsensitiveEnvironment is not. In this case, this method will throw a ReflectiveOperationException
+            // without modifying theEnvironment. Otherwise, the contents of theEnvironment will be corrupted. For this
+            // reason, both fields are fetched by reflection before either field is modified.
+            Map<String, String> theEnvironment = getValueOfPrivateField(processEnvironmentClass, "theEnvironment");
+            Map<String, String> theCaseInsensitiveEnvironment =
+                    getValueOfPrivateField(processEnvironmentClass, "theCaseInsensitiveEnvironment");
 
-        Map<String, String> modifiableEnvironment =
-                ReflectionHelper.getValueOfPrivateField(theUnmodifiableEnvironment, "m");
-        modifiableEnvironment.clear();
-        modifiableEnvironment.putAll(newEnvironment);
+            theEnvironment.clear();
+            theEnvironment.putAll(newEnvironment);
+
+            theCaseInsensitiveEnvironment.clear();
+            theCaseInsensitiveEnvironment.putAll(newEnvironment);
+        } catch (ReflectiveOperationException ex) {
+            Map<String, String> modifiableEnv = getValueOfPrivateField(System.getenv(), "m");
+
+            modifiableEnv.clear();
+            modifiableEnv.putAll(newEnvironment);
+        }
     }
 
     /**

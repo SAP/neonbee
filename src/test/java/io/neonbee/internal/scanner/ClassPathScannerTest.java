@@ -6,6 +6,7 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 
 import java.beans.Transient;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -24,6 +25,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import com.google.common.collect.Streams;
 
 import io.neonbee.internal.BasicJar;
+import io.neonbee.internal.helper.ThreadHelper;
+import io.neonbee.internal.scanner.ClassPathScanner.CloseableClassPathScanner;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.Checkpoint;
@@ -68,18 +71,22 @@ class ClassPathScannerTest {
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find files on the class path that match the passed prediction")
     void scanWithPredicateTest(Vertx vertx, VertxTestContext testContext) throws IOException {
-        List<String> expected = List.of(ClassPathScanner.class.getName().replace(".", "/") + ".class",
-                ClassPathScannerTest.class.getName().replace(".", "/") + ".class");
+        List<String> expected =
+                List.of(ClassPathScanner.class, ClassPathScannerTest.class, CloseableClassPathScanner.class).stream()
+                        .map(Class::getName).map(name -> name.replace(".", File.separator) + ".class")
+                        .collect(Collectors.toList());
 
-        new ClassPathScanner(ClassLoader.getSystemClassLoader())
-                .scanWithPredicate(vertx, name -> name.startsWith(ClassPathScanner.class.getName().replace(".", "/")))
+        new ClassPathScanner(ThreadHelper.getClassLoader()) // NOPMD
+                .scanWithPredicate(vertx,
+                        name -> name.startsWith(ClassPathScanner.class.getName().replace(".", File.separator)))
                 .onComplete(testContext.succeeding(paths -> testContext.verify(() -> {
-                    paths.forEach(path -> {
-                        assertThat(expected.stream().anyMatch(path::endsWith)).isTrue();
-                    });
-                    testContext.completeNow();
+                    assertThat(paths).isNotEmpty();
+                    if (!paths.stream().allMatch(path -> expected.stream().anyMatch(path::endsWith))) {
+                        testContext.failNow("Not all paths matched an expected value " + paths);
+                    } else {
+                        testContext.completeNow();
+                    }
                 })));
-
     }
 
     @Test

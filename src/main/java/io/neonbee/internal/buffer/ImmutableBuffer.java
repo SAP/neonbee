@@ -1,10 +1,10 @@
 package io.neonbee.internal.buffer;
 
 import static io.netty.buffer.Unpooled.EMPTY_BUFFER;
+import static java.util.Objects.requireNonNull;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.Objects;
 
 import io.netty.buffer.ByteBuf;
 import io.vertx.core.buffer.Buffer;
@@ -72,7 +72,7 @@ public final class ImmutableBuffer implements Buffer {
      * @param buffer the buffer to wrap
      */
     ImmutableBuffer(Buffer buffer) {
-        this(Objects.requireNonNull(buffer), buffer.getByteBuf());
+        this(requireNonNull(buffer), buffer.getByteBuf());
     }
 
     /**
