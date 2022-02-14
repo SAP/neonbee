@@ -2,24 +2,19 @@ package io.neonbee.entity;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.NeonBeeProfile.NO_WEB;
-import static io.neonbee.entity.EntityModelManager.BUFFERED_MODELS;
-import static io.neonbee.entity.EntityModelManager.EXTERNAL_MODEL_DEFINITIONS;
-import static io.neonbee.entity.EntityModelManager.getBufferedModel;
 import static io.neonbee.entity.EntityModelManager.getBufferedOData;
-import static io.neonbee.entity.EntityModelManager.getSharedModel;
-import static io.neonbee.entity.EntityModelManager.getSharedModels;
-import static io.neonbee.entity.EntityModelManager.registerModels;
-import static io.neonbee.entity.EntityModelManager.reloadModels;
-import static io.neonbee.entity.EntityModelManager.unregisterModels;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -46,24 +41,19 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
         options.addActiveProfile(NO_WEB);
     }
 
-    /**
-     * Public test helper, to get the BUFFERED_MODELS from the EntityModelManager
-     *
-     * @param neonBee the NeonBee to get the models for
-     * @return a map or null
-     */
-    public static Map<String, EntityModel> getBufferedModels(NeonBee neonBee) {
-        return BUFFERED_MODELS.get(neonBee);
-    }
+    @Test
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("should only be allowed to initialize once")
+    void testInitialization() {
+        assertThrows(NullPointerException.class, () -> new EntityModelManager(null));
 
-    /**
-     * Public test helper, to get the EXTERNAL_MODEL_DEFINITIONS from the EntityModelManager
-     *
-     * @param neonBee the NeonBee to get the models for
-     * @return a set or null
-     */
-    public static Set<EntityModelDefinition> getExternalModelDefinitions(NeonBee neonBee) {
-        return EXTERNAL_MODEL_DEFINITIONS.get(neonBee);
+        NeonBee neonBeeMock = mock(NeonBee.class);
+        when(neonBeeMock.getModelManager()).thenReturn(mock(EntityModelManager.class));
+        assertThrows(IllegalArgumentException.class, () -> new EntityModelManager(neonBeeMock));
+
+        when(neonBeeMock.getModelManager()).thenReturn(null);
+        EntityModelManager modelManager = assertDoesNotThrow(() -> new EntityModelManager(neonBeeMock));
+        assertThat(modelManager.neonBee).isSameInstanceAs(neonBeeMock);
     }
 
     @Test
@@ -102,13 +92,13 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
 
         NeonBee neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx,
                 defaultOptions().clearActiveProfiles().setWorkingDirectory(workingDir));
+        EntityModelManager modelManager = neonBee.getModelManager();
 
         // assert that buffered models is null and stays empty when being retrieved w/ getBufferedModels
-        assertThat(getBufferedModels(neonBee)).isNull();
-        assertThat(getBufferedModel(neonBee, "io.neonbee.test1")).isNull();
-        assertThat(BUFFERED_MODELS.get(neonBee)).isNull();
+        assertThat(modelManager.getBufferedModels()).isNull();
+        assertThat(modelManager.getBufferedModel("io.neonbee.test1")).isNull();
 
-        getSharedModels(neonBee).onComplete(testContext.succeeding(models -> testContext.verify(() -> {
+        modelManager.getSharedModels().onComplete(testContext.succeeding(models -> testContext.verify(() -> {
             // assert that all expected models have been loaded
             assertThat(models).isNotNull();
             assertThat(models).isNotEmpty();
@@ -118,19 +108,19 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
                     .getEntityContainer().getNamespace()).isEqualTo("io.neonbee.test2.TestService2Cars");
 
             // assert that now the models are actually buffered
-            assertThat(getBufferedModels(neonBee)).isNotNull();
-            assertThat(getBufferedModel(neonBee, "io.neonbee.test1")).isNotNull();
+            assertThat(modelManager.getBufferedModels()).isNotNull();
+            assertThat(modelManager.getBufferedModel("io.neonbee.test1")).isNotNull();
 
             // assert that if calling getSharedModels a second time, we retrieve the same instance of models
-            getSharedModels(neonBee).onComplete(testContext.succeeding(modelsAgain -> testContext.verify(() -> {
+            modelManager.getSharedModels().onComplete(testContext.succeeding(modelsAgain -> testContext.verify(() -> {
                 assertThat(modelsAgain).isSameInstanceAs(models);
 
                 // and assert that if now calling reloadModels, the model buffer is actually refreshed
-                reloadModels(neonBee).onComplete(testContext.succeeding(reloadModels -> testContext.verify(() -> {
+                modelManager.reloadModels().onComplete(testContext.succeeding(reloadModels -> testContext.verify(() -> {
                     assertThat(reloadModels).isNotSameInstanceAs(models);
 
                     // and also the buffer got actually refreshed
-                    assertThat(getBufferedModels(neonBee)).isSameInstanceAs(reloadModels);
+                    assertThat(modelManager.getBufferedModels()).isSameInstanceAs(reloadModels);
 
                     testContext.completeNow();
                 })));
@@ -148,7 +138,10 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
 
         NeonBee neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx,
                 defaultOptions().clearActiveProfiles().setWorkingDirectory(workingDir));
-        CompositeFuture.all(getSharedModel(neonBee, "io.neonbee.test1"), getSharedModel(neonBee, "io.neonbee.test2"))
+        EntityModelManager modelManager = neonBee.getModelManager();
+
+        CompositeFuture
+                .all(modelManager.getSharedModel("io.neonbee.test1"), modelManager.getSharedModel("io.neonbee.test2"))
                 .onComplete(testContext.succeeding(models -> testContext.verify(() -> {
                     assertThat(models.<EntityModel>resultAt(0).getEdmxMetadata().getEdm().getEntityContainer()
                             .getNamespace()).isEqualTo("io.neonbee.test1.TestService1");
@@ -165,10 +158,12 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
     @DisplayName("check if getting single non-existing model will fail for get shared edmx model")
     void getSingleNonExistingSharedModelTest(Vertx vertx, VertxTestContext testContext) {
         NeonBee neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx);
-        getSharedModel(neonBee, "non-existing").onComplete(testContext.failing(throwable -> testContext.verify(() -> {
-            assertThat(throwable).isInstanceOf(NoSuchElementException.class);
-            testContext.completeNow();
-        })));
+        EntityModelManager modelManager = neonBee.getModelManager();
+        modelManager.getSharedModel("non-existing")
+                .onComplete(testContext.failing(throwable -> testContext.verify(() -> {
+                    assertThat(throwable).isInstanceOf(NoSuchElementException.class);
+                    testContext.completeNow();
+                })));
     }
 
     @Test
@@ -178,6 +173,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
         Path workingDirectory = getNeonBee().getOptions().getWorkingDirectory();
         NeonBee neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx,
                 defaultOptions().clearActiveProfiles().setWorkingDirectory(workingDirectory));
+        EntityModelManager modelManager = neonBee.getModelManager();
 
         // Create modelsbuildModelEntry
         Map.Entry<String, byte[]> referenceModel = buildModelEntry("ReferenceService.csn");
@@ -188,15 +184,16 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
         Map<String, byte[]> extendedModels = Map.ofEntries(referenceExtModel);
 
         EntityModelDefinition modelDefinition = new EntityModelDefinition(models, extendedModels);
-        registerModels(neonBee, modelDefinition).onComplete(testContext.succeeding(result -> testContext.verify(() -> {
-            assertThat(getBufferedModel(neonBee, "io.neonbee.reference").getEdmxMetadata().getEdm().getEntityContainer()
-                    .getNamespace()).isEqualTo("io.neonbee.reference.ReferenceService");
-            unregisterModels(neonBee, modelDefinition)
-                    .onComplete(testContext.succeeding(result2 -> testContext.verify(() -> {
-                        assertThat(getBufferedModel(neonBee, "io.neonbee.reference")).isNull();
-                        testContext.completeNow();
-                    })));
-        })));
+        modelManager.registerModels(modelDefinition)
+                .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
+                    assertThat(modelManager.getBufferedModel("io.neonbee.reference").getEdmxMetadata().getEdm()
+                            .getEntityContainer().getNamespace()).isEqualTo("io.neonbee.reference.ReferenceService");
+                    modelManager.unregisterModels(modelDefinition)
+                            .onComplete(testContext.succeeding(result2 -> testContext.verify(() -> {
+                                assertThat(modelManager.getBufferedModel("io.neonbee.reference")).isNull();
+                                testContext.completeNow();
+                            })));
+                })));
     }
 
     @Test
@@ -206,6 +203,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
         Path workingDirectory = getNeonBee().getOptions().getWorkingDirectory();
         NeonBee neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx,
                 defaultOptions().clearActiveProfiles().setWorkingDirectory(workingDirectory));
+        EntityModelManager modelManager = neonBee.getModelManager();
 
         // Create 1st models
         Map.Entry<String, byte[]> referenceModel = buildModelEntry("ReferenceService.csn");
@@ -225,16 +223,17 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
 
         EntityModelDefinition definition = new EntityModelDefinition(referenceModels, referenceExtendedModels);
         EntityModelDefinition definition2 = new EntityModelDefinition(testModels, testExtendedModels);
-        registerModels(neonBee, definition).compose(result -> registerModels(neonBee, definition2))
+        modelManager.registerModels(definition).compose(result -> modelManager.registerModels(definition2))
                 .onComplete(testContext.succeeding(res -> testContext.verify(() -> {
-                    assertThat(getBufferedModel(neonBee, "io.neonbee.reference").getEdmxMetadata().getEdm()
+                    assertThat(modelManager.getBufferedModel("io.neonbee.reference").getEdmxMetadata().getEdm()
                             .getEntityContainer().getNamespace()).isEqualTo("io.neonbee.reference.ReferenceService");
-                    assertThat(getBufferedModel(neonBee, "io.neonbee.test1").getEdmxMetadata().getEdm()
+                    assertThat(modelManager.getBufferedModel("io.neonbee.test1").getEdmxMetadata().getEdm()
                             .getEntityContainer().getNamespace()).isEqualTo("io.neonbee.test1.TestService1");
-                    unregisterModels(neonBee, definition).compose(res2 -> unregisterModels(neonBee, definition2))
+                    modelManager.unregisterModels(definition)
+                            .compose(res2 -> modelManager.unregisterModels(definition2))
                             .onComplete(testContext.succeeding(result2 -> testContext.verify(() -> {
-                                assertThat(getBufferedModel(neonBee, "io.neonbee.reference")).isNull();
-                                assertThat(getBufferedModel(neonBee, "AnnotatedService")).isNull();
+                                assertThat(modelManager.getBufferedModel("io.neonbee.reference")).isNull();
+                                assertThat(modelManager.getBufferedModel("AnnotatedService")).isNull();
                                 testContext.completeNow();
                             })));
                 })));

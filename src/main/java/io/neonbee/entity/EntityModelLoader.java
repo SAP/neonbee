@@ -8,7 +8,6 @@ import static io.vertx.core.Future.succeededFuture;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -20,7 +19,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -77,23 +75,23 @@ class EntityModelLoader {
     }
 
     /**
-     * Load models from model directory and classpath and returns a future to an unmodifiable map of all loaded models.
+     * Load models from model directory and class path and return a future to a map of all loaded models.
      *
-     * @return a unmodifiable map of all loaded models
+     * @return a map of all loaded models
      */
     public static Future<Map<String, EntityModel>> load(Vertx vertx) {
-        return new EntityModelLoader(vertx).loadModelsFromModelDirectoryAndClasspath()
+        return new EntityModelLoader(vertx).loadModelsFromModelDirectoryAndClassPath()
                 .map(EntityModelLoader::getModels);
     }
 
     /**
-     * Load models from model directory and classpath, as well as from the maps provided and returns a future to an
-     * unmodifiable map of all loaded models.
+     * Load models from model directory and class path, as well as from the maps provided and return a future to a map
+     * of all loaded models.
      *
-     * @return a unmodifiable map of all loaded models
+     * @return a map of all loaded models
      */
     public static Future<Map<String, EntityModel>> load(Vertx vertx, Collection<EntityModelDefinition> definitions) {
-        return new EntityModelLoader(vertx).loadModelsFromModelDirectoryAndClasspath().compose(loader -> {
+        return new EntityModelLoader(vertx).loadModelsFromModelDirectoryAndClassPath().compose(loader -> {
             return CompositeFuture
                     .all(definitions.stream().map(loader::loadModelsFromDefinition).collect(Collectors.toList()))
                     .map(loader);
@@ -103,18 +101,18 @@ class EntityModelLoader {
     /**
      * Returns a map of all loaded models.
      *
-     * @return a unmodifiable map of all loaded models
+     * @return a map of all loaded models
      */
     public Map<String, EntityModel> getModels() {
-        return Collections.unmodifiableMap(models);
+        return models;
     }
 
     /**
-     * Load models from model directory and classpath.
+     * Load models from model directory and class path.
      *
      * @return a future to the {@link EntityModelLoader} instance
      */
-    public Future<EntityModelLoader> loadModelsFromModelDirectoryAndClasspath() {
+    public Future<EntityModelLoader> loadModelsFromModelDirectoryAndClassPath() {
         NeonBeeOptions options = NeonBee.get(vertx).getOptions();
         return CompositeFuture.all(scanDir(options.getModelsDirectory()),
                 options.shouldIgnoreClassPath() ? succeededFuture() : scanClassPath()).map(this);
@@ -165,7 +163,7 @@ class EntityModelLoader {
         Future<List<String>> modelFiles = scanner.scanManifestFiles(vertx, NEONBEE_MODELS);
 
         return CompositeFuture.all(csnFiles, modelFiles).compose(scanResult -> CompositeFuture
-                // Use distinct because models mentioned in the manifest could also exists as file.
+                // use distinct because models mentioned in the manifest could also exists as file.
                 .all(Streams.concat(csnFiles.result().stream(), modelFiles.result().stream()).distinct()
                         .map(name -> loadModel(Path.of(name)).otherwise(throwable -> {
                             // models loaded from the class path are non-vital for NeonBee so continue anyways
@@ -180,25 +178,26 @@ class EntityModelLoader {
             return succeededFuture();
         }
 
-        return readCsnModel(csnFile)
-                .compose(
-                        cdsModel -> CompositeFuture
-                                .all(EntityModelDefinition.resolveEdmxPaths(csnFile, cdsModel).stream()
-                                        .map(this::loadEdmxModel).collect(Collectors.toList()))
-                                .onSuccess(compositeFuture -> {
-                                    buildModelMap(cdsModel, compositeFuture.<ServiceMetadata>list());
-                                }))
-                .mapEmpty();
+        return readCsnModel(csnFile).compose(cdsModel -> {
+            return CompositeFuture.all(EntityModelDefinition.resolveEdmxPaths(csnFile, cdsModel).stream()
+                    .map(this::loadEdmxModel).collect(Collectors.toList())).onSuccess(compositeFuture -> {
+                        buildModelMap(cdsModel, compositeFuture.<ServiceMetadata>list());
+                    });
+        }).mapEmpty();
     }
 
-    Future<Void> parseModel(String csnFile, byte[] csnPayload, Map<String, byte[]> extensionModels) {
-        return parseCsnModel(csnPayload).compose(cdsModel -> CompositeFuture.all(EntityModelDefinition
-                .resolveEdmxPaths(Path.of(csnFile), cdsModel).stream().map(Path::toString).map(path -> {
-                    return Optional.ofNullable(extensionModels.get(path)).orElse(extensionModels
-                            .get(path.replace(File.separatorChar, File.separatorChar == '/' ? '\\' : '/')));
-                }).map(this::parseEdmxModel).collect(Collectors.toList())).onSuccess(compositeFuture -> {
-                    buildModelMap(cdsModel, compositeFuture.<ServiceMetadata>list());
-                })).mapEmpty();
+    Future<Void> parseModel(String csnFile, byte[] csnPayload, Map<String, byte[]> associatedModels) {
+        return parseCsnModel(csnPayload)
+                .compose(cdsModel -> CompositeFuture
+                        .all(EntityModelDefinition.resolveEdmxPaths(Path.of(csnFile), cdsModel).stream()
+                                .map(Path::toString).map(path -> {
+                                    // we do not know if the path uses windows / unix path separators, try both!
+                                    return FileSystemHelper.getPathFromMap(associatedModels, path);
+                                }).map(this::parseEdmxModel).collect(Collectors.toList()))
+                        .onSuccess(compositeFuture -> {
+                            buildModelMap(cdsModel, compositeFuture.<ServiceMetadata>list());
+                        }))
+                .mapEmpty();
     }
 
     private void buildModelMap(CdsModel cdsModel, List<ServiceMetadata> edmxModels) {

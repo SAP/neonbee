@@ -40,6 +40,7 @@ import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.config.ServerConfig;
 import io.neonbee.data.DataQuery;
+import io.neonbee.entity.EntityModelManager;
 import io.neonbee.entity.EntityWrapper;
 import io.neonbee.hook.HookRegistry;
 import io.neonbee.hook.HookType;
@@ -163,6 +164,8 @@ public class NeonBee {
     private AsyncMap<String, Object> sharedAsyncMap;
 
     private final Set<String> localConsumers = new ConcurrentHashSet<>();
+
+    private final EntityModelManager modelManager;
 
     private final CompositeMeterRegistry compositeMeterRegistry;
 
@@ -516,6 +519,8 @@ public class NeonBee {
     NeonBee(Vertx vertx, NeonBeeOptions options, CompositeMeterRegistry compositeMeterRegistry) {
         this.vertx = vertx;
         this.options = options;
+
+        this.modelManager = new EntityModelManager(this);
         this.compositeMeterRegistry = compositeMeterRegistry;
 
         // to be able to retrieve the NeonBee instance from any point you have a Vert.x instance add it to a global map
@@ -642,6 +647,15 @@ public class NeonBee {
      */
     public ServerConfig getServerConfig() {
         return new ServerConfig((JsonObject) getLocalMap().get(ServerVerticle.SERVER_CONFIG_KEY));
+    }
+
+    /**
+     * Get the {@link EntityModelManager}.
+     *
+     * @return the {@link EntityModelManager}
+     */
+    public EntityModelManager getModelManager() {
+        return modelManager;
     }
 
     /**

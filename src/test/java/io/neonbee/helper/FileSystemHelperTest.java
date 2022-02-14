@@ -4,19 +4,23 @@ import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.helper.FileSystemHelper.createDirs;
 import static io.neonbee.internal.helper.FileSystemHelper.deleteRecursive;
 import static io.neonbee.internal.helper.FileSystemHelper.exists;
+import static io.neonbee.internal.helper.FileSystemHelper.getPathFromMap;
 import static io.neonbee.internal.helper.FileSystemHelper.getProperties;
 import static io.neonbee.internal.helper.FileSystemHelper.isDirectory;
 import static io.neonbee.internal.helper.FileSystemHelper.openFile;
+import static io.neonbee.internal.helper.FileSystemHelper.parsePaths;
 import static io.neonbee.internal.helper.FileSystemHelper.readDir;
 import static io.neonbee.internal.helper.FileSystemHelper.readFile;
 import static io.neonbee.internal.helper.FileSystemHelper.writeFile;
 import static io.neonbee.test.helper.FileSystemHelper.createTempDirectory;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -184,5 +188,25 @@ class FileSystemHelperTest {
             assertThat(property.isDirectory()).isTrue();
             testContext.completeNow();
         }));
+    }
+
+    @Test
+    @DisplayName("Parse paths")
+    void testParsePaths() {
+        assertThat(parsePaths()).isEmpty();
+        List<Path> expectedPaths = List.of(Path.of("a"), Path.of("b"), Path.of("c"));
+        assertThat(parsePaths("a", "b", "c")).containsExactlyElementsIn(expectedPaths);
+        assertThat(parsePaths("a" + File.pathSeparator + "b" + File.pathSeparator + "c"))
+                .containsExactlyElementsIn(expectedPaths);
+        assertThat(parsePaths("a" + File.pathSeparator + "b", "c")).containsExactlyElementsIn(expectedPaths);
+        assertThat(parsePaths("a", "b" + File.pathSeparator + "c")).containsExactlyElementsIn(expectedPaths);
+    }
+
+    @Test
+    @DisplayName("Get path from map")
+    void testGetPathFromMap() {
+        assertThat(getPathFromMap(Map.of("test/test.txt", true), "test" + File.separator + "test.txt")).isTrue();
+        assertThat(getPathFromMap(Map.of("test\\test.txt", true), "test" + File.separator + "test.txt")).isTrue();
+        assertThat(getPathFromMap(Map.of("test/test.txt", true), "testtest.txt")).isNull();
     }
 }

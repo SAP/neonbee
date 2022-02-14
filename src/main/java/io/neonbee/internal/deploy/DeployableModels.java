@@ -1,7 +1,5 @@
 package io.neonbee.internal.deploy;
 
-import static io.neonbee.entity.EntityModelManager.registerModels;
-import static io.neonbee.entity.EntityModelManager.unregisterModels;
 import static java.util.Objects.requireNonNull;
 
 import java.io.InputStream;
@@ -81,10 +79,11 @@ public class DeployableModels extends Deployable {
 
     @Override
     public PendingDeployment deploy(NeonBee neonBee) {
-        return new PendingDeployment(neonBee, this, registerModels(neonBee, modelDefinition).mapEmpty()) {
+        return new PendingDeployment(neonBee, this,
+                neonBee.getModelManager().registerModels(modelDefinition).mapEmpty()) {
             @Override
             protected Future<Void> undeploy(String deploymentId) {
-                return unregisterModels(neonBee, modelDefinition).mapEmpty();
+                return neonBee.getModelManager().unregisterModels(modelDefinition).mapEmpty();
             }
         };
     }

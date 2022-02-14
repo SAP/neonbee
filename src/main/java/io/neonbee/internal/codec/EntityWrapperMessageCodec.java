@@ -1,6 +1,5 @@
 package io.neonbee.internal.codec;
 
-import static io.neonbee.entity.EntityModelManager.getBufferedModel;
 import static io.neonbee.entity.EntityModelManager.getBufferedOData;
 import static org.apache.olingo.commons.api.format.ContentType.APPLICATION_JSON;
 
@@ -86,9 +85,9 @@ public class EntityWrapperMessageCodec implements MessageCodec<EntityWrapper, En
     }
 
     private ServiceMetadata getServiceMetadata(FullQualifiedName entityTypeName) {
-        return getBufferedModel(NeonBee.get(vertx),
-                EntityModelDefinition.retrieveNamespace(entityTypeName.getNamespace()))
-                        .getEdmxMetadata(entityTypeName.getNamespace());
+        return NeonBee.get(vertx).getModelManager()
+                .getBufferedModel(EntityModelDefinition.retrieveNamespace(entityTypeName.getNamespace()))
+                .getEdmxMetadata(entityTypeName.getNamespace());
     }
 
     @Override
