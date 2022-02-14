@@ -73,7 +73,7 @@ class EntityWrapperTest extends NeonBeeTestBase {
     @DisplayName("Check if toBuffer works as expected")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testToBuffer(VertxTestContext testContext) {
-        EntityModelManager.reloadModels(getNeonBee()).onComplete(testContext.succeeding(map -> {
+        getNeonBee().getModelManager().reloadModels().onComplete(testContext.succeeding(map -> {
             testContext.verify(() -> {
                 Buffer buffer = TEST_USER_WRAPPER.toBuffer(getNeonBee().getVertx());
                 assertThat(buffer.toJsonObject()).isEqualTo(TEST_USER_WRAPPER_SERIALIZED.toJsonObject());
@@ -86,7 +86,7 @@ class EntityWrapperTest extends NeonBeeTestBase {
     @DisplayName("Check if fromBuffer works as expected")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testFromBuffer(VertxTestContext testContext) {
-        EntityModelManager.reloadModels(getNeonBee()).onComplete(testContext.succeeding(map -> {
+        getNeonBee().getModelManager().reloadModels().onComplete(testContext.succeeding(map -> {
             testContext.verify(() -> {
                 EntityWrapper decodedWrapper =
                         EntityWrapper.fromBuffer(getNeonBee().getVertx(), TEST_USER_WRAPPER_SERIALIZED);

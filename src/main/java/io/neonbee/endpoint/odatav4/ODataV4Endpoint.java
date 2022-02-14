@@ -5,7 +5,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.base.Strings.nullToEmpty;
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.STRICT;
 import static io.neonbee.entity.EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS;
-import static io.neonbee.entity.EntityModelManager.getSharedModels;
 import static io.neonbee.internal.helper.FunctionalHelper.entryConsumer;
 import static io.neonbee.internal.helper.FunctionalHelper.entryFunction;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
@@ -231,7 +230,7 @@ public class ODataV4Endpoint implements Endpoint {
 
     private static Future<Void> refreshRouter(Vertx vertx, Router router, String basePath, UriConversion uriConversion,
             RegexBlockList exposedEntities, AtomicReference<Map<String, EntityModel>> currentModels) {
-        return getSharedModels(NeonBee.get(vertx)).compose(models -> {
+        return NeonBee.get(vertx).getModelManager().getSharedModels().compose(models -> {
             if (models == currentModels.get()) {
                 return succeededFuture(); // no update needed
             } else {

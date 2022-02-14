@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
 import io.neonbee.NeonBeeOptions;
-import io.neonbee.entity.EntityModelManager;
 import io.neonbee.entity.EntityWrapper;
 import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
@@ -52,7 +51,7 @@ class EntityWrapperMessageCodecTest extends NeonBeeTestBase {
     @DisplayName("Should serialize and deserialize an EntityWrapper correctly.")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void encodeDecode(VertxTestContext testContext) {
-        EntityModelManager.reloadModels(getNeonBee()).<Void>compose(map -> {
+        getNeonBee().getModelManager().reloadModels().<Void>compose(map -> {
             Buffer buffer = Buffer.buffer();
             codec.encodeToWire(buffer, wrapper);
             EntityWrapper decodeFromWire = codec.decodeFromWire(0, buffer);

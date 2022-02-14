@@ -3,7 +3,6 @@ package io.neonbee.internal.deploy;
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.NeonBeeMockHelper.defaultVertxMock;
 import static io.neonbee.NeonBeeMockHelper.registerNeonBeeMock;
-import static io.neonbee.entity.EntityModelManagerTest.getExternalModelDefinitions;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -18,6 +17,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,6 +29,7 @@ import io.neonbee.NeonBeeOptions;
 import io.neonbee.entity.EntityModelDefinition;
 import io.neonbee.internal.NeonBeeModuleJar;
 import io.neonbee.internal.scanner.ClassPathScanner;
+import io.neonbee.test.helper.ReflectionHelper;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 
@@ -51,7 +52,7 @@ class DeployableModelsTest {
 
     @Test
     @DisplayName("test deploy and undeploy")
-    void testDeployUndeploy() {
+    void testDeployUndeploy() throws NoSuchFieldException, IllegalAccessException {
         EntityModelDefinition definition = new EntityModelDefinition(Map.of(), Map.of());
         DeployableModels deployable = new DeployableModels(definition);
 
@@ -60,10 +61,12 @@ class DeployableModelsTest {
 
         PendingDeployment deployment = deployable.deploy(neonBee);
         assertThat(deployment.succeeded()).isTrue();
-        assertThat(getExternalModelDefinitions(neonBee)).contains(definition);
+        Set<EntityModelDefinition> definitions =
+                ReflectionHelper.getValueOfPrivateField(neonBee.getModelManager(), "externalModelDefinitions");
+        assertThat(definitions).contains(definition);
 
         assertThat(deployment.undeploy().succeeded()).isTrue();
-        assertThat(getExternalModelDefinitions(neonBee)).doesNotContain(definition);
+        assertThat(definitions).doesNotContain(definition);
     }
 
     @Test
