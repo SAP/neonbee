@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.0 (2022-02-15)
+
+### Bug Fixes
+
+- null values queried with contains ([0b06e92b](https://github.com/SAP/neonbee/commit/0b06e92bd99f60e8e2f73bc2f38cff926ae2b61d))
+
+
+### Features
+
+- made `EntityModelManager` a non-static class ([d5e57d9b](https://github.com/SAP/neonbee/commit/d5e57d9b61edc12a0fd0a996316d4b4a906ce940))
+- improve `Launcher`, `Deployable`, `EntityModelManager` and more ([b578bace](https://github.com/SAP/neonbee/commit/b578bace738e82646da062b2723f61909da33b62))
+
+
 ## 0.8.0 (2022-01-27)
 
 ### Features
@@ -9,7 +22,7 @@
 
 ### Documentation
 
-- fix typo in github release guide ([33065169](https://github.com/SAP/neonbee/commit/33065169feeedb87c6b7d7579c909b43a9c98acf))
+- fix typo in github release guide ([974a7cf8](https://github.com/SAP/neonbee/commit/974a7cf8a022351bdffa8b3902a00e2ed0a85e31))
 
 
 ### Build System
