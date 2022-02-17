@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.1 (2022-02-17)
+
+### Bug Fixes
+
+- NPE ImmutableJsonObject/Array for null values ([0a791364](https://github.com/SAP/neonbee/commit/0a791364835c96364571c509a505bd7058bcf6b9))
+
+
 ## 0.9.0 (2022-02-15)
 
 ### Bug Fixes
