@@ -93,6 +93,23 @@ class ImmutableJsonArrayTest {
     }
 
     @Test
+    void testGetNullComplexValues() {
+        ImmutableJsonArray jsonArray = new ImmutableJsonArray(new JsonArray().addNull());
+        assertThat(jsonArray.getJsonObject(0)).isNull();
+        assertThat(jsonArray.getJsonArray(0)).isNull();
+
+        ImmutableJsonObject jsonObject = new ImmutableJsonObject(new JsonObject().putNull("baz"));
+        assertThat(jsonObject.getJsonObject("foo")).isNull();
+        assertThat(jsonObject.getJsonObject("foo", null)).isNull();
+        assertThat(jsonObject.getJsonArray("bar")).isNull();
+        assertThat(jsonObject.getJsonArray("bar", null)).isNull();
+        assertThat(jsonObject.getJsonObject("baz")).isNull();
+        assertThat(jsonObject.getJsonObject("baz", null)).isNull();
+        assertThat(jsonObject.getJsonArray("baz")).isNull();
+        assertThat(jsonObject.getJsonArray("baz", null)).isNull();
+    }
+
+    @Test
     void testMutableCopyIsMutable() {
         assertDoesNotThrow(() -> new ImmutableJsonArray().mutableCopy().add(true));
     }
