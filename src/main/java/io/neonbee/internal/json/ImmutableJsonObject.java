@@ -67,22 +67,26 @@ public final class ImmutableJsonObject extends JsonObject {
 
     @Override
     public ImmutableJsonObject getJsonObject(String key) {
-        return new ImmutableJsonObject(super.getJsonObject(key));
+        JsonObject object = super.getJsonObject(key);
+        return object != null ? new ImmutableJsonObject(object) : null;
     }
 
     @Override
     public ImmutableJsonObject getJsonObject(String key, JsonObject def) {
-        return new ImmutableJsonObject(super.getJsonObject(key, def));
+        JsonObject object = super.getJsonObject(key, def);
+        return object != null ? new ImmutableJsonObject(object) : null;
     }
 
     @Override
     public ImmutableJsonArray getJsonArray(String key) {
-        return new ImmutableJsonArray(super.getJsonArray(key));
+        JsonArray array = super.getJsonArray(key);
+        return array != null ? new ImmutableJsonArray(array) : null;
     }
 
     @Override
     public ImmutableJsonArray getJsonArray(String key, JsonArray def) {
-        return new ImmutableJsonArray(super.getJsonArray(key, def));
+        JsonArray array = super.getJsonArray(key, def);
+        return array != null ? new ImmutableJsonArray(array) : null;
     }
 
     @Override

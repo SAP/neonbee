@@ -66,12 +66,14 @@ public final class ImmutableJsonArray extends JsonArray {
 
     @Override
     public ImmutableJsonObject getJsonObject(int pos) {
-        return new ImmutableJsonObject(super.getJsonObject(pos));
+        JsonObject object = super.getJsonObject(pos);
+        return object != null ? new ImmutableJsonObject(object) : null;
     }
 
     @Override
     public ImmutableJsonArray getJsonArray(int pos) {
-        return new ImmutableJsonArray(super.getJsonArray(pos));
+        JsonArray array = super.getJsonArray(pos);
+        return array != null ? new ImmutableJsonArray(array) : null;
     }
 
     @Override
