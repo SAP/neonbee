@@ -65,6 +65,41 @@ class LauncherTest {
     }
 
     @Test
+    @DisplayName("should have NeonBeeProfile ALL by default")
+    void testDefaultActiveProfiles() {
+        args = new String[] {};
+        assertThat(parseArgs().getActiveProfiles()).containsExactly(NeonBeeProfile.ALL);
+    }
+
+    @Test
+    @DisplayName("should have WEB as active profile")
+    void testSingleActiveProfiles() {
+        args = new String[] { "-ap", "WEB" };
+        assertThat(parseArgs().getActiveProfiles()).containsExactly(NeonBeeProfile.WEB);
+    }
+
+    @Test
+    @DisplayName("should have ALL and WEB as active profiles")
+    void testMultiStringActiveProfiles() {
+        args = new String[] { "-ap", "WEB,ALL" };
+        assertThat(parseArgs().getActiveProfiles()).containsExactly(NeonBeeProfile.WEB, NeonBeeProfile.ALL);
+    }
+
+    @Test
+    @DisplayName("should have no NeonBeeProfile if empty")
+    void testMultiValueActiveProfiles() {
+        args = new String[] { "-ap", "WEB", "ALL" };
+        assertThat(parseArgs().getActiveProfiles()).containsExactly(NeonBeeProfile.WEB, NeonBeeProfile.ALL);
+    }
+
+    @Test
+    @DisplayName("should have no NeonBeeProfile if empty")
+    void testEmptyActiveProfiles() {
+        args = new String[] { "-ap", "" };
+        assertThat(parseArgs().getActiveProfiles()).isEmpty();
+    }
+
+    @Test
     @DisplayName("should throw an error, if instance-name is empty")
     void throwErrorIfInstanceNameIsEmpty() {
         args = new String[] { "-cwd", workDir, "-name", "" };

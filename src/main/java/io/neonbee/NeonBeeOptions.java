@@ -1,5 +1,6 @@
 package io.neonbee;
 
+import static io.neonbee.NeonBeeProfile.parseProfiles;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static java.util.Objects.requireNonNull;
 
@@ -191,6 +192,11 @@ public interface NeonBeeOptions {
          */
         public static final String DEFAULT_CLUSTER_CONFIG = "hazelcast-cf.xml";
 
+        /**
+         * The default active profiles.
+         */
+        public static final String DEFAULT_ACTIVE_PROFILES = "ALL";
+
         private int eventLoopPoolSize = VertxOptions.DEFAULT_EVENT_LOOP_POOL_SIZE;
 
         private int workerPoolSize = VertxOptions.DEFAULT_WORKER_POOL_SIZE;
@@ -213,7 +219,7 @@ public interface NeonBeeOptions {
 
         private Integer serverPort;
 
-        private Set<NeonBeeProfile> activeProfiles = Set.of(NeonBeeProfile.ALL);
+        private Set<NeonBeeProfile> activeProfiles = parseProfiles(DEFAULT_ACTIVE_PROFILES);
 
         private List<Path> moduleJarPaths = Collections.emptyList();
 
@@ -477,6 +483,7 @@ public interface NeonBeeOptions {
          * @return this instance for chaining
          */
         @Option(longName = "active-profiles", shortName = "ap", acceptMultipleValues = true)
+        @DefaultValue(DEFAULT_ACTIVE_PROFILES)
         @Description("Set the active deployment profiles")
         public Mutable setActiveProfiles(String... activeProfiles) {
             return setActiveProfiles(Arrays.stream(activeProfiles).map(NeonBeeProfile::parseProfiles)
