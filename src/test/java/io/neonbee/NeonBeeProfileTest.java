@@ -46,24 +46,11 @@ class NeonBeeProfileTest {
 
     @Test
     void parseActiveProfile() {
-        Set<NeonBeeProfile> profiles = parseProfiles("");
-        assertThat(profiles).contains(ALL);
-        assertThat(profiles).hasSize(1);
-        profiles = parseProfiles("CORE");
-        assertThat(profiles).contains(CORE);
-        assertThat(profiles).hasSize(1);
-        profiles = parseProfiles("CORE,STABLE");
-        assertThat(profiles).contains(CORE);
-        assertThat(profiles).contains(STABLE);
-        assertThat(profiles).hasSize(2);
-        profiles = parseProfiles("CORE,anything");
-        assertThat(profiles).contains(CORE);
-        assertThat(profiles).hasSize(1);
-        profiles = parseProfiles("anything");
-        assertThat(profiles).contains(ALL);
-        assertThat(profiles).hasSize(1);
-        profiles = parseProfiles("");
-        assertThat(profiles).contains(ALL);
-        assertThat(profiles).hasSize(1);
+        assertThat(parseProfiles("ALL")).containsExactly(ALL);
+        assertThat(parseProfiles("CORE")).containsExactly(CORE);
+        assertThat(parseProfiles("CORE,STABLE")).containsExactly(CORE, STABLE);
+        assertThat(parseProfiles("CORE,anything")).containsExactly(CORE);
+        assertThat(parseProfiles("anything")).isEmpty();
+        assertThat(parseProfiles("")).isEmpty();
     }
 }

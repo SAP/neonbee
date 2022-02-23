@@ -2,6 +2,7 @@ package io.neonbee;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -52,6 +53,6 @@ public enum NeonBeeProfile {
         return Optional.ofNullable(profiles)
                 .map(nonNullProfiles -> Arrays.stream(nonNullProfiles.split(",")).filter(Predicate.not(String::isBlank))
                         .map(NeonBeeProfile::getProfile).filter(Objects::nonNull).collect(Collectors.toSet()))
-                .filter(Predicate.not(Collection::isEmpty)).orElse(Set.of(ALL));
+                .orElse(Collections.emptySet());
     }
 }

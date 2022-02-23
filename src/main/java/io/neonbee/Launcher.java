@@ -1,5 +1,6 @@
 package io.neonbee;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.ServiceLoader;
@@ -72,6 +73,10 @@ public class Launcher {
      * An environment-aware {@link CommandLine} facade, that will, if an option is not present on the command line,
      * check for a {@code NEONBEE_} environment variable that contains the value returned for the option.
      *
+     * Another change in behavior is that, if a multi-value option is present, the option will fall back to the single
+     * default value, in case the option is unassigned. In the {@link DefaultCommandLine} implementation there the
+     * default value will be ignored in case {@link CommandLine#getOptionValues(String)} is called.
+     *
      * Does not change any of the behavior for CLI arguments.
      */
     @VisibleForTesting
@@ -104,16 +109,27 @@ public class Launcher {
             return super.isSeenInCommandLine(option) || hasEnvArg(option);
         }
 
+        @Override
+        public boolean isOptionAssigned(Option option) {
+            // do not call our implementation as it will, if the option is unassigned, return the default value (if any)
+            return !super.getRawValuesForOption(option).isEmpty() || hasEnvArg(option);
+        }
+
         /**
          * There are two possible implementations for this method:
          *
-         * - Either return the command line options only, if there are any and otherwise return the single environment
-         * option (if present) - Or return a concatenated list of both options
+         * <ul>
+         * <li>Either return the command line options only, if there are any and otherwise return the single environment
+         * option (if present)</li>
+         * <li>Or return a concatenated list of both options</li>
+         * </ul>
          *
          * This method favours the command line option and only returns the environment option (a list of one entry), if
          * the command line option is not set. This way it is more deterministic, meaning that if a command line option
-         * was specified it always overrides the environment, same as for the {@link #getRawValueForOption(Option)}
-         * method.
+         * was specified it always overrides the environment.
+         *
+         * Another change, compared to the {@link DefaultCommandLine} implementation is that it returns the default
+         * value, in case neither a command line option, nor a environment variable was set.
          */
         @Override
         public List<String> getRawValuesForOption(Option option) {
@@ -122,7 +138,16 @@ public class Launcher {
                 return values;
             }
 
-            return hasEnvArg(option) ? List.of(getEnvArg(option)) : values;
+            if (hasEnvArg(option)) {
+                return List.of(getEnvArg(option));
+            }
+
+            String value = option.getDefaultValue();
+            if (value != null) {
+                return List.of(value);
+            }
+
+            return Collections.emptyList();
         }
 
         /**

@@ -107,12 +107,16 @@ class NeonBeeOptionsTest {
     @Test
     @DisplayName("Test server profiles set correctly")
     void checkProfiles() {
-        Mutable opts = new NeonBeeOptions.Mutable().setActiveProfiles("CORE,WEB");
+        Mutable opts = new NeonBeeOptions.Mutable();
+        assertThat(opts.getActiveProfiles()).containsExactly(ALL);
+        opts = new NeonBeeOptions.Mutable().setActiveProfiles("CORE,WEB");
         assertThat(opts.getActiveProfiles()).containsExactly(CORE, WEB);
         opts = new NeonBeeOptions.Mutable().setActiveProfiles(List.of(CORE, WEB));
         assertThat(opts.getActiveProfiles()).containsExactly(CORE, WEB);
+        opts = new NeonBeeOptions.Mutable().setActiveProfiles();
+        assertThat(opts.getActiveProfiles()).isEmpty();
         opts = new NeonBeeOptions.Mutable().setActiveProfiles("anything");
-        assertThat(opts.getActiveProfiles()).containsExactly(ALL);
+        assertThat(opts.getActiveProfiles()).isEmpty();
 
         opts = new NeonBeeOptions.Mutable().setActiveProfiles(List.of(CORE, WEB, WEB, CORE));
         assertThat(opts.getActiveProfiles()).containsExactly(CORE, WEB);
