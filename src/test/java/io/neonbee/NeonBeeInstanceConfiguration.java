@@ -39,4 +39,6 @@ public @interface NeonBeeInstanceConfiguration {
     boolean disableJobScheduling() default true;
 
     NeonBeeProfile[] activeProfiles() default { ALL };
+
+    long healthCheckTimeout() default 1000L;
 }

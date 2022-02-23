@@ -34,6 +34,11 @@ public class NeonBeeConfigConverter {
                     obj.setEventBusTimeout(((Number) member.getValue()).intValue());
                 }
                 break;
+            case "healthCheckTimeout":
+                if (member.getValue() instanceof Number) {
+                    obj.setHealthCheckTimeout(((Number) member.getValue()).intValue());
+                }
+                break;
             case "micrometerRegistries":
                 if (member.getValue() instanceof JsonArray) {
                     java.util.ArrayList<io.neonbee.config.MicrometerRegistryConfig> list = new java.util.ArrayList<>();
@@ -80,6 +85,7 @@ public class NeonBeeConfigConverter {
             json.put("eventBusCodecs", map);
         }
         json.put("eventBusTimeout", obj.getEventBusTimeout());
+        json.put("healthCheckTimeout", obj.getHealthCheckTimeout());
         if (obj.getMicrometerRegistries() != null) {
             JsonArray array = new JsonArray();
             obj.getMicrometerRegistries().forEach(item -> array.add(item.toJson()));

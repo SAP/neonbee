@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.neonbee.HealthCheckRegistry;
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.config.metrics.MicrometerRegistryLoader;
@@ -45,6 +46,8 @@ public class NeonBeeConfig {
      */
     public static final String DEFAULT_TIME_ZONE = "UTC";
 
+    private static final int DEFAULT_HEALTH_CHECK_TIMEOUT = 1;
+
     private int eventBusTimeout = DEFAULT_EVENT_BUS_TIMEOUT;
 
     private Map<String, String> eventBusCodecs = Map.of();
@@ -56,6 +59,12 @@ public class NeonBeeConfig {
     private String timeZone = DEFAULT_TIME_ZONE;
 
     private List<MicrometerRegistryConfig> micrometerRegistries = List.of();
+
+    /**
+     * Gets the health check timeout for all NeonBee (default) health-check procedures. Custom health check procedures
+     * that are registered with {@link HealthCheckRegistry} must maintain the timeout by their own.
+     */
+    private int healthCheckTimeout = DEFAULT_HEALTH_CHECK_TIMEOUT;
 
     /**
      * Loads the NeonBee configuration from the NeonBee config directory and converts it to a {@link NeonBeeConfig}.
@@ -268,5 +277,29 @@ public class NeonBeeConfig {
      */
     public List<MicrometerRegistryConfig> getMicrometerRegistries() {
         return this.micrometerRegistries;
+    }
+
+    /**
+     * Gets the health-check timeout in seconds.
+     * <p>
+     * When a health-check procedure is started a timeout is applied. If not specified, the
+     * {@link #DEFAULT_HEALTH_CHECK_TIMEOUT default timeout} applies.
+     *
+     * @return the health-check timeout
+     */
+    public int getHealthCheckTimeout() {
+        return healthCheckTimeout;
+    }
+
+    /**
+     * Sets the health-check timeout in seconds.
+     *
+     * @param healthCheckTimeout the health-check timeout in seconds
+     * @return the {@linkplain NeonBeeConfig} for fluent usage
+     */
+    @Fluent
+    public NeonBeeConfig setHealthCheckTimeout(int healthCheckTimeout) {
+        this.healthCheckTimeout = healthCheckTimeout;
+        return this;
     }
 }

@@ -1,0 +1,8 @@
+---
+config:
+    port: 8080
+    endpoints:
+        - type: io.neonbee.endpoint.health.HealthEndpoint
+          enabled: true
+          basePath: /health/
+          authenticationChain: []

@@ -244,7 +244,7 @@ public final class NeonBeeMockHelper {
     public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config) {
         createLogger(); // the logger is only created internally, create one manually if required
 
-        NeonBee neonBee = new NeonBee(vertx, options, new CompositeMeterRegistry());
+        NeonBee neonBee = new NeonBee(vertx, options, new CompositeMeterRegistry(), null);
         neonBee.config = config;
 
         return neonBee;

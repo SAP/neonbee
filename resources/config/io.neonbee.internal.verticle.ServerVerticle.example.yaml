@@ -80,6 +80,15 @@ config:
         # endpoint specific authentication chain, (special case!) defaults to an empty array [] and no authentication required
         authenticationChain: []
 
+      # provides an Prometheus scraping endpoint for Micrometer.io metrics
+      - type: io.neonbee.endpoint.readiness.ReadinessEndpoint
+        # enable the metrics endpoint, defaults to true
+        enabled: true
+        # the base path to map this endpoint to, defaults to /metrics/
+        basePath: /readiness/
+        # endpoint specific authentication chain, (special case!) defaults to an empty array [] and no authentication required
+        authenticationChain: []
+
     # default authentication chain, defaults to an empty array (no authentication), use:
     authenticationChain:
         # any of: BASIC, DIGEST, JWT, OAUTH2, REDIRECT, mandatory attribute

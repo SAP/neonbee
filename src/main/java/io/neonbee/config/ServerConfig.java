@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableBiMap;
 
+import io.neonbee.endpoint.health.HealthEndpoint;
 import io.neonbee.endpoint.metrics.MetricsEndpoint;
 import io.neonbee.endpoint.odatav4.ODataV4Endpoint;
 import io.neonbee.endpoint.raw.RawEndpoint;
@@ -192,7 +193,7 @@ public class ServerConfig extends HttpServerOptions {
     private static final String PROPERTY_PORT = "port";
 
     private static final List<EndpointConfig> DEFAULT_ENDPOINT_CONFIGS = Collections.unmodifiableList(Stream
-            .of(RawEndpoint.class, ODataV4Endpoint.class, MetricsEndpoint.class)
+            .of(RawEndpoint.class, ODataV4Endpoint.class, MetricsEndpoint.class, HealthEndpoint.class)
             .map(endpointClass -> new EndpointConfig().setType(endpointClass.getName())).collect(Collectors.toList()));
 
     private static final ImmutableBiMap<String, String> REPHRASE_MAP =
