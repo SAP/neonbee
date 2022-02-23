@@ -65,6 +65,13 @@ class LauncherTest {
     }
 
     @Test
+    @DisplayName("should have NeonBeeProfile ALL by default")
+    void testDefaultActiveProfiles() {
+        args = new String[] {};
+        assertThat(parseArgs().getActiveProfiles()).containsExactly(NeonBeeProfile.ALL);
+    }
+
+    @Test
     @DisplayName("should throw an error, if instance-name is empty")
     void throwErrorIfInstanceNameIsEmpty() {
         args = new String[] { "-cwd", workDir, "-name", "" };

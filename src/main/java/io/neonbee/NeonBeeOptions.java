@@ -213,7 +213,7 @@ public interface NeonBeeOptions {
 
         private Integer serverPort;
 
-        private Set<NeonBeeProfile> activeProfiles = Set.of(NeonBeeProfile.ALL);
+        private Set<NeonBeeProfile> activeProfiles;
 
         private List<Path> moduleJarPaths = Collections.emptyList();
 
@@ -456,7 +456,7 @@ public interface NeonBeeOptions {
 
         @Override
         public Set<NeonBeeProfile> getActiveProfiles() {
-            return activeProfiles;
+            return activeProfiles == null ? Set.of(NeonBeeProfile.ALL) : activeProfiles;
         }
 
         /**
@@ -479,8 +479,14 @@ public interface NeonBeeOptions {
         @Option(longName = "active-profiles", shortName = "ap", acceptMultipleValues = true)
         @Description("Set the active deployment profiles")
         public Mutable setActiveProfiles(String... activeProfiles) {
-            return setActiveProfiles(Arrays.stream(activeProfiles).map(NeonBeeProfile::parseProfiles)
-                    .flatMap(Collection::stream).collect(Collectors.toSet()));
+            Collection<NeonBeeProfile> profiles = Arrays.stream(activeProfiles).map(NeonBeeProfile::parseProfiles)
+                    .flatMap(Collection::stream).collect(Collectors.toSet());
+
+            if (this.activeProfiles == null && profiles.isEmpty()) {
+                profiles = Set.of(NeonBeeProfile.ALL);
+            }
+
+            return setActiveProfiles(profiles);
         }
 
         /**
