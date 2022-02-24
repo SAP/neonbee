@@ -1,0 +1,140 @@
+
+name: Dependency Upgrader
+
+on:
+  schedule:
+    - cron: '1 0 * * *'
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Install workflow dependencies
+        run: pip install GitPython
+
+      - name: Upgrade project dependencies
+        id: upgrade
+        shell: python
+        run: |
+            import os
+            import re
+            import json
+            import http.client
+            import xml.etree.ElementTree as ET
+
+            from pathlib import Path
+            from typing import Dict, Any
+            from urllib.parse import urlparse
+            from git import Actor, Repo, IndexFile
+
+            config_file = ".github/workflows/.auto-upgrade.json"
+            update_file = "build.gradle"
+            author = Actor("github-actions[bot]", "github-actions[bot]@users.noreply.github.com")
+
+            def request_data(url: str, method: str='GET') -> str:
+                response = ""
+                try:
+                    o = urlparse(url)
+
+                    if o.scheme == 'https':
+                        h = http.client.HTTPSConnection(o.hostname)
+                    else:
+                        h = http.client.HTTPConnection(o.hostname)
+
+                    h.request(method, o.path)
+                    response = h.getresponse()
+
+                    if not (response.getcode() >= 200 & response.getcode() < 300):
+                        raise http.client.HTTPException("Unexpected status code: {}".format(response.getcode()))
+
+                    response = response.read().decode()
+                except Exception as err:
+                    print(f"Unexpected {err=}, {type(err)=}")
+                    raise
+                finally:
+                    h.close()
+
+                return response
+
+            def upgrade(file: str, artifact: Dict[str, Any], index: IndexFile) -> str:
+                key = artifact['name']
+                data = request_data(artifact['index'])
+                latest = ET.fromstring(data).find('versioning/latest').text
+
+                print("::set-output name=ARTIFACT_ID::" + key + "--" + latest)
+
+                old_version_pattern = "def\s{}_version\s=\s\'([\d.]+)\'".format(key)
+                new_version = "def {}_version = '{}'".format(key, latest)
+                f = Path(file)
+                f.write_text(re.sub(old_version_pattern, new_version, f.read_text()))
+
+                changedFiles = [ item.a_path for item in index.diff(None) ]
+                if update_file in changedFiles:
+                    index.add([update_file])
+                    index.commit("build(deps): upgrade `{}` to {}".format(key, latest), author=author, committer=author)
+
+                if 'changelog' in artifact.keys():
+                    changelog = " (<a href=\"{}\">changelog</a>)".format(artifact['changelog'].replace("{{VERSION}}", latest))
+
+                return "<li><code>{}</code> {}{}</li>".format(key, latest, changelog)
+
+            if __name__ == '__main__':
+                with open(config_file, 'r') as fd:
+                    artifacts = json.load(fd)
+
+                print('Starting auto-update of versions:')
+
+                repo = Repo(os.getcwd())
+
+                artifactNotice = ""
+                for artifact in artifacts:
+                    artifactNotice += upgrade(update_file, artifact, repo.index)
+
+                if artifactNotice == "":
+                    print("Nothing updated.")
+                else:
+                    body = "Bumps dependencies.<br /><details><summary>Upgrades</summary><ul>" + artifactNotice + "</ul></details><br />"
+                    with open(os.path.join(os.getenv('RUNNER_TEMP', '/tmp'), "body.md"), "w") as fd:
+                        fd.write(body)
+                    print(body)
+
+      - name: Create Update Summary
+        id: summary
+        run: |
+            BODY="${RUNNER_TEMP}"/body.md
+            if [[ ! -f "$BODY" ]] ;then
+                echo "nothing to upgrade" ; exit 0
+            fi
+            echo ::set-output name=pr_body::"$(cat "${BODY}")"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+            github_token: ${{ secrets.GH_PUSH_TOKEN }}
+            branch: ci/auto-upgrade
+            force: true
+
+      - name: Create Pull Request
+        id: cpr
+        if: steps.summary.outputs.pr_body != ''
+        uses: peter-evans/create-pull-request@v3
+        with:
+            token: ${{ secrets.GH_PUSH_TOKEN }}
+            author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+            title: Automated Dependency Upgrade
+            body: ${{ steps.summary.outputs.pr_body }}
+            labels: dependencies
+            branch: ci/auto-upgrade
+            draft: true
+
+      - name: Check outputs
+        if: steps.summary.outputs.pr_body != ''
+        run: |
+            echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
+            echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
