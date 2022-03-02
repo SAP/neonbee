@@ -1,12 +1,17 @@
 package io.neonbee.config;
 
+import static io.neonbee.internal.helper.ConfigHelper.notFound;
 import static io.neonbee.internal.helper.ConfigHelper.readConfig;
+import static io.vertx.core.Future.future;
+import static io.vertx.core.Future.succeededFuture;
 
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.neonbee.NeonBee;
@@ -58,7 +63,23 @@ public class NeonBeeConfig {
     private List<MicrometerRegistryConfig> micrometerRegistries = List.of();
 
     /**
+     * Loads the NeonBee configuration from the config directory and converts it to a {@link NeonBeeConfig}.
+     *
+     * This method does not require that NeonBee is started.
+     *
+     * @param vertx The Vert.x instance used to load the config file
+     * @param path  the configuration directory path
+     * @return a future to a {@link NeonBeeConfig}
+     */
+    public static Future<NeonBeeConfig> load(Vertx vertx, Path path) {
+        return readConfig(vertx, NeonBee.class.getName(), path)
+                .recover(notFound(() -> succeededFuture(new JsonObject()))).map(NeonBeeConfig::new);
+    }
+
+    /**
      * Loads the NeonBee configuration from the NeonBee config directory and converts it to a {@link NeonBeeConfig}.
+     *
+     * This method requires that NeonBee is started.
      *
      * @param vertx The Vert.x instance used to load the config file
      * @return a future to a {@link NeonBeeConfig}
@@ -86,6 +107,21 @@ public class NeonBeeConfig {
     /**
      * Try to load all {@link MicrometerRegistryLoader}s which are configured in the {@link NeonBeeConfig}.
      *
+     * @param vertx the {@link Vertx} instance
+     * @return MicrometerMetricsOptions which contains the loaded registries
+     */
+    public Stream<Future<MeterRegistry>> createMicrometerRegistries(Vertx vertx) {
+        return this.micrometerRegistries.stream()
+                .filter(micrometerRegistryConfig -> micrometerRegistryConfig.getClassName() != null)
+                .filter(micrometerRegistryConfig -> !micrometerRegistryConfig.getClassName().isBlank())
+                .map(micrometerRegistryConfig -> instantiateLoader(micrometerRegistryConfig.getClassName()).compose(
+                        micrometerRegistryLoader -> Future.<MeterRegistry>future(promise -> micrometerRegistryLoader
+                                .load(vertx, micrometerRegistryConfig.getConfig(), promise))));
+    }
+
+    /**
+     * Try to load all {@link MicrometerRegistryLoader}s which are configured in the {@link NeonBeeConfig}.
+     *
      * @return MicrometerMetricsOptions which contains the loaded registries
      * @throws ClassNotFoundException    if the class cannot be located
      * @throws NoSuchMethodException     if a matching method is not found.
@@ -95,6 +131,7 @@ public class NeonBeeConfig {
      * @throws IllegalAccessException    if this Constructor object is enforcing Java language access control and the
      *                                   underlying constructor is inaccessible.
      */
+    @Deprecated(forRemoval = true)
     public Collection<MeterRegistry> createMicrometerRegistries() throws ClassNotFoundException, NoSuchMethodException,
             InvocationTargetException, InstantiationException, IllegalAccessException {
 
@@ -113,6 +150,28 @@ public class NeonBeeConfig {
             registries.add(loader.load(micrometerRegistryConfig.getConfig()));
         }
         return registries;
+    }
+
+    /**
+     * Load and instantiate the {@link MicrometerRegistryLoader}.
+     *
+     * @param className the name of the class to load
+     * @return future with the {@link MicrometerRegistryLoader}
+     */
+    private Future<MicrometerRegistryLoader> instantiateLoader(String className) {
+        return future(promise -> {
+            try {
+                Class<?> classObject = Class.forName(className);
+                if (!MicrometerRegistryLoader.class.isAssignableFrom(classObject)) {
+                    promise.fail(new IllegalArgumentException(
+                            classObject.getName() + " must implement " + MicrometerRegistryLoader.class.getName()));
+                }
+                promise.complete((MicrometerRegistryLoader) classObject.getConstructor().newInstance());
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+                    | InvocationTargetException | NoSuchMethodException e) {
+                promise.fail(e);
+            }
+        });
     }
 
     /**

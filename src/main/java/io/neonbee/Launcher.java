@@ -1,5 +1,8 @@
 package io.neonbee;
 
+import static ch.qos.logback.classic.util.ContextInitializer.CONFIG_FILE_PROPERTY;
+import static java.lang.System.setProperty;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -7,6 +10,12 @@ import java.util.ServiceLoader;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import io.neonbee.config.NeonBeeConfig;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import io.netty.util.internal.logging.Slf4JLoggerFactory;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.cli.CLI;
 import io.vertx.core.cli.CLIException;
 import io.vertx.core.cli.CommandLine;
@@ -17,6 +26,12 @@ import io.vertx.core.cli.impl.DefaultCommandLine;
 public class Launcher {
     private static final Option HELP_FLAG =
             new Option().setLongName("help").setShortName("h").setDescription("Show help").setFlag(true).setHelp(true);
+
+    // Attention DO NOT create a static LOGGER instance here! NeonBee needs to start up first, in order to set the right
+    // logging parameterization, like the logging configuration, and the internal loggers for Netty.
+    private static final String HAZELCAST_LOGGING_TYPE = "hazelcast.logging.type";
+
+    private static final String LOG_DIR_PROPERTY = "LOG_DIR";
 
     @VisibleForTesting
     static final CLI INTERFACE = CLI.create(NeonBeeOptions.Mutable.class).addOption(HELP_FLAG);
@@ -41,26 +56,56 @@ public class Launcher {
         if (commandLine.isAskingForHelp()) {
             StringBuilder builder = new StringBuilder();
             INTERFACE.usage(builder);
-            System.out.print(builder.toString()); // NOPMD
+            System.out.print(builder); // NOPMD
             System.exit(0); // NOPMD
         }
 
-        try {
-            NeonBeeOptions.Mutable options = new NeonBeeOptions.Mutable();
-            CLIConfigurator.inject(commandLine, options);
+        NeonBeeOptions.Mutable options = new NeonBeeOptions.Mutable();
+        CLIConfigurator.inject(commandLine, options);
 
-            ServiceLoader<LauncherPreProcessor> loader = ServiceLoader.load(LauncherPreProcessor.class);
-            loader.forEach(processor -> processor.execute(options));
+        // do not use a Logger before this!
+        configureLogging(options);
 
-            NeonBee.create(options).onSuccess(neonBee -> {
-                Launcher.neonBee = neonBee;
-            }).onFailure(throwable -> {
-                System.err.println("Failed to start NeonBee '" + throwable.getMessage() + "'"); // NOPMD
-            });
-        } catch (Exception e) {
-            System.err.println("Error occurred during launcher pre-processing. " + e.getMessage()); // NOPMD
+        Vertx launcherVertx = Vertx.vertx();
+        Future<NeonBeeConfig> configFuture = NeonBeeConfig.load(launcherVertx, options.getWorkingDirectory());
+        executeLauncherPreProcessors(launcherVertx, options).onFailure(throwable -> {
+            System.err.println("Error occurred during launcher pre-processing. " + throwable.getMessage()); // NOPMD
             System.exit(1); // NOPMD
-        }
+        }).compose(unused -> configFuture).eventually(unused -> closeVertx(launcherVertx))
+                .compose(config -> NeonBee.create(options, config)).onSuccess(neonBee -> Launcher.neonBee = neonBee)
+                .onFailure(throwable -> System.err.println("Failed to start NeonBee '" + throwable.getMessage() + "'")); // NOPMD
+    }
+
+    /**
+     * If anything before this method initializes a logger, this will be broken!
+     *
+     * Switch to the SLF4J logging facade (using Logback as a logging backend). It is required to set the logging system
+     * properties before the first logger is initialized, so do it before the Vert.x initialization.
+     *
+     * @param options {@link NeonBeeOptions}
+     */
+    private static void configureLogging(NeonBeeOptions options) {
+        setProperty(CONFIG_FILE_PROPERTY, options.getConfigDirectory().resolve("logback.xml").toString());
+        setProperty(HAZELCAST_LOGGING_TYPE, "slf4j");
+        setProperty(LOG_DIR_PROPERTY, options.getLogDirectory().toAbsolutePath().toString());
+        InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
+    }
+
+    private static Future<Void> closeVertx(Vertx launcherVertx) {
+        Promise<Void> promise = Promise.promise();
+        launcherVertx.close(promise);
+        return promise.future();
+    }
+
+    private static Future<Void> executeLauncherPreProcessors(Vertx launcherVertx, NeonBeeOptions.Mutable options) {
+        return Future
+                .<ServiceLoader<LauncherPreProcessor>>future(
+                        promise -> promise.complete(ServiceLoader.load(LauncherPreProcessor.class)))
+                .compose(sl -> sl.stream().map(ServiceLoader.Provider::get).map(processor -> {
+                    Promise<Void> promise = Promise.promise();
+                    processor.execute(launcherVertx, options, promise);
+                    return promise.future();
+                }).reduce(Future.succeededFuture(), (f1, f2) -> f1.compose(unused -> f2)));
     }
 
     @VisibleForTesting

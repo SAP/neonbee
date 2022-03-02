@@ -13,8 +13,9 @@ import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,7 +39,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.MockedConstruction;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import io.neonbee.config.NeonBeeConfig;
@@ -256,9 +257,11 @@ class NeonBeeTest extends NeonBeeTestBase {
     @SuppressWarnings("PMD.UnusedFormalParameter")
     void checkTestCloseVertxOnError(String description, boolean ownVertx, Future<Void> result,
             VertxTestContext testContext) {
-        try (MockedConstruction<NeonBee> mocked =
-                mockConstruction(NeonBee.class, (mock, context) -> when(mock.loadConfig())
-                        .thenReturn(failedFuture(new RuntimeException("Failing Vert.x!"))))) {
+        try (MockedStatic<NeonBee> mocked = mockStatic(NeonBee.class)) {
+            mocked.when(() -> NeonBee.loadConfig(any(), any()))
+                    .thenReturn(failedFuture(new RuntimeException("Failing Vert.x!")));
+            mocked.when(() -> NeonBee.create(any(), any(), any())).thenCallRealMethod();
+
             Vertx failingVertxMock = mock(Vertx.class);
             when(failingVertxMock.close()).thenReturn(result);
 
@@ -269,7 +272,7 @@ class NeonBeeTest extends NeonBeeTestBase {
                 vertxFunction = (vertxOptions) -> succeededFuture(failingVertxMock);
             }
 
-            NeonBee.create(vertxFunction, defaultOptions().clearActiveProfiles())
+            NeonBee.create(vertxFunction, defaultOptions().clearActiveProfiles(), null)
                     .onComplete(testContext.failing(throwable -> {
                         testContext.verify(() -> {
                             // assert that the original message why the boot failed to start is propagated

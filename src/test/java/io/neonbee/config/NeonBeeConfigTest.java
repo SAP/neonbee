@@ -4,6 +4,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.config.NeonBeeConfig.DEFAULT_EVENT_BUS_TIMEOUT;
 import static io.neonbee.config.NeonBeeConfig.DEFAULT_TIME_ZONE;
 import static io.neonbee.config.NeonBeeConfig.DEFAULT_TRACKING_DATA_HANDLING_STRATEGY;
+import static io.vertx.core.CompositeFuture.all;
 import static org.junit.Assert.assertThrows;
 
 import java.lang.reflect.Method;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
@@ -62,8 +64,10 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
     }
 
     @Test
-    @DisplayName("Test loading the MeterRegistry")
-    void testLoadingMeterRegistry() throws Exception {
+    @DisplayName("Test loading the MeterRegistry with the deprecated method")
+    @Deprecated(forRemoval = true)
+    @SuppressWarnings({ "deprecation", "removal" })
+    void testDeprecatedLoadingMeterRegistry() throws Exception {
         NeonBeeConfig config = new NeonBeeConfig();
         CompositeMeterRegistry registry = new CompositeMeterRegistry();
         config.setMicrometerRegistries(List.of(new MicrometerRegistryConfig()
@@ -72,6 +76,23 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
         Set<MeterRegistry> registries = registry.getRegistries();
         assertThat(registries).hasSize(1);
         assertThat(registries.stream().anyMatch(PrometheusMeterRegistry.class::isInstance)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Test loading the MeterRegistry")
+    void testLoadingMeterRegistry(Vertx vertx, VertxTestContext context) throws Exception {
+        NeonBeeConfig config = new NeonBeeConfig();
+        CompositeMeterRegistry registry = new CompositeMeterRegistry();
+        config.setMicrometerRegistries(List.of(new MicrometerRegistryConfig()
+                .setClassName(TestMicrometerRegistryLoaderImpl.class.getName()).setConfig(new JsonObject())));
+
+        all(config.createMicrometerRegistries(vertx).collect(Collectors.toList()))
+                .onSuccess(h -> h.<MeterRegistry>list().forEach(registry::add)).onComplete(context.succeeding(event -> {
+                    Set<MeterRegistry> registries = registry.getRegistries();
+                    assertThat(registries).hasSize(1);
+                    assertThat(registries.stream().anyMatch(PrometheusMeterRegistry.class::isInstance)).isTrue();
+                    context.completeNow();
+                }));
     }
 
     static Stream<Arguments> testNotImplementingMicrometerRegistryLoaderArguments() {
@@ -90,6 +111,25 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test MicrometerRegistryLoader with incorrect configuration")
     void testNotImplementingMicrometerRegistryLoader(String className, String exceptionMessage,
+            Class<? extends Throwable> expectedException, Vertx vertx, VertxTestContext context) {
+        NeonBeeConfig config = new NeonBeeConfig();
+        config.setMicrometerRegistries(List.of(new MicrometerRegistryConfig().setClassName(className)));
+
+        all(config.createMicrometerRegistries(vertx).collect(Collectors.toList()))
+                .onComplete(context.failing(throwable -> {
+                    assertThat(throwable).isInstanceOf(expectedException);
+                    assertThat(throwable).hasMessageThat().isEqualTo(exceptionMessage);
+                    context.completeNow();
+                }));
+    }
+
+    @ParameterizedTest(name = "{index}: {0} expected exception message: {1}")
+    @MethodSource("testNotImplementingMicrometerRegistryLoaderArguments")
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("Test deprecated MicrometerRegistryLoader with incorrect configuration")
+    @Deprecated(forRemoval = true)
+    @SuppressWarnings({ "deprecation", "removal" })
+    void testDeprecatedNotImplementingMicrometerRegistryLoader(String className, String exceptionMessage,
             Class<? extends Throwable> expectedException) {
         NeonBeeConfig config = new NeonBeeConfig();
         config.setMicrometerRegistries(List.of(new MicrometerRegistryConfig().setClassName(className)));
@@ -101,10 +141,12 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should load NeonBeeConfig correctly from working dir")
     void testLoad(Vertx vertx, VertxTestContext testContext) {
-        NeonBeeConfig.load(vertx).onComplete(testContext.succeeding(nbc -> {
-            testContext.verify(() -> isEqualToDummyConfig(nbc));
-            testContext.completeNow();
-        }));
+
+        NeonBeeConfig.load(vertx, getNeonBee().getOptions().getConfigDirectory())
+                .onComplete(testContext.succeeding(nbc -> {
+                    testContext.verify(() -> isEqualToDummyConfig(nbc));
+                    testContext.completeNow();
+                }));
     }
 
     @Test

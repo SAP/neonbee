@@ -1,6 +1,8 @@
 package io.neonbee.config.metrics;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 
@@ -19,4 +21,15 @@ public interface MicrometerRegistryLoader {
      * @return the {@link MeterRegistry} to add to the {@link MicrometerMetricsOptions}
      */
     MeterRegistry load(JsonObject config);
+
+    /**
+     * Executes the launcher pre-processor.
+     *
+     * @param vertx   {@link Vertx} instance
+     * @param config  the configuration as a {@link JsonObject}. The config object can be null.
+     * @param promise a promise which should be called when the MicrometerRegistryLoader is complete.
+     */
+    default void load(Vertx vertx, JsonObject config, Promise<MeterRegistry> promise) {
+        promise.complete(load(config));
+    }
 }
