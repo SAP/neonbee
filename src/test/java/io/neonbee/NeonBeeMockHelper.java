@@ -182,7 +182,7 @@ public final class NeonBeeMockHelper {
      * @return the mocked NeonBee instance
      */
     public static Future<NeonBee> createNeonBee(Vertx vertx, NeonBeeOptions options) {
-        return NeonBee.create((vertxOptions) -> succeededFuture(vertx), options);
+        return NeonBee.create((vertxOptions) -> succeededFuture(vertx), options, null);
     }
 
     /**
@@ -243,11 +243,7 @@ public final class NeonBeeMockHelper {
      */
     public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config) {
         createLogger(); // the logger is only created internally, create one manually if required
-
-        NeonBee neonBee = new NeonBee(vertx, options, new CompositeMeterRegistry());
-        neonBee.config = config;
-
-        return neonBee;
+        return new NeonBee(vertx, options, config, new CompositeMeterRegistry());
     }
 
     @SuppressWarnings({ "CatchAndPrintStackTrace", "PMD.AvoidPrintStackTrace" })

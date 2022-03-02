@@ -44,6 +44,22 @@ public final class ConfigHelper {
      */
     public static Future<JsonObject> readConfig(Vertx vertx, String identifier) {
         Path configDirPath = NeonBee.get(vertx).getOptions().getConfigDirectory();
+        return readConfig(vertx, identifier, configDirPath);
+    }
+
+    /**
+     * Read the configuration for a given identifier (file name) from the configDirPath configuration directory.
+     * <p>
+     * This method will first attempt to read a file with the name of the identifier in the YAML format by appending
+     * either a ".yaml" or ".yml" to the identifier, if not present, it'll attempt to read the configuration in JSON
+     * format appending a ".json" to the identifier / file name.
+     *
+     * @param vertx         the Vert.x instance used to read the file
+     * @param identifier    the identifier / file name of the config file (without a file extension)
+     * @param configDirPath the config directory path
+     * @return a future to a JsonObject or a failed future in case reading failed or the config file was not found
+     */
+    public static Future<JsonObject> readConfig(Vertx vertx, String identifier, Path configDirPath) {
         return readYAML(vertx, configDirPath.resolve(identifier + ".yaml"))
                 .recover(notFound(() -> readYAML(vertx, configDirPath.resolve(identifier + ".yml"))))
                 .recover(notFound(() -> readJSON(vertx, configDirPath.resolve(identifier + ".json"))));
@@ -65,7 +81,16 @@ public final class ConfigHelper {
         return readConfig(vertx, identifier).recover(notFound(() -> succeededFuture(fallback)));
     }
 
-    private static <T> Function<Throwable, Future<T>> notFound(Supplier<Future<T>> whenNotFound) {
+    /**
+     * Returns the value of the supplier if the exception is an instance of {@link NoSuchFileException}, otherwise
+     * return a failed future with the exception.
+     *
+     * @param whenNotFound supplier of the value
+     * @param <T>          Type of the value
+     * @return a function which takes the exception and returns a future with the whenNotFound value if the exception is
+     *         an instance of a {@link NoSuchFileException}
+     */
+    public static <T> Function<Throwable, Future<T>> notFound(Supplier<Future<T>> whenNotFound) {
         return throwable -> throwable.getCause() instanceof NoSuchFileException ? whenNotFound.get()
                 : failedFuture(throwable);
     }
