@@ -1,5 +1,6 @@
 package io.neonbee.internal.verticle;
 
+import static io.neonbee.NeonBeeDeployable.NEONBEE_NAMESPACE;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
@@ -22,7 +23,7 @@ import io.neonbee.entity.EntityWrapper;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 
-@NeonBeeDeployable(namespace = NeonBeeDeployable.NEONBEE_NAMESPACE, autoDeploy = false)
+@NeonBeeDeployable(namespace = NEONBEE_NAMESPACE, autoDeploy = false)
 public class ConsolidationVerticle extends DataVerticle<EntityWrapper> {
     /**
      * This header is used to store the entity name to consolidate.
@@ -31,8 +32,7 @@ public class ConsolidationVerticle extends DataVerticle<EntityWrapper> {
 
     private static final String NAME = "_consolidationVerticle";
 
-    public static final String QUALIFIED_NAME =
-            DataVerticle.createQualifiedName(NeonBeeDeployable.NEONBEE_NAMESPACE, NAME);
+    public static final String QUALIFIED_NAME = DataVerticle.createQualifiedName(NEONBEE_NAMESPACE, NAME);
 
     @Override
     public String getName() {

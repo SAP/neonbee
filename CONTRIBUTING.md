@@ -112,7 +112,7 @@ This DCO replaces the previously used CLA ("Contributor License Agreement") as w
     - Also check on the [Issue Tracker](https://github.com/sap/neonbee/issues) whether related tasks are already being worked on, blocked, or in discussion.
 2. Create a branch by forking the repository and apply your change.
 3. Commit and push your change on that branch.
-    - 👉 **Please follow our **[Development Concept](docs/development_concept.md)**, [Commit Message Guidelines](docs/commit_msg.md) and [Code Quality Conventions](docs/code_quality.md).**
+    - 👉 **Please follow our **[Development Concept](docs/development_concept.md)**, **[Conventions](docs/development_conventions.md)**, [Commit Message Guidelines](docs/commit_msg.md) and [Code Quality Conventions](docs/code_quality.md).**
 4. Create a pull request.
 5. Follow the link posted by the CLA assistant to your pull request and accept it, as described above.
 6. Wait for our code review and approval, possibly enhancing your change on request.

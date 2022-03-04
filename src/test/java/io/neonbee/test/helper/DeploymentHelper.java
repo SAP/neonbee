@@ -1,17 +1,12 @@
 package io.neonbee.test.helper;
 
-import static io.neonbee.internal.helper.FunctionalHelper.uncheckedMapper;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.Deployment;
 import io.vertx.core.impl.VertxImpl;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
@@ -47,33 +42,29 @@ public final class DeploymentHelper {
     }
 
     /**
-     * This method undeploys the verticle assigned to the passed deploymentID.
+     * This method undeploy the verticle assigned to the passed deploymentID.
      *
      * @param vertx        The related Vert.x instance
      * @param deploymentID The deploymentID to undeploy
      * @return A succeeded future, or a failed future with the cause.
      */
     public static Future<Void> undeployVerticle(Vertx vertx, String deploymentID) {
-        return Future.future(promise -> vertx.undeploy(deploymentID, promise));
+        return vertx.undeploy(deploymentID);
     }
 
     /**
-     * Undeploys all verticle of the passed class
+     * Undeploy all verticle of the passed class
      *
      * @param vertx         The related Vert.x instance
      * @param verticleClass The class of the verticle which get undeployed.
      * @return A succeeded future, or a failed future with the cause.
      */
     public static Future<Void> undeployAllVerticlesOfClass(Vertx vertx, Class<? extends Verticle> verticleClass) {
-        List<Future<Void>> undeployFutures = new ArrayList<>();
-        for (String deploymentID : Set.copyOf(vertx.deploymentIDs())) {
-            Deployment deployment = ((VertxImpl) vertx).getDeployment(deploymentID);
-            if (deployment.getVerticles().stream().anyMatch(verticle -> verticleClass.isInstance(verticle))) {
-                undeployFutures.add(undeployVerticle(vertx, deploymentID));
-            }
-        }
-
-        return CompositeFuture.all(uncheckedMapper(undeployFutures)).mapEmpty();
+        return CompositeFuture.all(vertx.deploymentIDs().stream().map(((VertxImpl) vertx)::getDeployment)
+                .filter(deployment -> deployment.getVerticles().stream()
+                        .anyMatch(verticle -> verticleClass.isInstance(verticle)))
+                .map(deployment -> undeployVerticle(vertx, deployment.deploymentID())).collect(Collectors.toList()))
+                .mapEmpty();
     }
 
     public static boolean isVerticleDeployed(Vertx vertx, Class<? extends Verticle> verticleToCheck) {

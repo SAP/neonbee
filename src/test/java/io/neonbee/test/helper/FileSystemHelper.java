@@ -12,16 +12,25 @@ import java.util.zip.ZipInputStream;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.file.FileSystemException;
+import io.vertx.core.file.impl.FileSystemImpl;
 
 public final class FileSystemHelper {
     /**
      * This method behaves like {@link #deleteRecursive(Vertx, Path)}, but instantiate it's own Vert.x instance.
      *
+     * @deprecated use {@link #deleteRecursive(Vertx, Path)} instead, assuming that if you need a {@link Future} you
+     *             have a Vert.x at hand anyways
      * @param path The path to delete
      * @return A future to resolve when the delete operation finishes
      */
+    @Deprecated(forRemoval = true)
     public static Future<Void> deleteRecursive(Path path) {
-        return deleteRecursive(Vertx.vertx(), path);
+        Vertx vertx = Vertx.vertx();
+        return deleteRecursive(vertx, path).eventually(throwable -> {
+            // we wait for Vert.x to close, before we propagate the reason why deleting failed
+            return vertx.close();
+        });
     }
 
     /**
@@ -37,12 +46,17 @@ public final class FileSystemHelper {
     }
 
     /**
-     * This method behaves like {@link #deleteRecursiveBlocking(Vertx, Path)}, but instantiate it's own Vert.x instance.
+     * This method behaves similar to {@link #deleteRecursiveBlocking(Vertx, Path)}, but does not require a Vert.x
+     * instance.
      *
      * @param path The path to delete
      */
     public static void deleteRecursiveBlocking(Path path) {
-        deleteRecursiveBlocking(Vertx.vertx(), path);
+        try (Stream<Path> pathStream = Files.walk(path)) {
+            FileSystemImpl.delete(path, true);
+        } catch (IOException e) {
+            throw new FileSystemException(e);
+        }
     }
 
     /**

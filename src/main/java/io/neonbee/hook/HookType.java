@@ -5,7 +5,7 @@ public enum HookType {
      * The bootstrap hook is called when a new NeonBee instance was created, even before the NeonBee configuration is
      * loaded, or any configurations on the event bus have been done, or system / web verticle have been deployed.
      * <p>
-     * Note: For security reasons this hook requires the module to be present in the classpath of NeonBee on startup!
+     * Note: For security reasons this hook requires the module to be present in the class path of NeonBee on startup!
      * Placing a module in the work directories /modules directory, will cause the hook NOT to be called!
      */
     BEFORE_BOOTSTRAP,

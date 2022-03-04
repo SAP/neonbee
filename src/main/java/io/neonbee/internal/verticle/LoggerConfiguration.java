@@ -24,10 +24,10 @@ import io.vertx.core.json.JsonObject;
  */
 public class LoggerConfiguration implements Comparable<LoggerConfiguration> {
     @VisibleForTesting
-    static final String NAME = "name";
+    static final String NAME_KEY = "name";
 
     @VisibleForTesting
-    static final String CONFIGURED_LEVEL = "configuredLevel";
+    static final String CONFIGURED_LEVEL_KEY = "configuredLevel";
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
@@ -201,7 +201,9 @@ public class LoggerConfiguration implements Comparable<LoggerConfiguration> {
      * @return the LoggerConfiguration for chaining
      */
     public LoggerConfiguration setEffectiveLevel(Level effectiveLevel) {
-        LOGGER.info("Changing log level for {} from {} to {}.", getName(), getEffectiveLevel(), effectiveLevel);
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Changing log level for {} from {} to {}.", getName(), getEffectiveLevel(), effectiveLevel);
+        }
         Optional.ofNullable(getLogger()).ifPresent(logger -> logger.setLevel(effectiveLevel));
         return this;
     }
@@ -257,7 +259,7 @@ public class LoggerConfiguration implements Comparable<LoggerConfiguration> {
      * @return A {@link JsonObject} which contains the log level information
      */
     public JsonObject toJson() {
-        return new JsonObject().put(NAME, this.name).put(CONFIGURED_LEVEL,
+        return new JsonObject().put(NAME_KEY, this.name).put(CONFIGURED_LEVEL_KEY,
                 this.configuredLevel != null ? this.configuredLevel.levelStr : null);
     }
 
@@ -268,6 +270,6 @@ public class LoggerConfiguration implements Comparable<LoggerConfiguration> {
      * @return A new {@link LoggerConfiguration} which contains the log level information from a passed object.
      */
     public static LoggerConfiguration fromJson(JsonObject json) {
-        return new LoggerConfiguration(json.getString(NAME), json.getString(CONFIGURED_LEVEL));
+        return new LoggerConfiguration(json.getString(NAME_KEY), json.getString(CONFIGURED_LEVEL_KEY));
     }
 }

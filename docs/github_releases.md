@@ -18,7 +18,7 @@
 3. Push the branch
 
     ```console
-    `git push -u origin HEAD:refs/heads/release-<nextVersion>
+    git push -u origin HEAD:refs/heads/release-<nextVersion>
     ```
 
 4. Open a new pull request against the `main` branch

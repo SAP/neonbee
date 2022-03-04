@@ -1,6 +1,7 @@
 package io.neonbee.entity;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.entity.EntityVerticle.CDS_NAMESPACE_GROUP;
 import static io.neonbee.entity.EntityVerticle.CDS_SERVICE_NAME_GROUP;
 import static io.neonbee.entity.EntityVerticle.ENTITY_PATH_GROUP;
@@ -30,8 +31,10 @@ import org.apache.olingo.server.api.uri.queryoption.SystemQueryOption;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import io.neonbee.NeonBeeDeployable;
+import io.neonbee.NeonBeeOptions;
 import io.neonbee.data.DataAction;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
@@ -53,11 +56,17 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     private EntityVerticle entityVerticleImpl2;
 
     @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.addActiveProfile(NO_WEB);
+    }
+
+    @Override
     protected List<Path> provideEntityModels() {
         return List.of(TEST_RESOURCES.resolveRelated("TestService1.csn"));
     }
 
     @BeforeEach
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void deployEntityVerticles(VertxTestContext testContext) {
         entityVerticleImpl1 = new EntityVerticleImpl1();
         entityVerticleImpl2 = new EntityVerticleImpl2();

@@ -1,7 +1,7 @@
 package io.neonbee.logging;
 
 import static io.neonbee.internal.handler.CorrelationIdHandler.CORRELATION_ID;
-import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
+import static io.neonbee.internal.helper.ThreadHelper.getCallingClass;
 
 import java.util.Optional;
 
@@ -86,12 +86,7 @@ public interface LoggingFacade extends Logger {
      * @return a logging facade, offering ways to correlate the logged messages
      */
     static LoggingFacade create() {
-        StackWalker walker = StackWalker.getInstance(RETAIN_CLASS_REFERENCE);
-        Class<?> callerClass = walker.walk(stackStream -> stackStream
-                .filter(stackframe -> !LoggingFacade.class.equals(stackframe.getDeclaringClass())).findFirst().get()
-                .getDeclaringClass());
-
-        return create(callerClass);
+        return create(getCallingClass());
     }
 
     /**

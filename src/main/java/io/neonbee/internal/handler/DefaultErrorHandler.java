@@ -1,17 +1,20 @@
 package io.neonbee.internal.handler;
 
 import static io.neonbee.internal.handler.CorrelationIdHandler.getCorrelationId;
-import static io.neonbee.internal.helper.BufferHelper.readResourceToBuffer;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
-import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
+import io.neonbee.NeonBee;
 import io.neonbee.data.DataException;
+import io.neonbee.handler.ErrorHandler;
+import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.logging.LoggingFacade;
+import io.vertx.core.Future;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.MIMEHeader;
@@ -20,11 +23,11 @@ import io.vertx.ext.web.RoutingContext;
 /**
  * Similar to the io.vertx.ext.web.handler.impl.ErrorHandlerImpl, w/ minor adoptions for error text and template.
  */
-public class DefaultErrorHandler implements io.vertx.ext.web.handler.ErrorHandler {
+public class DefaultErrorHandler implements ErrorHandler {
     /**
      * The default template to use for rendering.
      */
-    public static final String DEFAULT_ERROR_HANDLER_TEMPLATE = "META-INF/neonbee/error-template.html";
+    public static final Path DEFAULT_ERROR_HANDLER_TEMPLATE = Path.of("META-INF/neonbee/error-template.html");
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
@@ -35,31 +38,27 @@ public class DefaultErrorHandler implements io.vertx.ext.web.handler.ErrorHandle
     /**
      * Cached template for rendering the HTML errors.
      */
-    private final String errorTemplate;
+    private String errorTemplate;
 
     /**
-     * Returns a new ErrorHandler with the default {@link #DEFAULT_ERROR_HANDLER_TEMPLATE template}.
-     */
-    public DefaultErrorHandler() {
-        try {
-            this.errorTemplate = readErrorTemplate(DEFAULT_ERROR_HANDLER_TEMPLATE);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not read default error template", e);
-        }
-    }
-
-    /**
-     * Returns a new ErrorHandler with the passed template.
+     * Initializes the ErrorHandler with the passed template.
      *
-     * @param errorTemplateName resource path to the template.
-     * @throws IOException in case the template is not found or cannot be read from the current class loader.
+     * @param neonBee the related NeonBee instance
+     *
+     * @return A Future with the initialized ErrorHandler
      */
-    public DefaultErrorHandler(String errorTemplateName) throws IOException {
-        this.errorTemplate = readErrorTemplate(errorTemplateName);
+    @Override
+    public Future<ErrorHandler> initialize(NeonBee neonBee) {
+        return readErrorTemplate(neonBee).map(errorTemplate -> {
+            this.errorTemplate = errorTemplate;
+            return this;
+        });
     }
 
-    private String readErrorTemplate(String errorTemplateName) throws IOException {
-        return readResourceToBuffer(Objects.requireNonNull(errorTemplateName)).toString();
+    private Future<String> readErrorTemplate(NeonBee neonBee) {
+        String errorTemplatePath = neonBee.getServerConfig().getErrorHandlerTemplate();
+        Path p = errorTemplatePath == null ? DEFAULT_ERROR_HANDLER_TEMPLATE : Path.of(errorTemplatePath);
+        return FileSystemHelper.readFile(neonBee.getVertx(), p).map(Buffer::toString);
     }
 
     @Override

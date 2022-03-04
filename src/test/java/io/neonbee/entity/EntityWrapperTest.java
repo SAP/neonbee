@@ -1,6 +1,7 @@
 package io.neonbee.entity;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 
 import java.util.concurrent.TimeUnit;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import io.neonbee.NeonBeeOptions;
 import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.buffer.Buffer;
@@ -20,6 +22,7 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class EntityWrapperTest extends NeonBeeTestBase {
+
     private static final EntityWrapper TEST_USER_WRAPPER =
             new EntityWrapper("io.neonbee.test2.TestService2Users.TestUsers", createTestUser());
 
@@ -33,6 +36,11 @@ class EntityWrapperTest extends NeonBeeTestBase {
                 .addProperty(new Property("Edm.String", "ID", ValueType.PRIMITIVE, "ID"));
         testUser.setType("io.neonbee.test2.TestService2Users.TestUsers");
         return testUser;
+    }
+
+    @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.addActiveProfile(NO_WEB);
     }
 
     @Override
@@ -65,7 +73,7 @@ class EntityWrapperTest extends NeonBeeTestBase {
     @DisplayName("Check if toBuffer works as expected")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testToBuffer(VertxTestContext testContext) {
-        EntityModelManager.reloadModels(getNeonBee().getVertx()).onComplete(testContext.succeeding(map -> {
+        getNeonBee().getModelManager().reloadModels().onComplete(testContext.succeeding(map -> {
             testContext.verify(() -> {
                 Buffer buffer = TEST_USER_WRAPPER.toBuffer(getNeonBee().getVertx());
                 assertThat(buffer.toJsonObject()).isEqualTo(TEST_USER_WRAPPER_SERIALIZED.toJsonObject());
@@ -78,7 +86,7 @@ class EntityWrapperTest extends NeonBeeTestBase {
     @DisplayName("Check if fromBuffer works as expected")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testFromBuffer(VertxTestContext testContext) {
-        EntityModelManager.reloadModels(getNeonBee().getVertx()).onComplete(testContext.succeeding(map -> {
+        getNeonBee().getModelManager().reloadModels().onComplete(testContext.succeeding(map -> {
             testContext.verify(() -> {
                 EntityWrapper decodedWrapper =
                         EntityWrapper.fromBuffer(getNeonBee().getVertx(), TEST_USER_WRAPPER_SERIALIZED);

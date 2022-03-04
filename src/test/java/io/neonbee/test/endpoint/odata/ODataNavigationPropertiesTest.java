@@ -52,6 +52,7 @@ class ODataNavigationPropertiesTest extends ODataEndpointTestBase {
     }
 
     @BeforeEach
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         CompositeFuture
                 .all(deployVerticle(new NavPropsProductsEntityVerticle()),

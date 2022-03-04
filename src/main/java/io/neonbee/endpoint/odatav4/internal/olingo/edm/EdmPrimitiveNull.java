@@ -93,7 +93,7 @@ public final class EdmPrimitiveNull implements EdmPrimitiveType {
             return null;
         }
 
-        if (value.equals(NULL_STRING)) {
+        if (NULL_STRING.equals(value)) {
             return null;
         } else {
             throw new EdmPrimitiveTypeException("Error: The literal '" + value + "' has illegal content");

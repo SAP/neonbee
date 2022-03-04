@@ -3,34 +3,67 @@ package io.neonbee.internal.deploy;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
+import java.util.function.Function;
+
+import io.neonbee.NeonBee;
+import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
+import io.vertx.core.Handler;
+import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.future.FutureInternal;
+import io.vertx.core.impl.future.Listener;
 
-public class PendingDeployment extends Deployment implements Promise<Deployment> {
-    // It is necessary to throw an exception directly, otherwise code coverage calculation is not correct
-    private static final IllegalStateException CANNOT_COMPLETE =
-            new IllegalStateException("Cannot complete pending deployments.");
-
-    private static final IllegalStateException CANNOT_FAIL =
-            new IllegalStateException("Cannot fail pending deployments.");
+public abstract class PendingDeployment extends Deployment implements FutureInternal<Deployment> {
+    private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     private final Future<String> deployFuture;
 
-    PendingDeployment(Vertx vertx, String identifier, String correlationId, Future<String> deployFuture) {
-        super(vertx, identifier, correlationId);
-        this.deployFuture = deployFuture;
+    PendingDeployment(NeonBee neonBee, Deployable deployable, Future<String> deployFuture) {
+        super(neonBee, deployable);
+
+        LOGGER.info("Started deployment of {} ...", deployable);
+
+        this.deployFuture = deployFuture.map(deploymentId -> {
+            // in case a deployment doesn't want to specify a own deployment ID, generate one based on the hash code of
+            // the pending deployment (thus all deployables, might just return an empty future)
+            return deploymentId != null ? deploymentId : super.getDeploymentId();
+        }).onSuccess(deploymentId -> {
+            LOGGER.info("Deployment of {} succeeded with ID {}", deployable, deploymentId);
+        }).onFailure(throwable -> {
+            LOGGER.error("Deployment of {} failed", deployable, throwable);
+        });
     }
 
     @Override
-    public Future<Void> undeploy() {
+    public final Future<Void> undeploy() {
+        Deployable deployable = getDeployable();
         if (!deployFuture.isComplete()) {
-            return failedFuture(
-                    new IllegalStateException("Undeployment not possible, because deployment is still ongoing."));
+            return failedFuture(new IllegalStateException(
+                    "Cannot undeploy " + deployable.getIdentifier() + ", because deployment is still ongoing."));
+        } else if (deployFuture.failed() && !Deployables.class.isInstance(deployable)) {
+            // if the deployable wasn't successfully deployed, we do not need to undeploy it
+            return succeededFuture();
         }
-        return deployFuture.succeeded() ? super.undeploy() : succeededFuture();
+
+        String deployableIdentifier = deployable.getIdentifier();
+        String deploymentId = deployFuture.result();
+        LOGGER.info("Starting to undeploy {} with ID {}", deployableIdentifier, deploymentId);
+        return undeploy(deploymentId).onSuccess(nothing -> {
+            LOGGER.info("Undeployment of {} with ID {} succeeded", deployableIdentifier, deploymentId);
+        }).onFailure(throwable -> {
+            LOGGER.error("Undeployment of {} with ID {} failed", deployableIdentifier, deploymentId, throwable);
+        });
     }
+
+    /**
+     * Undeploy a deployment with a given deployment ID.
+     *
+     * @see Deployment#undeploy()
+     * @param deploymentId the deployment ID of the deployment to undeploy
+     * @return a future to signal when the undeployment was completed
+     */
+    protected abstract Future<Void> undeploy(String deploymentId);
 
     @Override
     public String getDeploymentId() {
@@ -38,52 +71,82 @@ public class PendingDeployment extends Deployment implements Promise<Deployment>
     }
 
     @Override
-    public void complete(Deployment result) {
-        throw CANNOT_COMPLETE;
+    public boolean isComplete() {
+        return deployFuture.isComplete();
     }
 
     @Override
-    public void complete() {
-        throw CANNOT_COMPLETE;
+    public Future<Deployment> onComplete(Handler<AsyncResult<Deployment>> handler) {
+        return mapDeployment().onComplete(handler);
     }
 
     @Override
-    public boolean tryComplete(Deployment result) {
-        throw CANNOT_COMPLETE;
+    public Deployment result() {
+        return succeeded() ? this : null;
     }
 
     @Override
-    public boolean tryComplete() {
-        throw CANNOT_COMPLETE;
+    public Throwable cause() {
+        return deployFuture.cause();
     }
 
     @Override
-    public void fail(Throwable cause) {
-        throw CANNOT_FAIL;
+    public boolean succeeded() {
+        return deployFuture.succeeded();
     }
 
     @Override
-    public void fail(String failureMessage) {
-        throw CANNOT_FAIL;
+    public boolean failed() {
+        return deployFuture.failed();
     }
 
     @Override
-    public boolean tryFail(Throwable cause) {
-        throw CANNOT_FAIL;
+    public <U> Future<U> compose(Function<Deployment, Future<U>> successMapper,
+            Function<Throwable, Future<U>> failureMapper) {
+        return mapDeployment().compose(successMapper, failureMapper);
     }
 
     @Override
-    public boolean tryFail(String failureMessage) {
-        throw CANNOT_FAIL;
+    public <U> Future<U> transform(Function<AsyncResult<Deployment>, Future<U>> mapper) {
+        return mapDeployment().transform(mapper);
     }
 
     @Override
-    public void handle(AsyncResult<Deployment> asyncResult) {
-        throw new IllegalStateException("Cannot handle pending deployments.");
+    public <U> Future<Deployment> eventually(Function<Void, Future<U>> mapper) {
+        return mapDeployment().eventually(mapper);
     }
 
     @Override
-    public Future<Deployment> future() {
+    public <U> Future<U> map(Function<Deployment, U> mapper) {
+        return mapDeployment().map(mapper);
+    }
+
+    @Override
+    public <V> Future<V> map(V value) {
+        return mapDeployment().map(value);
+    }
+
+    @Override
+    public Future<Deployment> otherwise(Function<Throwable, Deployment> mapper) {
+        return mapDeployment().otherwise(mapper);
+    }
+
+    @Override
+    public Future<Deployment> otherwise(Deployment value) {
+        return mapDeployment().otherwise(value);
+    }
+
+    @Override
+    public ContextInternal context() {
+        return ((FutureInternal<String>) deployFuture).context();
+    }
+
+    @Override
+    public void addListener(Listener<Deployment> listener) {
+        ((FutureInternal<Deployment>) mapDeployment()).addListener(listener);
+    }
+
+    private Future<Deployment> mapDeployment() {
         return deployFuture.map((Deployment) this);
     }
 }

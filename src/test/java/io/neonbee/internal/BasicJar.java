@@ -1,5 +1,7 @@
 package io.neonbee.internal;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -48,7 +50,7 @@ public class BasicJar {
      * @param content  The content of the jar file
      */
     public BasicJar(Manifest manifest, Map<ZipEntry, byte[]> content) {
-        this.manifest = Objects.requireNonNull(manifest);
+        this.manifest = requireNonNull(manifest);
         this.content = content;
     }
 

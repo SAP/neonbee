@@ -1,7 +1,9 @@
 package io.neonbee.data;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.vertx.core.Future.succeededFuture;
+import static java.lang.Boolean.parseBoolean;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -9,8 +11,10 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import io.neonbee.NeonBeeDeployable;
+import io.neonbee.NeonBeeOptions;
 import io.neonbee.test.base.DataVerticleTestBase;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -28,7 +32,13 @@ class DataVerticleTest extends DataVerticleTestBase {
     // effective namespace dataverticletestnamespace2
     private DataVerticleImpl2 dataVerticleImpl2;
 
+    @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.addActiveProfile(NO_WEB);
+    }
+
     @BeforeEach
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void deployEntityVerticles(VertxTestContext testContext) {
         this.dataVerticleImpl0 = new DataVerticleImpl0();
         this.dataVerticleImpl1 = new DataVerticleImpl1();
@@ -59,7 +69,7 @@ class DataVerticleTest extends DataVerticleTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Get the correct namespace for verticle with and without the @NeonBeeDeployable annotation")
-    void getNamespaceTest() {
+    void testGetNamespace() {
         // No annotation available, therefore the namespace has to be null
         assertThat(dataVerticleImpl0.getNamespace()).isNull();
 
@@ -111,6 +121,7 @@ class DataVerticleTest extends DataVerticleTestBase {
     @Test
     void createQualifiedName() {
         assertThat(DataVerticle.createQualifiedName("namespace", "verticle")).isEqualTo("namespace/verticle");
+        assertThat(DataVerticle.createQualifiedName("nameSpace", "verticle")).isEqualTo("namespace/verticle");
     }
 
     private static class DataVerticleImpl0 extends DataVerticle<String> {
@@ -157,7 +168,7 @@ class DataVerticleTest extends DataVerticleTestBase {
 
         @Override
         public Future<String> retrieveData(DataQuery query, DataMap require, DataContext context) {
-            if ("true".equalsIgnoreCase(query.getParameter("ping"))) {
+            if (parseBoolean(query.getParameter("ping"))) {
                 return succeededFuture("Pong");
             }
             throw new DataException(400, "Bad Request");

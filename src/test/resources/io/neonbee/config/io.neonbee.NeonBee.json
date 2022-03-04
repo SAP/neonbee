@@ -1,0 +1,15 @@
+{
+    "eventBusCodecs": {},
+    "eventBusTimeout": 90,
+    "micrometerRegistries": [
+        {
+            "className" : "io.neonbee.config.NeonBeeConfigTest.TestMicrometerRegistryLoaderImpl",
+            "config" : {
+                "key": "value"
+            }
+        }
+    ],
+    "platformClasses": [],
+    "timeZone": "UTC",
+    "trackingDataHandlingStrategy": "io.neonbee.internal.tracking.TrackingDataLoggingStrategy"
+}

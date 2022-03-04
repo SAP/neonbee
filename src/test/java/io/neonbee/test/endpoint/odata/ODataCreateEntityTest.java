@@ -30,6 +30,7 @@ class ODataCreateEntityTest extends ODataEndpointTestBase {
     }
 
     @BeforeEach
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         deployVerticle(new TestService1EntityVerticle()).onComplete(testContext.succeedingThenComplete());
     }

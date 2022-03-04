@@ -1,23 +1,30 @@
 package io.neonbee.internal.scanner;
 
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.vertx.core.Future.failedFuture;
+import static io.vertx.core.Future.succeededFuture;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
@@ -27,15 +34,21 @@ import java.util.stream.Stream;
 import org.objectweb.asm.ClassReader;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Streams;
 
+import io.neonbee.internal.helper.AsyncHelper;
+import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.helper.JarHelper;
+import io.neonbee.internal.helper.ThreadHelper;
+import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 
 /**
- * The possible entries for the classpath are defined here [1]:
+ * The possible entries for the class path are defined here [1]:
  *
  * <pre>
  * - For a .jar or .zip file that contains .class files, the class path ends with the name of the .zip or .jar file.
@@ -49,7 +62,7 @@ import io.vertx.core.Vertx;
  * {@link #scanWithPredicate(Vertx, Predicate)} and .jar files with the method
  * {@link #scanJarFilesWithPredicate(Vertx, Predicate)}. It also offers the method
  * {@link ClassPathScanner#scanManifestFiles(Vertx, String)} to extract the values of a given manifest attribute from
- * every jar file on the classpath.
+ * every jar file on the class path.
  * <p>
  * [1] https://docs.oracle.com/javase/7/docs/technotes/tools/windows/classpath.html
  *
@@ -66,7 +79,7 @@ public class ClassPathScanner {
      * Creates a new ClassPathScanner with the current context class loader.
      */
     public ClassPathScanner() {
-        this(getClassLoader());
+        this(ThreadHelper.getClassLoader()); // NOPMD false positive getClassLoader
     }
 
     /**
@@ -79,15 +92,40 @@ public class ClassPathScanner {
     }
 
     /**
-     * Retrieves the current thread's context class loader or the class loader the {@link ClassPathScanner} was loaded
-     * with, in case the current thread has no context class loader to retrieve.
+     * Get the class loader this scanner is using.
      *
-     * @return A class loader
+     * @return the class loader this class path scanner is scanning from.
      */
-    @SuppressWarnings("PMD.UseProperClassLoader")
-    public static ClassLoader getClassLoader() {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        return classLoader == null ? ClassPathScanner.class.getClassLoader() : classLoader;
+    public ClassLoader getClassLoader() {
+        return classLoader;
+    }
+
+    /**
+     * Creates a new closable instance of a {@link ClassPathScanner}, that scans for the contents of a JAR file.
+     *
+     * This initializes a new {@link URLClassLoader} without any parent, to search only inside the JAR. Calling
+     * {@link CloseableClassPathScanner#close} on the returned instance, will close the underlying
+     * {@link URLClassLoader}.
+     *
+     * @param vertx   the Vert.x instance used to check the JAR files existence
+     * @param jarPath the path to the JAR file
+     * @return a closable {@link ClassPathScanner}
+     */
+    public static Future<CloseableClassPathScanner> forJarFile(Vertx vertx, Path jarPath) {
+        return FileSystemHelper.exists(vertx, jarPath).compose(jarExists -> {
+            if (!jarExists) {
+                return failedFuture(new NoSuchFileException("JAR path does not exist: " + jarPath.toString()));
+            }
+
+            URL jarUrl;
+            try {
+                jarUrl = jarPath.toUri().toURL();
+            } catch (MalformedURLException e) {
+                return failedFuture(e);
+            }
+
+            return succeededFuture(new CloseableClassPathScanner(new URLClassLoader(new URL[] { jarUrl }, null)));
+        });
     }
 
     /**
@@ -101,23 +139,19 @@ public class ClassPathScanner {
      * @return a future to a list of strings (separated list of manifest attribute values)
      */
     public Future<List<String>> scanManifestFiles(Vertx vertx, String attributeName) {
-        return vertx.executeBlocking(promise -> {
-            try {
-                List<String> resources = new ArrayList<>();
-                for (URL manifestResources : getManifestResourceURLs()) {
-                    try (InputStream inputStream = manifestResources.openStream()) {
-                        Manifest manifest = new Manifest(inputStream);
-                        // Attribute looks like: Attribute-Name: package.Resource1; package.Resource2
-                        String attributeValue = manifest.getMainAttributes().getValue(attributeName);
-                        if (!Strings.isNullOrEmpty(attributeValue)) {
-                            SEPARATOR_PATTERN.splitAsStream(attributeValue).map(String::trim).forEach(resources::add);
-                        }
+        return AsyncHelper.executeBlocking(vertx, () -> {
+            List<String> resources = new ArrayList<>();
+            for (URL manifestResources : getManifestResourceURLs()) {
+                try (InputStream inputStream = manifestResources.openStream()) {
+                    Manifest manifest = new Manifest(inputStream);
+                    // Attribute looks like: Attribute-Name: package.Resource1; package.Resource2
+                    String attributeValue = manifest.getMainAttributes().getValue(attributeName);
+                    if (!Strings.isNullOrEmpty(attributeValue)) {
+                        SEPARATOR_PATTERN.splitAsStream(attributeValue).map(String::trim).forEach(resources::add);
                     }
                 }
-                promise.complete(resources);
-            } catch (IOException e) {
-                promise.fail(e);
             }
+            return resources;
         });
     }
 
@@ -167,7 +201,7 @@ public class ClassPathScanner {
                 .map(classes -> classes.stream().map(JarHelper::extractFilePath).collect(Collectors.toList()));
 
         return CompositeFuture.all(classesFromDirectories, classesFromJars)
-                .compose(compositeResult -> vertx.executeBlocking(promise -> {
+                .compose(compositeResult -> AsyncHelper.executeBlocking(vertx, () -> {
                     List<AnnotationClassVisitor> classVisitors = annotationClasses.stream()
                             .map(annotationClass -> new AnnotationClassVisitor(annotationClass, elementTypes))
                             .collect(Collectors.toList());
@@ -188,13 +222,13 @@ public class ClassPathScanner {
                                 }
                             });
 
-                    promise.complete(classVisitors.stream().flatMap(acv -> acv.getClassNames().stream()).distinct()
-                            .collect(Collectors.toList()));
+                    return classVisitors.stream().flatMap(acv -> acv.getClassNames().stream()).distinct()
+                            .collect(Collectors.toList());
                 }));
     }
 
     /**
-     * Scans all directories in the classpath for files whose file name matches a certain predicate.
+     * Scans all directories in the class path for files whose file name matches a certain predicate.
      *
      * @param vertx     the Vert.x instance
      * @param predicate The predicate to test if a found file matches.
@@ -202,33 +236,29 @@ public class ClassPathScanner {
      */
     @SuppressWarnings("PMD.EmptyCatchBlock")
     public Future<List<String>> scanWithPredicate(Vertx vertx, Predicate<String> predicate) {
-        return vertx.executeBlocking(promise -> {
-            try {
-                List<String> resources = new ArrayList<>();
-                Enumeration<URL> rootResources = classLoader.getResources(EMPTY);
-                while (rootResources.hasMoreElements()) {
-                    URL resource = rootResources.nextElement();
-                    if (!"file".equals(resource.getProtocol())) {
-                        continue; // ignore non-files on root (we don't care for bundled JARs or ZIPs)
+        return AsyncHelper.executeBlocking(vertx, () -> {
+            List<String> resources = new ArrayList<>();
+            Enumeration<URL> rootResources = classLoader.getResources(EMPTY);
+            while (rootResources.hasMoreElements()) {
+                URL resource = rootResources.nextElement();
+                if (!"file".equals(resource.getProtocol())) {
+                    continue; // ignore non-files on root (we don't care for bundled JARs or ZIPs)
 
-                        // .class files must be handled here
-                    }
-                    try {
-                        Path resourcePath = Paths.get(resource.toURI());
-                        // The file must be a directory, because the class path does only contains JARs, ZIPs and
-                        // directories.
-                        if (Files.isDirectory(resourcePath)) {
-                            scanDirectoryWithPredicateRecursive(resourcePath, predicate)
-                                    .forEach(path -> resources.add(resourcePath.relativize(path).toString()));
-                        }
-                    } catch (URISyntaxException e) {
-                        /* nothing to do here, just continue searching */
-                    }
+                    // .class files must be handled here
                 }
-                promise.complete(resources);
-            } catch (IOException e) {
-                promise.fail(e);
+                try {
+                    Path resourcePath = Paths.get(resource.toURI());
+                    // The file must be a directory, because the class path does only contains JARs, ZIPs and
+                    // directories.
+                    if (Files.isDirectory(resourcePath)) {
+                        scanDirectoryWithPredicateRecursive(resourcePath, predicate)
+                                .forEach(path -> resources.add(resourcePath.relativize(path).toString()));
+                    }
+                } catch (URISyntaxException e) {
+                    /* nothing to do here, just continue searching */
+                }
             }
+            return resources;
         });
     }
 
@@ -241,24 +271,20 @@ public class ClassPathScanner {
      * @return a future to a list of URIs representing the files which matches the given predicate
      */
     public Future<List<URI>> scanJarFilesWithPredicate(Vertx vertx, Predicate<String> predicate) {
-        return vertx.executeBlocking(promise -> {
-            try {
-                List<URI> resources = new ArrayList<>();
-                for (URL manifestResource : getManifestResourceURLs()) {
-                    URI uri = manifestResource.toURI();
-                    // filter for manifest files inside of jar files
-                    if ("jar".equals(uri.getScheme())) {
-                        try (FileSystem fileSystem = FileSystems.newFileSystem(uri, Map.of())) {
-                            Path rootPath = fileSystem.getPath("/");
-                            scanDirectoryWithPredicateRecursive(rootPath, predicate)
-                                    .forEach(path -> resources.add(path.toUri()));
-                        }
+        return AsyncHelper.executeBlocking(vertx, () -> {
+            List<URI> resources = new ArrayList<>();
+            for (URL manifestResource : getManifestResourceURLs()) {
+                URI uri = manifestResource.toURI();
+                // filter for manifest files inside of jar files
+                if ("jar".equals(uri.getScheme())) {
+                    try (FileSystem fileSystem = FileSystems.newFileSystem(uri, Map.of())) {
+                        Path rootPath = fileSystem.getPath("/");
+                        scanDirectoryWithPredicateRecursive(rootPath, predicate)
+                                .forEach(path -> resources.add(path.toUri()));
                     }
                 }
-                promise.complete(resources);
-            } catch (IOException | URISyntaxException e) {
-                promise.fail(e);
             }
+            return resources;
         });
     }
 
@@ -271,10 +297,7 @@ public class ClassPathScanner {
      * @throws IOException an I/O error occurs while scanning the class paths
      */
     private List<URL> getManifestResourceURLs() throws IOException {
-        Enumeration<URL> manifestResources = classLoader.getResources("META-INF/MANIFEST.MF");
-        List<URL> urls = new ArrayList<>();
-        manifestResources.asIterator().forEachRemaining(urls::add);
-        return urls;
+        return ImmutableList.copyOf(Iterators.forEnumeration(classLoader.getResources("META-INF/MANIFEST.MF")));
     }
 
     /**
@@ -299,5 +322,47 @@ public class ClassPathScanner {
 
     private static boolean isClassFile(String name) {
         return name.endsWith(".class");
+    }
+
+    public static class CloseableClassPathScanner extends ClassPathScanner implements Closeable {
+        private static final LoggingFacade LOGGER = LoggingFacade.create();
+
+        /**
+         * Creates a new {@link CloseableClassPathScanner} with the passed class loader.
+         *
+         * @param urlClassLoader the URL class loader to use
+         */
+        public CloseableClassPathScanner(URLClassLoader urlClassLoader) {
+            super(urlClassLoader);
+        }
+
+        @Override
+        public URLClassLoader getClassLoader() {
+            return (URLClassLoader) super.getClassLoader(); // NOPMD false positive getClassLoader
+        }
+
+        @Override
+        public void close() throws IOException {
+            getClassLoader().close();
+        }
+
+        /**
+         * Returns a handler that if called, closes this {@link ClassPathScanner}. Useful in the context of class-path
+         * scanning to call {@code classPathScanner.scan...().eventually(classPathScanner.close(vertx))}
+         *
+         * @param vertx the Vert.x instance on which to execute the closing operation on
+         * @param <U>   an empty future of a given type
+         * @return returns a mapper to a future that closes the underlying class loader of this {@link ClassPathScanner}
+         *         when called
+         */
+        public <U> Function<Void, Future<U>> close(Vertx vertx) {
+            return nothing -> AsyncHelper.executeBlocking(vertx, () -> {
+                try {
+                    close();
+                } catch (IOException e) {
+                    LOGGER.error("Failed to close {}", this, e);
+                }
+            }).mapEmpty();
+        }
     }
 }

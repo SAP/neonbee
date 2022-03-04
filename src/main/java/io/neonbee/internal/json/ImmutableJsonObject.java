@@ -18,6 +18,16 @@ public final class ImmutableJsonObject extends JsonObject {
      */
     public static final ImmutableJsonObject EMPTY = new ImmutableJsonObject();
 
+    // store the source object to be able to compare it
+    private final JsonObject object;
+
+    /**
+     * Create a new, empty instance.
+     */
+    public ImmutableJsonObject() {
+        this(emptyMap());
+    }
+
     /**
      * Create an instance from a string of JSON.
      *
@@ -28,19 +38,12 @@ public final class ImmutableJsonObject extends JsonObject {
     }
 
     /**
-     * Create a new, empty instance.
-     */
-    public ImmutableJsonObject() {
-        this(emptyMap());
-    }
-
-    /**
      * Create an instance from a Map. The Map is not copied.
      *
      * @param map the map to create the instance from.
      */
     public ImmutableJsonObject(Map<String, Object> map) {
-        super(Collections.unmodifiableMap(map));
+        this(new JsonObject(map));
     }
 
     /**
@@ -58,27 +61,32 @@ public final class ImmutableJsonObject extends JsonObject {
      * @param obj the existing JSON object
      */
     public ImmutableJsonObject(JsonObject obj) {
-        this(obj.getMap());
+        super(Collections.unmodifiableMap(obj.getMap()));
+        this.object = obj instanceof ImmutableJsonObject ? ((ImmutableJsonObject) obj).object : obj;
     }
 
     @Override
     public ImmutableJsonObject getJsonObject(String key) {
-        return new ImmutableJsonObject(super.getJsonObject(key));
+        JsonObject object = super.getJsonObject(key);
+        return object != null ? new ImmutableJsonObject(object) : null;
     }
 
     @Override
     public ImmutableJsonObject getJsonObject(String key, JsonObject def) {
-        return new ImmutableJsonObject(super.getJsonObject(key, def));
+        JsonObject object = super.getJsonObject(key, def);
+        return object != null ? new ImmutableJsonObject(object) : null;
     }
 
     @Override
     public ImmutableJsonArray getJsonArray(String key) {
-        return new ImmutableJsonArray(super.getJsonArray(key));
+        JsonArray array = super.getJsonArray(key);
+        return array != null ? new ImmutableJsonArray(array) : null;
     }
 
     @Override
     public ImmutableJsonArray getJsonArray(String key, JsonArray def) {
-        return new ImmutableJsonArray(super.getJsonArray(key, def));
+        JsonArray array = super.getJsonArray(key, def);
+        return array != null ? new ImmutableJsonArray(array) : null;
     }
 
     @Override
@@ -101,5 +109,33 @@ public final class ImmutableJsonObject extends JsonObject {
             val = new ImmutableJsonArray((JsonArray) val);
         }
         return val;
+    }
+
+    @Override
+    public ImmutableJsonObject copy() {
+        return this;
+    }
+
+    @Override
+    // this method violates the symmetric property of how equal should be implement, because as of how JsonObject
+    // implements equal, it is impossible to fulfill this property. our aim is that object with the same content equal
+    // each other, so object.equal(immutableObject) will never be true, while immutableObject.equal(object) and
+    // immutableObject.equal(immutableObject) will, as long as the content is equal
+    public boolean equals(Object other) {
+        return object.equals(other instanceof ImmutableJsonObject ? ((ImmutableJsonObject) other).object : other);
+    }
+
+    @Override
+    public int hashCode() {
+        return object.hashCode();
+    }
+
+    /**
+     * Creates a mutable copy of this object.
+     *
+     * @return The mutable copy of this object
+     */
+    public JsonObject mutableCopy() {
+        return new JsonObject(getMap()).copy();
     }
 }

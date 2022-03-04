@@ -6,6 +6,7 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 
 import java.beans.Transient;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -13,6 +14,7 @@ import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,19 +25,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import com.google.common.collect.Streams;
 
 import io.neonbee.internal.BasicJar;
+import io.neonbee.internal.helper.ThreadHelper;
+import io.neonbee.internal.scanner.ClassPathScanner.CloseableClassPathScanner;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.Checkpoint;
+import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
 class ClassPathScannerTest {
-    Vertx vertx = Vertx.vertx();
-
     @Test
+    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find passed attribute in all Manifest files")
-    void scanManifestFilesTest(VertxTestContext testContext) throws IOException {
+    void scanManifestFilesTest(Vertx vertx, VertxTestContext testContext) throws IOException {
         String attribute1Name = "Attr1";
         String attribute2Name = "Attr2";
         List<String> manifest1Attribute1Values = List.of("M1A1V1", "M1A1V2");
@@ -64,25 +68,31 @@ class ClassPathScannerTest {
     }
 
     @Test
+    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find files on the class path that match the passed prediction")
-    void scanWithPredicateTest(VertxTestContext testContext) throws IOException {
-        List<String> expected = List.of(ClassPathScanner.class.getName().replace(".", "/") + ".class",
-                ClassPathScannerTest.class.getName().replace(".", "/") + ".class");
+    void scanWithPredicateTest(Vertx vertx, VertxTestContext testContext) throws IOException {
+        List<String> expected =
+                List.of(ClassPathScanner.class, ClassPathScannerTest.class, CloseableClassPathScanner.class).stream()
+                        .map(Class::getName).map(name -> name.replace(".", File.separator) + ".class")
+                        .collect(Collectors.toList());
 
-        new ClassPathScanner(ClassLoader.getSystemClassLoader())
-                .scanWithPredicate(vertx, name -> name.startsWith(ClassPathScanner.class.getName().replace(".", "/")))
+        new ClassPathScanner(ThreadHelper.getClassLoader()) // NOPMD
+                .scanWithPredicate(vertx,
+                        name -> name.startsWith(ClassPathScanner.class.getName().replace(".", File.separator)))
                 .onComplete(testContext.succeeding(paths -> testContext.verify(() -> {
-                    paths.forEach(path -> {
-                        assertThat(expected.stream().anyMatch(path::endsWith)).isTrue();
-                    });
-                    testContext.completeNow();
+                    assertThat(paths).isNotEmpty();
+                    if (!paths.stream().allMatch(path -> expected.stream().anyMatch(path::endsWith))) {
+                        testContext.failNow("Not all paths matched an expected value " + paths);
+                    } else {
+                        testContext.completeNow();
+                    }
                 })));
-
     }
 
     @Test
+    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find files on the class path that are inside of a JAR file")
-    void scanWithPredicateJarFile(VertxTestContext testContext) throws IOException, URISyntaxException {
+    void scanWithPredicateJarFile(Vertx vertx, VertxTestContext testContext) throws IOException, URISyntaxException {
         String ressourceToFind = "MyCoolResource";
         byte[] dummyContent = "lol".getBytes(StandardCharsets.UTF_8);
         BasicJar bj = new BasicJar(Map.of(ressourceToFind, dummyContent, "somethingElse", dummyContent));
@@ -98,8 +108,9 @@ class ClassPathScannerTest {
     }
 
     @Test
+    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find classes which the class or any field or method within is annotated with a given annotation")
-    void scanForAnnotation(VertxTestContext testContext) throws IOException, URISyntaxException {
+    void scanForAnnotation(Vertx vertx, VertxTestContext testContext) throws IOException, URISyntaxException {
         BasicJar jarWithTypeAnnotatedClass =
                 new AnnotatedClassTemplate("Hodor", "type").setTypeAnnotation("@Deprecated").asJar();
         BasicJar jarWithFieldAnnotatedClass =

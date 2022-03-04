@@ -17,9 +17,14 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.entity.EntityVerticle;
 import io.neonbee.entity.EntityWrapper;
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.Verticle;
 
 public class DummyVerticleHelper {
+    public static final Verticle DUMMY_VERTICLE = new AbstractVerticle() {
+        // nothing to do here
+    };
 
     /**
      * Creates a factory which can be used to construct a dummy {@link DataVerticle}.

@@ -31,7 +31,7 @@ class DefaultHookRegistrationTest {
 
     private Method hookMethod;
 
-    private DefaultHookRegistration defaultHookegistration;
+    private DefaultHookRegistration defaultHookRegistration;
 
     @BeforeEach
     void setup(Vertx vertx) throws Exception {
@@ -49,7 +49,7 @@ class DefaultHookRegistrationTest {
         instanceWithHook = classWithValidHook.getConstructor().newInstance();
         hookMethod = classWithValidHook.getMethod("doNothing", NeonBee.class, HookContext.class, Promise.class);
 
-        defaultHookegistration =
+        defaultHookRegistration =
                 new DefaultHookRegistration(hookRegistry, instanceWithHook, hookMethod, HookType.ONCE_PER_REQUEST);
     }
 
@@ -74,41 +74,41 @@ class DefaultHookRegistrationTest {
     @Test
     @DisplayName("Check that getters of DefaultHookRegistration are working correct")
     void testGetters() {
-        assertThat(defaultHookegistration.getId()).isNotNull();
-        assertThat(defaultHookegistration.getRelatedObject()).isEqualTo(instanceWithHook);
-        assertThat(defaultHookegistration.getHookMethod()).isEqualTo(hookMethod);
-        assertThat(defaultHookegistration.getType()).isEqualTo(HookType.ONCE_PER_REQUEST);
-        assertThat(defaultHookegistration.getName()).isEqualTo("hook.HodorHook::doNothing");
+        assertThat(defaultHookRegistration.getId()).isNotNull();
+        assertThat(defaultHookRegistration.getRelatedObject()).isEqualTo(instanceWithHook);
+        assertThat(defaultHookRegistration.getHookMethod()).isEqualTo(hookMethod);
+        assertThat(defaultHookRegistration.getType()).isEqualTo(HookType.ONCE_PER_REQUEST);
+        assertThat(defaultHookRegistration.getName()).isEqualTo("hook.HodorHook::doNothing");
     }
 
     @Test
     @DisplayName("Check that equals works correct")
     @SuppressWarnings("TruthSelfEquals")
     void testEquals() {
-        DefaultHookRegistration defaultHookegistrationClone =
+        DefaultHookRegistration defaultHookRegistrationClone =
                 new DefaultHookRegistration(hookRegistry, instanceWithHook, hookMethod, HookType.ONCE_PER_REQUEST);
 
-        DefaultHookRegistration differentHookegistration =
+        DefaultHookRegistration differentHookRegistration =
                 new DefaultHookRegistration(hookRegistry, instanceWithHook, hookMethod, HookType.BEFORE_BOOTSTRAP);
 
-        assertThat(defaultHookegistrationClone).isEqualTo(defaultHookegistrationClone);
-        assertThat(defaultHookegistrationClone).isEqualTo(defaultHookegistration);
-        assertThat(differentHookegistration).isNotEqualTo(defaultHookegistration);
-        assertThat(differentHookegistration).isNotEqualTo(null);
+        assertThat(defaultHookRegistrationClone).isEqualTo(defaultHookRegistrationClone);
+        assertThat(defaultHookRegistrationClone).isEqualTo(defaultHookRegistration);
+        assertThat(differentHookRegistration).isNotEqualTo(defaultHookRegistration);
+        assertThat(differentHookRegistration).isNotEqualTo(null);
     }
 
     @Test
     @DisplayName("Check that equals works correct")
     void testHashcode() {
-        DefaultHookRegistration defaultHookegistrationClone =
+        DefaultHookRegistration defaultHookRegistrationClone =
                 new DefaultHookRegistration(hookRegistry, instanceWithHook, hookMethod, HookType.ONCE_PER_REQUEST);
 
-        DefaultHookRegistration differentHookegistration =
+        DefaultHookRegistration differentHookRegistration =
                 new DefaultHookRegistration(hookRegistry, instanceWithHook, hookMethod, HookType.BEFORE_SHUTDOWN);
 
-        assertThat(defaultHookegistration.hashCode()).isEqualTo(defaultHookegistrationClone.hashCode());
+        assertThat(defaultHookRegistration.hashCode()).isEqualTo(defaultHookRegistrationClone.hashCode());
 
-        assertThat(differentHookegistration.hashCode()).isNotEqualTo(defaultHookegistration.hashCode());
-        assertThat(differentHookegistration.hashCode()).isNotEqualTo(StringHelper.EMPTY.hashCode());
+        assertThat(differentHookRegistration.hashCode()).isNotEqualTo(defaultHookRegistration.hashCode());
+        assertThat(differentHookRegistration.hashCode()).isNotEqualTo(StringHelper.EMPTY.hashCode());
     }
 }

@@ -24,12 +24,14 @@ import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import io.neonbee.NeonBee;
 import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.Counter;
 
@@ -46,6 +48,8 @@ public class WatchVerticle extends AbstractVerticle {
     static final String WATCH_LOGIC_OPTION_COPY = "copy";
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
+
+    private static final long UNDEPLOY_DELAY = 50L;
 
     @VisibleForTesting
     final long watchPeriodMillis;
@@ -150,20 +154,33 @@ public class WatchVerticle extends AbstractVerticle {
 
     @Override
     public void start(Promise<Void> startPromise) {
+        Vertx vertx = getVertx();
+        if (NeonBee.get(vertx).getOptions().doNotWatchFiles()) {
+            // edge case: signal completion to Vert.x before undeploying ourself after a small delay
+            startPromise.complete();
+            vertx.setTimer(UNDEPLOY_DELAY, timerId -> {
+                vertx.undeploy(deploymentID()).onFailure(throwable -> {
+                    LOGGER.error("Failed to undeploy watch verticle", throwable);
+                });
+            });
+            return;
+        }
+
         try {
             watcher = watchPath.getFileSystem().newWatchService();
         } catch (IOException e) {
             startPromise.fail(e);
             return;
         }
+
         (handleExisting ? handleExistingFiles(watchPath) : registerWatchKey(watchPath)).compose(
-                v -> Future.<Counter>future(promise -> getVertx().sharedData().getLocalCounter(counterName, promise)))
+                v -> Future.<Counter>future(promise -> vertx.sharedData().getLocalCounter(counterName, promise)))
                 .onComplete(asyncCounter -> {
                     if (asyncCounter.failed()) {
                         startPromise.fail(asyncCounter.cause());
                     } else {
                         counter = asyncCounter.result();
-                        getVertx().setPeriodic(watchPeriodMillis, l -> {
+                        vertx.setPeriodic(watchPeriodMillis, l -> {
                             if (parallelProcessing) {
                                 checkForChanges();
                             } else {
@@ -180,6 +197,20 @@ public class WatchVerticle extends AbstractVerticle {
                         startPromise.complete();
                     }
                 });
+    }
+
+    @Override
+    public void stop(Promise<Void> stopPromise) throws Exception {
+        if (watcher != null) {
+            try {
+                watcher.close();
+            } catch (IOException e) {
+                stopPromise.fail(e);
+                return;
+            }
+        }
+
+        stopPromise.complete();
     }
 
     /**
@@ -358,11 +389,5 @@ public class WatchVerticle extends AbstractVerticle {
     public void observedModify(Path affectedPath, Promise<Void> finishPromise) {
         observedModify(affectedPath);
         finishPromise.complete();
-    }
-
-    @Override
-    public void stop() throws Exception {
-        super.stop();
-        watcher.close();
     }
 }

@@ -12,6 +12,8 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import io.neonbee.NeonBee;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.internal.DataContextImpl;
@@ -21,9 +23,19 @@ import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
 public abstract class JobVerticle extends AbstractVerticle {
+    @VisibleForTesting
+    static final long MINIMUM_DELAY = 100L;
+
+    @VisibleForTesting
+    static final long FINALIZE_DELAY = 50L;
+
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
-    private static final long MINIMUM_DELAY = 100L;
+    private static final long NO_SCHEDULE = -1;
+
+    private static final long STOPPED = -2;
+
+    private static final long FINALIZED = -3;
 
     private static final int SCHEDULE_TEST_EXECUTIONS = 10;
 
@@ -32,6 +44,8 @@ public abstract class JobVerticle extends AbstractVerticle {
     private Instant lastExecution;
 
     private boolean undeployWhenDone;
+
+    private long currentTimerId = NO_SCHEDULE;
 
     /**
      * Create a new job verticle with a given job schedule.
@@ -86,6 +100,15 @@ public abstract class JobVerticle extends AbstractVerticle {
         }
     }
 
+    @Override
+    public void stop() {
+        // stop without finalizing
+        if (currentTimerId >= 0) {
+            getVertx().cancelTimer(currentTimerId);
+            currentTimerId = STOPPED;
+        }
+    }
+
     private boolean isScheduleValid() {
         if (schedule.isPeriodic()) {
             Instant before = now();
@@ -96,6 +119,7 @@ public abstract class JobVerticle extends AbstractVerticle {
                 }
             }
         }
+
         return true;
     }
 
@@ -132,12 +156,14 @@ public abstract class JobVerticle extends AbstractVerticle {
             return;
         }
 
-        // schedule the job for the delay defined and remember the last execution time
-        // use a minimum delay to not run jobs in a immediate succession
+        // schedule the job for the delay defined and remember the last execution time use a minimum delay to not run
+        // jobs in a immediate succession
         long nextDelay = max(MINIMUM_DELAY, now.until(lastExecution = nextExecution, MILLIS));
-        LOGGER.info("Scheduling job execution of {} in {}ms ({})", getName(), nextDelay,
-                ISO_LOCAL_DATE_TIME.format(ZonedDateTime.now(UTC).plus(nextDelay, MILLIS)));
-        getVertx().setTimer(nextDelay, timerID -> {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Scheduling job execution of {} in {}ms ({})", getName(), nextDelay,
+                    ISO_LOCAL_DATE_TIME.format(ZonedDateTime.now(UTC).plus(nextDelay, MILLIS)));
+        }
+        currentTimerId = getVertx().setTimer(nextDelay, timerID -> {
             // initialize the a data context for the job execution
             DataContext context = new DataContextImpl(UUID.randomUUID().toString(),
                     "internal-" + UUID.randomUUID().toString(), getUser());
@@ -166,12 +192,34 @@ public abstract class JobVerticle extends AbstractVerticle {
     /**
      * Finalize the job execution by eventually undeploying the own verticle.
      */
-    private void finalizeJob() {
-        LOGGER.info("Finalizing job {}", getName());
+    protected void finalizeJob() {
+        String name = getName();
+        LOGGER.info("Finalizing job {}", name);
+
+        // indicate that the job was finalized (there is no need to cancel any timer
+        // here, because finalizeJob will only
+        // be called after a timer completed, or in case no timer was ever started
+        currentTimerId = FINALIZED;
+
         if (undeployWhenDone) {
-            LOGGER.info("Undeploying job {}, as processing finished", getName());
-            getVertx().undeploy(deploymentID());
+            // this delay accounts for the edge case, that we are undeploying / finalizing
+            // when starting
+            getVertx().setTimer(FINALIZE_DELAY, timerId -> {
+                LOGGER.info("Undeploying job {}, as processing finished", name);
+                getVertx().undeploy(deploymentID()).onFailure(throwable -> {
+                    LOGGER.error("Failed to undeploy job {}", name, throwable);
+                });
+            });
         }
+    }
+
+    /**
+     * True if the job was finalized.
+     *
+     * @return true if the job was finalized
+     */
+    public boolean isFinalized() {
+        return currentTimerId == FINALIZED;
     }
 
     /**

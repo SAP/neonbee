@@ -1,6 +1,9 @@
 package io.neonbee.internal.verticle;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeMockHelper.defaultVertxMock;
+import static io.neonbee.NeonBeeMockHelper.registerNeonBeeMock;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.internal.helper.FileSystemHelper.createDirs;
 import static io.neonbee.internal.helper.FileSystemHelper.deleteRecursive;
 import static io.neonbee.internal.helper.FileSystemHelper.writeFile;
@@ -12,6 +15,14 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.future;
 import static io.vertx.core.Future.succeededFuture;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
@@ -23,11 +34,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 
+import io.neonbee.NeonBeeOptions;
+import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.DeploymentHelper;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -35,13 +47,17 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
-import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.junit5.VertxTestContext.ExecutionBlock;
 
-@ExtendWith(VertxExtension.class)
-class WatchVerticleTest {
+class WatchVerticleTest extends NeonBeeTestBase {
     private Path watchDir;
+
+    @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.setDoNotWatchFiles(false);
+        options.addActiveProfile(NO_WEB);
+    }
 
     @BeforeEach
     void beforeEach() throws IOException {
@@ -49,6 +65,7 @@ class WatchVerticleTest {
     }
 
     @AfterEach
+    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     void afterEach(Vertx vertx, VertxTestContext testContext) throws IOException {
         deleteRecursive(vertx, watchDir).recover(throwable -> {
             if (throwable.getCause() instanceof DirectoryNotEmptyException) {
@@ -65,11 +82,29 @@ class WatchVerticleTest {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Constructor should set / calculate interval correct")
-    void testConstrcutor() {
+    void testConstructor() {
         WatchVerticle watchVerticle = new WatchVerticle(watchDir);
         assertThat(watchVerticle.watchPeriodMillis).isEqualTo(500);
         watchVerticle = new WatchVerticle(watchDir, 2, TimeUnit.SECONDS, false, false);
         assertThat(watchVerticle.watchPeriodMillis).isEqualTo(2000);
+    }
+
+    @Test
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("Test to do not watch files")
+    @SuppressWarnings("unchecked")
+    void testDontWatchFiles() {
+        Vertx vertxMock = defaultVertxMock();
+        registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setDoNotWatchFiles(true));
+
+        WatchVerticle watchVerticle = new WatchVerticle(watchDir);
+        watchVerticle.init(vertxMock, vertxMock.getOrCreateContext()); // set the Vert.x instance
+
+        Promise<Void> promiseMock = mock(Promise.class);
+        watchVerticle.start(promiseMock);
+        verify(promiseMock).complete();
+
+        verify(vertxMock).undeploy(anyString());
     }
 
     @Test
@@ -92,14 +127,13 @@ class WatchVerticleTest {
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
     void testBlocking(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {
         AtomicReference<Promise<Void>> waitFutureReference = new AtomicReference<>(Promise.promise());
-        WatchVerticle watchVerticleSpy =
-                Mockito.spy(new WatchVerticle(watchDir, 1, TimeUnit.MILLISECONDS, false, false));
-        Mockito.doAnswer(invocation -> waitFutureReference.get()).when(watchVerticleSpy).checkForChanges();
+        WatchVerticle watchVerticleSpy = spy(new WatchVerticle(watchDir, 1, TimeUnit.MILLISECONDS, false, false));
+        doAnswer(invocation -> waitFutureReference.get()).when(watchVerticleSpy).checkForChanges();
 
         DeploymentHelper.deployVerticle(vertx, watchVerticleSpy).compose(deploymentId ->
         // Wait 100 milliseconds to ensure that interval theoretically could triggered more then once
         waitFor(vertx, 100).compose(v -> {
-            testCtx.verify(() -> Mockito.verify(watchVerticleSpy, Mockito.times(1)).checkForChanges());
+            testCtx.verify(() -> verify(watchVerticleSpy, times(1)).checkForChanges());
             // Check if still no other interval was started
             // Resolve waitFuture to enter a new interval
             waitFutureReference.getAndSet(Promise.<Void>promise()).complete();
@@ -107,7 +141,7 @@ class WatchVerticleTest {
             return waitFor(vertx, 100);
         }).onComplete(testCtx.succeeding(v -> {
             // CHeck that WatchVerticle entered a new interval
-            testCtx.verify(() -> Mockito.verify(watchVerticleSpy, Mockito.times(2)).checkForChanges());
+            testCtx.verify(() -> verify(watchVerticleSpy, times(2)).checkForChanges());
             testCtx.completeNow();
         })));
     }
@@ -118,15 +152,14 @@ class WatchVerticleTest {
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
     void testParallelProcessing(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {
-        WatchVerticle watchVerticleSpy =
-                Mockito.spy(new WatchVerticle(watchDir, 10, TimeUnit.MILLISECONDS, true, false));
-        Mockito.doAnswer(invocation -> Promise.promise()).when(watchVerticleSpy).checkForChanges();
+        WatchVerticle watchVerticleSpy = spy(new WatchVerticle(watchDir, 10, TimeUnit.MILLISECONDS, true, false));
+        doAnswer(invocation -> Promise.promise()).when(watchVerticleSpy).checkForChanges();
 
         DeploymentHelper.deployVerticle(vertx, watchVerticleSpy).compose(deploymentId ->
         // Assumption that the watchVerticle has been called at least 10 times after 100 ms
         future(promise -> vertx.setTimer(110, l -> promise.complete()))).onComplete(testCtx.succeeding(v -> {
             // Check that WatchVerticle has been called at least 10 times
-            testCtx.verify(() -> Mockito.verify(watchVerticleSpy, Mockito.atLeast(10)).checkForChanges());
+            testCtx.verify(() -> verify(watchVerticleSpy, atLeast(10)).checkForChanges());
             testCtx.completeNow();
         }));
     }
@@ -137,22 +170,18 @@ class WatchVerticleTest {
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
     void test(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {
-        WatchVerticle watchVerticleSpy = Mockito.spy(new WatchVerticle(watchDir, 10, TimeUnit.MINUTES, false, false));
+        WatchVerticle watchVerticleSpy = spy(new WatchVerticle(watchDir, 10, TimeUnit.MINUTES, false, false));
         Path watchedFile = watchDir.resolve("watchedFile");
 
         DeploymentHelper.deployVerticle(vertx, watchVerticleSpy)
                 .compose(s -> writeFile(vertx, watchedFile, Buffer.buffer()))
                 .compose(v -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
-                        () -> Mockito.verify(watchVerticleSpy, Mockito.atLeast(1))
-                                .observedCreate(Mockito.eq(watchedFile))))
+                        () -> verify(watchVerticleSpy, atLeast(1)).observedCreate(eq(watchedFile))))
                 .compose(v -> writeFile(vertx, watchedFile, Buffer.buffer(toByte("Lord Citrange")))
                         .compose(innerVoid -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
-                                () -> Mockito.verify(watchVerticleSpy, Mockito.atLeast(1))
-                                        .observedModify(Mockito.eq(watchedFile)))))
-                .compose(v -> deleteRecursive(vertx, watchedFile)
-                        .compose(innerVoid -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
-                                () -> Mockito.verify(watchVerticleSpy, Mockito.atLeast(1))
-                                        .observedDelete(Mockito.eq(watchedFile)))))
+                                () -> verify(watchVerticleSpy, atLeast(1)).observedModify(eq(watchedFile)))))
+                .compose(v -> deleteRecursive(vertx, watchedFile).compose(innerVoid -> verifyFileEvent(vertx, testCtx,
+                        watchVerticleSpy, () -> verify(watchVerticleSpy, atLeast(1)).observedDelete(eq(watchedFile)))))
                 .onComplete(testCtx.succeedingThenComplete());
     }
 
@@ -162,8 +191,7 @@ class WatchVerticleTest {
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
     void testExisting(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {
-
-        WatchVerticle watchVerticleSpy = Mockito.spy(new WatchVerticle(watchDir, 10, TimeUnit.MINUTES, false, true));
+        WatchVerticle watchVerticleSpy = spy(new WatchVerticle(watchDir, 10, TimeUnit.MINUTES, false, true));
         Path watchedFile = watchDir.resolve("watchedFile");
 
         writeFile(vertx, watchedFile, Buffer.buffer())
@@ -180,7 +208,7 @@ class WatchVerticleTest {
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
     void testRecursivly(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {
 
-        WatchVerticle watchVerticleSpy = Mockito.spy(new WatchVerticle(watchDir, 10, TimeUnit.MINUTES, false, true));
+        WatchVerticle watchVerticleSpy = spy(new WatchVerticle(watchDir, 10, TimeUnit.MINUTES, false, true));
         Path watchedSubDir = watchDir.resolve("subDir");
         Path watchedSubSubDir = watchedSubDir.resolve("subSubDir");
         Path watchedFileInSubDir = watchedSubDir.resolve("watchedFile");
@@ -190,54 +218,42 @@ class WatchVerticleTest {
                 // Create subdirectory and test events
                 .compose(s -> createDirs(vertx, watchedSubDir)
                         .compose(v -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
-                                () -> Mockito.verify(watchVerticleSpy, Mockito.atLeast(1))
-                                        .observedCreate(Mockito.eq(watchedSubDir))))
+                                () -> verify(watchVerticleSpy, atLeast(1)).observedCreate(eq(watchedSubDir))))
                         .compose(v -> writeFile(vertx, watchedFileInSubDir, Buffer.buffer()))
                         .compose(v -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
-                                () -> Mockito.verify(watchVerticleSpy, Mockito.atLeast(1))
-                                        .observedCreate(Mockito.eq(watchedFileInSubDir))))
+                                () -> verify(watchVerticleSpy, atLeast(1)).observedCreate(eq(watchedFileInSubDir))))
                         .compose(v -> writeFile(vertx, watchedFileInSubDir, Buffer.buffer(toByte("Lord Citrange"))))
                         .compose(v -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
-                                () -> Mockito.verify(watchVerticleSpy, Mockito.atLeast(1))
-                                        .observedModify(Mockito.eq(watchedFileInSubDir))))
+                                () -> verify(watchVerticleSpy, atLeast(1)).observedModify(eq(watchedFileInSubDir))))
                         .compose(v -> deleteRecursive(vertx, watchedFileInSubDir))
                         .compose(v -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
-                                () -> Mockito.verify(watchVerticleSpy, Mockito.atLeast(1))
-                                        .observedDelete(Mockito.eq(watchedFileInSubDir)))))
+                                () -> verify(watchVerticleSpy, atLeast(1)).observedDelete(eq(watchedFileInSubDir)))))
 
                 // Create sub subdirectory and test events
-                .compose(
-                        v -> createDirs(vertx, watchedSubSubDir)
-                                .compose(innerVoid -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
-                                        () -> Mockito.verify(watchVerticleSpy)
-                                                .observedCreate(Mockito.eq(watchedSubSubDir))))
-                                .compose(innerVoid -> writeFile(vertx, watchedFileInSubSubDir, Buffer.buffer()))
-                                .compose(innerVoid -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
-                                        () -> Mockito.verify(watchVerticleSpy)
-                                                .observedCreate(Mockito.eq(watchedFileInSubSubDir)))))
+                .compose(v -> createDirs(vertx, watchedSubSubDir)
+                        .compose(innerVoid -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
+                                () -> verify(watchVerticleSpy).observedCreate(eq(watchedSubSubDir))))
+                        .compose(innerVoid -> writeFile(vertx, watchedFileInSubSubDir, Buffer.buffer()))
+                        .compose(innerVoid -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
+                                () -> verify(watchVerticleSpy).observedCreate(eq(watchedFileInSubSubDir)))))
 
                 // DELETE subdirectory and check if the mapped watchKey is deleted
-                .compose(
-                        v -> deleteRecursive(vertx, watchedSubDir)
-                                .compose(
-                                        innerVoid -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
-                                                () -> Mockito.verify(watchVerticleSpy)
-                                                        .observedDelete(Mockito.eq(watchedSubDir))))
-                                .compose(innerVoid -> {
-                                    testCtx.verify(() -> assertThat(watchVerticleSpy.watchKeys)
-                                            .doesNotContainKey(watchedSubDir));
-                                    return succeededFuture();
-                                })
-                                // check if the subdirectories/files of the deleted directory are deleted as well
-                                .compose(
-                                        innerVoid -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
-                                                () -> Mockito.verify(watchVerticleSpy)
-                                                        .observedDelete(Mockito.eq(watchedSubSubDir))))
-                                .compose(innerVoid -> {
-                                    testCtx.verify(() -> assertThat(watchVerticleSpy.watchKeys)
-                                            .doesNotContainKey(watchedSubSubDir));
-                                    return succeededFuture();
-                                }))
+                .compose(v -> deleteRecursive(vertx, watchedSubDir)
+                        .compose(innerVoid -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
+                                () -> verify(watchVerticleSpy).observedDelete(eq(watchedSubDir))))
+                        .compose(innerVoid -> {
+                            testCtx.verify(
+                                    () -> assertThat(watchVerticleSpy.watchKeys).doesNotContainKey(watchedSubDir));
+                            return succeededFuture();
+                        })
+                        // check if the subdirectories/files of the deleted directory are deleted as well
+                        .compose(innerVoid -> verifyFileEvent(vertx, testCtx, watchVerticleSpy,
+                                () -> verify(watchVerticleSpy).observedDelete(eq(watchedSubSubDir))))
+                        .compose(innerVoid -> {
+                            testCtx.verify(
+                                    () -> assertThat(watchVerticleSpy.watchKeys).doesNotContainKey(watchedSubSubDir));
+                            return succeededFuture();
+                        }))
                 .onComplete(testCtx.succeedingThenComplete());
     }
 
@@ -247,7 +263,7 @@ class WatchVerticleTest {
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
     void testHandleExistingRecursivly(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {
-        WatchVerticle watchVerticleSpy = Mockito.spy(new WatchVerticle(watchDir, 10, TimeUnit.MINUTES, false, true));
+        WatchVerticle watchVerticleSpy = spy(new WatchVerticle(watchDir, 10, TimeUnit.MINUTES, false, true));
         // Root Directory Content
         Path watchedFile = watchDir.resolve("watchedFile");
         Path watchedSubDir = watchDir.resolve("watchedSubDir");
@@ -287,8 +303,8 @@ class WatchVerticleTest {
     }
 
     private static void verifyCreateModifyFile(WatchVerticle watchVerticleSpy, Path watchedFile) {
-        Mockito.verify(watchVerticleSpy).observedCreate(Mockito.eq(watchedFile));
-        Mockito.verify(watchVerticleSpy).observedModify(Mockito.eq(watchedFile));
+        verify(watchVerticleSpy).observedCreate(eq(watchedFile));
+        verify(watchVerticleSpy).observedModify(eq(watchedFile));
     }
 
     private static byte[] toByte(String string) {

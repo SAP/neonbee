@@ -2,20 +2,20 @@ package io.neonbee;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Strings;
+import com.google.common.base.Enums;
 
 /**
  * NeonBee deployment profile.
  */
 @SuppressWarnings("checkstyle:JavadocVariable")
 public enum NeonBeeProfile {
-    WEB, CORE, STABLE, INCUBATOR, ALL;
+    WEB, CORE, STABLE, INCUBATOR, NO_WEB, ALL;
 
     /**
      * Returns true if this profile is inside the passed active profiles.
@@ -23,25 +23,35 @@ public enum NeonBeeProfile {
      * @param activeProfiles The active profiles
      * @return true if this profile is active
      */
-    public boolean isActive(List<NeonBeeProfile> activeProfiles) {
+    public boolean isActive(Collection<NeonBeeProfile> activeProfiles) {
+        if (activeProfiles.isEmpty() || (activeProfiles.contains(NO_WEB) && this == WEB)) {
+            return false;
+        }
+
         return activeProfiles.contains(ALL) || activeProfiles.contains(this) || this == ALL;
     }
 
     /**
-     * Parses a comma separated string of profile values.
+     * Similar to {@link #valueOf(String)}, but returning {@code null} instead of throwing an exception if the profile
+     * is not found.
      *
-     * @param values string with profile values
+     * @param profile the profile to get
+     * @return the {@link NeonBeeProfile} or {@code null}
+     */
+    public static NeonBeeProfile getProfile(String profile) {
+        return Enums.getIfPresent(NeonBeeProfile.class, profile).orNull();
+    }
+
+    /**
+     * Parses a comma separated string of profiles.
+     *
+     * @param profiles a comma separated string of profiles
      * @return a List with the parsed {@link NeonBeeProfile}s
      */
-    public static List<NeonBeeProfile> parseProfiles(String values) {
-        return Optional.ofNullable(values).map(Strings::emptyToNull)
-                .map(nonEmptyValues -> Arrays.stream(nonEmptyValues.split(",")).map(value -> {
-                    try {
-                        return NeonBeeProfile.valueOf(value);
-                    } catch (Exception e) {
-                        return null;
-                    }
-                }).filter(Objects::nonNull).collect(Collectors.toList())).filter(Predicate.not(Collection::isEmpty))
-                .orElse(List.of(ALL));
+    public static Set<NeonBeeProfile> parseProfiles(String profiles) {
+        return Optional.ofNullable(profiles)
+                .map(nonNullProfiles -> Arrays.stream(nonNullProfiles.split(",")).filter(Predicate.not(String::isBlank))
+                        .map(NeonBeeProfile::getProfile).filter(Objects::nonNull).collect(Collectors.toSet()))
+                .filter(Predicate.not(Collection::isEmpty)).orElse(Set.of(ALL));
     }
 }

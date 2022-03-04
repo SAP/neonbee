@@ -1,11 +1,17 @@
 package io.neonbee.job;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
+import static io.neonbee.job.JobVerticle.FINALIZE_DELAY;
+import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
+import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
@@ -15,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.mockito.ArgumentMatcher;
 
 import io.neonbee.NeonBeeMockHelper;
@@ -35,28 +42,32 @@ class JobVerticleTest extends NeonBeeTestBase {
         public int jobExecuted;
 
         TestJobVerticle(JobSchedule schedule) {
-            this(schedule, true);
+            this(schedule, true /* undeploy when done */);
         }
 
         TestJobVerticle(JobSchedule schedule, boolean undeployWhenDone) {
-            this(schedule, undeployWhenDone, false);
+            this(schedule, undeployWhenDone, false /* disable job scheduling */);
         }
 
         TestJobVerticle(JobSchedule schedule, boolean undeployWhenDone, boolean disableJobScheduling) {
-            this(schedule, undeployWhenDone, false /* do not sleep in execution */,
-                    0 /* do not call the handler once */, disableJobScheduling);
+            this(schedule, false /* do not sleep in execution */, 0 /* do not call the handler */, undeployWhenDone,
+                    disableJobScheduling);
         }
 
-        TestJobVerticle(JobSchedule schedule, boolean undeployWhenDone, boolean delayExecutions,
-                int breakExecutionsAfter) {
-            this(schedule, undeployWhenDone, delayExecutions, breakExecutionsAfter, false /* disable job scheduling */);
+        TestJobVerticle(JobSchedule schedule, boolean delayExecutions, int breakExecutionsAfter) {
+            this(schedule, delayExecutions, breakExecutionsAfter, true /* undeploy when done */);
         }
 
-        TestJobVerticle(JobSchedule schedule, boolean undeployWhenDone, boolean delayExecutions,
-                int breakExecutionsAfter, boolean disableJobScheduling) {
+        TestJobVerticle(JobSchedule schedule, boolean delayExecutions, int breakExecutionsAfter,
+                boolean undeployWhenDone) {
+            this(schedule, delayExecutions, breakExecutionsAfter, undeployWhenDone, false /* disable job scheduling */);
+        }
+
+        TestJobVerticle(JobSchedule schedule, boolean delayExecutions, int breakExecutionsAfter,
+                boolean undeployWhenDone, boolean disableJobScheduling) {
             super(schedule, undeployWhenDone);
             NeonBeeMockHelper.registerNeonBeeMock(vertxMock = NeonBeeMockHelper.defaultVertxMock(),
-                    new NeonBeeOptions.Mutable().setDisableJobScheduling(disableJobScheduling));
+                    defaultOptions().clearActiveProfiles().setDisableJobScheduling(disableJobScheduling));
 
             // calling setTimer on the mock should invoke the handler (once)
             doAnswer(invocation -> {
@@ -93,6 +104,12 @@ class JobVerticleTest extends NeonBeeTestBase {
         }
     }
 
+    @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.addActiveProfile(NO_WEB);
+        options.setDisableJobScheduling(false);
+    }
+
     @Test
     @DisplayName("Verify that jobs are scheduled at the expected times")
     void verifyJobSchedule() {
@@ -102,7 +119,7 @@ class JobVerticleTest extends NeonBeeTestBase {
 
         testJobVerticle = new TestJobVerticle(new JobSchedule(Instant.now().minus(30, ChronoUnit.SECONDS)));
         // when a job is scheduled 30 seconds to the past, the job should not be scheduled
-        verify(testJobVerticle.vertxMock, never()).setTimer(anyLong(), any());
+        verify(testJobVerticle.vertxMock, never()).setTimer(not(eq(FINALIZE_DELAY)), any());
 
         testJobVerticle = new TestJobVerticle(new JobSchedule(Instant.now().plus(30, ChronoUnit.SECONDS)));
         // when a job is scheduled 30 seconds to the future, the next job run should be scheduled at approximately
@@ -132,53 +149,53 @@ class JobVerticleTest extends NeonBeeTestBase {
         testJobVerticle = new TestJobVerticle(
                 new JobSchedule(Duration.ofMinutes(100), Instant.now().plus(30, ChronoUnit.SECONDS)));
         // when a job is scheduled and the end date is in the future, verify that a timer is set
-        verify(testJobVerticle.vertxMock).setTimer(anyLong(), any());
+        verify(testJobVerticle.vertxMock).setTimer(not(eq(FINALIZE_DELAY)), any());
 
         testJobVerticle = new TestJobVerticle(
-                new JobSchedule(Duration.ofMinutes(100), Instant.now().minus(30, ChronoUnit.SECONDS)));
+                new JobSchedule(Duration.ofMinutes(100), Instant.now().minus(30, ChronoUnit.SECONDS)), false, 1);
         // when a job is scheduled and the end date is in the past, verify that a timer is NOT set and the verticle
         // was undeployed
-        verify(testJobVerticle.vertxMock, never()).setTimer(anyLong(), any());
+        verify(testJobVerticle.vertxMock, times(1)).setTimer(eq(FINALIZE_DELAY), any());
         verify(testJobVerticle.vertxMock).undeploy("expected_deployment_id");
 
         testJobVerticle = new TestJobVerticle(
                 new JobSchedule(Duration.ofMinutes(100), Instant.now().minus(30, ChronoUnit.SECONDS)), false);
         // when a job is scheduled and the end date is in the past, verify that a timer is NOT set and the verticle
         // was undeployed
-        verify(testJobVerticle.vertxMock, never()).setTimer(anyLong(), any());
+        verify(testJobVerticle.vertxMock, never()).setTimer(not(eq(FINALIZE_DELAY)), any());
         verify(testJobVerticle.vertxMock, never()).undeploy(any());
 
         testJobVerticle = new TestJobVerticle(new JobSchedule(Instant.now().minus(30, ChronoUnit.SECONDS),
                 Duration.ofMinutes(1), Instant.now().plus(10, ChronoUnit.SECONDS)));
         // when a job is scheduled 30 seconds to the past, and the interval is one minute, but the job execution
         // should end 20 seconds to the future already, verify that a timer is NOT set
-        verify(testJobVerticle.vertxMock, never()).setTimer(anyLong(), any());
+        verify(testJobVerticle.vertxMock, never()).setTimer(not(eq(FINALIZE_DELAY)), any());
     }
 
     @Test
     @DisplayName("Verify that jobs executed when scheduled")
     void verifyJobExecuted() {
         // if a one time job was scheduled, handler should be called once and undeploay should be called
-        TestJobVerticle testJobVerticle = new TestJobVerticle(new JobSchedule(), true, false, 100);
+        TestJobVerticle testJobVerticle = new TestJobVerticle(new JobSchedule(), false, 100);
         assertThat(testJobVerticle.jobExecuted).isEqualTo(1);
         verify(testJobVerticle.vertxMock).undeploy(any());
 
         // continuous job without an end (should be called the maximum number of times specified [100])
-        testJobVerticle = new TestJobVerticle(new JobSchedule(Duration.ofMinutes(1)), true, false, 100);
+        testJobVerticle = new TestJobVerticle(new JobSchedule(Duration.ofMinutes(1)), false, 100);
         assertThat(testJobVerticle.jobExecuted).isEqualTo(100);
         verify(testJobVerticle.vertxMock, never()).undeploy(any());
 
         // continuous job with a start and without an end (should be called the maximum number of times specified
         // [100])
         testJobVerticle = new TestJobVerticle(
-                new JobSchedule(Instant.now().plus(30, ChronoUnit.MINUTES), Duration.ofMinutes(1)), true, false, 100);
+                new JobSchedule(Instant.now().plus(30, ChronoUnit.MINUTES), Duration.ofMinutes(1)), false, 100);
         assertThat(testJobVerticle.jobExecuted).isEqualTo(100);
         verify(testJobVerticle.vertxMock, never()).undeploy(any());
 
         // continuous job for 2 seconds, repeating every 100 milliseconds => the job should run 20 times and then
         // the verticle should get undeployed
         testJobVerticle = new TestJobVerticle(new JobSchedule(Duration.ofMillis(100),
-                Instant.now().plus(2, ChronoUnit.SECONDS).plus(95, ChronoUnit.MILLIS)), true, true, 100);
+                Instant.now().plus(2, ChronoUnit.SECONDS).plus(95, ChronoUnit.MILLIS)), true, 100);
         // It should be exactly 20, but depending on the workload of the current system or when running from and IDE
         // like Eclipse and if stuff needs to compile first, it is often the case that we do not reach 20, but less.
         assertThat(testJobVerticle.jobExecuted).isAtLeast(17);
@@ -188,7 +205,7 @@ class JobVerticleTest extends NeonBeeTestBase {
     @Test
     @DisplayName("Verify that jobs are disabled when flag is set")
     void verifyDisableJobScheduling() {
-        TestJobVerticle testJobVerticle = new TestJobVerticle(new JobSchedule(), true, true);
+        TestJobVerticle testJobVerticle = new TestJobVerticle(new JobSchedule(), false, 1, true, true);
         assertThat(testJobVerticle.jobExecuted).isEqualTo(0);
         verify(testJobVerticle.vertxMock).undeploy(any());
     }
@@ -240,9 +257,9 @@ class JobVerticleTest extends NeonBeeTestBase {
     }
 
     // the delay must always not be longer than 20 milliseconds from the expected delay
-    // (the 50ms is the amount of time the test execution might take until the verify statement)
+    // (the 75ms some leeway granted that the test execution might take until the verify statement)
     @SuppressWarnings("PMD")
     private static ArgumentMatcher<Long> isApproximately(long expectedDelay) {
-        return delay -> (delay <= expectedDelay) && (delay >= (expectedDelay - 50));
+        return delay -> (delay <= expectedDelay) && (delay >= (expectedDelay - 100));
     }
 }

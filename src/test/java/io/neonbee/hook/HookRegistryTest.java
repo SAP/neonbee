@@ -18,7 +18,7 @@ import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
 class HookRegistryTest {
-    private final String correlID = "correl";
+    private static final String CORRELATION_ID = "correl";
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
@@ -30,13 +30,13 @@ class HookRegistryTest {
             public Future<Collection<HookRegistration>> registerInstanceHooks(Object instance, String correlationId) {
                 testContext.verify(() -> {
                     assertThat(instance).isInstanceOf(Object.class);
-                    assertThat(correlationId).isEqualTo(correlID);
+                    assertThat(correlationId).isEqualTo(CORRELATION_ID);
                 });
                 return Future.succeededFuture();
             }
         };
 
-        registry.registerHooks(Object.class, correlID).onComplete(testContext.succeedingThenComplete());
+        registry.registerHooks(Object.class, CORRELATION_ID).onComplete(testContext.succeedingThenComplete());
     }
 
     @Test
@@ -45,7 +45,7 @@ class HookRegistryTest {
     void registerHooksFails(VertxTestContext testContext) throws SecurityException, IllegalArgumentException {
         HookRegistry registry = new TestHookRegistry();
 
-        registry.registerHooks(Void.class, correlID).onComplete(testContext.failing(t -> {
+        registry.registerHooks(Void.class, CORRELATION_ID).onComplete(testContext.failing(t -> {
             testContext.verify(() -> assertThat(t).isInstanceOf(NoSuchMethodException.class));
             testContext.completeNow();
         }));

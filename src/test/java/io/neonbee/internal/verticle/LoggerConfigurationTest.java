@@ -6,8 +6,8 @@ import static ch.qos.logback.classic.Level.INFO;
 import static ch.qos.logback.classic.Level.TRACE;
 import static ch.qos.logback.classic.Level.WARN;
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.internal.verticle.LoggerConfiguration.CONFIGURED_LEVEL;
-import static io.neonbee.internal.verticle.LoggerConfiguration.NAME;
+import static io.neonbee.internal.verticle.LoggerConfiguration.CONFIGURED_LEVEL_KEY;
+import static io.neonbee.internal.verticle.LoggerConfiguration.NAME_KEY;
 
 import java.util.Arrays;
 
@@ -43,7 +43,7 @@ class LoggerConfigurationTest {
 
     @Test
     void testBasics() {
-        ROOT.hashCode();
+        assertThat(ROOT.hashCode()).isNotEqualTo(0);
         assertThat(ROOT.toString()).isEqualTo("LoggerConfiguration [name=ROOT, configuredLevel=INFO]");
         assertThat(ROOT.getName()).isEqualTo(Logger.ROOT_LOGGER_NAME);
         assertThat(ROOT.getConfiguredLevel()).isEqualTo(INFO);
@@ -52,12 +52,12 @@ class LoggerConfigurationTest {
     @Test
     void testToJson() {
         JsonObject json = ROOT.toJson();
-        assertThat(json).isEqualTo(new JsonObject().put(NAME, "ROOT").put(CONFIGURED_LEVEL, "INFO"));
+        assertThat(json).isEqualTo(new JsonObject().put(NAME_KEY, "ROOT").put(CONFIGURED_LEVEL_KEY, "INFO"));
     }
 
     @Test
     void testFromJson() {
-        JsonObject json = new JsonObject().put(NAME, "logger1").put(CONFIGURED_LEVEL, ERROR.levelStr);
+        JsonObject json = new JsonObject().put(NAME_KEY, "logger1").put(CONFIGURED_LEVEL_KEY, ERROR.levelStr);
         LoggerConfiguration configuration = LoggerConfiguration.fromJson(json);
         assertThat(configuration).isEqualTo(new LoggerConfiguration("logger1", ERROR));
     }
