@@ -11,13 +11,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import com.google.common.collect.Range;
 
@@ -36,7 +33,6 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(NeonBeeExtension.class)
-@Execution(ExecutionMode.SAME_THREAD)
 class LocalPreferredClusterTest {
     private static final String LOCAL = "local";
 
@@ -49,21 +45,17 @@ class LocalPreferredClusterTest {
     @BeforeEach
     @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Setup the cluster nodes and deploy the consumers")
-    void setUp(@NeonBeeInstanceConfiguration(clustered = true) NeonBee localNode,
-            @NeonBeeInstanceConfiguration(clustered = true) NeonBee remoteNode, VertxTestContext testContext) {
+    void setUp(@NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee localNode,
+            @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee remoteNode,
+            VertxTestContext testContext) {
         this.localNode = localNode;
         deployVerticle(localNode.getVertx(), new ConsumerVerticle(LOCAL))
                 .compose(v -> deployVerticle(remoteNode.getVertx(), new ConsumerVerticle(REMOTE)))
                 .onComplete(testContext.succeedingThenComplete());
     }
 
-    @AfterEach
-    void tearDown(VertxTestContext testContext) {
-        localNode.getVertx().close(testContext.succeedingThenComplete());
-    }
-
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that localPreferred requests are always dispatched to local consumer")
     void testLocalPreferredRequest(VertxTestContext testContext) {
         // Create a localPreferred request
@@ -88,7 +80,7 @@ class LocalPreferredClusterTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that non localPreferred requests are dispatched to local and remote consumers")
     void testNonLocalPreferredRequest(VertxTestContext testContext) {
         Range<Long> expectedRange = Range.closed(REPETITION / 2 - 1, REPETITION / 2 + 1);
@@ -108,7 +100,7 @@ class LocalPreferredClusterTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that data verticle are registered and deregistered properly as local consumer")
     void testLocalConsumerRegistration(VertxTestContext testContext) {
         String verticleAddress = "DataVerticle[" + ConsumerVerticle.NAME + "]";

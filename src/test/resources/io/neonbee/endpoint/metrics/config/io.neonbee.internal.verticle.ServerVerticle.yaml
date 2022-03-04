@@ -1,0 +1,21 @@
+---
+# the configuration for the NeonBee server verticle
+config:
+    # the port number to use for the HTTP server, defaults to 8080
+    port: 8080
+    # specific endpoint configuration, defaults to the object seen below
+    endpoints:
+        # provides an Prometheus scraping endpoint for Micrometer.io metrics
+        - type: io.neonbee.endpoint.metrics.MetricsEndpoint
+          # enable the metrics endpoint, defaults to true
+          enabled: true
+          # the base path to map this endpoint to, defaults to /metrics/
+          basePath: /metrics/
+          # endpoint specific authentication chain, (special case!) defaults to an empty array [] and no authentication required
+          authenticationChain: [ ]
+        # TestEndpoint
+        - type: io.neonbee.endpoint.metrics.NeonBeeMetricsTest$TestEndpoint
+          basePath: /testendpoint/
+          # endpoint specific authentication chain, (special case!) defaults to an empty array [] and no authentication required
+          authenticationChain: []
+

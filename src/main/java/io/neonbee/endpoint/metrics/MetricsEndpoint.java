@@ -2,18 +2,38 @@ package io.neonbee.endpoint.metrics;
 
 import static io.neonbee.endpoint.Endpoint.createRouter;
 
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.neonbee.NeonBee;
 import io.neonbee.config.EndpointConfig;
 import io.neonbee.endpoint.Endpoint;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
-import io.vertx.micrometer.PrometheusScrapingHandler;
 
 public class MetricsEndpoint implements Endpoint {
+
     /**
      * The default path the metrics endpoint is exposed by NeonBee.
      */
     public static final String DEFAULT_BASE_PATH = "/metrics/";
+
+    /**
+     * Add {@link NeonBeePrometheusMeterRegistry} to the {@link CompositeMeterRegistry}.
+     *
+     * Note that this Method is <b>static synchronized</b> to ensure that the registry is only added once.
+     *
+     * @param vertx the {@link Vertx} instance
+     */
+    @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
+    private static synchronized void addRegistry(Vertx vertx) {
+        CompositeMeterRegistry compositeMeterRegistry = NeonBee.get(vertx).getCompositeMeterRegistry();
+        boolean isNotRegisterd = compositeMeterRegistry.getRegistries().stream()
+                .noneMatch(NeonBeePrometheusMeterRegistry.class::isInstance);
+        if (isNotRegisterd) {
+            compositeMeterRegistry.add(new NeonBeePrometheusMeterRegistry(PrometheusConfig.DEFAULT));
+        }
+    }
 
     @Override
     public EndpointConfig getDefaultConfig() {
@@ -23,6 +43,7 @@ public class MetricsEndpoint implements Endpoint {
 
     @Override
     public Router createEndpointRouter(Vertx vertx, String basePath, JsonObject config) {
-        return createRouter(vertx, PrometheusScrapingHandler.create(config.getString("registryName")));
+        addRegistry(vertx);
+        return createRouter(vertx, new PrometheusScrapingHandler(config.getString("registryName")));
     }
 }

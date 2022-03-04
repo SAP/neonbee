@@ -1,13 +1,20 @@
 package io.neonbee.config;
 
+import java.util.Base64;
+
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.impl.JsonUtil;
 
 /**
  * Converter and mapper for {@link io.neonbee.config.NeonBeeConfig}. NOTE: This class has been automatically generated
  * from the {@link io.neonbee.config.NeonBeeConfig} original class using Vert.x codegen.
  */
 public class NeonBeeConfigConverter {
+
+    private static final Base64.Decoder BASE64_DECODER = JsonUtil.BASE64_DECODER;
+
+    private static final Base64.Encoder BASE64_ENCODER = JsonUtil.BASE64_ENCODER;
 
     static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, NeonBeeConfig obj) {
         for (java.util.Map.Entry<String, Object> member : json) {
@@ -25,6 +32,17 @@ public class NeonBeeConfigConverter {
             case "eventBusTimeout":
                 if (member.getValue() instanceof Number) {
                     obj.setEventBusTimeout(((Number) member.getValue()).intValue());
+                }
+                break;
+            case "micrometerRegistries":
+                if (member.getValue() instanceof JsonArray) {
+                    java.util.ArrayList<io.neonbee.config.MicrometerRegistryConfig> list = new java.util.ArrayList<>();
+                    ((Iterable<Object>) member.getValue()).forEach(item -> {
+                        if (item instanceof JsonObject)
+                            list.add(new io.neonbee.config.MicrometerRegistryConfig(
+                                    (io.vertx.core.json.JsonObject) item));
+                    });
+                    obj.setMicrometerRegistries(list);
                 }
                 break;
             case "platformClasses":
@@ -62,6 +80,11 @@ public class NeonBeeConfigConverter {
             json.put("eventBusCodecs", map);
         }
         json.put("eventBusTimeout", obj.getEventBusTimeout());
+        if (obj.getMicrometerRegistries() != null) {
+            JsonArray array = new JsonArray();
+            obj.getMicrometerRegistries().forEach(item -> array.add(item.toJson()));
+            json.put("micrometerRegistries", array);
+        }
         if (obj.getPlatformClasses() != null) {
             JsonArray array = new JsonArray();
             obj.getPlatformClasses().forEach(item -> array.add(item));

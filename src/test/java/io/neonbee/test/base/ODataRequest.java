@@ -1,8 +1,8 @@
 package io.neonbee.test.base;
 
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.DEFAULT_BASE_PATH;
-import static io.neonbee.internal.helper.ConfigHelper.readConfig;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.neonbee.test.base.NeonBeeTestBase.readServerConfig;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -20,10 +20,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 
 import io.neonbee.NeonBee;
-import io.neonbee.config.ServerConfig;
 import io.neonbee.endpoint.odatav4.ODataV4Endpoint;
-import io.neonbee.internal.verticle.ServerVerticle;
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
@@ -102,26 +99,23 @@ public class ODataRequest {
      */
     public Future<HttpResponse<Buffer>> send(NeonBee neonBee) {
         Vertx vertx = neonBee.getVertx();
-        return readConfig(vertx, ServerVerticle.class.getName()).map(DeploymentOptions::new)
-                .map(DeploymentOptions::getConfig).map(ServerConfig::new).compose(config -> {
-                    int port = config.getPort();
+        return readServerConfig(neonBee).compose(config -> {
+            int port = config.getPort();
 
-                    String basePath = config.getEndpointConfigs().stream()
-                            .filter(eConfig -> ODataV4Endpoint.class.getSimpleName().equals(eConfig.getType()))
-                            .findFirst().map(eConfig -> eConfig.getBasePath()).orElse(DEFAULT_BASE_PATH);
+            String basePath = config.getEndpointConfigs().stream()
+                    .filter(eConfig -> ODataV4Endpoint.class.getSimpleName().equals(eConfig.getType())).findFirst()
+                    .map(eConfig -> eConfig.getBasePath()).orElse(DEFAULT_BASE_PATH);
 
-                    WebClientOptions clientOpts =
-                            new WebClientOptions().setDefaultHost("localhost").setDefaultPort(port);
-                    HttpRequest<Buffer> httpRequest =
-                            WebClient.create(vertx, clientOpts).request(method, basePath + getUri());
+            WebClientOptions clientOpts = new WebClientOptions().setDefaultHost("localhost").setDefaultPort(port);
+            HttpRequest<Buffer> httpRequest = WebClient.create(vertx, clientOpts).request(method, basePath + getUri());
 
-                    httpRequest.queryParams().addAll(query);
-                    httpRequest.putHeaders(headers);
-                    Optional.ofNullable(interceptor).ifPresent(i -> i.accept(httpRequest));
-                    httpRequest.queryParams(); // ensures that query params are encoded
+            httpRequest.queryParams().addAll(query);
+            httpRequest.putHeaders(headers);
+            Optional.ofNullable(interceptor).ifPresent(i -> i.accept(httpRequest));
+            httpRequest.queryParams(); // ensures that query params are encoded
 
-                    return Optional.ofNullable(body).map(httpRequest::sendBuffer).orElse(httpRequest.send());
-                });
+            return Optional.ofNullable(body).map(httpRequest::sendBuffer).orElse(httpRequest.send());
+        });
     }
 
     /**
@@ -303,7 +297,7 @@ public class ODataRequest {
      * @return An {@link ODataRequest} which contains the passed query options
      */
     public ODataRequest setQuery(Map<String, String> query) {
-        setQuery(Objects.isNull(query) ? null : MultiMap.caseInsensitiveMultiMap().addAll(query));
+        setQuery(Objects.isNull(query) ? null : MultiMap.caseInsensitiveMultiMap().addAll(query)); // NOPMD
         return this;
     }
 
@@ -339,7 +333,7 @@ public class ODataRequest {
      * @return An {@link ODataRequest} which contains the passed header
      */
     public ODataRequest setHeaders(Map<String, String> headers) {
-        setHeaders(Objects.isNull(headers) ? null : MultiMap.caseInsensitiveMultiMap().addAll(headers));
+        setHeaders(Objects.isNull(headers) ? null : MultiMap.caseInsensitiveMultiMap().addAll(headers)); // NOPMD
         return this;
     }
 

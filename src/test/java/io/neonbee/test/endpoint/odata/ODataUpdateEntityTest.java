@@ -65,7 +65,6 @@ class ODataUpdateEntityTest extends ODataEndpointTestBase {
     @ParameterizedTest(name = "{index}: with Method {0}")
     @MethodSource("withHTTPMethods")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-
     @DisplayName("Respond with 405 METHOD NOT ALLOWED if the HTTP request was sent to the entity set url instead of a dedicated entity")
     void updateEntitySetTest(HttpMethod method, VertxTestContext testContext) {
         oDataRequest.setMethod(method).setBody(TestService1EntityVerticle.EXPECTED_ENTITY_DATA_1.toBuffer());

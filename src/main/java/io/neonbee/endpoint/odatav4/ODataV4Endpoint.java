@@ -5,7 +5,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.base.Strings.nullToEmpty;
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.STRICT;
 import static io.neonbee.entity.EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS;
-import static io.neonbee.entity.EntityModelManager.getSharedModels;
 import static io.neonbee.internal.helper.FunctionalHelper.entryConsumer;
 import static io.neonbee.internal.helper.FunctionalHelper.entryFunction;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
@@ -26,6 +25,7 @@ import java.util.regex.Pattern;
 
 import com.google.common.base.MoreObjects;
 
+import io.neonbee.NeonBee;
 import io.neonbee.config.EndpointConfig;
 import io.neonbee.endpoint.Endpoint;
 import io.neonbee.endpoint.odatav4.internal.olingo.OlingoEndpointHandler;
@@ -230,7 +230,7 @@ public class ODataV4Endpoint implements Endpoint {
 
     private static Future<Void> refreshRouter(Vertx vertx, Router router, String basePath, UriConversion uriConversion,
             RegexBlockList exposedEntities, AtomicReference<Map<String, EntityModel>> currentModels) {
-        return getSharedModels(vertx).compose(models -> {
+        return NeonBee.get(vertx).getModelManager().getSharedModels().compose(models -> {
             if (models == currentModels.get()) {
                 return succeededFuture(); // no update needed
             } else {
@@ -242,7 +242,7 @@ public class ODataV4Endpoint implements Endpoint {
 
             // register new routes first, this will avoid downtimes of already existing services. Register the shortest
             // routes last, this will lead to some routes like the empty namespace / to be registered last.
-            models.values().stream().flatMap(entityModel -> entityModel.getEdmxes().entrySet().stream())
+            models.values().stream().flatMap(entityModel -> entityModel.getAllEdmxMetadata().entrySet().stream())
                     .map(entryFunction(
                             (schemaNamespace, edmxModel) -> Map.entry(uriConversion.apply(schemaNamespace), edmxModel)))
                     .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(String::length).reversed()))
@@ -270,15 +270,20 @@ public class ODataV4Endpoint implements Endpoint {
                                 })
                                 // TODO depending on the config either create Olingo or CDS based OData V4 handlers here
                                 .handler(new OlingoEndpointHandler(edmxModel));
-                        LOGGER.info("Serving OData service endpoint for {} at {}{} ({} URI mapping)", schemaNamespace,
-                                basePath, uriPath, uriConversion.name().toLowerCase(Locale.getDefault()));
+                        if (LOGGER.isInfoEnabled()) {
+                            LOGGER.info("Serving OData service endpoint for {} at {}{} ({} URI mapping)",
+                                    schemaNamespace, basePath, uriPath,
+                                    uriConversion.name().toLowerCase(Locale.getDefault()));
+                        }
                     }));
 
             // remove any of the old routes, so the old models will stop serving
             existingRoutes.forEach(Route::remove);
 
-            LOGGER.info("Refreshed OData endpoint router, populated {} models, removed {} existing routes",
-                    models.size(), existingRoutes.size());
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info("Refreshed OData endpoint router, populated {} models, removed {} existing routes",
+                        models.size(), existingRoutes.size());
+            }
             return succeededFuture();
         });
     }

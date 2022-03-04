@@ -1,6 +1,6 @@
 package io.neonbee.test.helper;
 
-import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
+import static io.neonbee.internal.helper.ThreadHelper.getCallingClass;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -40,12 +40,7 @@ public final class ResourceHelper {
      * @return The passed filename resolved against the related resources folder
      */
     public Path resolveRelated(String filename) {
-        StackWalker walker = StackWalker.getInstance(RETAIN_CLASS_REFERENCE);
-        Class<?> callerClass = walker.walk(stackStream -> stackStream
-                .filter(stackframe -> !ResourceHelper.class.equals(stackframe.getDeclaringClass())).findFirst().get()
-                .getDeclaringClass());
-
-        Path packagePath = Path.of(callerClass.getPackage().getName().replace(".", "/"));
+        Path packagePath = Path.of(getCallingClass().getPackage().getName().replace(".", "/"));
         return resourcePath.resolve(packagePath).resolve(filename);
     }
 
@@ -184,13 +179,7 @@ public final class ResourceHelper {
      */
     @Deprecated(forRemoval = true)
     public static Path getRelatedTestResource(Path file) {
-        StackWalker walker = StackWalker.getInstance(RETAIN_CLASS_REFERENCE);
-        Class<?> callerClass = walker.walk(stackStream -> {
-            return stackStream.filter(stackframe -> !ResourceHelper.class.equals(stackframe.getDeclaringClass()))
-                    .findFirst().get().getDeclaringClass();
-        });
-
-        return TEST_RESOURCES_PATH.resolve(getPackageAsPath(callerClass)).resolve(file);
+        return TEST_RESOURCES_PATH.resolve(getPackageAsPath(getCallingClass())).resolve(file);
     }
 
     /**

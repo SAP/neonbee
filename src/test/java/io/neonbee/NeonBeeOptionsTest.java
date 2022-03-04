@@ -7,9 +7,12 @@ import static io.neonbee.NeonBeeProfile.WEB;
 import static io.neonbee.test.helper.FileSystemHelper.createTempDirectory;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,14 +61,6 @@ class NeonBeeOptionsTest {
     }
 
     @Test
-    @DisplayName("should set workingDirectory, if working directory does exist on the file system")
-    void checkThatWorkingDirExists() throws IOException {
-        Path tempDirPath = createTempDirectory();
-        new NeonBeeOptions.Mutable().setWorkingDirectory(tempDirPath);
-        FileSystemHelper.deleteRecursiveBlocking(tempDirPath);
-    }
-
-    @Test
     @DisplayName("should resolve working directory subfolders according to the working directory path")
     void checkThatSubfoldersExist() throws IOException {
         Path tempDirPath = createTempDirectory();
@@ -73,7 +68,7 @@ class NeonBeeOptionsTest {
         assertThat((Object) opts.getLogDirectory()).isEqualTo(tempDirPath.resolve("logs"));
         assertThat((Object) opts.getConfigDirectory()).isEqualTo(tempDirPath.resolve("config"));
         assertThat((Object) opts.getModelsDirectory()).isEqualTo(tempDirPath.resolve("models"));
-        assertThat((Object) opts.getVerticlesDirectory()).isEqualTo(tempDirPath.resolve("verticles"));
+        assertThat((Object) opts.getModulesDirectory()).isEqualTo(tempDirPath.resolve("modules"));
         FileSystemHelper.deleteRecursiveBlocking(tempDirPath);
     }
 
@@ -112,12 +107,27 @@ class NeonBeeOptionsTest {
     @Test
     @DisplayName("Test server profiles set correctly")
     void checkProfiles() {
-        Mutable opts = new NeonBeeOptions.Mutable().setActiveProfileValues("CORE,WEB");
+        Mutable opts = new NeonBeeOptions.Mutable().setActiveProfiles("CORE,WEB");
         assertThat(opts.getActiveProfiles()).containsExactly(CORE, WEB);
         opts = new NeonBeeOptions.Mutable().setActiveProfiles(List.of(CORE, WEB));
         assertThat(opts.getActiveProfiles()).containsExactly(CORE, WEB);
-        opts = new NeonBeeOptions.Mutable().setActiveProfileValues("anything");
+        opts = new NeonBeeOptions.Mutable().setActiveProfiles("anything");
         assertThat(opts.getActiveProfiles()).containsExactly(ALL);
+
+        opts = new NeonBeeOptions.Mutable().setActiveProfiles(List.of(CORE, WEB, WEB, CORE));
+        assertThat(opts.getActiveProfiles()).containsExactly(CORE, WEB);
+        Set<NeonBeeProfile> profiles = opts.getActiveProfiles();
+        assertThrows(UnsupportedOperationException.class, () -> profiles.add(WEB));
+
+        opts.addActiveProfile(ALL).addActiveProfile(ALL);
+        opts.addActiveProfiles(CORE, ALL);
+        assertThat(opts.getActiveProfiles()).containsExactly(CORE, WEB, ALL);
+        opts.removeActiveProfile(CORE).removeActiveProfile(CORE).removeActiveProfile(WEB);
+        opts.removeActiveProfiles(WEB, CORE);
+        assertThat(opts.getActiveProfiles()).containsExactly(ALL);
+
+        opts.clearActiveProfiles();
+        assertThat(opts.getActiveProfiles()).isEmpty();
     }
 
     @Test
@@ -165,5 +175,26 @@ class NeonBeeOptionsTest {
 
         mutable = new NeonBeeOptions.Mutable().setClusterConfig(localConfig);
         assertThat(mutable.getClusterConfig().getNetworkConfig().getPort()).isEqualTo(20000);
+    }
+
+    @Test
+    @DisplayName("Test moduleJarPaths getter and setter")
+    void testModuleJarPath() {
+        Mutable mutable = new NeonBeeOptions.Mutable();
+        assertThat(mutable.getModuleJarPaths()).isEmpty();
+
+        List<Path> paths = new ArrayList<>();
+        paths.add(Path.of("a"));
+        paths.add(Path.of("b"));
+        assertThat(mutable.setModuleJarPaths(paths)).isSameInstanceAs(mutable);
+        assertThat(mutable.getModuleJarPaths()).isNotSameInstanceAs(paths);
+
+        assertThat(mutable.getModuleJarPaths()).containsExactly(Path.of("a"), Path.of("b"));
+        assertThrows(UnsupportedOperationException.class, () -> mutable.getModuleJarPaths().add(Path.of("c")));
+
+        assertThat(mutable.setModuleJarPaths("e", "f").getModuleJarPaths()).containsExactly(Path.of("e"), Path.of("f"));
+        assertThat(mutable.setModuleJarPaths("g" + File.pathSeparator + "h",
+                "i" + File.pathSeparator + "j" + File.separator + "k").getModuleJarPaths())
+                        .containsExactly(Path.of("g"), Path.of("h"), Path.of("i"), Path.of("j" + File.separator + "k"));
     }
 }

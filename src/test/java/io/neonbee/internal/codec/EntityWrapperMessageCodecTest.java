@@ -1,6 +1,7 @@
 package io.neonbee.internal.codec;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 
 import java.util.concurrent.TimeUnit;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
-import io.neonbee.entity.EntityModelManager;
+import io.neonbee.NeonBeeOptions;
 import io.neonbee.entity.EntityWrapper;
 import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
@@ -32,6 +33,11 @@ class EntityWrapperMessageCodecTest extends NeonBeeTestBase {
     private EntityWrapperMessageCodec codec;
 
     @Override
+    protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
+        options.addActiveProfile(NO_WEB);
+    }
+
+    @Override
     protected WorkingDirectoryBuilder provideWorkingDirectoryBuilder(TestInfo testInfo, VertxTestContext testContext) {
         return WorkingDirectoryBuilder.standard().addModel(TEST_RESOURCES.resolveRelated("CodecService.csn"));
     }
@@ -45,7 +51,7 @@ class EntityWrapperMessageCodecTest extends NeonBeeTestBase {
     @DisplayName("Should serialize and deserialize an EntityWrapper correctly.")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void encodeDecode(VertxTestContext testContext) {
-        EntityModelManager.reloadModels(getNeonBee().getVertx()).<Void>compose(map -> {
+        getNeonBee().getModelManager().reloadModels().<Void>compose(map -> {
             Buffer buffer = Buffer.buffer();
             codec.encodeToWire(buffer, wrapper);
             EntityWrapper decodeFromWire = codec.decodeFromWire(0, buffer);

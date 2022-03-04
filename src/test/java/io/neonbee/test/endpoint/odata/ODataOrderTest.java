@@ -6,6 +6,7 @@ import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_3;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_4;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_5;
+import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.EXPECTED_ENTITY_DATA_6;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.TEST_ENTITY_SET_FQN;
 import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle.getDeclaredEntityModel;
 
@@ -33,6 +34,7 @@ class ODataOrderTest extends ODataEndpointTestBase {
     }
 
     @BeforeEach
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         request = new ODataRequest(TEST_ENTITY_SET_FQN);
         deployVerticle(new TestService1EntityVerticle()).onComplete(testContext.succeedingThenComplete());
@@ -46,7 +48,7 @@ class ODataOrderTest extends ODataEndpointTestBase {
 
         assertODataEntitySet(requestOData(request), entities -> {
             assertThat(entities).containsExactly(EXPECTED_ENTITY_DATA_1, EXPECTED_ENTITY_DATA_3, EXPECTED_ENTITY_DATA_4,
-                    EXPECTED_ENTITY_DATA_2, EXPECTED_ENTITY_DATA_5).inOrder();
+                    EXPECTED_ENTITY_DATA_2, EXPECTED_ENTITY_DATA_5, EXPECTED_ENTITY_DATA_6).inOrder();
         }, testContext).onComplete(testContext.succeedingThenComplete());
     }
 
@@ -57,8 +59,8 @@ class ODataOrderTest extends ODataEndpointTestBase {
         request.setQuery(Map.of("$orderby", "PropertyString desc,PropertyInt32 desc"));
 
         assertODataEntitySet(requestOData(request), entities -> {
-            assertThat(entities).containsExactly(EXPECTED_ENTITY_DATA_5, EXPECTED_ENTITY_DATA_2, EXPECTED_ENTITY_DATA_4,
-                    EXPECTED_ENTITY_DATA_3, EXPECTED_ENTITY_DATA_1).inOrder();
+            assertThat(entities).containsExactly(EXPECTED_ENTITY_DATA_6, EXPECTED_ENTITY_DATA_5, EXPECTED_ENTITY_DATA_2,
+                    EXPECTED_ENTITY_DATA_4, EXPECTED_ENTITY_DATA_3, EXPECTED_ENTITY_DATA_1).inOrder();
         }, testContext).onComplete(testContext.succeedingThenComplete());
     }
 
@@ -70,7 +72,7 @@ class ODataOrderTest extends ODataEndpointTestBase {
 
         assertODataEntitySet(requestOData(request), entities -> {
             assertThat(entities).containsExactly(EXPECTED_ENTITY_DATA_5, EXPECTED_ENTITY_DATA_4, EXPECTED_ENTITY_DATA_3,
-                    EXPECTED_ENTITY_DATA_2, EXPECTED_ENTITY_DATA_1).inOrder();
+                    EXPECTED_ENTITY_DATA_2, EXPECTED_ENTITY_DATA_1, EXPECTED_ENTITY_DATA_6).inOrder();
         }, testContext).onComplete(testContext.succeedingThenComplete());
     }
 
@@ -81,8 +83,8 @@ class ODataOrderTest extends ODataEndpointTestBase {
         request.setQuery(Map.of("$orderby", "PropertyDateTime desc"));
 
         assertODataEntitySet(requestOData(request), entities -> {
-            assertThat(entities).containsExactly(EXPECTED_ENTITY_DATA_1, EXPECTED_ENTITY_DATA_2, EXPECTED_ENTITY_DATA_3,
-                    EXPECTED_ENTITY_DATA_4, EXPECTED_ENTITY_DATA_5).inOrder();
+            assertThat(entities).containsExactly(EXPECTED_ENTITY_DATA_6, EXPECTED_ENTITY_DATA_1, EXPECTED_ENTITY_DATA_2,
+                    EXPECTED_ENTITY_DATA_3, EXPECTED_ENTITY_DATA_4, EXPECTED_ENTITY_DATA_5).inOrder();
         }, testContext).onComplete(testContext.succeedingThenComplete());
     }
 }

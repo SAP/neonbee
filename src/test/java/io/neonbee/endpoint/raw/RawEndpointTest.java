@@ -100,7 +100,7 @@ class RawEndpointTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.HOURS)
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("RawDataEndpoint must prohibit requests to DataVerticles starting with underscore by default")
     void testProhibitRequestsToUnderScoreDVsByDefault(VertxTestContext testContext) {
         String verticleName = "_TestVerticle" + UUID.randomUUID().toString();

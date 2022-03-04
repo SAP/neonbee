@@ -5,7 +5,7 @@ import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.CONFIG_URI_CONVERSION;
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.CDS;
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.LOOSE;
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.STRICT;
-import static io.neonbee.internal.helper.CollectionsHelper.multiMapToMap;
+import static io.neonbee.internal.helper.CollectionHelper.multiMapToMap;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;

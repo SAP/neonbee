@@ -2,17 +2,23 @@ package io.neonbee.config;
 
 import static io.neonbee.internal.helper.ConfigHelper.readConfig;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeOptions;
+import io.neonbee.config.metrics.MicrometerRegistryLoader;
 import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.metrics.MetricsOptions;
 
 /**
  * In contrast to the {@link NeonBeeOptions} the {@link NeonBeeConfig} is persistent configuration in a file.
@@ -49,8 +55,10 @@ public class NeonBeeConfig {
 
     private String timeZone = DEFAULT_TIME_ZONE;
 
+    private List<MicrometerRegistryConfig> micrometerRegistries = List.of();
+
     /**
-     * Loads the NeonBee configuration from the NeonBee config. directory and convert it to a {@link NeonBeeConfig}.
+     * Loads the NeonBee configuration from the NeonBee config directory and converts it to a {@link NeonBeeConfig}.
      *
      * @param vertx The Vert.x instance used to load the config file
      * @return a future to a {@link NeonBeeConfig}
@@ -73,6 +81,38 @@ public class NeonBeeConfig {
         this();
 
         NeonBeeConfigConverter.fromJson(json, this);
+    }
+
+    /**
+     * Try to load all {@link MicrometerRegistryLoader}s which are configured in the {@link NeonBeeConfig}.
+     *
+     * @return MicrometerMetricsOptions which contains the loaded registries
+     * @throws ClassNotFoundException    if the class cannot be located
+     * @throws NoSuchMethodException     if a matching method is not found.
+     * @throws InvocationTargetException if the underlying constructor throws an exception.
+     * @throws InstantiationException    if the class that declares the underlying constructor represents an abstract
+     *                                   class.
+     * @throws IllegalAccessException    if this Constructor object is enforcing Java language access control and the
+     *                                   underlying constructor is inaccessible.
+     */
+    public Collection<MeterRegistry> createMicrometerRegistries() throws ClassNotFoundException, NoSuchMethodException,
+            InvocationTargetException, InstantiationException, IllegalAccessException {
+
+        List<MeterRegistry> registries = new ArrayList<>(this.micrometerRegistries.size());
+        for (MicrometerRegistryConfig micrometerRegistryConfig : this.micrometerRegistries) {
+            String className = micrometerRegistryConfig.getClassName();
+            if (className == null || className.isBlank()) {
+                continue;
+            }
+            Class<?> classObject = Class.forName(className);
+            if (!MicrometerRegistryLoader.class.isAssignableFrom(classObject)) {
+                throw new IllegalArgumentException(
+                        classObject.getName() + " must implement " + MicrometerRegistryLoader.class.getName());
+            }
+            MicrometerRegistryLoader loader = (MicrometerRegistryLoader) classObject.getConstructor().newInstance();
+            registries.add(loader.load(micrometerRegistryConfig.getConfig()));
+        }
+        return registries;
     }
 
     /**
@@ -204,5 +244,28 @@ public class NeonBeeConfig {
     public NeonBeeConfig setTimeZone(String timeZone) {
         this.timeZone = timeZone;
         return this;
+    }
+
+    /**
+     * Adds the passed list of {@link String}s containing the full qualified name of classes which implement the
+     * {@link MicrometerRegistryLoader}.
+     *
+     * @param micrometerRegistries A list of Strings containing classes which implement the
+     *                             {@link MicrometerRegistryLoader}
+     * @return a reference to this, so the API can be used fluently
+     */
+    @Fluent
+    public NeonBeeConfig setMicrometerRegistries(List<MicrometerRegistryConfig> micrometerRegistries) {
+        this.micrometerRegistries = micrometerRegistries;
+        return this;
+    }
+
+    /**
+     * Get the {@link MetricsOptions}.
+     *
+     * @return the {@link MetricsOptions}
+     */
+    public List<MicrometerRegistryConfig> getMicrometerRegistries() {
+        return this.micrometerRegistries;
     }
 }

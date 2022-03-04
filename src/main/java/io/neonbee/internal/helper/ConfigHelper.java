@@ -1,6 +1,6 @@
 package io.neonbee.internal.helper;
 
-import static io.neonbee.internal.helper.CollectionsHelper.identityMapCollector;
+import static io.neonbee.internal.helper.CollectionHelper.identityMapCollector;
 import static io.neonbee.internal.helper.FileSystemHelper.readJSON;
 import static io.neonbee.internal.helper.FileSystemHelper.readYAML;
 import static io.neonbee.internal.helper.FunctionalHelper.entryConsumer;
@@ -44,7 +44,6 @@ public final class ConfigHelper {
      */
     public static Future<JsonObject> readConfig(Vertx vertx, String identifier) {
         Path configDirPath = NeonBee.get(vertx).getOptions().getConfigDirectory();
-
         return readYAML(vertx, configDirPath.resolve(identifier + ".yaml"))
                 .recover(notFound(() -> readYAML(vertx, configDirPath.resolve(identifier + ".yml"))))
                 .recover(notFound(() -> readJSON(vertx, configDirPath.resolve(identifier + ".json"))));
@@ -89,7 +88,7 @@ public final class ConfigHelper {
     }
 
     /**
-     * Collects the additional configuration out of an configuration object.
+     * Collects the additional configuration out of a configuration object.
      *
      * What this method actually does is to extract all values of a configuration object, which are not part of a given
      * set of keys. The properties are then returned as a new (additional configuration) JSON object.

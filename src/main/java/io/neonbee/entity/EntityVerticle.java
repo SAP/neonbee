@@ -2,7 +2,6 @@ package io.neonbee.entity;
 
 import static io.neonbee.entity.EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS;
 import static io.neonbee.entity.EntityModelManager.getBufferedOData;
-import static io.neonbee.entity.EntityModelManager.getSharedModel;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.internal.verticle.ConsolidationVerticle.ENTITY_TYPE_NAME_HEADER;
 import static io.vertx.core.Future.failedFuture;
@@ -18,8 +17,6 @@ import java.util.stream.Collectors;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.core.uri.parser.Parser;
-import org.apache.olingo.server.core.uri.parser.UriParserException;
-import org.apache.olingo.server.core.uri.validator.UriValidationException;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -29,6 +26,7 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.internal.SharedDataAccessor;
+import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.AsyncResult;
@@ -153,11 +151,23 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
     /**
      * Parses a given DataQuery to a OData UriInfo object.
      *
+     * @see #parseUriInfo(NeonBee, DataQuery)
      * @param vertx the Vertx instance to be used
      * @param query the DataQuery to convert
      * @return a future to an UriInfo for a given DataQuery
      */
     protected static Future<UriInfo> parseUriInfo(Vertx vertx, DataQuery query) {
+        return parseUriInfo(NeonBee.get(vertx), query);
+    }
+
+    /**
+     * Parses a given DataQuery to a OData UriInfo object.
+     *
+     * @param neonBee the NeonBee instance to be used
+     * @param query   the DataQuery to convert
+     * @return a future to an UriInfo for a given DataQuery
+     */
+    protected static Future<UriInfo> parseUriInfo(NeonBee neonBee, DataQuery query) {
         // the uriPath with trimmed leading forward slash e.g. <schemaNamespace>/<entitySet> where <schemaNamespace> is
         // <namespace>.<service> or <service> (if no namespace was used in the CDS model file)
         Matcher uriMatcher = URI_PATH_PATTERN.matcher(query.getUriPath());
@@ -167,14 +177,11 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
         }
 
         String serviceName = uriMatcher.group(SERVICE_NAMESPACE_GROUP);
-        return getSharedModel(vertx, ModelDefinitionHelper.retrieveNamespace(serviceName)).compose(entityModel -> {
-            try {
-                return succeededFuture(new Parser(entityModel.getEdmx(serviceName).getEdm(), getBufferedOData())
-                        .parseUri(uriMatcher.group(ENTITY_PATH_GROUP), query.getQuery(), EMPTY, EMPTY));
-            } catch (UriParserException | UriValidationException e) {
-                return failedFuture(e);
-            }
-        });
+        return neonBee.getModelManager().getSharedModel(EntityModelDefinition.retrieveNamespace(serviceName))
+                .compose(entityModel -> AsyncHelper.executeBlocking(neonBee.getVertx(), () -> {
+                    return new Parser(entityModel.getEdmxMetadata(serviceName).getEdm(), getBufferedOData())
+                            .parseUri(uriMatcher.group(ENTITY_PATH_GROUP), query.getQuery(), EMPTY, EMPTY);
+                }));
     }
 
     /**
@@ -227,7 +234,7 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
     public void start(Promise<Void> promise) {
         vertx.eventBus().consumer(EVENT_BUS_MODELS_LOADED_ADDRESS, message -> {
             announceEntityVerticle(vertx, asyncResult -> {
-                if (asyncResult.failed()) {
+                if (asyncResult.failed() && LOGGER.isErrorEnabled()) {
                     LOGGER.error("Updating announcements of entity verticle {} failed", getQualifiedName(),
                             asyncResult.cause());
                 }

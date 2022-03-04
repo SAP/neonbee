@@ -3,7 +3,7 @@ package io.neonbee.internal.verticle;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
-import io.neonbee.entity.EntityModelManager;
+import io.neonbee.NeonBee;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Promise;
 
@@ -49,7 +49,7 @@ public class ModelRefreshVerticle extends WatchVerticle {
     }
 
     private void triggerRefresh(Promise<Void> finishPromise) {
-        EntityModelManager.reloadModels(vertx).map((Void) null).onComplete(asyncResult -> {
+        NeonBee.get(vertx).getModelManager().reloadModels().map((Void) null).onComplete(asyncResult -> {
             LOGGER.debug("Models have been refreshed.");
             finishPromise.handle(asyncResult);
         });

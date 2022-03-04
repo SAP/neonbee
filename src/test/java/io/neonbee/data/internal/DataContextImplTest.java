@@ -1,7 +1,7 @@
 package io.neonbee.data.internal;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.data.internal.DataContextImpl.NO_SESSION_ID_AVAILABLE;
+import static io.neonbee.data.internal.DataContextImpl.NO_SESSION_ID_AVAILABLE_KEY;
 import static io.neonbee.internal.handler.CorrelationIdHandler.CORRELATION_ID;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -134,10 +135,14 @@ class DataContextImplTest {
     }
 
     @Test
+    @DisplayName("can update response timestamp LocalTime format")
     void testUpdateTimestamp() {
         context.pushVerticleToPath("DataVerticle");
         context.amendTopVerticleCoordinate("deploymentId1");
+        assertThat(context.path().next().getResponseTimestamp()).isNull();
+
         context.updateResponseTimestamp();
+        assertThat(LocalTime.parse(context.path().next().getResponseTimestamp())).isNotNull();
     }
 
     @Test
@@ -314,7 +319,8 @@ class DataContextImplTest {
         String expectedSessionValue = "expectedSessId";
         Session sessionMock = mock(Session.class);
         when(sessionMock.id()).thenReturn(expectedSessionValue);
-        return Stream.of(Arguments.of(sessionMock, expectedSessionValue), Arguments.of(null, NO_SESSION_ID_AVAILABLE));
+        return Stream.of(Arguments.of(sessionMock, expectedSessionValue),
+                Arguments.of(null, NO_SESSION_ID_AVAILABLE_KEY));
     }
 
     @ParameterizedTest(name = "{index}: with session: {0}")

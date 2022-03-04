@@ -191,7 +191,7 @@ publishing {
     repositories {
         maven {
             name = 'mavenCentral'
-            credentials(PasswordCredentials)
+            credentials(org.gradle.api.artifacts.repositories.PasswordCredentials)
             def releasesRepoUrl = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
             def snapshotsRepoUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
             url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl

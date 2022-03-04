@@ -81,8 +81,17 @@ public class TestService1EntityVerticle extends EntityVerticle {
                     .put("PropertyBinary", NULL).put("PropertyBinary100", NULL).put("PropertyLargeBinary", NULL)
                     .put("PropertyBoolean", false).put("PropertyDate", "2010-01-20").put("PropertyTime", NULL)
                     .put("PropertyDateTime", "2010-01-20T11:30:05Z").put("PropertyTimestamp", NULL)
-                    .put("PropertyDecimal", NULL).put("PropertyDecimalFloat", NULL).put("PropertyDouble", 1337.0815)
+                    .put("PropertyDecimal", NULL).put("PropertyDecimalFloat", NULL).put("PropertyDouble", 1337.0815d)
                     .put("PropertyUuid", NULL).put("PropertyInt32", 4).put("PropertyInt64", NULL);
+
+    public static final JsonObject EXPECTED_ENTITY_DATA_6 =
+            new JsonObject().put("KeyPropertyString", "id-6").put("PropertyString", "X").put("PropertyChar", NULL)
+                    .put("PropertyString100", NULL).put("PropertyLargeString", NULL).put("PropertyBinary", NULL)
+                    .put("PropertyBinary100", NULL).put("PropertyLargeBinary", NULL).put("PropertyBoolean", false)
+                    .put("PropertyDate", "2022-02-01").put("PropertyTime", NULL)
+                    .put("PropertyDateTime", "2022-02-01T15:45:23.000004Z").put("PropertyTimestamp", NULL)
+                    .put("PropertyDecimal", NULL).put("PropertyDecimalFloat", NULL).put("PropertyDouble", 1.23456d)
+                    .put("PropertyUuid", NULL).put("PropertyInt32", 42).put("PropertyInt64", NULL);
 
     @Override
     public Future<Set<FullQualifiedName>> entityTypeNames() {
@@ -139,6 +148,17 @@ public class TestService1EntityVerticle extends EntityVerticle {
                 .addProperty(new Property(null, "PropertyDouble", ValueType.PRIMITIVE, Double.MAX_VALUE))
                 .addProperty(new Property(null, "PropertyBoolean", ValueType.PRIMITIVE, true));
 
+        Entity entity6 = new Entity() //
+                .addProperty(new Property(null, "KeyPropertyString", ValueType.PRIMITIVE, "id-6"))
+                .addProperty(new Property(null, "PropertyString100", ValueType.PRIMITIVE, null))
+                .addProperty(new Property(null, "PropertyString", ValueType.PRIMITIVE, "X"))
+                .addProperty(new Property(null, "PropertyInt32", ValueType.PRIMITIVE, 42))
+                .addProperty(new Property(null, "PropertyDate", ValueType.PRIMITIVE, LocalDate.of(2022, 2, 1)))
+                .addProperty(new Property(null, "PropertyDateTime", ValueType.PRIMITIVE,
+                        LocalDateTime.of(2022, 2, 1, 15, 45, 23, 4000).toInstant(ZoneOffset.UTC)))
+                .addProperty(new Property(null, "PropertyDouble", ValueType.PRIMITIVE, 1.23456d))
+                .addProperty(new Property(null, "PropertyBoolean", ValueType.PRIMITIVE, false));
+
         Entity entity5 = new Entity();
         try {
             entity5 = entity5.addProperty(new Property(null, "KeyPropertyString", ValueType.PRIMITIVE, "id-4"))
@@ -150,11 +170,11 @@ public class TestService1EntityVerticle extends EntityVerticle {
                             new SimpleDateFormat("yyyy-MM-dd", Locale.US).parse("2010-01-20")))
                     .addProperty(new Property(null, "PropertyDateTime", ValueType.PRIMITIVE,
                             Instant.parse("2010-01-20T11:30:05Z")))
-                    .addProperty(new Property(null, "PropertyDouble", ValueType.PRIMITIVE, Double.valueOf(1337.0815)))
+                    .addProperty(new Property(null, "PropertyDouble", ValueType.PRIMITIVE, 1337.0815d))
                     .addProperty(new Property(null, "PropertyBoolean", ValueType.PRIMITIVE, false));
 
-            return Future.succeededFuture(
-                    new EntityWrapper(TEST_ENTITY_SET_FQN, List.of(entity1, entity2, entity3, entity4, entity5)));
+            return Future.succeededFuture(new EntityWrapper(TEST_ENTITY_SET_FQN,
+                    List.of(entity1, entity2, entity3, entity4, entity5, entity6)));
         } catch (ParseException e) {
             return Future.failedFuture(e);
         }
