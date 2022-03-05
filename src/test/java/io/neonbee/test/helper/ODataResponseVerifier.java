@@ -1,7 +1,6 @@
 package io.neonbee.test.helper;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.vertx.core.Future.future;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -56,13 +55,12 @@ public interface ODataResponseVerifier {
      */
     default Future<Void> assertOData(Future<HttpResponse<Buffer>> response, Consumer<Buffer> assertHandler,
             VertxTestContext testContext) {
-        return future(promise -> response.onComplete(testContext.succeeding(r -> {
+        return response.onComplete(testContext.succeeding(r -> {
             testContext.verify(() -> {
                 assertThat(r.statusCode()).isIn(Range.closed(200, 399));
                 assertHandler.accept(r.bodyAsBuffer());
             });
-            promise.complete();
-        })));
+        })).mapEmpty();
     }
 
     /**

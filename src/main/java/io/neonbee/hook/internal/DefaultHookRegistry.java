@@ -81,10 +81,10 @@ public class DefaultHookRegistry implements HookRegistry {
         return Future.succeededFuture(registrations);
     }
 
-    private Future<Void> executeHook(NeonBee neonbee, DefaultHookRegistration hookRegistration, HookContext context) {
+    private Future<Void> executeHook(NeonBee neonBee, DefaultHookRegistration hookRegistration, HookContext context) {
         return Future.future(promise -> {
             try {
-                hookRegistration.getHookMethod().invoke(hookRegistration.getRelatedObject(), neonbee, context, promise);
+                hookRegistration.getHookMethod().invoke(hookRegistration.getRelatedObject(), neonBee, context, promise);
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
                 promise.fail(e);
             }

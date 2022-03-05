@@ -33,7 +33,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.shareddata.Counter;
 
 public class WatchVerticle extends AbstractVerticle {
     /**
@@ -63,8 +62,6 @@ public class WatchVerticle extends AbstractVerticle {
     private final boolean parallelProcessing;
 
     private final boolean handleExisting;
-
-    private Counter counter;
 
     private final String counterName = UUID.randomUUID().toString();
 
@@ -173,30 +170,20 @@ public class WatchVerticle extends AbstractVerticle {
             return;
         }
 
-        (handleExisting ? handleExistingFiles(watchPath) : registerWatchKey(watchPath)).compose(
-                v -> Future.<Counter>future(promise -> vertx.sharedData().getLocalCounter(counterName, promise)))
-                .onComplete(asyncCounter -> {
-                    if (asyncCounter.failed()) {
-                        startPromise.fail(asyncCounter.cause());
-                    } else {
-                        counter = asyncCounter.result();
-                        vertx.setPeriodic(watchPeriodMillis, l -> {
-                            if (parallelProcessing) {
-                                checkForChanges();
-                            } else {
-                                counter.compareAndSet(0, 1, asyncCounterLock -> {
-                                    if (asyncCounterLock.succeeded() && asyncCounterLock.result()) {
-                                        checkForChanges()
-                                                .onComplete(v -> counter.compareAndSet(1, 0, asyncCounterUnlock -> {
-                                                    /* nothing to handle here */
-                                                }));
-                                    }
-                                });
-                            }
-                        });
-                        startPromise.complete();
-                    }
-                });
+        (handleExisting ? handleExistingFiles(watchPath) : registerWatchKey(watchPath))
+                .compose(nothing -> vertx.sharedData().getLocalCounter(counterName)).onSuccess(counter -> {
+                    vertx.setPeriodic(watchPeriodMillis, l -> {
+                        if (parallelProcessing) {
+                            checkForChanges();
+                        } else {
+                            counter.compareAndSet(0, 1).onSuccess(result -> {
+                                if (result) {
+                                    checkForChanges().onComplete(nothing -> counter.compareAndSet(1, 0));
+                                }
+                            });
+                        }
+                    });
+                }).<Void>mapEmpty().onComplete(startPromise);
     }
 
     @Override
@@ -260,10 +247,9 @@ public class WatchVerticle extends AbstractVerticle {
             watchEventFutures.add(processEvent(affectedPath, event.kind()));
         }
 
-        return Future.future(promise -> joinComposite(watchEventFutures).onComplete(asyncCompFuture -> {
+        return joinComposite(watchEventFutures).onComplete(asyncCompFuture -> {
             watchKeys.get(watchPath).reset();
-            promise.complete();
-        }));
+        }).mapEmpty();
     }
 
     @VisibleForTesting

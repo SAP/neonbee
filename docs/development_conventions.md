@@ -165,3 +165,54 @@ These log messages are ambiguous, because the order of log messages doesn't nece
 - `Deploying verticle 'ABC' succeeded`
 
 No need for a correlation ID in this case.
+
+# Prefer futurized interfaces
+
+Since essentially Vert.x 4, Vert.x provides fully futurized interfaces. So instead of:
+
+```java
+void deployVerticle(..., handler)
+```
+
+Prefer using the interface returning a future instead:
+
+```java
+Future<...> deployVerticle(...)
+```
+
+Similarly using the `Future.future(handler)` constructor of a future becomes not recommended:
+
+```java
+Future<String>.future(handler -> vertx.deployVerticle(..., handler))
+```
+
+Instead again use the futurized interface directly:
+
+```java
+vertx.deployVerticle(...)
+```
+
+Also for our own interfaces, we much prefer returning futures than having a handler as a parameter in the signature.
+
+# Prefer using `Checkpoint` over `CompositeFuture` in tests
+
+In tests it often happens that you need to check multiple asynchronous operations at the same time. Patterns like:
+
+```java
+Future<?> future1 = ..., future2 = ..., future3 = ...;
+
+CompositeFuture.all(future1, future2, future3).onComplete(testContext.succeedingThenComplete());
+```
+
+Are highly frowned upon, because the results of the different futures will get "muffled" into one `CompositeFuture` which will, if failed, not provide great details to the test runner where it failed.
+
+Instead prefer using Vert.x's `Checkpoint`, in order to write more clean tests:
+
+```java
+Future<?> future1 = ..., future2 = ..., future3 = ...;
+
+Checkpoint checkpoint = testContext.checkpoint(3);
+future1.onComplete(testContext.succeeding(result -> checkpoint.flag()));
+future2.onComplete(testContext.succeeding(result -> checkpoint.flag()));
+future3.onComplete(testContext.succeeding(result -> checkpoint.flag()));
+```

@@ -1,7 +1,6 @@
 package io.neonbee.test.helper;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.vertx.core.Future.future;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -58,10 +57,9 @@ public interface DataResponseVerifier {
     default <T> Future<Void> assertData(Function<DataContext, Future<T>> responseBuilder,
             BiConsumer<T, DataContext> assertHandler, VertxTestContext testContext) {
         DataContext dataContext = new DataContextImpl();
-        return future(promise -> responseBuilder.apply(dataContext).onComplete(testContext.succeeding(response -> {
+        return responseBuilder.apply(dataContext).onComplete(testContext.succeeding(response -> {
             testContext.verify(() -> assertHandler.accept(response, dataContext));
-            promise.complete();
-        })));
+        })).mapEmpty();
     }
 
     /**
@@ -106,10 +104,9 @@ public interface DataResponseVerifier {
     default Future<Void> assertDataFailure(Function<DataContext, Future<?>> responseBuilder,
             BiConsumer<DataException, DataContext> assertHandler, VertxTestContext testContext) {
         DataContext dataContext = new DataContextImpl();
-        return future(promise -> responseBuilder.apply(dataContext).onComplete(testContext.failing(failure -> {
+        return responseBuilder.apply(dataContext).onComplete(testContext.failing(failure -> {
             testContext.verify(() -> assertThat(failure).isInstanceOf(DataException.class))
                     .verify(() -> assertHandler.accept((DataException) failure, dataContext));
-            promise.complete();
-        })));
+        })).mapEmpty();
     }
 }
