@@ -16,8 +16,8 @@ import org.junit.jupiter.api.TestInfo;
 import io.neonbee.NeonBeeDeployable;
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.test.base.DataVerticleTestBase;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
+import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
@@ -40,11 +40,13 @@ class DataVerticleTest extends DataVerticleTestBase {
     @BeforeEach
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void deployEntityVerticles(VertxTestContext testContext) {
-        this.dataVerticleImpl0 = new DataVerticleImpl0();
-        this.dataVerticleImpl1 = new DataVerticleImpl1();
-        this.dataVerticleImpl2 = new DataVerticleImpl2();
-        CompositeFuture.all(deployVerticle(dataVerticleImpl0), deployVerticle(dataVerticleImpl1),
-                deployVerticle(dataVerticleImpl2)).onComplete(testContext.succeedingThenComplete());
+        Checkpoint checkpoint = testContext.checkpoint(3);
+        deployVerticle(this.dataVerticleImpl0 = new DataVerticleImpl0())
+                .onComplete(testContext.succeeding(result -> checkpoint.flag()));
+        deployVerticle(this.dataVerticleImpl1 = new DataVerticleImpl1())
+                .onComplete(testContext.succeeding(result -> checkpoint.flag()));
+        deployVerticle(this.dataVerticleImpl2 = new DataVerticleImpl2())
+                .onComplete(testContext.succeeding(result -> checkpoint.flag()));
     }
 
     @Test
@@ -88,15 +90,14 @@ class DataVerticleTest extends DataVerticleTestBase {
         String addressDVImpl2 = "DataVerticleTestNamespace2".toLowerCase(Locale.ENGLISH) + "/" + DataVerticleImpl2.NAME;
         DataRequest requestDVImpl2 = new DataRequest(addressDVImpl2, new DataQuery().addParameter("ping", ""));
 
-        Future<String> dataVerticle0Response = requestData(DataVerticleImpl0.NAME);
-        Future<String> dataVerticle1Response = requestData(DataVerticleImpl1.NAME);
-        Future<String> dataVerticle2Response = requestData(requestDVImpl2);
+        Checkpoint checkpoint = testContext.checkpoint(3);
 
-        CompositeFuture
-                .all(assertDataEquals(dataVerticle0Response, DataVerticleImpl0.EXPECTED_RESPONSE, testContext),
-                        assertDataEquals(dataVerticle1Response, DataVerticleImpl1.EXPECTED_RESPONSE, testContext),
-                        assertDataFailure(dataVerticle2Response, new DataException(400, "Bad Request"), testContext))
-                .onComplete(testContext.succeedingThenComplete());
+        assertDataEquals(requestData(DataVerticleImpl0.NAME), DataVerticleImpl0.EXPECTED_RESPONSE, testContext)
+                .onComplete(nothing -> checkpoint.flag());
+        assertDataEquals(requestData(DataVerticleImpl1.NAME), DataVerticleImpl1.EXPECTED_RESPONSE, testContext)
+                .onComplete(nothing -> checkpoint.flag());
+        assertDataFailure(requestData(requestDVImpl2), new DataException(400, "Bad Request"), testContext)
+                .onComplete(nothing -> checkpoint.flag());
     }
 
     @Test

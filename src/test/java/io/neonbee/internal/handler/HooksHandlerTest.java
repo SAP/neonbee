@@ -16,9 +16,7 @@ import io.neonbee.hook.HookType;
 import io.neonbee.test.base.DataVerticleTestBase;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
@@ -84,8 +82,7 @@ class HooksHandlerTest extends DataVerticleTestBase {
     }
 
     private Future<Integer> sendRequestReturnStatusCode() {
-        return Future.<HttpResponse<Buffer>>future(p -> createRequest(HttpMethod.GET, "/raw/core/Hodor").send(p))
-                .map(response -> response.statusCode());
+        return createRequest(HttpMethod.GET, "/raw/core/Hodor").send().map(response -> response.statusCode());
     }
 
     public static class TestHook {

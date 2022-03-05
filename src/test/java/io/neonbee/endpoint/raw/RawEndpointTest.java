@@ -139,6 +139,6 @@ class RawEndpointTest extends DataVerticleTestBase {
 
     private Future<HttpResponse<Buffer>> sendRequest(String verticleName, String path, String query) {
         String uriPath = String.format("/raw/%s/%s/%s?%s", NEONBEE_NAMESPACE, verticleName, path, query);
-        return Future.future(fut -> createRequest(HttpMethod.GET, uriPath).send(fut));
+        return createRequest(HttpMethod.GET, uriPath).send();
     }
 }

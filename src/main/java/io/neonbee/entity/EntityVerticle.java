@@ -2,6 +2,7 @@ package io.neonbee.entity;
 
 import static io.neonbee.entity.EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS;
 import static io.neonbee.entity.EntityModelManager.getBufferedOData;
+import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.internal.verticle.ConsolidationVerticle.ENTITY_TYPE_NAME_HEADER;
 import static io.vertx.core.Future.failedFuture;
@@ -29,10 +30,7 @@ import io.neonbee.internal.SharedDataAccessor;
 import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.logging.LoggingFacade;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
@@ -233,64 +231,53 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
     @Override
     public void start(Promise<Void> promise) {
         vertx.eventBus().consumer(EVENT_BUS_MODELS_LOADED_ADDRESS, message -> {
-            announceEntityVerticle(vertx, asyncResult -> {
-                if (asyncResult.failed() && LOGGER.isErrorEnabled()) {
-                    LOGGER.error("Updating announcements of entity verticle {} failed", getQualifiedName(),
-                            asyncResult.cause());
+            announceEntityVerticle(vertx).onFailure(throwable -> {
+                if (LOGGER.isErrorEnabled()) {
+                    LOGGER.error("Updating announcements of entity verticle {} failed", getQualifiedName(), throwable);
                 }
             });
         });
 
-        Future.<Void>future(asyncAnnounce -> announceEntityVerticle(vertx, asyncAnnounce))
-                .compose(nothing -> Future.<Void>future(super::start)).onComplete(promise);
+        announceEntityVerticle(vertx).compose(nothing -> Future.<Void>future(super::start)).onComplete(promise);
     }
 
     /**
      * Announces that this EntityVerticle is handling certain {@link #entityTypeNames()} to the rest of the cluster by
      * adding the EntityTypes to a shared map in a secure and cluster-wide thread safe manner.
      */
-    private void announceEntityVerticle(Vertx vertx, Handler<AsyncResult<Void>> done) {
+    private Future<Void> announceEntityVerticle(Vertx vertx) {
         // in case this entity verticle does not listen to any entityTypeNames, do not add it to the shared map
-        Future<Set<FullQualifiedName>> entityTypeNames =
-                entityTypeNames().compose(fqns -> succeededFuture(Optional.ofNullable(fqns).orElse(Set.of())));
+        return entityTypeNames()
+                .map(entityTypeNames -> entityTypeNames != null ? entityTypeNames : Set.<FullQualifiedName>of())
+                .compose(entityTypeNames -> {
+                    AsyncMap<String, Object> sharedMap = NeonBee.get(vertx).getAsyncMap();
+                    List<Future<Void>> announceFutures =
+                            entityTypeNames.stream().map(EntityVerticle::sharedEntityMapName).map(name -> {
+                                LOGGER.debug("Acquire lock {} for announcement of entity verticle", name);
+                                return new SharedDataAccessor(vertx, EntityVerticle.class).getLock(name)
+                                        .onFailure(throwable -> {
+                                            LOGGER.error("Error acquiring lock with name {}", name, throwable);
+                                        }).compose(lock -> {
+                                            return sharedMap.get(name).compose(qualifiedNamesOrNull -> {
+                                                String qualifiedName = getQualifiedName();
+                                                JsonArray qualifiedNames =
+                                                        qualifiedNamesOrNull != null ? (JsonArray) qualifiedNamesOrNull
+                                                                : new JsonArray();
+                                                if (!qualifiedNames.contains(qualifiedName)) {
+                                                    qualifiedNames.add(qualifiedName);
+                                                }
 
-        entityTypeNames.compose(asyncEntityTypeNames -> {
-            AsyncMap<String, Object> asyncSharedMap = NeonBee.get(vertx).getAsyncMap();
-            return CompositeFuture.all(
-                    asyncEntityTypeNames.stream().map(EntityVerticle::sharedEntityMapName).map(sharedEntityMapName -> {
-                        Promise<Object> promise = Promise.promise();
-
-                        LOGGER.debug("Acquire lock {} for announcement of entity verticle", sharedEntityMapName);
-                        new SharedDataAccessor(vertx, EntityVerticle.class).getLock(sharedEntityMapName, lock -> {
-                            if (!lock.succeeded()) {
-                                String error = "Error while acquiring lock with name " + sharedEntityMapName;
-                                LOGGER.error(error);
-                                promise.fail(error);
-                                return;
-                            }
-
-                            Future.future(asyncGet -> asyncSharedMap.get(sharedEntityMapName, asyncGet))
-                                    .compose(qualifiedNamesOrNull -> {
-                                        String qualifiedName = getQualifiedName();
-                                        JsonArray qualifiedNames = Optional.ofNullable((JsonArray) qualifiedNamesOrNull)
-                                                .orElse(new JsonArray());
-                                        if (!qualifiedNames.contains(qualifiedName)) {
-                                            qualifiedNames.add(qualifiedName);
-                                        }
-
-                                        LOGGER.info(
-                                                "Announce entity {} is served by entity verticle with qualified name {} ",
-                                                sharedEntityMapName, qualifiedName);
-                                        return Future.<Void>future(asyncPut -> asyncSharedMap.put(sharedEntityMapName,
-                                                qualifiedNames, asyncPut));
-                                    }).onComplete(nothing -> {
-                                        LOGGER.debug("Releasing lock {}", sharedEntityMapName);
-                                        lock.result().release();
-                                        promise.complete();
-                                    });
-                        });
-                        return promise.future();
-                    }).collect(Collectors.toList())).map((Void) null);
-        }).onComplete(done);
+                                                LOGGER.info(
+                                                        "Announce entity {} is served by entity verticle with qualified name {}",
+                                                        name, qualifiedName);
+                                                return sharedMap.put(name, qualifiedNames);
+                                            }).onComplete(anyResult -> {
+                                                LOGGER.debug("Releasing lock {}", name);
+                                                lock.release();
+                                            });
+                                        });
+                            }).collect(Collectors.toList());
+                    return allComposite(announceFutures).mapEmpty();
+                });
     }
 }

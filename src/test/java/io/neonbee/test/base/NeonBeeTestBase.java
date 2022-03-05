@@ -47,6 +47,7 @@ import io.neonbee.internal.deploy.DeployableVerticle;
 import io.neonbee.internal.deploy.Deployment;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.neonbee.job.JobVerticle;
+import io.neonbee.test.helper.ConcurrentHelper;
 import io.neonbee.test.helper.DeploymentHelper;
 import io.neonbee.test.helper.DummyVerticleHelper;
 import io.neonbee.test.helper.DummyVerticleHelper.DummyDataVerticleFactory;
@@ -188,7 +189,7 @@ public class NeonBeeTestBase {
             if (throwable.getCause() instanceof DirectoryNotEmptyException) {
                 // especially on windows machines, open file handles sometimes cause an issue that the directory cannot
                 // be deleted, wait a little and try again afterwards
-                return Future.future(handler -> vertx.setTimer(250, along -> handler.complete()))
+                return ConcurrentHelper.waitFor(vertx, 250)
                         .compose(nothing -> FileSystemHelper.deleteRecursive(vertx, workingDirPath));
             } else {
                 return failedFuture(throwable);

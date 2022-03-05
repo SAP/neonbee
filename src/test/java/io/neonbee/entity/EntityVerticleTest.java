@@ -11,7 +11,6 @@ import static io.neonbee.entity.EntityVerticle.SERVICE_NAMESPACE_GROUP;
 import static io.neonbee.entity.EntityVerticle.URI_PATH_PATTERN;
 import static io.neonbee.entity.EntityVerticle.sharedEntityMapName;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
-import static io.vertx.core.Future.future;
 import static io.vertx.core.Future.succeededFuture;
 
 import java.nio.file.Path;
@@ -79,20 +78,23 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     @DisplayName("Check if entity types are registered in shared entity map")
     void registerEntityTypes(VertxTestContext testContext) {
         AsyncMap<String, Object> asyncSharedMap = getNeonBee().getAsyncMap();
-        CompositeFuture.join(future(
-                asyncGet -> asyncSharedMap.get(sharedEntityMapName(new FullQualifiedName("ERP.Customers")), asyncGet)),
-                future(asyncGet -> asyncSharedMap.get(sharedEntityMapName(new FullQualifiedName("Sales.Orders")),
-                        asyncGet)))
-                .onComplete(asyncComposite -> {
-                    CompositeFuture future = asyncComposite.result();
+
+        Checkpoint checkpoint = testContext.checkpoint(2);
+        asyncSharedMap.get(sharedEntityMapName(new FullQualifiedName("ERP.Customers")))
+                .onComplete(testContext.succeeding(result -> {
                     testContext.verify(() -> {
-                        assertThat(future.<JsonArray>resultAt(0)).containsExactly(
-                                entityVerticleImpl1.getQualifiedName(), entityVerticleImpl2.getQualifiedName());
-                        assertThat(future.<JsonArray>resultAt(1))
-                                .containsExactly(entityVerticleImpl1.getQualifiedName());
-                        testContext.completeNow();
+                        assertThat((JsonArray) result).containsExactly(entityVerticleImpl1.getQualifiedName(),
+                                entityVerticleImpl2.getQualifiedName());
                     });
-                });
+                    checkpoint.flag();
+                }));
+        asyncSharedMap.get(sharedEntityMapName(new FullQualifiedName("Sales.Orders")))
+                .onComplete(testContext.succeeding(result -> {
+                    testContext.verify(() -> {
+                        assertThat((JsonArray) result).containsExactly(entityVerticleImpl1.getQualifiedName());
+                    });
+                    checkpoint.flag();
+                }));
     }
 
     @Test

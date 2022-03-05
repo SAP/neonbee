@@ -37,8 +37,7 @@ public final class DeploymentHelper {
      * @return A succeeded future with the deploymentId, or a failed future with the cause.
      */
     public static Future<String> deployVerticle(Vertx vertx, Verticle verticle, JsonObject verticleConfig) {
-        DeploymentOptions opts = new DeploymentOptions().setConfig(verticleConfig);
-        return Future.future(promise -> vertx.deployVerticle(verticle, opts, promise));
+        return vertx.deployVerticle(verticle, new DeploymentOptions().setConfig(verticleConfig));
     }
 
     /**

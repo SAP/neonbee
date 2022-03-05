@@ -12,7 +12,6 @@ import static io.neonbee.internal.verticle.WatchVerticle.WATCH_LOGIC_OPTION_COPY
 import static io.neonbee.test.helper.ConcurrentHelper.waitFor;
 import static io.neonbee.test.helper.FileSystemHelper.createTempDirectory;
 import static io.vertx.core.Future.failedFuture;
-import static io.vertx.core.Future.future;
 import static io.vertx.core.Future.succeededFuture;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -71,8 +70,7 @@ class WatchVerticleTest extends NeonBeeTestBase {
             if (throwable.getCause() instanceof DirectoryNotEmptyException) {
                 // especially on windows machines, open file handles sometimes cause an issue that the directory cannot
                 // be deleted, wait a little and try again afterwards
-                return future(handler -> vertx.setTimer(250, along -> handler.complete()))
-                        .compose(nothing -> deleteRecursive(vertx, watchDir));
+                return waitFor(vertx, 250).compose(nothing -> deleteRecursive(vertx, watchDir));
             } else {
                 return failedFuture(throwable);
             }
@@ -157,7 +155,7 @@ class WatchVerticleTest extends NeonBeeTestBase {
 
         DeploymentHelper.deployVerticle(vertx, watchVerticleSpy).compose(deploymentId ->
         // Assumption that the watchVerticle has been called at least 10 times after 100 ms
-        future(promise -> vertx.setTimer(110, l -> promise.complete()))).onComplete(testCtx.succeeding(v -> {
+        waitFor(vertx, 110)).onComplete(testCtx.succeeding(v -> {
             // Check that WatchVerticle has been called at least 10 times
             testCtx.verify(() -> verify(watchVerticleSpy, atLeast(10)).checkForChanges());
             testCtx.completeNow();

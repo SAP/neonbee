@@ -27,6 +27,7 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.Message;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
@@ -176,11 +177,7 @@ class SelfFirstClassLoaderTest {
     }
 
     private Future<String> deployVerticle(Class<Verticle> verticleClass, Vertx vertx, VertxTestContext testContext) {
-        return Future.future(promise -> {
-            vertx.deployVerticle(verticleClass, new DeploymentOptions(), testContext.succeeding(s -> {
-                promise.complete(s);
-            }));
-        });
+        return vertx.deployVerticle(verticleClass, new DeploymentOptions()).onFailure(testContext::failNow);
     }
 
     private static URLClassLoader createClassLoaderWithJars(List<BasicJar> jars, ClassLoader parent)
@@ -217,21 +214,16 @@ class SelfFirstClassLoaderTest {
         }
 
         public Future<Void> sendAndVerifyPing(Vertx vertx, VertxTestContext testContext) {
-            return Future.future(promise -> {
-                vertx.eventBus().request(ebAddress.concat("/ping"), "", testContext.succeeding(resp -> {
-                    testContext.verify(() -> {
-                        assertThat(resp.body()).isEqualTo("Pong from: " + ebAddress);
-                        promise.complete();
-                    });
-                }));
-            });
+            return vertx.eventBus().request(ebAddress.concat("/ping"), "").onComplete(testContext.succeeding(resp -> {
+                testContext.verify(() -> {
+                    assertThat(resp.body()).isEqualTo("Pong from: " + ebAddress);
+                });
+            })).mapEmpty();
         }
 
         public Future<String> getResourceAsString(String resourceName, Vertx vertx, VertxTestContext testContext) {
-            return Future.future(promise -> {
-                vertx.eventBus().<String>request(ebAddress + "/resources", resourceName,
-                        testContext.succeeding(resp -> promise.complete(resp.body())));
-            });
+            return vertx.eventBus().<String>request(ebAddress + "/resources", resourceName)
+                    .onFailure(testContext::failNow).map(Message::body);
         }
 
         @Override

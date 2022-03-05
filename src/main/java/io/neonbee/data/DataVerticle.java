@@ -293,8 +293,9 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
              */
             LOGGER.correlateWith(context).debug("Sending message via the event bus to {}", qualifiedName);
             String address = getAddress(qualifiedName);
-            return Future.future(doneHandler -> vertx.eventBus().<U>request(address, request.getQuery(),
-                    requestDeliveryOptions(vertx, request, context, address), asyncReply -> {
+            return vertx.eventBus()
+                    .<U>request(address, request.getQuery(), requestDeliveryOptions(vertx, request, context, address))
+                    .transform(asyncReply -> {
                         LOGGER.correlateWith(context).debug("Received event bus reply");
 
                         if (asyncReply.succeeded()) {
@@ -302,16 +303,16 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                                     .ofNullable(
                                             decodeContextFromString(asyncReply.result().headers().get(CONTEXT_HEADER)))
                                     .map(DataContext::data).orElse(null));
-                            doneHandler.complete(asyncReply.result().body());
+                            return succeededFuture(asyncReply.result().body());
                         } else {
                             Throwable cause = asyncReply.cause();
                             if (LOGGER.isWarnEnabled()) {
                                 LOGGER.correlateWith(context).warn("Failed to receive event bus reply from {}",
                                         qualifiedName, cause);
                             }
-                            doneHandler.fail(mapException(cause));
+                            return failedFuture(mapException(cause));
                         }
-                    }));
+                    });
         }
 
         FullQualifiedName entityTypeName = request.getEntityTypeName();
