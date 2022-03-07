@@ -138,7 +138,8 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
         assertThat(defaultConfig.getTrackingDataHandlingStrategy()).isEqualTo(DEFAULT_TRACKING_DATA_HANDLING_STRATEGY);
         assertThat(defaultConfig.getTimeZone()).isEqualTo(DEFAULT_TIME_ZONE);
         assertThat(defaultConfig.getEventBusCodecs()).isEmpty();
-        assertThat(defaultConfig.getPlatformClasses()).isEmpty();
+        assertThat(defaultConfig.getPlatformClasses()).containsExactly("io.vertx.*", "io.neonbee.*", "org.slf4j.*",
+                "org.apache.olingo.*");
     }
 
     @Test
