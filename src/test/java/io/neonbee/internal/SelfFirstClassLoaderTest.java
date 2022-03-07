@@ -22,6 +22,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Isolated;
 
+import com.google.common.base.Predicates;
+
 import io.neonbee.test.helper.FileSystemHelper;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -60,15 +62,19 @@ class SelfFirstClassLoaderTest {
     @DisplayName("Test if the decision logic which class should be loaded from parent works correct")
     void testLoadFromParent() throws IOException {
         SelfFirstClassLoader sfcl = new SelfFirstClassLoader(new URL[] {}, null,
-                List.of("io.neonbee.*", "io.Hod*", "com.example.LordCitrange"));
+                List.of("io.neonbee.*", "io.Hod*", "io.vertx.*.TestClass", "com.example.LordCitrange"));
         assertThat(sfcl.loadFromParent("io.neonbee.DataVerticle")).isTrue();
         assertThat(sfcl.loadFromParent("io.Hodor")).isTrue();
         assertThat(sfcl.loadFromParent("com.example.LordCitrange")).isTrue();
+        assertThat(sfcl.loadFromParent("io.vertx.any.TestClass")).isTrue();
+        assertThat(sfcl.loadFromParent("io.vertx.other.TestClass")).isTrue();
 
         assertThat(sfcl.loadFromParent("io.hodor.Hodor")).isFalse();
         assertThat(sfcl.loadFromParent("com.example.Hodor")).isFalse();
         assertThat(sfcl.loadFromParent("io.NeonBee")).isFalse();
         assertThat(sfcl.loadFromParent("io.neonbeefoo.Lol")).isFalse();
+        assertThat(sfcl.loadFromParent("io.vertx.any.testClass")).isFalse();
+        assertThat(sfcl.loadFromParent("io.verty.any.TestClass")).isFalse();
         sfcl.close();
     }
 
@@ -89,9 +95,27 @@ class SelfFirstClassLoaderTest {
         List<String> parentPreferred = new ArrayList<>(expected);
         parentPreferred.add("");
         parentPreferred.add(null);
-        SelfFirstClassLoader sfcl = new SelfFirstClassLoader(new URL[] {}, null, parentPreferred);
-        assertThat(sfcl.parentPreferred).containsExactlyElementsIn(expected);
 
+        SelfFirstClassLoader sfcl = new SelfFirstClassLoader(new URL[] {}, null, parentPreferred);
+        assertThat(sfcl.parentPreferredPredicate.test("io.hodor.Hodor")).isTrue();
+        assertThat(sfcl.parentPreferredPredicate.test("lord.Citrange")).isTrue();
+        assertThat(sfcl.parentPreferredPredicate.test("")).isFalse();
+        sfcl.close();
+    }
+
+    @Test
+    @DisplayName("Test if an empty list will result in everything being loaded from the own classloader")
+    void testLoadFromOwnClassLoaderIfEmpty() throws IOException {
+        SelfFirstClassLoader sfcl = new SelfFirstClassLoader(new URL[] {}, null);
+        assertThat(sfcl.parentPreferredPredicate).isSameInstanceAs(Predicates.alwaysFalse());
+        sfcl.close();
+
+        List<String> parentPreferred = new ArrayList<>();
+        parentPreferred.add("");
+        parentPreferred.add(null);
+
+        sfcl = new SelfFirstClassLoader(new URL[] {}, null, parentPreferred);
+        assertThat(sfcl.parentPreferredPredicate).isSameInstanceAs(Predicates.alwaysFalse());
         sfcl.close();
     }
 
