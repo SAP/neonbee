@@ -1,22 +1,25 @@
 package io.neonbee.internal;
 
-import static java.util.stream.Collectors.toList;
-
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 
 public class SelfFirstClassLoader extends URLClassLoader {
     @VisibleForTesting
-    final List<String> parentPreferred;
+    final Predicate<String> parentPreferredPredicate;
 
     private final Map<String, Class<?>> loadedClasses = new ConcurrentHashMap<>();
 
@@ -28,8 +31,7 @@ public class SelfFirstClassLoader extends URLClassLoader {
      * @param parent The parent ClassLoader
      */
     public SelfFirstClassLoader(URL[] urls, ClassLoader parent) {
-        super(urls, parent);
-        this.parentPreferred = Collections.emptyList();
+        this(urls, parent, Collections.emptyList());
     }
 
     /**
@@ -55,7 +57,17 @@ public class SelfFirstClassLoader extends URLClassLoader {
      */
     public SelfFirstClassLoader(URL[] urls, ClassLoader parent, List<String> parentPreferred) {
         super(urls, parent);
-        this.parentPreferred = parentPreferred.stream().filter(s -> !Strings.isNullOrEmpty(s)).collect(toList());
+
+        this.parentPreferredPredicate = getClassNamePredicate(parentPreferred);
+    }
+
+    @VisibleForTesting
+    static Predicate<String> getClassNamePredicate(List<String> classNames) {
+        String pattern = classNames
+                .stream().filter(Predicate.not(Strings::isNullOrEmpty)).map(className -> Arrays
+                        .stream(className.split("\\*", -1)).map(Pattern::quote).collect(Collectors.joining(".*")))
+                .collect(Collectors.joining("|"));
+        return !pattern.isEmpty() ? Pattern.compile(pattern).asMatchPredicate() : Predicates.alwaysFalse();
     }
 
     @SuppressWarnings("PMD.EmptyCatchBlock")
@@ -127,19 +139,6 @@ public class SelfFirstClassLoader extends URLClassLoader {
 
     @VisibleForTesting
     boolean loadFromParent(String className) {
-        for (String pp : parentPreferred) {
-            // Check for wildcard
-            if (pp.contains("*")) {
-                if (className.startsWith(pp.replace("*", ""))) {
-                    return true;
-                }
-            } else {
-                // No wildcard
-                if (pp.equals(className)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return parentPreferredPredicate.test(className);
     }
 }
