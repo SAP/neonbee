@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.10.0 (2022-03-07)
+
+### Bug Fixes
+
+- allow no active profile, make ALL the default ([e8461712](https://github.com/SAP/neonbee/commit/e8461712fb5de4baefac21a49eadbbff096ce681))
+- prefer loading Vert.x/NeonBee from system class loader ([9d01198b](https://github.com/SAP/neonbee/commit/9d01198bb66ee32c1afedcdba4b52cdfeb145e28))
+
+
+### Features
+
+- add NeonBee vs. Vert.x to README.md ([bf00a23a](https://github.com/SAP/neonbee/commit/bf00a23a763fdf2d51a401660e97369325253edf))
+- make NeonBee boot logging a little more verbose ([ca5d8be2](https://github.com/SAP/neonbee/commit/ca5d8be2e6c4d93e534bb3dc38ee873413a5832c))
+
+
+### Code Refactoring
+
+- change to futurized interfaces ([e2659537](https://github.com/SAP/neonbee/commit/e2659537bd18a79c5405c7d1a7a8889ae7403a3e))
+- improve wildcard handling in SelfFirstClassLoader ([e98615bb](https://github.com/SAP/neonbee/commit/e98615bbb62797ba28cd974576c7af8bc4a90d44))
+
+
+### Continuous Integration
+
+- automate dependency upgrade (of vertx) ([1ab6d1a8](https://github.com/SAP/neonbee/commit/1ab6d1a84817c115240c6dc1385afe0481ddf854))
+
+
 ## 0.9.1 (2022-02-17)
 
 ### Bug Fixes
