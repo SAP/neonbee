@@ -51,7 +51,7 @@ public class NeonBeeConfig {
 
     private String trackingDataHandlingStrategy = DEFAULT_TRACKING_DATA_HANDLING_STRATEGY;
 
-    private List<String> platformClasses = List.of();
+    private List<String> platformClasses = List.of("io.vertx.*", "io.neonbee.*", "org.slf4j.*", "org.apache.olingo.*");
 
     private String timeZone = DEFAULT_TIME_ZONE;
 
@@ -198,15 +198,15 @@ public class NeonBeeConfig {
     }
 
     /**
-     * The idea of this method is to define, which classes are considered as platform classes. This is important to know
-     * to avoid potential class loading issues during the load of a NeonBee Module. Because generally a class which is
-     * already loaded by the platform shouldn't also be loaded by the class loader which loads the classes for the
-     * NeonBee Module.<br>
-     * <br>
+     * Platform classes are classes to be considered "provided" by the system class loader. NeonBee modules will attempt
+     * to find platform classes in the system class loader first, before loading them (self-first) from their own (so
+     * called) module class-loader. This way, you can prevent incompatibility issues across modules and also have
+     * modules with a much smaller runtime footprint.
      *
-     * Example values: [io.vertx.core.json.JsonObject, io.neonbee.data*, com.foo.bar*]
+     * Example values: io.vertx.core.json.JsonObject, io.neonbee.data.*, com.foo.bar.*
      *
-     * @return a list of Strings that could contain full qualified class names, or prefixes marked with a *;
+     * @return a list of strings that either contains a full qualified class names, or class names with * als a wildcard
+     *         character sequence. By default all NeonBee and Vert.x classes are considered platform classes.
      */
     public List<String> getPlatformClasses() {
         return platformClasses;
@@ -215,6 +215,7 @@ public class NeonBeeConfig {
     /**
      * Sets classes available by the platform.
      *
+     * @see #getPlatformClasses()
      * @param platformClasses a list of class names
      * @return the {@linkplain NeonBeeConfig} for fluent use
      */
