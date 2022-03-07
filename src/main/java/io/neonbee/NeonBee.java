@@ -288,6 +288,7 @@ public class NeonBee {
     }
 
     private Future<Void> boot() {
+        logger.info("Booting NeonBee ...");
         return registerHooks().compose(nothing -> hookRegistry.executeHooks(HookType.BEFORE_BOOTSTRAP))
                 .onSuccess(anything -> {
                     // set the default timezone and overwrite any configured user.timezone property
@@ -296,7 +297,8 @@ public class NeonBee {
                     // further synchronous initializations which should happen before verticles are getting deployed
                 }).compose(nothing -> all(initializeSharedMaps(), decorateEventBus(), createMicrometerRegistries()))
                 .compose(nothing -> all(deployVerticles(), deployModules())) // deployment of verticles & modules
-                .compose(nothing -> hookRegistry.executeHooks(HookType.AFTER_STARTUP)).mapEmpty();
+                .compose(nothing -> hookRegistry.executeHooks(HookType.AFTER_STARTUP))
+                .onSuccess(result -> logger.info("Successfully booted NeonBee!")).mapEmpty();
     }
 
     private Future<Void> registerHooks() {
@@ -397,8 +399,12 @@ public class NeonBee {
     private Future<Void> deployVerticles() {
         Collection<NeonBeeProfile> activeProfiles = options.getActiveProfiles();
         if (logger.isInfoEnabled()) {
-            logger.info("Deploying verticle with active profiles: {}",
-                    activeProfiles.stream().map(NeonBeeProfile::name).collect(Collectors.joining(",")));
+            if (!activeProfiles.isEmpty()) {
+                logger.info("Deploying verticle with active profiles: {}", // NOPMD log guard false positive
+                        activeProfiles.stream().map(NeonBeeProfile::name).collect(Collectors.joining(", ")));
+            } else {
+                logger.info("No active profiles, only deploying system verticles");
+            }
         }
 
         List<Future<?>> deployFutures = new ArrayList<>();
@@ -531,7 +537,14 @@ public class NeonBee {
 
     @VisibleForTesting
     Future<NeonBeeConfig> loadConfig() {
-        return NeonBeeConfig.load(vertx).onSuccess(config -> this.config = config);
+        logger.info("Loading NeonBee configuration ...");
+        return NeonBeeConfig.load(vertx).onSuccess(config -> {
+            this.config = config;
+            logger.info("Successfully loaded NeonBee configuration");
+            if (logger.isDebugEnabled()) {
+                logger.debug("Loaded configuration {}", config);
+            }
+        }).onFailure(throwable -> logger.error("Failed to load NeonBee configuration", throwable));
     }
 
     @SuppressWarnings("rawtypes")
