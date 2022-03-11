@@ -40,6 +40,12 @@ public class NeonBeeConfigConverter {
                             new io.neonbee.config.HealthConfig((io.vertx.core.json.JsonObject) member.getValue()));
                 }
                 break;
+            case "metricsConfig":
+                if (member.getValue() instanceof JsonObject) {
+                    obj.setMetricsConfig(
+                            new io.neonbee.config.MetricsConfig((io.vertx.core.json.JsonObject) member.getValue()));
+                }
+                break;
             case "micrometerRegistries":
                 if (member.getValue() instanceof JsonArray) {
                     java.util.ArrayList<io.neonbee.config.MicrometerRegistryConfig> list = new java.util.ArrayList<>();
@@ -88,6 +94,9 @@ public class NeonBeeConfigConverter {
         json.put("eventBusTimeout", obj.getEventBusTimeout());
         if (obj.getHealthConfig() != null) {
             json.put("healthConfig", obj.getHealthConfig().toJson());
+        }
+        if (obj.getMetricsConfig() != null) {
+            json.put("metricsConfig", obj.getMetricsConfig().toJson());
         }
         if (obj.getMicrometerRegistries() != null) {
             JsonArray array = new JsonArray();

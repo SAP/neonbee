@@ -68,3 +68,40 @@ counter.increment();
 count = counter.count();
 ```
 For more information, see [user defined metrics](https://vertx.io/docs/vertx-micrometer-metrics/java/#_user_defined_metrics)
+
+## DataVerticle metrics
+
+The DataVerticle collects four metrics:
+
+| metric | discription |
+|---|---|
+| Time | How long it takes to retrieve the data. |
+| Status counter | How many requests completed successfully, how many requests failed |
+| Number of requests | Total number of all requests |
+| Active requests | How many requests are currently open |
+
+### DataVerticle metrics configuration
+
+All metrics are disabled by default. You can enable the metrics globally for all DataVerticles by setting the `metrics.enabled` value to `true` in the `NeonBeeConfig`.
+
+**io.neonbee.NeonBee.yaml:**
+
+```yaml
+# Other settings omitted for simplicity.
+metrics:
+    enabled: true
+```
+
+The metrics can be also configured using the verticle configuration. To enable the metrics for an individual DataVerticle, it is necessary to add the `config.metrics.enabled` property with the value `true`. In addition, you can enable only specific metrics by specifying the metrics configuration name and a true value in the verticle configuration. If you have added a metrics configuration key, only the values with the specified `true` value are enabled. All others are disabled.
+Complete yaml example configuration to enable the metrics:
+```yaml
+config:
+    metrics:
+        enabled: true
+        meterRegistryName: SomeRegistryName
+        reportNumberOfRequests: true
+        reportActiveRequests: true
+        reportStatusCounter: true
+        reportTiming: true
+```
+

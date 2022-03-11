@@ -53,7 +53,8 @@ public class NeonBeeConfig {
      */
     public static final String DEFAULT_TIME_ZONE = "UTC";
 
-    private static final ImmutableBiMap<String, String> REPHRASE_MAP = ImmutableBiMap.of("healthConfig", "health");
+    private static final ImmutableBiMap<String, String> REPHRASE_MAP =
+            ImmutableBiMap.of("healthConfig", "health", "metricsConfig", "metrics");
 
     private int eventBusTimeout = DEFAULT_EVENT_BUS_TIMEOUT;
 
@@ -68,6 +69,29 @@ public class NeonBeeConfig {
     private List<MicrometerRegistryConfig> micrometerRegistries = List.of();
 
     private HealthConfig healthConfig = new HealthConfig();
+
+    private MetricsConfig metricsConfig = new MetricsConfig();
+
+    /**
+     * Are the metrics enabled?
+     *
+     * @return true if the metrics are enabled, otherwise false.
+     */
+    public MetricsConfig getMetricsConfig() {
+        return metricsConfig;
+    }
+
+    /**
+     * Sets the value to enable, disable metrics.
+     *
+     * @param metricsConfig true if the metrics should be enabled, false otherwise.
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    @Fluent
+    public NeonBeeConfig setMetricsConfig(MetricsConfig metricsConfig) {
+        this.metricsConfig = metricsConfig;
+        return this;
+    }
 
     /**
      * Loads the NeonBee configuration from the config directory and converts it to a {@link NeonBeeConfig}.
