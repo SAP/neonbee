@@ -7,16 +7,23 @@ import static java.lang.Boolean.parseBoolean;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import io.neonbee.NeonBeeDeployable;
 import io.neonbee.NeonBeeOptions;
+import io.neonbee.config.MetricsConfig;
+import io.neonbee.data.internal.metrics.ConfiguredDataVerticleMetrics;
 import io.neonbee.test.base.DataVerticleTestBase;
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
@@ -125,6 +132,83 @@ class DataVerticleTest extends DataVerticleTestBase {
         assertThat(DataVerticle.createQualifiedName("nameSpace", "verticle")).isEqualTo("namespace/verticle");
     }
 
+    /**
+     * Eunum for the testMetricsConfiguration test method.
+     */
+    private enum VerticleMetricsConfigTestValues {
+        /**
+         * Configuration with "enabled" = null
+         */
+        NULL(null),
+        /**
+         * Configuration with "enabled" = false
+         */
+        FALSE(false),
+        /**
+         * Configuration with "enabled" = true
+         */
+        TRUE(true),
+        /**
+         * Configuration is null
+         */
+        CONFIG_NULL(null);
+
+        private final Boolean value;
+
+        VerticleMetricsConfigTestValues(Boolean value) {
+            this.value = value;
+        }
+
+        public JsonObject getConfig() {
+            if (this == CONFIG_NULL) {
+                return null;
+            }
+            return getConfig(value);
+        }
+
+        private JsonObject getConfig(Boolean verticleMetricsEnabled) {
+            return new JsonObject().put(DataVerticle.CONFIG_METRICS_KEY,
+                    new JsonObject().put(ConfiguredDataVerticleMetrics.ENABLED, verticleMetricsEnabled));
+        }
+    }
+
+    static Stream<Arguments> metricsConfigurationArguments() {
+        return Stream.of(Arguments.of(false, VerticleMetricsConfigTestValues.NULL, false),
+                Arguments.of(false, VerticleMetricsConfigTestValues.FALSE, false),
+                Arguments.of(false, VerticleMetricsConfigTestValues.TRUE, false),
+                Arguments.of(false, VerticleMetricsConfigTestValues.CONFIG_NULL, false),
+                Arguments.of(true, VerticleMetricsConfigTestValues.FALSE, false),
+                Arguments.of(true, VerticleMetricsConfigTestValues.NULL, true),
+                Arguments.of(true, VerticleMetricsConfigTestValues.TRUE, true),
+                Arguments.of(true, VerticleMetricsConfigTestValues.CONFIG_NULL, true),
+                Arguments.of(null, VerticleMetricsConfigTestValues.TRUE, false),
+                Arguments.of(null, VerticleMetricsConfigTestValues.FALSE, false),
+                Arguments.of(null, VerticleMetricsConfigTestValues.NULL, false),
+                Arguments.of(null, VerticleMetricsConfigTestValues.CONFIG_NULL, false));
+    }
+
+    @ParameterizedTest(
+            name = "{index}: MetricsConfig enabled:{0}, verticle metric configuration enabled:{1}, expected:{2}")
+    @MethodSource("metricsConfigurationArguments")
+    @Timeout(timeUnit = TimeUnit.SECONDS, value = 1)
+    @DisplayName("Tests the creation of the actual metric configuration.")
+    @SuppressWarnings("PMD.UnusedFormalParameter")
+    void testMetricsConfiguration(Boolean globalEnabled, VerticleMetricsConfigTestValues verticleMetricsConfigValue,
+            boolean expectedValue) {
+        MetricsConfig mc = getGlobalMetricsConfig(globalEnabled);
+        JsonObject verticleMetricsConfig = verticleMetricsConfigValue.getConfig();
+
+        JsonObject config = new DataVerticleMetricConfig(verticleMetricsConfig).getMetricsConfig(mc);
+        assertThat(config).isEqualTo(new JsonObject().put(ConfiguredDataVerticleMetrics.ENABLED, expectedValue));
+    }
+
+    private MetricsConfig getGlobalMetricsConfig(Boolean globalEnabled) {
+        if (globalEnabled == null) {
+            return null;
+        }
+        return new MetricsConfig().setEnabled(globalEnabled);
+    }
+
     private static class DataVerticleImpl0 extends DataVerticle<String> {
         public static final String NAME = "ExpectedName0";
 
@@ -173,6 +257,31 @@ class DataVerticleTest extends DataVerticleTestBase {
                 return succeededFuture("Pong");
             }
             throw new DataException(400, "Bad Request");
+        }
+    }
+
+    private static class DataVerticleMetricConfig extends DataVerticle<String> {
+
+        private final JsonObject config;
+
+        DataVerticleMetricConfig(JsonObject verticleMetricConfig) {
+            super();
+            config = verticleMetricConfig;
+        }
+
+        @Override
+        public JsonObject config() {
+            return config;
+        }
+
+        @Override
+        public String getName() {
+            throw new UnsupportedOperationException("test implementation");
+        }
+
+        @Override
+        public Future<String> retrieveData(DataQuery query, DataMap require, DataContext context) {
+            throw new UnsupportedOperationException("test implementation");
         }
     }
 }

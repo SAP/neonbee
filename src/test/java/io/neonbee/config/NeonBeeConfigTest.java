@@ -157,6 +157,23 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
     }
 
     @Test
+    @DisplayName("should read the metrics configuration correctly")
+    void readMetricsConfig() {
+        NeonBeeConfig config =
+                new NeonBeeConfig(new JsonObject().put("metrics", new JsonObject().put("enabled", true)));
+        assertThat(config.getMetricsConfig().isEnabled()).isTrue();
+    }
+
+    @Test
+    @DisplayName("should create the metrics configuration JSON correctly")
+    void metricsConfigToJson() {
+        NeonBeeConfig config = new NeonBeeConfig();
+        config.getMetricsConfig().setEnabled(true);
+        JsonObject actual = config.toJson();
+        assertThat(actual.getJsonObject("metrics")).isEqualTo(new JsonObject().put("enabled", true));
+    }
+
+    @Test
     @DisplayName("should read the platform classes correctly")
     void testGetPlatformClasses() {
         List<String> validListOfPlatformClasses = List.of("hodor");

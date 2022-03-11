@@ -15,8 +15,10 @@ import static io.vertx.core.Future.succeededFuture;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -29,10 +31,15 @@ import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 
+import io.micrometer.core.instrument.ImmutableTag;
+import io.micrometer.core.instrument.Tag;
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeDeployable;
+import io.neonbee.config.MetricsConfig;
 import io.neonbee.data.DataRequest.ResolutionStrategy;
 import io.neonbee.data.internal.DataContextImpl;
+import io.neonbee.data.internal.metrics.ConfiguredDataVerticleMetrics;
+import io.neonbee.data.internal.metrics.DataVerticleMetrics;
 import io.neonbee.internal.helper.FunctionalHelper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.AbstractVerticle;
@@ -46,21 +53,32 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.json.JsonObject;
 
+@SuppressWarnings("PMD.GodClass")
 public abstract class DataVerticle<T> extends AbstractVerticle implements DataAdapter<T> {
     /**
      * The name of the context header of an event bus message.
      */
     public static final String CONTEXT_HEADER = "context";
 
+    /**
+     * Metrics configuration name.
+     */
+    public static final String CONFIG_METRICS_KEY = "metrics";
+
     static final String RESOLUTION_STRATEGY_HEADER = "resolutionStrategy";
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
+
+    private static final String SUCCEEDED_RESPONSE_COUNT = "succeeded response count";
 
     @SuppressWarnings("UnnecessaryLambda") // overridden in DummyVerticleHelper, as getNamespace is final
     private final Supplier<String> namespaceSupplier =
             () -> Optional.ofNullable(this.getClass().getAnnotation(NeonBeeDeployable.class))
                     .map(NeonBeeDeployable::namespace).map(Strings::emptyToNull).map(String::toLowerCase).orElse(null);
+
+    private DataVerticleMetrics dataVerticleMetrics;
 
     /**
      * The name of this data verticle (must be unique in one cluster)
@@ -112,6 +130,8 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
     @Override
     public void init(Vertx vertx, Context context) {
         super.init(vertx, context);
+        JsonObject metrics = getMetricsConfig(NeonBee.get().getConfig().getMetricsConfig());
+        this.dataVerticleMetrics = ConfiguredDataVerticleMetrics.configureMetricsReporting(metrics);
 
         // if present, register the custom codec. IMPORTANT: do NOT register the codec in the start method, as the
         // codec will need to be available on all instances, even if no instance of the verticle is started later on
@@ -125,6 +145,27 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                 }
             }
         }
+    }
+
+    /**
+     * Get the metric configuration.
+     *
+     * @param globalMetricsConfig the global {@link MetricsConfig} object.
+     * @return the metric configuration as JSON object.
+     */
+    @VisibleForTesting
+    JsonObject getMetricsConfig(MetricsConfig globalMetricsConfig) {
+        MetricsConfig metricsConfig =
+                globalMetricsConfig == null ? new MetricsConfig().setEnabled(false) : globalMetricsConfig;
+        JsonObject verticleMetricsConfig =
+                config() == null ? new JsonObject() : config().getJsonObject(CONFIG_METRICS_KEY, new JsonObject());
+
+        Boolean enabled = verticleMetricsConfig.getBoolean(ConfiguredDataVerticleMetrics.ENABLED);
+        // if there is no setting for the metric enabled in the DataVerticle configuration use the global setting.
+        if (enabled == null || Boolean.TRUE.equals(enabled)) {
+            verticleMetricsConfig.put(ConfiguredDataVerticleMetrics.ENABLED, metricsConfig.isEnabled());
+        }
+        return verticleMetricsConfig;
     }
 
     /**
@@ -262,7 +303,9 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
     public <U> Future<U> requestData(DataRequest request, DataContext context) {
         LOGGER.correlateWith(context).debug("Data verticle {} requesting data from {}", getQualifiedName(), request);
 
-        return requestData(vertx, request, context);
+        Future<U> future = requestData(vertx, request, context);
+        reportRequestDataMetrics(request, future);
+        return future;
     }
 
     /**
@@ -277,6 +320,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
      */
     public static <U> Future<U> requestData(Vertx vertx, DataRequest request, DataContext context) {
         DataSource<?> dataSource = request.getDataSource();
+
         if (dataSource != null) {
             return dataSource.retrieveData(request.getQuery(), context).map(FunctionalHelper::uncheckedMapper);
         }
@@ -321,6 +365,24 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
         }
 
         return failedFuture(new IllegalArgumentException("Data request did not specify what data to request"));
+    }
+
+    private <U> void reportRequestDataMetrics(DataRequest request, Future<U> future) {
+        List<Tag> tags;
+        if (request.getQuery() == null || request.getQuery().getQuery() == null) {
+            tags = List.of();
+        } else {
+            tags = List.of(new ImmutableTag("query", request.getQuery().getQuery()));
+        }
+        String qualifiedName = request.getQualifiedName();
+
+        dataVerticleMetrics.reportTimingMetric("request.data.timer." + qualifiedName, "time to retrieve the data", tags,
+                future);
+        dataVerticleMetrics.reportStatusCounter("request.data.counter." + qualifiedName, SUCCEEDED_RESPONSE_COUNT, tags,
+                future);
+        dataVerticleMetrics.reportActiveRequestsGauge("request.data.active.requests." + qualifiedName,
+                "Number of requests waiting for a response", List.of(), future);
+        dataVerticleMetrics.reportNumberOfRequests("request.counter." + qualifiedName, "Number of requests sent", tags);
     }
 
     /**
@@ -490,18 +552,51 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                 // ignore the result of the require data composite future (otherwiseEmpty), the retrieve data method
                 // should decide if it needs to handle success or failure of any of the individual asynchronous results
                 return CompositeFuture.join(Optional.ofNullable(requests).map(Collection::stream).orElse(Stream.empty())
-                        .map(request -> requestResults.computeIfAbsent(request,
-                                mapRequest -> requestData(vertx, request, context.copy())))
-                        .map(Future.class::cast).collect(Collectors.toList())).otherwiseEmpty();
+                        .map(request -> requestResults.computeIfAbsent(request, mapRequest -> {
+                            Future<Object> future = requestData(vertx, request, context.copy());
+                            reportRequestDataMetrics(request, future);
+                            return future;
+                        })).map(Future.class::cast).collect(Collectors.toList())).otherwiseEmpty();
             }).compose(requiredCompositeOrNothing -> {
+                List<Tag> tags = retrieveDataTags();
                 try {
-                    return retrieveData(query, new DataMap(requestResults), context);
+                    Future<T> future = retrieveData(query, new DataMap(requestResults), context);
+                    reportRetrieveDataMetrics(tags, future);
+                    return future;
                 } catch (Exception e) {
+                    dataVerticleMetrics.reportStatusCounter("retrieve.data.counter." + getAddress(),
+                            SUCCEEDED_RESPONSE_COUNT, tags, failedFuture(e));
                     // handle any (runtime) exception here and fail the result future
                     return failedFuture(e);
                 }
             });
         }
+    }
+
+    /**
+     * @return tags for the retrieve data metrics.
+     */
+    private List<Tag> retrieveDataTags() {
+        List<Tag> tags = new ArrayList<>(2);
+        String name = getName();
+        if (name != null) {
+            tags.add(new ImmutableTag("name", name));
+        }
+        String namespace = getNamespace();
+        if (namespace != null) {
+            tags.add(new ImmutableTag("namespace", namespace));
+        }
+        return tags;
+    }
+
+    private void reportRetrieveDataMetrics(List<Tag> tags, Future<T> future) {
+        String address = getAddress();
+        dataVerticleMetrics.reportTimingMetric("retrieve.data.timer." + address, "Time to retrieve data", tags, future);
+        dataVerticleMetrics.reportStatusCounter("retrieve.data.counter." + address, SUCCEEDED_RESPONSE_COUNT, tags,
+                future);
+        dataVerticleMetrics.reportActiveRequestsGauge("retrieve.data.active.requests." + address,
+                "Number of requests waiting for a response", tags, future);
+        dataVerticleMetrics.reportNumberOfRequests("retrieve.counter." + address, "Number of requests sent", tags);
     }
 
     private class OptimizedResolutionRoutine implements ResolutionRoutine {
