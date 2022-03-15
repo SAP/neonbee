@@ -93,11 +93,11 @@ class DataVerticleTest extends DataVerticleTestBase {
         Checkpoint checkpoint = testContext.checkpoint(3);
 
         assertDataEquals(requestData(DataVerticleImpl0.NAME), DataVerticleImpl0.EXPECTED_RESPONSE, testContext)
-                .onComplete(nothing -> checkpoint.flag());
+                .onComplete(testContext.succeeding(nothing -> checkpoint.flag()));
         assertDataEquals(requestData(DataVerticleImpl1.NAME), DataVerticleImpl1.EXPECTED_RESPONSE, testContext)
-                .onComplete(nothing -> checkpoint.flag());
+                .onComplete(testContext.succeeding(nothing -> checkpoint.flag()));
         assertDataFailure(requestData(requestDVImpl2), new DataException(400, "Bad Request"), testContext)
-                .onComplete(nothing -> checkpoint.flag());
+                .onComplete(testContext.succeeding(nothing -> checkpoint.flag()));
     }
 
     @Test

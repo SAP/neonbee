@@ -33,7 +33,7 @@ public interface EntityResponseVerifier {
      * @param response      a Future with the received response
      * @param assertHandler the assertion handler which implements the validation logic for the response
      * @param testContext   the Vert.x test context
-     * @return a succeeded Future if the the assertion was successful. Otherwise, the testContext fails.
+     * @return a succeeded Future if the assertion was successful. Otherwise, the testContext fails.
      */
 
     default Future<Void> assertEntity(Future<EntityWrapper> response, Consumer<EntityWrapper> assertHandler,
@@ -52,7 +52,7 @@ public interface EntityResponseVerifier {
      * @param assertHandler   the assertion handler which implements the validation logic for the response under
      *                        consideration of the {@link DataContext}
      * @param testContext     the Vert.x test context
-     * @return a succeeded Future if the the assertion was successful. Otherwise, the testContext fails.
+     * @return a succeeded Future if the assertion was successful. Otherwise, the testContext fails.
      */
     default Future<Void> assertEntity(Function<DataContext, Future<EntityWrapper>> responseBuilder,
             BiConsumer<EntityWrapper, DataContext> assertHandler, VertxTestContext testContext) {
@@ -65,7 +65,7 @@ public interface EntityResponseVerifier {
      * @param response    a Future with the received response
      * @param exception   the exception that is expected and compared to the received response
      * @param testContext the Vert.x test context
-     * @return a succeeded Future if the the assertion was successful. Otherwise, the testContext fails.
+     * @return a succeeded Future if the assertion was successful. Otherwise, the testContext fails.
      */
     default Future<Void> assertEntityFailure(Future<EntityWrapper> response, DataException exception,
             VertxTestContext testContext) {
@@ -78,7 +78,7 @@ public interface EntityResponseVerifier {
      * @param response      a Future with the received response
      * @param assertHandler the assertion handler which implements the expected exception
      * @param testContext   the Vert.x test context
-     * @return a succeeded Future if the the assertion was successful. Otherwise, the testContext fails.
+     * @return a succeeded Future if the assertion was successful. Otherwise, the testContext fails.
      */
     default Future<Void> assertEntityFailure(Future<EntityWrapper> response, Consumer<DataException> assertHandler,
             VertxTestContext testContext) {
@@ -96,7 +96,7 @@ public interface EntityResponseVerifier {
      * @param assertHandler   the assertion handler which implements an exception that is used for the comparison with
      *                        the actual exception from the response under consideration of the {@link DataContext}
      * @param testContext     the Vert.x test context
-     * @return a succeeded Future if the the assertion was successful. Otherwise, the testContext fails.
+     * @return a succeeded Future if the assertion was successful. Otherwise, the testContext fails.
      */
     default Future<Void> assertEntityFailure(Function<DataContext, Future<EntityWrapper>> responseBuilder,
             BiConsumer<DataException, DataContext> assertHandler, VertxTestContext testContext) {
