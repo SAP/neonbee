@@ -1,0 +1,7 @@
+{
+  "name": "@neonbee/models-plugin",
+  "version": "0.0.0",
+  "dependencies": {
+    "@sap/cds-dk": "4.0.7"
+  }
+}

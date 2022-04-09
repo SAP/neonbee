@@ -39,3 +39,15 @@ License: EPL-2.0
 Files: .editorconfig  .gitignore  .gitattributes  .vscode/settings.json
 Copyright: 2019 SAP SE or an SAP affiliate company and NeonBee contributors
 License: CC0-1.0
+
+#### NeonBee Plugin
+
+Files: gradle-plugin/gradle/wrapper/*  gradle-plugin/gradlew  gradle-plugin/gradlew.bat
+Copyright: Gradle Inc. 2020
+License: Apache-2.0
+
+Files: gradle-plugin/src/* gradle-plugin/gradle/spotless/* gradle-plugin/.gitignore
+Copyright: 2019 SAP SE or an SAP affiliate company and NeonBee contributors
+License: EPL-2.0
+
+

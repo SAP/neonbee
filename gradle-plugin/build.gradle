@@ -1,0 +1,58 @@
+import static com.diffplug.spotless.LineEnding.UNIX
+
+plugins {
+    id 'idea'
+    id 'java-gradle-plugin'
+    id 'groovy'
+    id 'maven-publish'
+    id "com.diffplug.spotless" version "6.4.2"
+}
+
+idea {
+    module {
+        downloadJavadoc = true
+    }
+}
+
+group 'io.neonbee'
+version '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    gradlePluginPortal()
+}
+
+dependencies {
+    implementation platform('org.codehaus.groovy:groovy-bom:3.0.10')
+    implementation 'org.codehaus.groovy:groovy-yaml:3.0.10'
+
+    implementation 'com.github.node-gradle:gradle-node-plugin:3.0.1' // https://plugins.gradle.org/plugin/com.github.node-gradle.node
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+gradlePlugin {
+    plugins {
+        base {
+            id = 'io.neonbee.gradle.base'
+            implementationClass = 'io.neonbee.gradle.BasePlugin'
+        }
+
+        models {
+            id = 'io.neonbee.gradle.models'
+            implementationClass = 'io.neonbee.gradle.ModelsPlugin'
+        }
+    }
+}
+
+spotless {
+    groovy {
+        encoding 'UTF8'
+        trimTrailingWhitespace()
+        endWithNewline()
+        lineEndings UNIX
+        importOrderFile("${rootDir}/gradle/spotless/neonbee.importorder")
+        greclipse('4.21.0').configFile("${rootDir}/gradle/spotless/eclipse-formatter.xml")
+    }
+}
