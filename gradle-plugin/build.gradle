@@ -26,6 +26,8 @@ dependencies {
     implementation platform('org.codehaus.groovy:groovy-bom:3.0.10')
     implementation 'org.codehaus.groovy:groovy-yaml:3.0.10'
 
+    implementation 'org.ow2.asm:asm:9.2' // https://mvnrepository.com/artifact/org.ow2.asm/asm
+    implementation 'com.github.jengelman.gradle.plugins:shadow:6.1.0'
     implementation 'com.github.node-gradle:gradle-node-plugin:3.0.1' // https://plugins.gradle.org/plugin/com.github.node-gradle.node
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
@@ -35,8 +37,8 @@ dependencies {
 gradlePlugin {
     plugins {
         base {
-            id = 'io.neonbee.gradle.base'
-            implementationClass = 'io.neonbee.gradle.BasePlugin'
+            id = 'io.neonbee.gradle.module'
+            implementationClass = 'io.neonbee.gradle.ModulePlugin'
         }
 
         models {

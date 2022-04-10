@@ -41,6 +41,12 @@ class InitializeModelsProjectTask extends DefaultTask {
             if(settingsFile.readLines().stream().noneMatch {line -> line.trim() == includeString} ) {
                 settingsFile.append("\n"+includeString)
             }
+
+            // add models dependency to build.gradle
+            File buildFile = getProject().file('build.gradle')
+            buildFile.append("\n" + """dependencies {
+    models project(path: ':models', configuration: 'models')
+}""")
         }
     }
 }

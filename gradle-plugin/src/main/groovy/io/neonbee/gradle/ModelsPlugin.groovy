@@ -18,6 +18,8 @@ import io.neonbee.gradle.internal.GradleHelper
 import io.neonbee.gradle.internal.NodeHelper
 
 class ModelsPlugin implements Plugin<Project> {
+    static String MODELS_COMPILE_TASK_NAME = 'compileModels'
+
     private static String CLEAN_TASK_NAME = 'clean'
     private static String COMPILE_EDMX_TASK_NAME = 'compileEdmx'
     private static String DIST_DIR = 'dist'
@@ -31,7 +33,7 @@ class ModelsPlugin implements Plugin<Project> {
      * @param renameFunction function to rename endings of compiled files
      * @param configureClosure closure to add additional configuration e.g. dependsOn ..
      */
-    private void registerCompileTask(Project project, String name, String src, String to, String destDir, Closure configureClosure = {}) {
+    private static void registerCompileTask(Project project, String name, String src, String to, String destDir, Closure configureClosure = {}) {
         ArrayList<String> cdsTaskArgs = [
             'compile',
             src,
@@ -88,7 +90,7 @@ class ModelsPlugin implements Plugin<Project> {
             }
         })
 
-        TaskProvider<Task> compileModels = project.tasks.register('compileModels', Task) {
+        TaskProvider<Task> compileModels = project.tasks.register(MODELS_COMPILE_TASK_NAME, Task) {
             List<String> dependencies = new ArrayList<>()
             dependencies.addAll([
                 CLEAN_TASK_NAME,
@@ -98,12 +100,18 @@ class ModelsPlugin implements Plugin<Project> {
             dependsOn(dependencies)
         }
 
+        project.afterEvaluate {
+            project.artifacts.add(BasePlugin.MODELS_CONFIGURATION_NAME, compiledModelsDir.toFile()) {
+                builtBy compileModels
+            }
+        }
+
         GradleHelper.registerOrConfigureTask(project, CLEAN_TASK_NAME, Delete) {
             it.delete(project.fileTree(DIST_DIR))
         }
+    }
 
-        project.afterEvaluate {
-            project.artifacts.add(BasePlugin.MODELS_CONFIGURATION_NAME, project.buildDir) { builtBy compileModels }
-        }
+    static boolean isApplied(Project project) {
+        project.getAllprojects().find {it.projectDir.getName() == 'models'} != null
     }
 }

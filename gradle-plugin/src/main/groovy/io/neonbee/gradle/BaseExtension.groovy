@@ -15,8 +15,15 @@ class BaseExtension {
     // the component group will be used throughout the project (e.g. for defining the version used for maven publications)
     String componentVersion
 
+    // The NeonBee version to build the module against.
+    String neonbeeVersion
+
     BaseExtension(Project project) {
 
+    }
+
+    static BaseExtension get(Project project) {
+        project.extensions.findByType(BaseExtension) ?: project.rootProject.extensions.getByType(BaseExtension)
     }
 
     static BaseExtension create(Project project) {

@@ -22,7 +22,7 @@ class GradleHelper {
 
     static String getFileNameWithoutExtension(Path file) {
         String fileName = file.getName(file.getNameCount()-1).toString()
-        fileName.substring(0, fileName.indexOf('.'))
+        fileName.substring(0, fileName.lastIndexOf('.'))
     }
 
     static File copyResourceToFile(String resourceName, Path target) {
@@ -45,12 +45,12 @@ class GradleHelper {
      * Registers and configures a task if non-existent or (re-)configures the existing task
      */
     static <T extends Task> TaskProvider<T> registerOrConfigureTask(Project project, String name, Class<T> type) {
-        registerOrConfigureTask(project, name, type, { project.configure(it, {}) } as Action)
+        registerOrConfigureTask(project, name, type, {})
     }
     static <T extends Task> TaskProvider<T> registerOrConfigureTask(Project project, String name, Class<T> type, Closure configureClosure) {
-        registerOrConfigureTask(project, name, type, { project.configure(it, configureClosure) } as Action)
+        _registerOrConfigureTask(project, name, type, { project.configure(it, configureClosure) } as Action)
     }
-    static <T extends Task> TaskProvider<T> registerOrConfigureTask(Project project, String name, Class<T> type, Action<? super T> configureAction) {
+    private static <T extends Task> TaskProvider<T> _registerOrConfigureTask(Project project, String name, Class<T> type, Action<? super T> configureAction) {
         def taskProvider = probeTask(project, name) ?: project.tasks.register(name, type)
         taskProvider.configure configureAction
         taskProvider as TaskProvider<T>

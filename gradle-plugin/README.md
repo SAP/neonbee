@@ -5,7 +5,7 @@ The NeonBee Gradle Plugin helps to build NeonBee Modules.
 The plugin can be added with the following code to your *build.gradle* of the root project:
 ```
 plugins {
-    id 'io.neonbee.gradle.base' version '0.0.1-SNAPSHOT'
+    id 'io.neonbee.gradle.module' version '0.0.1-SNAPSHOT'
 }
 ```
 
@@ -23,6 +23,8 @@ This will add a *models* sub-project to your NeonBee module with the following c
  * package.json
  * Example.cds
  * .gitignore
+
+It will also add the required models dependency to your *build.gradle* file.
 
 ## Plugin Development
 
