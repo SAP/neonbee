@@ -26,12 +26,20 @@ dependencies {
     implementation platform('org.codehaus.groovy:groovy-bom:3.0.10')
     implementation 'org.codehaus.groovy:groovy-yaml:3.0.10'
 
+    // Module Plugin Dependencies
     implementation 'org.ow2.asm:asm:9.2' // https://mvnrepository.com/artifact/org.ow2.asm/asm
-    implementation 'com.github.jengelman.gradle.plugins:shadow:6.1.0'
-    implementation 'com.github.node-gradle:gradle-node-plugin:3.0.1' // https://plugins.gradle.org/plugin/com.github.node-gradle.node
+    implementation 'com.github.jengelman.gradle.plugins:shadow:6.1.0' // https://plugins.gradle.org/plugin/com.github.johnrengelman.shadow
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    // Static Code Checkers Plugin Dependencies
+    implementation 'com.diffplug.spotless:spotless-plugin-gradle:6.4.2' // https://plugins.gradle.org/plugin/com.diffplug.spotless
+    implementation 'com.github.spotbugs.snom:spotbugs-gradle-plugin:5.0.6' // https://plugins.gradle.org/plugin/com.github.spotbugs
+    implementation 'gradle.plugin.se.bjurr.violations:violations-gradle-plugin:1.50.16' // https://plugins.gradle.org/plugin/se.bjurr.violations.violations-gradle-plugin
+    implementation "gradle.plugin.com.github.ksoichiro:gradle-console-reporter:0.6.3" // https://plugins.gradle.org/plugin/com.github.ksoichiro.console.reporter
+    implementation "net.ltgt.gradle:gradle-errorprone-plugin:2.0.2" // https://plugins.gradle.org/plugin/net.ltgt.errorprone
+
+
+    // Models Plugin Dependencies
+    implementation 'com.github.node-gradle:gradle-node-plugin:3.0.1' // https://plugins.gradle.org/plugin/com.github.node-gradle.node
 }
 
 gradlePlugin {
@@ -44,6 +52,11 @@ gradlePlugin {
         models {
             id = 'io.neonbee.gradle.models'
             implementationClass = 'io.neonbee.gradle.ModelsPlugin'
+        }
+
+        quality {
+            id = 'io.neonbee.gradle.quality'
+            implementationClass = 'io.neonbee.gradle.QualityPlugin'
         }
     }
 }

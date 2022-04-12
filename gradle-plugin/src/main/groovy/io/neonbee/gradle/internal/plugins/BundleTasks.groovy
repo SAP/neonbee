@@ -11,7 +11,7 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
 
-import io.neonbee.gradle.BaseExtension
+import io.neonbee.gradle.ModuleExtension
 import io.neonbee.gradle.internal.GradleHelper
 
 class BundleTasks {
@@ -40,7 +40,7 @@ class BundleTasks {
             exclude EXCLUDED_FILES
             archiveExtension = 'jar'
             doFirst {
-                archiveVersion = BaseExtension.get(project).getComponentVersion()
+                archiveVersion = ModuleExtension.get(project).getComponentVersion()
             }
         }
 

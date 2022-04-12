@@ -1,5 +1,6 @@
 package io.neonbee.gradle.internal
 
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -31,6 +32,21 @@ class GradleHelper {
             Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
         }
         target.toFile()
+    }
+
+    static void copyResourceDir(String resourceDir, Path targetDir) {
+        URI resource = GradleHelper.class.getResource("").toURI()
+        def fileSystem = FileSystems.newFileSystem( resource, Collections.<String, String>emptyMap())
+        Path jarPath = fileSystem.getPath(resourceDir)
+
+        Files.walk(jarPath).forEach {
+            if (Files.isDirectory(it)) {
+                Files.createDirectory(targetDir.resolve(it.toString()))
+            } else {
+                copyResourceToFile(it.toString(), targetDir.resolve(it.toString()))
+            }
+        }
+        fileSystem.close()
     }
 
     static TaskProvider<? extends Task> probeTask(Project project, String name) {

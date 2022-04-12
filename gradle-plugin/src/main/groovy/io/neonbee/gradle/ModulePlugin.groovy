@@ -1,6 +1,5 @@
 package io.neonbee.gradle
 
-import static io.neonbee.gradle.ModelsPlugin.MODELS_COMPILE_TASK_NAME
 import static java.lang.annotation.ElementType.METHOD
 import static java.lang.annotation.ElementType.TYPE
 
@@ -26,6 +25,7 @@ class ModulePlugin implements Plugin<Project> {
     static String CUSTOM_DEPENDENCIES_CONFIGURATION_NAME = 'custom'
 
     void apply(Project project) {
+        ModuleExtension.create(project)
         project.pluginManager.apply(BasePlugin)
         project.pluginManager.apply(JavaPlugin)
         project.pluginManager.apply(ShadowPlugin)
@@ -39,14 +39,14 @@ class ModulePlugin implements Plugin<Project> {
         Configuration compileConfiguration = project.configurations.maybeCreate(org.gradle.api.plugins.JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME)
         compileConfiguration.extendsFrom(customDependenciesConfiguration)
 
-        verifyNeonBeeExtension(project, BaseExtension.get(project))
+        verifyNeonBeeExtension(project, ModuleExtension.get(project))
         registerShadowJarTasks(project)
     }
 
-    static void verifyNeonBeeExtension(Project project, BaseExtension config) {
+    static void verifyNeonBeeExtension(Project project, ModuleExtension config) {
         project.afterEvaluate {
             if (!config.componentName || !config.componentGroup || !config.componentVersion) {
-                throw new InvalidUserDataException("""It is mandatory to define a componentName, componentGroup and componentVersion in the ${BaseExtension.NAME} configuration extension object DSL block in the root project:
+                throw new InvalidUserDataException("""It is mandatory to define a componentName, componentGroup and componentVersion in the ${ModuleExtension.NAME} configuration extension object DSL block in the root project:
 
 neonbeeModule {
     componentName = 'example'

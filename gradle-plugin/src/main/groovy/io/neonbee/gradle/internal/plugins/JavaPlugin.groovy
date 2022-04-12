@@ -14,13 +14,13 @@ import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
-import io.neonbee.gradle.BaseExtension
 import io.neonbee.gradle.BasePlugin
+import io.neonbee.gradle.ModuleExtension
 
 class JavaPlugin implements Plugin<Project> {
     void apply(Project project) {
         project.pluginManager.apply(org.gradle.api.plugins.JavaPlugin)
-        BaseExtension config = BaseExtension.get(project)
+        ModuleExtension config = ModuleExtension.get(project)
 
         // apply and configure other, third-party plugins
         configureJavaPlugin(project)
@@ -55,7 +55,8 @@ class JavaPlugin implements Plugin<Project> {
         // the models configuration is created by the base plugin, we need the models built by other sub-projects as input here
         project.tasks.named(TEST_TASK_NAME) {
             // as models are required for the unit tests
-            dependsOn BasePlugin.getModelsConfiguration(project)
+            dependsOn BasePlugin.getModelsConfiguration(project), 'cleanTest'
+
 
             useJUnitPlatform()
             testLogging {

@@ -9,12 +9,8 @@ import io.neonbee.gradle.internal.tasks.InitializeModelsProjectTask
 
 class BasePlugin implements Plugin<Project> {
     static String MODELS_CONFIGURATION_NAME = 'models'
-    private BaseExtension config
 
     void apply(Project project) {
-        // config of the root project (where it is created)
-        this.config = BaseExtension.create(project)
-
         // create models configuration for every project
         Configuration modelsConfiguration = project.configurations.maybeCreate(MODELS_CONFIGURATION_NAME)
         modelsConfiguration.description = 'Model configuration'
