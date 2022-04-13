@@ -58,6 +58,11 @@ gradlePlugin {
             id = 'io.neonbee.gradle.quality'
             implementationClass = 'io.neonbee.gradle.QualityPlugin'
         }
+
+        application {
+            id = 'io.neonbee.gradle.application'
+            implementationClass = 'io.neonbee.gradle.ApplicationPlugin'
+        }
     }
 }
 

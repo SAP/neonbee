@@ -112,6 +112,14 @@ class ModelsPlugin implements Plugin<Project> {
     }
 
     static boolean isApplied(Project project) {
-        project.getAllprojects().find {it.projectDir.getName() == 'models'} != null
+        getModelsProject(project) != null
+    }
+
+    static Task getCompileModelsTask(Project project) {
+        getModelsProject(project).tasks.findByName(MODELS_COMPILE_TASK_NAME)
+    }
+
+    private static Project getModelsProject(Project project) {
+        project.getAllprojects().find {it.projectDir.getName() == 'models'}
     }
 }

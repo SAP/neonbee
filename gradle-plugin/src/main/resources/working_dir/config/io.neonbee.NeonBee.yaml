@@ -1,0 +1,7 @@
+---
+# the number of seconds before an event bus message times-out, defaults to 30
+eventBusTimeout: 110
+
+# configure the tracking strategy implementation.
+trackingDataHandlingStrategy: io.neonbee.internal.tracking.TrackingDataLoggingStrategy
+

@@ -40,7 +40,7 @@ class GradleHelper {
         Path jarPath = fileSystem.getPath(resourceDir)
 
         Files.walk(jarPath).forEach {
-            if (Files.isDirectory(it)) {
+            if (Files.isDirectory(it) && Files.notExists(targetDir.resolve(it.toString()))) {
                 Files.createDirectory(targetDir.resolve(it.toString()))
             } else {
                 copyResourceToFile(it.toString(), targetDir.resolve(it.toString()))

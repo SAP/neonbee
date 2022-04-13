@@ -19,16 +19,26 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import io.neonbee.gradle.internal.BundleHelper
 import io.neonbee.gradle.internal.GradleHelper
 import io.neonbee.gradle.internal.plugins.JavaPlugin
+import io.neonbee.gradle.internal.plugins.PublishPlugin
 
 class ModulePlugin implements Plugin<Project> {
     static String MODELS_MODULE_JAR_TASK_NAME = 'modelsModuleJar'
     static String CUSTOM_DEPENDENCIES_CONFIGURATION_NAME = 'custom'
 
     void apply(Project project) {
-        ModuleExtension.create(project)
+        ModuleExtension config = ModuleExtension.create(project)
+
+        // after project evaluation, the configuration was applied, so use the componentName as archivesBaseName for this project
+        project.afterEvaluate {
+            project.group = config.getComponentGroup()
+            project.archivesBaseName = config.getComponentName()
+            project.version = config.getComponentVersion()
+        }
+
         project.pluginManager.apply(BasePlugin)
         project.pluginManager.apply(JavaPlugin)
         project.pluginManager.apply(ShadowPlugin)
+        project.pluginManager.apply(PublishPlugin)
 
         Configuration customDependenciesConfiguration = project.configurations.maybeCreate(CUSTOM_DEPENDENCIES_CONFIGURATION_NAME)
         customDependenciesConfiguration.setVisible(false)
@@ -39,7 +49,7 @@ class ModulePlugin implements Plugin<Project> {
         Configuration compileConfiguration = project.configurations.maybeCreate(org.gradle.api.plugins.JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME)
         compileConfiguration.extendsFrom(customDependenciesConfiguration)
 
-        verifyNeonBeeExtension(project, ModuleExtension.get(project))
+        verifyNeonBeeExtension(project, config)
         registerShadowJarTasks(project)
     }
 
@@ -55,13 +65,6 @@ neonbeeModule {
     neonbeeVersion = '0.10.0'
 }""")
             }
-        }
-
-        // after project evaluation, the configuration was applied, so use the componentName as archivesBaseName for this project
-        project.afterEvaluate {
-            project.group = config.getComponentGroup()
-            project.archivesBaseName = config.getComponentName()
-            project.version = config.getComponentVersion()
         }
     }
 
