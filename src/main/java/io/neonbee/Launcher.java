@@ -63,14 +63,14 @@ public class Launcher {
         NeonBeeOptions.Mutable options = new NeonBeeOptions.Mutable();
         CLIConfigurator.inject(commandLine, options);
 
-        // do not use a Logger before this!
-        configureLogging(options);
-
         Vertx launcherVertx = Vertx.vertx();
         Future<NeonBeeConfig> configFuture = NeonBeeConfig.load(launcherVertx, options.getWorkingDirectory());
         executeLauncherPreProcessors(launcherVertx, options).onFailure(throwable -> {
             System.err.println("Error occurred during launcher pre-processing. " + throwable.getMessage()); // NOPMD
             System.exit(1); // NOPMD
+        }).onSuccess(unused -> {
+            // do not use a Logger before this!
+            configureLogging(options);
         }).compose(unused -> configFuture).eventually(unused -> closeVertx(launcherVertx))
                 .compose(config -> NeonBee.create(options, config)).onSuccess(neonBee -> Launcher.neonBee = neonBee)
                 .onFailure(throwable -> System.err.println("Failed to start NeonBee '" + throwable.getMessage() + "'")); // NOPMD
