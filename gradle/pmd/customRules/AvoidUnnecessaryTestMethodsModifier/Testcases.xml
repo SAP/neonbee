@@ -10,7 +10,7 @@ class Foo {
   @Test
   public void bar() {
   }
-  
+
   @Test
   private void foo() {
   }
@@ -22,19 +22,6 @@ class Foo {
   @Test
   protected void foobar() {
   }
-
-  static class TestPreProcessor implements LauncherPreProcessor {
-        private boolean preProcessorExecuted;
-
-        @Override
-        public void execute(NeonBeeOptions options) {
-            this.preProcessorExecuted = true;
-        }
-
-        public boolean isPreProcessorExecuted() {
-            return preProcessorExecuted;
-        }
-    }
 }
         ]]></code>
       <source-type>java 11</source-type>
