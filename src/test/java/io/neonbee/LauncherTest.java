@@ -192,19 +192,6 @@ class LauncherTest {
         verify(commandLine).hasEnvArg(option);
     }
 
-    static class TestPreProcessor implements LauncherPreProcessor {
-        private boolean preProcessorExecuted;
-
-        @Override
-        public void execute(NeonBeeOptions options) {
-            this.preProcessorExecuted = true;
-        }
-
-        public boolean isPreProcessorExecuted() {
-            return preProcessorExecuted;
-        }
-    }
-
     private void assertNeonBeeOptions() {
         NeonBeeOptions neonBeeOptions = parseArgs();
         assertThat(neonBeeOptions.getInstanceName()).isEqualTo("Hodor");

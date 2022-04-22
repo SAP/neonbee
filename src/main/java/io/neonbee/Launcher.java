@@ -6,7 +6,6 @@ import static java.lang.System.setProperty;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.ServiceLoader;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -67,11 +66,7 @@ public class Launcher {
         configureLogging(options);
 
         Vertx launcherVertx = Vertx.vertx();
-        Future<NeonBeeConfig> configFuture = NeonBeeConfig.load(launcherVertx, options.getWorkingDirectory());
-        executeLauncherPreProcessors(launcherVertx, options).onFailure(throwable -> {
-            System.err.println("Error occurred during launcher pre-processing. " + throwable.getMessage()); // NOPMD
-            System.exit(1); // NOPMD
-        }).compose(unused -> configFuture).eventually(unused -> closeVertx(launcherVertx))
+        NeonBeeConfig.load(launcherVertx, options.getWorkingDirectory()).eventually(unused -> closeVertx(launcherVertx))
                 .compose(config -> NeonBee.create(options, config)).onSuccess(neonBee -> Launcher.neonBee = neonBee)
                 .onFailure(throwable -> System.err.println("Failed to start NeonBee '" + throwable.getMessage() + "'")); // NOPMD
     }
@@ -95,17 +90,6 @@ public class Launcher {
         Promise<Void> promise = Promise.promise();
         launcherVertx.close(promise);
         return promise.future();
-    }
-
-    private static Future<Void> executeLauncherPreProcessors(Vertx launcherVertx, NeonBeeOptions.Mutable options) {
-        return Future
-                .<ServiceLoader<LauncherPreProcessor>>future(
-                        promise -> promise.complete(ServiceLoader.load(LauncherPreProcessor.class)))
-                .compose(sl -> sl.stream().map(ServiceLoader.Provider::get).map(processor -> {
-                    Promise<Void> promise = Promise.promise();
-                    processor.execute(launcherVertx, options, promise);
-                    return promise.future();
-                }).reduce(Future.succeededFuture(), (f1, f2) -> f1.compose(unused -> f2)));
     }
 
     @VisibleForTesting
