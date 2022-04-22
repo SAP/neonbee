@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
+import org.slf4j.LoggerFactory;
+
 import com.google.common.annotations.VisibleForTesting;
 
 import io.neonbee.config.NeonBeeConfig;
@@ -40,6 +42,48 @@ public class Launcher {
 
     @SuppressWarnings("checkstyle:MissingJavadocMethod")
     public static void main(String[] args) {
+        CommandLine commandLine = commandLine(args);
+
+        NeonBeeOptions.Mutable options = createNeonBeeOptions(commandLine);
+
+        startNeonBee(options);
+    }
+
+    /**
+     * Configure and start NeonBee.
+     *
+     * @param options NeonBeeOptions
+     */
+    public static void startNeonBee(NeonBeeOptions options) {
+        // do not use a Logger before this!
+        configureLogging(options);
+
+        Vertx launcherVertx = Vertx.vertx();
+        Future.succeededFuture().compose(unused -> NeonBeeConfig.load(launcherVertx, options.getWorkingDirectory()))
+                .eventually(unused -> closeVertx(launcherVertx)).compose(config -> NeonBee.create(options, config))
+                .onSuccess(neonBee -> Launcher.neonBee = neonBee).onFailure(throwable -> LoggerFactory
+                        .getLogger(Launcher.class).error("Failed to start NeonBee", throwable));
+    }
+
+    /**
+     * Create the NeonBeeOptions from the CommandLine.
+     *
+     * @param commandLine the CommandLine
+     * @return the NeonBeeOptions.Mutable object from the CommandLine
+     */
+    public static NeonBeeOptions.Mutable createNeonBeeOptions(CommandLine commandLine) {
+        NeonBeeOptions.Mutable options = new NeonBeeOptions.Mutable();
+        CLIConfigurator.inject(commandLine, options);
+        return options;
+    }
+
+    /**
+     * Create the CommandLine object from the provided arguments.
+     *
+     * @param args the arguments to parse
+     * @return the CommandLine from the arguments
+     */
+    public static CommandLine commandLine(String... args) {
         CommandLine commandLine = null;
         try {
             commandLine = parseCommandLine(args);
@@ -58,17 +102,7 @@ public class Launcher {
             System.out.print(builder); // NOPMD
             System.exit(0); // NOPMD
         }
-
-        NeonBeeOptions.Mutable options = new NeonBeeOptions.Mutable();
-        CLIConfigurator.inject(commandLine, options);
-
-        // do not use a Logger before this!
-        configureLogging(options);
-
-        Vertx launcherVertx = Vertx.vertx();
-        NeonBeeConfig.load(launcherVertx, options.getWorkingDirectory()).eventually(unused -> closeVertx(launcherVertx))
-                .compose(config -> NeonBee.create(options, config)).onSuccess(neonBee -> Launcher.neonBee = neonBee)
-                .onFailure(throwable -> System.err.println("Failed to start NeonBee '" + throwable.getMessage() + "'")); // NOPMD
+        return commandLine;
     }
 
     /**
@@ -208,7 +242,7 @@ public class Launcher {
          * @return The converted option name
          */
         static String getEnvName(Option option) {
-            return "NEONBEE_" + option.getName().replaceAll("-", "_").toUpperCase(Locale.ROOT);
+            return "NEONBEE_" + option.getName().replace("-", "_").toUpperCase(Locale.ROOT);
         }
     }
 }
