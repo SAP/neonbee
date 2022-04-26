@@ -1,6 +1,7 @@
 package io.neonbee.endpoint;
 
 import io.neonbee.config.EndpointConfig;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -25,9 +26,9 @@ public interface Endpoint {
      * @param vertx    the Vert.x instance to use to create the router for
      * @param basePath the base path NeonBee will mount the router to, once it was created
      * @param config   any additional configuration provided in the {@link EndpointConfig}
-     * @return a fully configured {@link Router} for this endpoint
+     * @return a {@link Future} holding a fully configured {@link Router} for this endpoint
      */
-    Router createEndpointRouter(Vertx vertx, String basePath, JsonObject config);
+    Future<Router> createEndpointRouter(Vertx vertx, String basePath, JsonObject config);
 
     /**
      * Convenience method creating a {@link Router} for a single {@link Handler}.

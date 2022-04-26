@@ -172,7 +172,7 @@ public class ODataV4Endpoint implements Endpoint {
     }
 
     @Override
-    public Router createEndpointRouter(Vertx vertx, String basePath, JsonObject config) {
+    public Future<Router> createEndpointRouter(Vertx vertx, String basePath, JsonObject config) {
         Router router = Router.router(vertx);
         AtomicBoolean initialized = new AtomicBoolean(); // true if the router was initialized already
         AtomicReference<Map<String, EntityModel>> models = new AtomicReference<>();
@@ -225,7 +225,7 @@ public class ODataV4Endpoint implements Endpoint {
                             routingContext.reroute(routingContext.request().uri());
                         })));
 
-        return router;
+        return succeededFuture(router);
     }
 
     private static Future<Void> refreshRouter(Vertx vertx, Router router, String basePath, UriConversion uriConversion,

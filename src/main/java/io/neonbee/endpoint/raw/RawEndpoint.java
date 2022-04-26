@@ -15,6 +15,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.GATEWAY_TIMEOUT;
 import static io.netty.handler.codec.http.HttpResponseStatus.METHOD_NOT_ALLOWED;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
+import static io.vertx.core.Future.succeededFuture;
 import static io.vertx.core.http.HttpMethod.GET;
 import static io.vertx.core.http.HttpMethod.HEAD;
 import static io.vertx.core.http.HttpMethod.PATCH;
@@ -39,6 +40,7 @@ import io.neonbee.data.DataRequest;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.endpoint.Endpoint;
 import io.neonbee.internal.RegexBlockList;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -77,8 +79,8 @@ public class RawEndpoint implements Endpoint {
     }
 
     @Override
-    public Router createEndpointRouter(Vertx vertx, String basePath, JsonObject config) {
-        return createRouter(vertx, new RawHandler(config));
+    public Future<Router> createEndpointRouter(Vertx vertx, String basePath, JsonObject config) {
+        return succeededFuture(createRouter(vertx, new RawHandler(config)));
     }
 
     @VisibleForTesting
