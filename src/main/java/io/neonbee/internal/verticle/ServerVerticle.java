@@ -5,45 +5,39 @@ import static io.vertx.core.Future.succeededFuture;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.lang.invoke.MethodHandles;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 
 import io.neonbee.NeonBee;
-import io.neonbee.config.AuthHandlerConfig;
 import io.neonbee.config.EndpointConfig;
 import io.neonbee.config.ServerConfig;
 import io.neonbee.config.ServerConfig.SessionHandling;
 import io.neonbee.endpoint.Endpoint;
+import io.neonbee.endpoint.MountableEndpoint;
 import io.neonbee.handler.ErrorHandler;
+import io.neonbee.internal.handler.AuthChainHandler;
 import io.neonbee.internal.handler.CacheControlHandler;
 import io.neonbee.internal.handler.CorrelationIdHandler;
 import io.neonbee.internal.handler.DefaultErrorHandler;
-import io.neonbee.internal.handler.HooksHandler;
 import io.neonbee.internal.handler.InstanceInfoHandler;
 import io.neonbee.internal.handler.LoggerHandler;
 import io.neonbee.internal.handler.NotFoundHandler;
+import io.neonbee.internal.helper.AsyncHelper;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.AuthenticationHandler;
 import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.ChainAuthHandler;
 import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.handler.TimeoutHandler;
 import io.vertx.ext.web.sstore.ClusteredSessionStore;
@@ -63,14 +57,6 @@ public class ServerVerticle extends AbstractVerticle {
     public static final String SERVER_CONFIG_KEY = "__ServerVerticleConfig__";
 
     @VisibleForTesting
-    static final AuthenticationHandler NOOP_AUTHENTICATION_HANDLER = new AuthenticationHandler() {
-        @Override
-        public void handle(RoutingContext routingContext) {
-            routingContext.next();
-        }
-    };
-
-    @VisibleForTesting
     static final String DEFAULT_ERROR_HANDLER_CLASS_NAME = DefaultErrorHandler.class.getName();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -83,8 +69,9 @@ public class ServerVerticle extends AbstractVerticle {
 
         ServerConfig config = new ServerConfig(config());
         createRouter(config).compose(router -> {
-            Optional<AuthenticationHandler> ach = createAuthChainHandler(config.getAuthChainConfig());
-            return mountEndpoints(router, config.getEndpointConfigs(), ach, new HooksHandler()).onSuccess(v -> {
+            Optional<AuthChainHandler> defaultAuthHandler =
+                    Optional.ofNullable(config.getAuthChainConfig()).map(c -> AuthChainHandler.create(vertx, c));
+            return mountEndpoints(router, config.getEndpointConfigs(), defaultAuthHandler).onSuccess(v -> {
                 // the NotFoundHandler fails the routing context finally.
                 // To ensure that no handler will be added after it, it is added here.
                 router.route().handler(new NotFoundHandler());
@@ -168,100 +155,31 @@ public class ServerVerticle extends AbstractVerticle {
     }
 
     /**
-     * Mounts all endpoints as sub routers to the given router.
+     * Mounts all endpoints as sub routers to the given router. How the authentication handlers are generated and
+     * deployed is explained {@link MountableEndpoint#mount here}.
      *
      * @param router             the main router of the server verticle
      * @param endpointConfigs    a list of endpoint configurations to mount
      * @param defaultAuthHandler the fallback auth. handler in case no auth. handler is specified by the endpoint
-     * @param hooksHandler       the "once per request" handler, to be executed after authentication on an endpoint
+     * @return a {@link Future}, succeeded if all endpoints are loaded and mounted successfully, failing otherwise.
      */
-    private Future<Void> mountEndpoints(Router router, List<EndpointConfig> endpointConfigs,
-            Optional<AuthenticationHandler> defaultAuthHandler, HooksHandler hooksHandler) {
+    @VisibleForTesting
+    protected Future<Void> mountEndpoints(Router router, List<EndpointConfig> endpointConfigs,
+            Optional<AuthChainHandler> defaultAuthHandler) {
         if (endpointConfigs.isEmpty()) {
             LOGGER.warn("No endpoints configured");
             return succeededFuture();
         }
 
         // iterate the endpoint configurations, as order is important here!
-        for (EndpointConfig endpointConfig : endpointConfigs) {
-            String endpointType = endpointConfig.getType();
-            if (Strings.isNullOrEmpty(endpointType)) {
-                if (LOGGER.isErrorEnabled()) {
-                    LOGGER.error("Endpoint with configuration {} is missing the 'type' field",
-                            endpointConfig.toJson().encode());
-                }
-                return failedFuture(new IllegalArgumentException("Endpoint is missing the 'type' field"));
+        List<Future<MountableEndpoint>> mountableEndpoints =
+                endpointConfigs.stream().map(ec -> MountableEndpoint.create(vertx, ec)).collect(Collectors.toList());
+        return AsyncHelper.allComposite(mountableEndpoints).onSuccess(v -> {
+            for (Future<MountableEndpoint> endpointFuture : mountableEndpoints) {
+                endpointFuture.result().mount(vertx, router, defaultAuthHandler);
             }
-
-            Endpoint endpoint;
-            try {
-                endpoint =
-                        Class.forName(endpointType).asSubclass(Endpoint.class).getDeclaredConstructor().newInstance();
-            } catch (ClassNotFoundException e) {
-                LOGGER.error("No class for endpoint type {}", endpointType, e);
-                return failedFuture(new IllegalArgumentException("Endpoint class not found", e));
-            } catch (ClassCastException e) {
-                if (LOGGER.isErrorEnabled()) {
-                    LOGGER.error("Endpoint type {} must implement {}", endpointType, Endpoint.class.getName(), e);
-                }
-                return failedFuture(
-                        new IllegalArgumentException("Endpoint does not implement the Endpoint interface", e));
-            } catch (NoSuchMethodException e) {
-                LOGGER.error("Endpoint type {} must expose an empty constructor", endpointType, e);
-                return failedFuture(new IllegalArgumentException("Endpoint does not expose an empty constructor", e));
-            } catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
-                LOGGER.error("Endpoint type {} could not be instantiated or threw an exception", endpointType, e);
-                return failedFuture(Optional.ofNullable((Exception) e.getCause()).orElse(e));
-            }
-
-            EndpointConfig defaultEndpointConfig = endpoint.getDefaultConfig();
-            if (!Optional.ofNullable(endpointConfig.isEnabled()).orElse(defaultEndpointConfig.isEnabled())) {
-                LOGGER.info("Endpoint with type {} is disabled", endpointType);
-                continue;
-            }
-
-            String endpointBasePath =
-                    Optional.ofNullable(endpointConfig.getBasePath()).orElse(defaultEndpointConfig.getBasePath());
-            if (!endpointBasePath.endsWith("/")) {
-                endpointBasePath += "/";
-            }
-
-            JsonObject endpointAdditionalConfig = Optional.ofNullable(defaultEndpointConfig.getAdditionalConfig())
-                    .map(JsonObject::copy).orElseGet(JsonObject::new);
-            Optional.ofNullable(endpointConfig.getAdditionalConfig()).ifPresent(endpointAdditionalConfig::mergeIn);
-
-            Router endpointRouter;
-            try {
-                endpointRouter = endpoint.createEndpointRouter(vertx, endpointBasePath, endpointAdditionalConfig);
-            } catch (Exception e) {
-                LOGGER.error("Failed to initialize endpoint router for endpoint with type {} with configuration {}",
-                        endpointType, endpointAdditionalConfig, e);
-                return failedFuture(e);
-            }
-
-            Optional<AuthenticationHandler> endpointAuthHandler =
-                    createAuthChainHandler(Optional.ofNullable(endpointConfig.getAuthChainConfig())
-                            .orElse(defaultEndpointConfig.getAuthChainConfig())).or(() -> defaultAuthHandler);
-
-            Route endpointRoute = router.route(endpointBasePath + "*");
-            endpointAuthHandler.ifPresent(endpointRoute::handler);
-            endpointRoute.handler(hooksHandler);
-
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(
-                        "Mounting endpoint with type {} and configuration {}"
-                                + "to base path {} using {} authentication handler",
-                        endpointType, endpointConfig, endpointBasePath,
-                        endpointAuthHandler.isPresent() ? "an" + endpointAuthHandler.get().getClass().getSimpleName()
-                                : "no");
-            }
-
-            // requires a new route object, thus do not use the endpointRoute here, but call mountSubRouter instead
-            router.mountSubRouter(endpointBasePath, endpointRouter);
-        }
-
-        // all endpoints have been mounted successfully
-        return succeededFuture();
+            // all endpoints have been mounted in correct order successfully
+        }).mapEmpty();
     }
 
     /**
@@ -286,44 +204,6 @@ public class ServerVerticle extends AbstractVerticle {
             return Optional.of(ClusteredSessionStore.create(vertx));
         default: /* nothing to do here, no session handling, so neither add a cookie, nor a session handler */
             return Optional.empty();
-        }
-    }
-
-    /**
-     * This method will return a full configured authentication handler with the following rules:
-     * <ul>
-     * <li>In case the auth. chain configuration is {@code null} an empty optional will be returned, meaning that either
-     * no authentication should be used or NeonBee should fall back to the default authentication chain.
-     * <li>In case the auth. chain configuration is empty, a dummy authentication handler, skipping authentication will
-     * be returned which is used to state "no authentication" should be done for this endpoint.
-     * <li>In case the auth. chain configuration contains exactly one configuration, the authentication handler will be
-     * configured and returned by this method accordingly.
-     * <li>In case multiple authentication handlers are configured in the authentication chain, an
-     * {@link ChainAuthHandler} will be created with all configured authentication handlers in the order they appear in
-     * the list of configurations.
-     * </ul>
-     * Overridden in NeonBeeTestBase and thus protected.
-     *
-     * @param authChainConfig a list of authentication handler configurations to create a auth. chain for
-     * @return an optional auth. chain handler or an empty optional if no authentication should be used
-     */
-    @VisibleForTesting
-    protected Optional<AuthenticationHandler> createAuthChainHandler(List<AuthHandlerConfig> authChainConfig) {
-        if (authChainConfig == null) {
-            // fallback to default authentication type (if available)
-            return Optional.empty();
-        } else if (authChainConfig.isEmpty()) {
-            // important: empty means no authentication, while null / not specifying will fall back to the default
-            return Optional.of(NOOP_AUTHENTICATION_HANDLER);
-        }
-
-        Stream<AuthenticationHandler> authHandlers =
-                authChainConfig.stream().map(config -> config.createAuthHandler(vertx));
-        if (authChainConfig.size() == 1) {
-            return authHandlers.findFirst();
-        } else {
-            return Optional.of(authHandlers.reduce((AuthenticationHandler) ChainAuthHandler.any(),
-                    (chainAuthHandler, authHandler) -> ((ChainAuthHandler) chainAuthHandler).add(authHandler)));
         }
     }
 }

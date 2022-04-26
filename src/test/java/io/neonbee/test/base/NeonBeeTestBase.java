@@ -39,12 +39,13 @@ import io.neonbee.NeonBeeInstanceConfiguration;
 import io.neonbee.NeonBeeMockHelper;
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.NeonBeeProfile;
-import io.neonbee.config.AuthHandlerConfig;
+import io.neonbee.config.EndpointConfig;
 import io.neonbee.config.ServerConfig;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.entity.EntityVerticle;
 import io.neonbee.internal.deploy.DeployableVerticle;
 import io.neonbee.internal.deploy.Deployment;
+import io.neonbee.internal.handler.AuthChainHandler;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.neonbee.job.JobVerticle;
 import io.neonbee.test.helper.ConcurrentHelper;
@@ -65,12 +66,11 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
-import io.vertx.ext.web.handler.AuthenticationHandler;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -412,23 +412,24 @@ public class NeonBeeTestBase {
     }
 
     private ServerVerticle createDummyServerVerticle(TestInfo testInfo) {
-        return new ServerVerticle() {
-            @Override
-            protected Optional<AuthenticationHandler> createAuthChainHandler(List<AuthHandlerConfig> authChainConfig) {
-                return Optional.of(new AuthenticationHandler() {
-                    @Override
-                    public void handle(RoutingContext ctx) {
-                        ctx.setUser(User.create(provideUserPrincipal(testInfo)));
-                        Session session = ctx.session();
-                        if (session != null) {
-                            // the user has upgraded from unauthenticated to authenticated
-                            // session should be upgraded as recommended by owasp
-                            session.regenerateId();
-                        }
+        AuthChainHandler dummyAuthHandler = ctx -> {
+            ctx.setUser(User.create(provideUserPrincipal(testInfo)));
+            Session session = ctx.session();
+            if (session != null) {
+                // the user has upgraded from unauthenticated to authenticated
+                // session should be upgraded as recommended by owasp
+                session.regenerateId();
+            }
 
-                        ctx.next();
-                    }
-                });
+            ctx.next();
+        };
+
+        return new ServerVerticle() {
+
+            @Override
+            protected Future<Void> mountEndpoints(Router router, List<EndpointConfig> endpointConfigs,
+                    Optional<AuthChainHandler> defaultAuthHandler) {
+                return super.mountEndpoints(router, endpointConfigs, Optional.of(dummyAuthHandler));
             }
         };
     }

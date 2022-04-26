@@ -95,8 +95,8 @@ public class NeonBeeMetricsTest {
         }
 
         @Override
-        public Router createEndpointRouter(Vertx vertx, String basePath, JsonObject config) {
-            return Endpoint.createRouter(vertx, testEndpointHandler);
+        public Future<Router> createEndpointRouter(Vertx vertx, String basePath, JsonObject config) {
+            return Future.succeededFuture(Endpoint.createRouter(vertx, testEndpointHandler));
         }
     }
 

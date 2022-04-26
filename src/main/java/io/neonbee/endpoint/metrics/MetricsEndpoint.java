@@ -1,12 +1,14 @@
 package io.neonbee.endpoint.metrics;
 
 import static io.neonbee.endpoint.Endpoint.createRouter;
+import static io.vertx.core.Future.succeededFuture;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.neonbee.NeonBee;
 import io.neonbee.config.EndpointConfig;
 import io.neonbee.endpoint.Endpoint;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -42,8 +44,8 @@ public class MetricsEndpoint implements Endpoint {
     }
 
     @Override
-    public Router createEndpointRouter(Vertx vertx, String basePath, JsonObject config) {
+    public Future<Router> createEndpointRouter(Vertx vertx, String basePath, JsonObject config) {
         addRegistry(vertx);
-        return createRouter(vertx, new PrometheusScrapingHandler(config.getString("registryName")));
+        return succeededFuture(createRouter(vertx, new PrometheusScrapingHandler(config.getString("registryName"))));
     }
 }
