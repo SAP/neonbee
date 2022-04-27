@@ -42,10 +42,11 @@ dependencies {
     // Framework dependencies
     def vertx_version = '4.2.7'
     implementation group: 'io.vertx', name: 'vertx-core', version: vertx_version
-    implementation group: 'io.vertx', name: 'vertx-web-client', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-web', version: vertx_version
-    implementation group: 'io.vertx', name: 'vertx-config-yaml', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-web-client', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-web-openapi', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-config', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-config-yaml', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-micrometer-metrics', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-auth-common', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-auth-htpasswd', version: vertx_version
