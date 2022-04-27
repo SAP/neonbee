@@ -19,6 +19,7 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.MIMEHeader;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.validation.BadRequestException;
 
 /**
  * Similar to the io.vertx.ext.web.handler.impl.ErrorHandlerImpl, w/ minor adoptions for error text and template.
@@ -81,6 +82,10 @@ public class DefaultErrorHandler implements ErrorHandler {
         if (errorCode != -1 && errorMessage == null) {
             routingContext.response().setStatusCode(errorCode);
             errorMessage = routingContext.response().getStatusMessage();
+        }
+        // Use meaningful error messages in case that error comes from Vert.x Web Validation
+        if (failure instanceof BadRequestException) {
+            errorMessage = failure.getMessage();
         }
         answerWithError(routingContext, errorCode, errorMessage);
     }
