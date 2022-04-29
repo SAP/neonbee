@@ -70,9 +70,9 @@ class ClassPathScannerTest {
     @Test
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find files on the class path that match the passed prediction")
-    void scanWithPredicateTest(Vertx vertx, VertxTestContext testContext) throws IOException {
+    void scanWithPredicateTest(Vertx vertx, VertxTestContext testContext) {
         List<String> expected =
-                List.of(ClassPathScanner.class, ClassPathScannerTest.class, CloseableClassPathScanner.class).stream()
+                Stream.of(ClassPathScanner.class, ClassPathScannerTest.class, CloseableClassPathScanner.class)
                         .map(Class::getName).map(name -> name.replace(".", File.separator) + ".class")
                         .collect(Collectors.toList());
 
@@ -110,7 +110,7 @@ class ClassPathScannerTest {
     @Test
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Should find classes which the class or any field or method within is annotated with a given annotation")
-    void scanForAnnotation(Vertx vertx, VertxTestContext testContext) throws IOException, URISyntaxException {
+    void scanForAnnotation(Vertx vertx, VertxTestContext testContext) throws IOException {
         BasicJar jarWithTypeAnnotatedClass =
                 new AnnotatedClassTemplate("Hodor", "type").setTypeAnnotation("@Deprecated").asJar();
         BasicJar jarWithFieldAnnotatedClass =
@@ -148,8 +148,24 @@ class ClassPathScannerTest {
     private static void futureContainsExactly(VertxTestContext testContext, Checkpoint checkpoint,
             Future<List<String>> future, Object... varargs) {
         future.onComplete(testContext.succeeding(list -> testContext.verify(() -> {
-            assertThat(list).containsExactly(varargs);
+            assertThat(filterInjectedFilesForIdeCoverageRuns(list)).containsExactly(varargs);
             checkpoint.flag();
         })));
+    }
+
+    /**
+     * Filter IDE specific files
+     *
+     * IntelliJ IDEA seems to inject a bunch of libraries to the classpath when running tests in coverage mode. This
+     * leads to issues when running tests where classpath scanning is involved, because for example classes like
+     * org.jetbrains.coverage.org.objectweb.asm.ClassReader and org.jetbrains.coverage.org.objectweb.asm.Opcodes (as
+     * well as many more) are found during the classpath scan even if they not match the lookup criteria. Therefore, the
+     * list of found files is filtered to clean it up from IntelliJ IDEA injected classes.
+     *
+     * @param list of classes to be filtered
+     * @return the filtered list of classes without any IDE specific classes
+     */
+    private static List<String> filterInjectedFilesForIdeCoverageRuns(List<String> list) {
+        return list.stream().filter(s -> !s.startsWith("org.jetbrains.coverage")).collect(Collectors.toList());
     }
 }
