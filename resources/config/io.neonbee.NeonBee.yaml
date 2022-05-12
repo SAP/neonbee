@@ -1,6 +1,12 @@
 ---
-# the number of seconds before a event bus message times-out, defaults to 30
+# the number of seconds before an event bus message times-out, defaults to 30
 eventBusTimeout: 110
+
+health:
+    # whether health-checks should be enabled or not
+    enabled: true
+    # the number of seconds before health check procedures time-out
+    timeout: 1
 
 # configure the tracking strategy implementation.
 trackingDataHandlingStrategy: io.neonbee.internal.tracking.TrackingDataLoggingStrategy

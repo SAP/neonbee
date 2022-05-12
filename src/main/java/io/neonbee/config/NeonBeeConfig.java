@@ -2,6 +2,7 @@ package io.neonbee.config;
 
 import static io.neonbee.internal.helper.ConfigHelper.notFound;
 import static io.neonbee.internal.helper.ConfigHelper.readConfig;
+import static io.neonbee.internal.helper.ConfigHelper.rephraseConfigNames;
 import static io.vertx.core.Future.future;
 import static io.vertx.core.Future.succeededFuture;
 
@@ -12,6 +13,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+
+import com.google.common.collect.ImmutableBiMap;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.neonbee.NeonBee;
@@ -50,6 +53,8 @@ public class NeonBeeConfig {
      */
     public static final String DEFAULT_TIME_ZONE = "UTC";
 
+    private static final ImmutableBiMap<String, String> REPHRASE_MAP = ImmutableBiMap.of("healthConfig", "health");
+
     private int eventBusTimeout = DEFAULT_EVENT_BUS_TIMEOUT;
 
     private Map<String, String> eventBusCodecs = Map.of();
@@ -61,6 +66,8 @@ public class NeonBeeConfig {
     private String timeZone = DEFAULT_TIME_ZONE;
 
     private List<MicrometerRegistryConfig> micrometerRegistries = List.of();
+
+    private HealthConfig healthConfig = new HealthConfig();
 
     /**
      * Loads the NeonBee configuration from the config directory and converts it to a {@link NeonBeeConfig}.
@@ -101,7 +108,29 @@ public class NeonBeeConfig {
     public NeonBeeConfig(JsonObject json) {
         this();
 
-        NeonBeeConfigConverter.fromJson(json, this);
+        JsonObject newJson = rephraseConfigNames(json.copy(), REPHRASE_MAP, true);
+        NeonBeeConfigConverter.fromJson(newJson, this);
+    }
+
+    /**
+     * Gets the health config.
+     *
+     * @return the {@link HealthConfig}
+     */
+    public HealthConfig getHealthConfig() {
+        return healthConfig;
+    }
+
+    /**
+     * Sets the health config.
+     *
+     * @param healthConfig the health config to set
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    @Fluent
+    public NeonBeeConfig setHealthConfig(HealthConfig healthConfig) {
+        this.healthConfig = healthConfig;
+        return this;
     }
 
     /**
@@ -182,6 +211,7 @@ public class NeonBeeConfig {
     public JsonObject toJson() {
         JsonObject json = new JsonObject();
         NeonBeeConfigConverter.toJson(this, json);
+        rephraseConfigNames(json, REPHRASE_MAP, false);
         return json;
     }
 

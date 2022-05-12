@@ -173,6 +173,30 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
     }
 
     @Test
+    @DisplayName("should read the health config correctly")
+    void testReadMetricsConfig() {
+        JsonObject settings = new JsonObject();
+        Function<Boolean, JsonObject> buildConfig =
+                enabled -> settings.put("health", new JsonObject().put("enabled", enabled));
+
+        NeonBeeConfig neonBeeConfig = new NeonBeeConfig(buildConfig.apply(true));
+        assertThat(neonBeeConfig.getHealthConfig().isEnabled()).isTrue();
+
+        neonBeeConfig = new NeonBeeConfig(buildConfig.apply(false));
+        assertThat(neonBeeConfig.getHealthConfig().isEnabled()).isFalse();
+    }
+
+    @Test
+    @DisplayName("should create the metrics config correctly")
+    void testHealthConfigToJson() {
+        NeonBeeConfig config = new NeonBeeConfig();
+        config.getHealthConfig().setEnabled(false);
+        JsonObject actual = config.toJson();
+
+        assertThat(actual.getJsonObject("health")).isEqualTo(new JsonObject().put("enabled", false).put("timeout", 1));
+    }
+
+    @Test
     @DisplayName("should have the correct default values")
     void testDefaultValues() {
         NeonBeeConfig defaultConfig = new NeonBeeConfig();
@@ -182,6 +206,8 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
         assertThat(defaultConfig.getEventBusCodecs()).isEmpty();
         assertThat(defaultConfig.getPlatformClasses()).containsExactly("io.vertx.*", "io.neonbee.*", "org.slf4j.*",
                 "org.apache.olingo.*");
+        assertThat(defaultConfig.getHealthConfig().isEnabled()).isTrue();
+        assertThat(defaultConfig.getHealthConfig().getTimeout()).isEqualTo(1);
     }
 
     @Test
