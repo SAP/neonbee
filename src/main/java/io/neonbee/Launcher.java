@@ -59,7 +59,7 @@ public class Launcher {
         configureLogging(options);
 
         Vertx launcherVertx = Vertx.vertx();
-        Future.succeededFuture().compose(unused -> NeonBeeConfig.load(launcherVertx, options.getWorkingDirectory()))
+        Future.succeededFuture().compose(unused -> NeonBeeConfig.load(launcherVertx, options.getConfigDirectory()))
                 .eventually(unused -> closeVertx(launcherVertx)).compose(config -> NeonBee.create(options, config))
                 .onSuccess(neonBee -> Launcher.neonBee = neonBee).onFailure(throwable -> LoggerFactory
                         .getLogger(Launcher.class).error("Failed to start NeonBee", throwable));
