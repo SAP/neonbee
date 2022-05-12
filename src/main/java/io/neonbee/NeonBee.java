@@ -7,6 +7,7 @@ import static io.neonbee.internal.deploy.Deployables.allTo;
 import static io.neonbee.internal.deploy.Deployables.anyTo;
 import static io.neonbee.internal.deploy.Deployables.fromDeployables;
 import static io.neonbee.internal.helper.AsyncHelper.allComposite;
+import static io.neonbee.internal.helper.AsyncHelper.joinComposite;
 import static io.neonbee.internal.helper.HostHelper.getHostIp;
 import static io.neonbee.internal.scanner.DeployableScanner.scanForDeployableClasses;
 import static io.vertx.core.CompositeFuture.all;
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -36,11 +38,16 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.neonbee.config.HealthConfig;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.config.ServerConfig;
 import io.neonbee.data.DataQuery;
 import io.neonbee.entity.EntityModelManager;
 import io.neonbee.entity.EntityWrapper;
+import io.neonbee.health.HazelcastClusterHealthCheck;
+import io.neonbee.health.HealthCheckRegistry;
+import io.neonbee.health.MemoryHealthCheck;
+import io.neonbee.health.internal.HealthCheck;
 import io.neonbee.hook.HookRegistry;
 import io.neonbee.hook.HookType;
 import io.neonbee.hook.internal.DefaultHookRegistry;
@@ -83,7 +90,7 @@ import io.vertx.core.shareddata.LocalMap;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
-@SuppressWarnings("PMD.CouplingBetweenObjects")
+@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass" })
 public class NeonBee {
     /** // @formatter:off
      *
@@ -139,6 +146,8 @@ public class NeonBee {
 
     private static final int NUMBER_DEFAULT_INSTANCES = 4;
 
+    private static final String NODE_ID = UUID.randomUUID().toString();
+
     @VisibleForTesting
     final NeonBeeConfig config;
 
@@ -147,6 +156,8 @@ public class NeonBee {
     private final NeonBeeOptions options;
 
     private final HookRegistry hookRegistry;
+
+    private final HealthCheckRegistry healthRegistry;
 
     private LocalMap<String, Object> sharedLocalMap;
 
@@ -157,6 +168,8 @@ public class NeonBee {
     private final EntityModelManager modelManager;
 
     private final CompositeMeterRegistry compositeMeterRegistry;
+
+    private final HazelcastClusterManager clusterManager;
 
     /**
      * Convenience method for returning the current NeonBee instance.
@@ -233,8 +246,13 @@ public class NeonBee {
                 .setWorkerPoolSize(options.getWorkerPoolSize());
 
         CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
+        HazelcastClusterManager clusterManager =
+                options.isClustered() ? new HazelcastClusterManager(options.getClusterConfig()) : null;
         vertxOptions.setMetricsOptions(
                 new MicrometerMetricsOptions().setMicrometerRegistry(compositeMeterRegistry).setEnabled(true));
+        if (options.isClustered()) {
+            vertxOptions.setClusterManager(clusterManager);
+        }
 
         // create a Vert.x instance (clustered or unclustered)
         return vertxFactory.apply(vertxOptions).compose(vertx -> {
@@ -265,7 +283,7 @@ public class NeonBee {
 
                 Future<NeonBee> neonBeeFuture = neonBeeConfigFuture
                         // create a NeonBee instance, hook registry and close handler
-                        .map(c -> new NeonBee(vertx, options, c, compositeMeterRegistry));
+                        .map(c -> new NeonBee(vertx, options, c, compositeMeterRegistry, clusterManager));
                 // boot NeonBee, on failure close Vert.x
                 return neonBeeFuture.compose(NeonBee::boot).recover(closeVertx).compose(unused -> neonBeeFuture);
             } catch (Throwable t) {
@@ -279,15 +297,14 @@ public class NeonBee {
     static Future<Vertx> newVertx(VertxOptions vertxOptions, NeonBeeOptions options) {
         if (!options.isClustered()) {
             return succeededFuture(Vertx.vertx(vertxOptions));
-        } else {
-            vertxOptions.setClusterManager(new HazelcastClusterManager(options.getClusterConfig())).getEventBusOptions()
-                    .setPort(options.getClusterPort());
-            Optional.ofNullable(getHostIp()).filter(Predicate.not(String::isEmpty))
-                    .ifPresent(currentIp -> vertxOptions.getEventBusOptions().setHost(currentIp));
-            return Vertx.clusteredVertx(vertxOptions).onFailure(throwable -> {
-                LOGGER.error("Failed to start clustered Vert.x", throwable); // NOPMD slf4j
-            });
         }
+
+        vertxOptions.getEventBusOptions().setPort(options.getClusterPort());
+        Optional.ofNullable(getHostIp()).filter(Predicate.not(String::isEmpty))
+                .ifPresent(currentIp -> vertxOptions.getEventBusOptions().setHost(currentIp));
+        return Vertx.clusteredVertx(vertxOptions).onFailure(throwable -> {
+            LOGGER.error("Failed to start clustered Vert.x", throwable); // NOPMD slf4j
+        });
     }
 
     private Future<Void> boot() {
@@ -300,8 +317,33 @@ public class NeonBee {
                     // further synchronous initializations which should happen before verticles are getting deployed
                 }).compose(nothing -> all(initializeSharedMaps(), decorateEventBus(), createMicrometerRegistries()))
                 .compose(nothing -> all(deployVerticles(), deployModules())) // deployment of verticles & modules
+                .compose(nothing -> registerHealthChecks())
                 .compose(nothing -> hookRegistry.executeHooks(HookType.AFTER_STARTUP))
                 .onSuccess(result -> LOGGER.info("Successfully booted NeonBee!")).mapEmpty();
+    }
+
+    /**
+     * Registers default NeonBee health checks to the {@link HealthCheckRegistry}.
+     *
+     * @return a Future
+     */
+    private Future<Void> registerHealthChecks() {
+        List<Future<HealthCheck>> healthChecks = new ArrayList<>();
+
+        if (Optional.ofNullable(config.getHealthConfig()).map(HealthConfig::isEnabled).orElse(true)) {
+            healthChecks.add(healthRegistry.register(new MemoryHealthCheck(this)));
+
+            if (options.isClustered()) {
+                healthChecks.add(healthRegistry.register(new HazelcastClusterHealthCheck(this, clusterManager)));
+            }
+        }
+
+        return joinComposite(healthChecks).recover(v -> {
+            healthChecks.stream().filter(Future::failed).map(Future::cause).forEach(t -> {
+                LOGGER.error("Failed to register health checks to registry.", t);
+            });
+            return succeededFuture();
+        }).mapEmpty();
     }
 
     private Future<Void> registerHooks() {
@@ -524,11 +566,14 @@ public class NeonBee {
     }
 
     @VisibleForTesting
-    NeonBee(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config, CompositeMeterRegistry compositeMeterRegistry) {
+    NeonBee(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config, CompositeMeterRegistry compositeMeterRegistry,
+            HazelcastClusterManager clusterManager) {
         this.vertx = vertx;
         this.options = options;
         this.config = config;
 
+        this.clusterManager = clusterManager;
+        this.healthRegistry = new HealthCheckRegistry(vertx);
         this.modelManager = new EntityModelManager(this);
         this.compositeMeterRegistry = compositeMeterRegistry;
 
@@ -680,6 +725,15 @@ public class NeonBee {
      */
     public CompositeMeterRegistry getCompositeMeterRegistry() {
         return compositeMeterRegistry;
+    }
+
+    /**
+     * Get a unique identifier of the node NeonBee is running on.
+     *
+     * @return the id
+     */
+    public String getNodeId() {
+        return NODE_ID;
     }
 
     /**

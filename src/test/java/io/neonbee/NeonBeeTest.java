@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -198,6 +199,12 @@ class NeonBeeTest extends NeonBeeTestBase {
         assertThat(getNeonBee().isLocalConsumerAvailable(address)).isTrue();
         getNeonBee().unregisterLocalConsumer(address);
         assertThat(getNeonBee().isLocalConsumerAvailable(address)).isFalse();
+    }
+
+    @Test
+    @DisplayName("NeonBee should have a (unique) node id")
+    void testGetNodeId() {
+        assertThat(getNeonBee().getNodeId()).matches(Pattern.compile("[0-9a-zA-Z\\-]+"));
     }
 
     @SuppressWarnings("unchecked")

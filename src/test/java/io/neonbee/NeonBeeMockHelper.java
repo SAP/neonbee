@@ -30,6 +30,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.file.FileSystem;
+import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 public final class NeonBeeMockHelper {
     /**
@@ -243,7 +244,7 @@ public final class NeonBeeMockHelper {
      */
     public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config) {
         createLogger(); // the logger is only created internally, create one manually if required
-        return new NeonBee(vertx, options, config, new CompositeMeterRegistry());
+        return new NeonBee(vertx, options, config, new CompositeMeterRegistry(), new HazelcastClusterManager());
     }
 
     @SuppressWarnings({ "CatchAndPrintStackTrace", "PMD.AvoidPrintStackTrace" })
