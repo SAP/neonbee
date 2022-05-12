@@ -2,13 +2,16 @@ package io.neonbee;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.Launcher.parseCommandLine;
+import static io.neonbee.Launcher.startNeonBee;
 import static io.neonbee.test.helper.FileSystemHelper.createTempDirectory;
 import static io.neonbee.test.helper.SystemHelper.withEnvironment;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -23,11 +26,14 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
+import org.mockito.MockedStatic;
 
 import com.hazelcast.config.ClasspathXmlConfig;
 
 import io.neonbee.Launcher.EnvironmentAwareCommandLine;
+import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.test.helper.FileSystemHelper;
+import io.vertx.core.Future;
 import io.vertx.core.cli.Argument;
 import io.vertx.core.cli.CLI;
 import io.vertx.core.cli.CLIException;
@@ -190,6 +196,20 @@ class LauncherTest {
         clearInvocations(commandLine);
         commandLine.getRawValuesForOption(option);
         verify(commandLine).hasEnvArg(option);
+    }
+
+    @Test
+    void testStartNeonBeeConfigPath() {
+        NeonBeeOptions.Mutable options = new NeonBeeOptions.Mutable();
+        Path tempDirectory = Path.of("some", "test", "path").toAbsolutePath();
+        options.setWorkingDirectory(tempDirectory);
+
+        try (MockedStatic<NeonBeeConfig> staticNbc = mockStatic(NeonBeeConfig.class)) {
+            staticNbc.when(() -> NeonBeeConfig.load(any(), any()))
+                    .thenReturn(Future.failedFuture("fail starting NeonBee"));
+            startNeonBee(options);
+            staticNbc.verify(() -> NeonBeeConfig.load(any(), eq(tempDirectory.resolve("config"))));
+        }
     }
 
     private void assertNeonBeeOptions() {
