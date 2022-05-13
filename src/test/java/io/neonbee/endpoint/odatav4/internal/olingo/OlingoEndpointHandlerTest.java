@@ -29,6 +29,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 
 class OlingoEndpointHandlerTest {
@@ -87,9 +88,12 @@ class OlingoEndpointHandlerTest {
         when(request.method()).thenReturn(HttpMethod.GET);
         when(request.headers()).thenReturn(MultiMap.caseInsensitiveMultiMap());
 
+        RequestBody requestBody = mock(RequestBody.class);
+        when(requestBody.buffer()).thenReturn(Buffer.buffer(""));
+
         RoutingContext routingContext = mock(RoutingContext.class);
         when(routingContext.request()).thenReturn(request);
-        when(routingContext.getBody()).thenReturn(Buffer.buffer(""));
+        when(routingContext.body()).thenReturn(requestBody);
         when(routingContext.mountPoint()).thenReturn("/");
         when(routingContext.currentRoute()).thenReturn(null);
         when(routingContext.get(CorrelationIdHandler.CORRELATION_ID)).thenReturn("correlId");
