@@ -1,11 +1,11 @@
 package io.neonbee.internal.handler;
 
 import io.neonbee.NeonBee;
-import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.PlatformHandler;
 
-public class InstanceInfoHandler implements Handler<RoutingContext> {
+public class InstanceInfoHandler implements PlatformHandler {
     static final String X_INSTANCE_INFO_HEADER = "X-Instance-Info";
 
     @Override

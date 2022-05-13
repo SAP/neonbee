@@ -130,7 +130,7 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
         ODataRequest odataRequest = new ODataRequest();
         odataRequest.setProtocol(request.scheme());
         odataRequest.setMethod(mapODataRequestMethod(request));
-        odataRequest.setBody(new BufferInputStream(routingContext.getBody()));
+        odataRequest.setBody(new BufferInputStream(routingContext.body().buffer()));
         for (String header : request.headers().names()) {
             odataRequest.addHeader(header, request.headers().getAll(header));
         }

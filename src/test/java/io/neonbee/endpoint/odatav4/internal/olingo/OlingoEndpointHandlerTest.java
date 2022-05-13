@@ -89,7 +89,7 @@ class OlingoEndpointHandlerTest {
 
         RoutingContext routingContext = mock(RoutingContext.class);
         when(routingContext.request()).thenReturn(request);
-        when(routingContext.getBody()).thenReturn(Buffer.buffer(""));
+        when(routingContext.body().buffer()).thenReturn(Buffer.buffer(""));
         when(routingContext.mountPoint()).thenReturn("/");
         when(routingContext.currentRoute()).thenReturn(null);
         when(routingContext.get(CorrelationIdHandler.CORRELATION_ID)).thenReturn("correlId");

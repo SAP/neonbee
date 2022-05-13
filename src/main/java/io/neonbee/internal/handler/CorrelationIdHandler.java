@@ -3,10 +3,10 @@ package io.neonbee.internal.handler;
 import static io.neonbee.config.ServerConfig.CorrelationStrategy.GENERATE_UUID;
 
 import io.neonbee.config.ServerConfig.CorrelationStrategy;
-import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.PlatformHandler;
 
-public class CorrelationIdHandler implements Handler<RoutingContext> {
+public class CorrelationIdHandler implements PlatformHandler {
     /**
      * The key for the correlation id stored in the RoutingContext.
      */

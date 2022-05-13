@@ -91,13 +91,14 @@ public final class MountableEndpoint {
     public void mount(Vertx vertx, Router rootRouter, Optional<AuthChainHandler> defaultAuthHandler) {
         String endpointBasePath = getEndpointBasePath(endpointConfig, endpoint);
         Route endpointRoute = rootRouter.route(endpointBasePath + "*");
-        endpointRoute.handler(new HooksHandler());
 
         Optional<List<AuthHandlerConfig>> effectiveAuthChainConfig =
                 Optional.ofNullable(endpointConfig.getAuthChainConfig())
                         .or(() -> Optional.ofNullable(endpoint.getDefaultConfig().getAuthChainConfig()));
         effectiveAuthChainConfig.map(authChainConfig -> AuthChainHandler.create(vertx, authChainConfig))
-                .or(() -> defaultAuthHandler).ifPresent(endpointRoute::handler);
+                .or(() -> defaultAuthHandler).ifPresent(handler -> endpointRoute.handler(handler));
+
+        endpointRoute.handler(new HooksHandler());
 
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info(
@@ -108,7 +109,7 @@ public final class MountableEndpoint {
         }
 
         // requires a new route object, thus do not use the endpointRoute here, but call mountSubRouter instead
-        rootRouter.mountSubRouter(endpointBasePath, endpointRouter);
+        endpointRoute.subRouter(endpointRouter);
     }
 
     private static String getEndpointBasePath(EndpointConfig endpointConfig, Endpoint endpoint) {

@@ -6,16 +6,16 @@ import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERR
 import java.util.Optional;
 
 import io.neonbee.logging.LoggingFacade;
-import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.PlatformHandler;
 
 /**
  * Similar but simplified to the io.vertx.ext.web.handler.impl.LoggerHandlerImpl, w/ minor adaptions for logging the
  * correlationId.
  */
-public class LoggerHandler implements Handler<RoutingContext> {
+public class LoggerHandler implements PlatformHandler {
     /**
      * The facaded logger to use to log the events.
      */
