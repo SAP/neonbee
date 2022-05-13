@@ -4,11 +4,11 @@ import static io.netty.handler.codec.http.HttpHeaderNames.PRAGMA;
 import static io.vertx.core.http.HttpHeaders.CACHE_CONTROL;
 import static io.vertx.core.http.HttpHeaders.EXPIRES;
 
-import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.PlatformHandler;
 
-public class CacheControlHandler implements Handler<RoutingContext> {
+public class CacheControlHandler implements PlatformHandler {
 
     @Override
     public void handle(RoutingContext routingContext) {

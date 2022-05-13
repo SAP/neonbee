@@ -34,3 +34,4 @@ Thumbs.db
 VCAP_SERVICES.json
 /.checkstyle
 /.eclipse-pmd
+/src/main/generated/

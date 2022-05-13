@@ -20,6 +20,7 @@ import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.SharedData;
 import io.vertx.ext.web.sstore.ClusteredSessionStore;
@@ -32,7 +33,7 @@ class ServerVerticleTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testCreateSessionStore() {
-        Vertx mockedVertx = mock(Vertx.class);
+        Vertx mockedVertx = mock(VertxInternal.class);
         when(mockedVertx.isClustered()).thenReturn(false);
         when(mockedVertx.sharedData()).thenReturn(mock(SharedData.class));
 
@@ -45,7 +46,7 @@ class ServerVerticleTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testCreateSessionStoreClustered() {
-        Vertx mockedVertx = mock(Vertx.class);
+        Vertx mockedVertx = mock(VertxInternal.class);
         when(mockedVertx.isClustered()).thenReturn(true);
         when(mockedVertx.sharedData()).thenReturn(mock(SharedData.class));
 

@@ -142,7 +142,7 @@ public class RawEndpoint implements Endpoint {
 
             DataQuery query = new DataQuery(action,
                     pathOffset(routingContext.normalizedPath(), routingContext).substring(qualifiedName.length() + 1),
-                    decodedQueryPath, multiMapToMap(request.headers()), routingContext.getBody())
+                    decodedQueryPath, multiMapToMap(request.headers()), routingContext.body().buffer())
                             .addHeader("X-HTTP-Method", request.method().name());
 
             requestData(routingContext.vertx(), new DataRequest(qualifiedName, query),

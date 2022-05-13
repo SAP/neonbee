@@ -98,16 +98,15 @@ public class ServerVerticle extends AbstractVerticle {
         return createErrorHandler(config.getErrorHandlerClassName(), vertx).compose(errorHandler -> {
             rootRoute.failureHandler(errorHandler);
             rootRoute.handler(new LoggerHandler());
-            rootRoute.handler(BodyHandler.create(false /* do not handle file uploads */));
+            rootRoute.handler(new InstanceInfoHandler());
             rootRoute.handler(new CorrelationIdHandler(config.getCorrelationStrategy()));
             rootRoute.handler(
                     TimeoutHandler.create(SECONDS.toMillis(config.getTimeout()), config.getTimeoutStatusCode()));
-            rootRoute.handler(new CacheControlHandler());
-            rootRoute.handler(new InstanceInfoHandler());
-
             createSessionStore(vertx, config.getSessionHandling()).map(SessionHandler::create)
                     .ifPresent(sessionHandler -> rootRoute
                             .handler(sessionHandler.setSessionCookieName(config.getSessionCookieName())));
+            rootRoute.handler(new CacheControlHandler());
+            rootRoute.handler(BodyHandler.create(false /* do not handle file uploads */));
 
             return succeededFuture(router);
         }).onFailure(e -> LOGGER.error("Router could not be created", e));
