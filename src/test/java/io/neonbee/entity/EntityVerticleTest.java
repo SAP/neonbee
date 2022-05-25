@@ -205,7 +205,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
                             new FullQualifiedName(dq.getHeader(ConsolidationVerticle.ENTITY_TYPE_NAME_HEADER));
                     assertThat(entityTypeName).isEqualTo(EntityVerticleImpl1.FQN_ERP_CUSTOMERS);
                     testContext.completeNow();
-                    return null;
+                    return new EntityWrapper(EntityVerticleImpl1.FQN_ERP_CUSTOMERS, (Entity) null);
                 });
 
         undeployVerticles(ConsolidationVerticle.class).compose(v -> deployVerticle(dummy))
