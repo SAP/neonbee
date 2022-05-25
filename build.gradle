@@ -143,8 +143,7 @@ task annotationProcessing(type: JavaCompile, group: 'build') {
     destinationDirectory = project.file('src/generated/java')
     options.compilerArgs = [
         "-proc:only",
-        "-processor", "io.vertx.codegen.CodeGenProcessor",
-        "-Acodegen.output=${project.projectDir}/src/main"
+        "-processor", "io.vertx.codegen.CodeGenProcessor"
     ]
 }
 
@@ -194,6 +193,9 @@ clean {
 // ############ Test Phase
 
 test {
+    // Is required for ReflectionsHelper
+    jvmArgs += ['--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED']
+
     // deactivate parallel execution of tests temporary until parallel execution works again
     if (false && !org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX()) {
         systemProperties = [
@@ -300,8 +302,16 @@ tasks.withType(Javadoc) {
     doFirst {
         gradle.services.get(LoggingOutputInternal).addOutputEventListener(new OutputEventListener() {
             void onOutput(OutputEvent event) {
-                if (event.toString() =~ " warning: ") {
-                    exceptions << "Javadoc warning: ${event.toString()}"
+                String eventString = event.toString()
+                if (eventString =~ " warning: ") {
+                    if (eventString =~ " warning: no comment") {
+                        // Ignore warnings if a class is missing a JavaDoc,
+                        // therefore we have checkstyle
+                        // With Java 18 we can also suppress this warnings in the console
+                        // https://bugs.openjdk.java.net/browse/JDK-8189591
+                    } else {
+                        exceptions << "Javadoc warning: ${event.toString()}"
+                    }
                 }
             }
         })

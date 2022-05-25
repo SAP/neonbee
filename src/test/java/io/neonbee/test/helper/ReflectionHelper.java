@@ -1,5 +1,10 @@
 package io.neonbee.test.helper;
 
+import static java.lang.invoke.MethodHandles.lookup;
+import static java.lang.invoke.MethodHandles.privateLookupIn;
+
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
@@ -135,9 +140,9 @@ public final class ReflectionHelper {
     }
 
     private static void removeFinalModifier(Field field) throws NoSuchFieldException, IllegalAccessException {
-        Field modifiersField = Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+        Lookup lookup = privateLookupIn(Field.class, lookup());
+        VarHandle modifiers = lookup.findVarHandle(Field.class, "modifiers", int.class);
+        modifiers.set(field, field.getModifiers() & ~Modifier.FINAL);
     }
 
     private ReflectionHelper() {
