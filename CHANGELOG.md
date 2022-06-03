@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.11.0 (2022-06-03)
+
+### BREAKING CHANGES
+
+- remove LauncherPreProcessor ([b4a014d8](https://github.com/SAP/neonbee/commit/b4a014d803a956192cdb2d5257f9d5f07f91ca3c))
+
+
+### Bug Fixes
+
+- assertDataFailure should return a succeeded future ([0f73202b](https://github.com/SAP/neonbee/commit/0f73202b8823276e5c6983badb0d01c27cf85356))
+- enable tests to run in intellij idea with coverage ([f263eac5](https://github.com/SAP/neonbee/commit/f263eac5c35b15549daf4a410641a844b7edeb08))
+- loading the NeonBee configuration ([649b54c9](https://github.com/SAP/neonbee/commit/649b54c9a181196d0812bca9d922fdd4a030c12c))
+
+
+### Features
+
+- add temporary vertx instance ([f622f17d](https://github.com/SAP/neonbee/commit/f622f17d31bf2225bafdc833c10deb591006ebd8))
+- load endpoints asynchronously ([89036cca](https://github.com/SAP/neonbee/commit/89036cca64103677197b16759641ddc3c56bf140))
+- add abstract OpenAPI endpoint ([4032df4b](https://github.com/SAP/neonbee/commit/4032df4bd2701afbfc2f41e7c237a2b70f009f80))
+- add health checks ([e4e93552](https://github.com/SAP/neonbee/commit/e4e93552479589d0b321855efd2d7dc6a3812553)), closes [#117](https://github.com/SAP/neonbee/issues/117)
+- ensure compatibility with Java 17 ([6adeaad7](https://github.com/SAP/neonbee/commit/6adeaad73022757dd8517b312fda2484b986f603))
+
+
+### Code Refactoring
+
+- created methods to reuse code ([de48d135](https://github.com/SAP/neonbee/commit/de48d135bda5385928b8c18b42c1c4acad9708a0))
+
+
+### Build System
+
+- **deps**: upgrade `vertx` to 4.2.5 ([0723ac2b](https://github.com/SAP/neonbee/commit/0723ac2b88755f6f1f86945ea78cebf8b479fcc2))
+- **deps**: upgrade `vertx` to 4.2.6 ([624de7de](https://github.com/SAP/neonbee/commit/624de7dee090f563280bc09a1b4659054e8c6466))
+- **deps**: upgrade `vertx` to 4.2.7 ([368451f1](https://github.com/SAP/neonbee/commit/368451f10540bcd72f5b8f4382796e68c8cbf030))
+
+
 ## 0.10.0 (2022-03-07)
 
 ### Bug Fixes
