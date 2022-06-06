@@ -3,17 +3,19 @@ package io.neonbee.internal.handler;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import io.neonbee.config.AuthHandlerConfig;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.AuthenticationHandler;
-import io.vertx.ext.web.handler.ChainAuthHandler;
 
-public interface AuthChainHandler extends AuthenticationHandler {
+public interface ChainAuthHandler extends AuthenticationHandler {
     /**
      * A no operation authentication handler.
      */
-    AuthChainHandler NOOP_AUTHENTICATION_HANDLER = RoutingContext::next;
+    @VisibleForTesting
+    ChainAuthHandler NOOP_AUTHENTICATION_HANDLER = RoutingContext::next;
 
     /**
      * Creates an AuthChainHandler instance.
@@ -23,16 +25,21 @@ public interface AuthChainHandler extends AuthenticationHandler {
      * @return an AuthChainHandler based on the passed configuration. If the passed <i>authChainConfig</i> is null or
      *         empty a {@link #NOOP_AUTHENTICATION_HANDLER} will be returned.
      */
-    static AuthChainHandler create(Vertx vertx, List<AuthHandlerConfig> authChainConfig) {
+    static ChainAuthHandler create(Vertx vertx, List<AuthHandlerConfig> authChainConfig) {
         if (authChainConfig == null || authChainConfig.isEmpty()) {
             return NOOP_AUTHENTICATION_HANDLER;
         }
 
-        ChainAuthHandler authChainHandler = ChainAuthHandler.any();
+        io.vertx.ext.web.handler.ChainAuthHandler chainAuthHandler = io.vertx.ext.web.handler.ChainAuthHandler.any();
         List<AuthenticationHandler> authHandlers =
                 authChainConfig.stream().map(config -> config.createAuthHandler(vertx)).collect(Collectors.toList());
-        authHandlers.forEach(authChainHandler::add);
+        authHandlers.forEach(chainAuthHandler::add);
 
-        return (AuthChainHandler) authChainHandler;
+        return new ChainAuthHandler() {
+            @Override
+            public void handle(RoutingContext event) {
+                chainAuthHandler.handle(event);
+            }
+        };
     }
 }

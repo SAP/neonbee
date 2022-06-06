@@ -45,7 +45,7 @@ import io.neonbee.data.DataVerticle;
 import io.neonbee.entity.EntityVerticle;
 import io.neonbee.internal.deploy.DeployableVerticle;
 import io.neonbee.internal.deploy.Deployment;
-import io.neonbee.internal.handler.AuthChainHandler;
+import io.neonbee.internal.handler.ChainAuthHandler;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.neonbee.job.JobVerticle;
 import io.neonbee.test.helper.ConcurrentHelper;
@@ -412,7 +412,7 @@ public class NeonBeeTestBase {
     }
 
     private ServerVerticle createDummyServerVerticle(TestInfo testInfo) {
-        AuthChainHandler dummyAuthHandler = ctx -> {
+        ChainAuthHandler dummyAuthHandler = ctx -> {
             ctx.setUser(User.create(provideUserPrincipal(testInfo)));
             Session session = ctx.session();
             if (session != null) {
@@ -428,7 +428,7 @@ public class NeonBeeTestBase {
 
             @Override
             protected Future<Void> mountEndpoints(Router router, List<EndpointConfig> endpointConfigs,
-                    Optional<AuthChainHandler> defaultAuthHandler) {
+                    Optional<ChainAuthHandler> defaultAuthHandler) {
                 return super.mountEndpoints(router, endpointConfigs, Optional.of(dummyAuthHandler));
             }
         };
