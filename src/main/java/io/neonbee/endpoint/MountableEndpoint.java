@@ -11,7 +11,7 @@ import com.google.common.base.Strings;
 import io.neonbee.config.AuthHandlerConfig;
 import io.neonbee.config.EndpointConfig;
 import io.neonbee.config.ServerConfig;
-import io.neonbee.internal.handler.AuthChainHandler;
+import io.neonbee.internal.handler.ChainAuthHandler;
 import io.neonbee.internal.handler.HooksHandler;
 import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.logging.LoggingFacade;
@@ -88,7 +88,7 @@ public final class MountableEndpoint {
      * @param rootRouter         the router on which the endpoint will be mounted
      * @param defaultAuthHandler the default auth handler if there is no endpoint-specific one
      */
-    public void mount(Vertx vertx, Router rootRouter, Optional<AuthChainHandler> defaultAuthHandler) {
+    public void mount(Vertx vertx, Router rootRouter, Optional<ChainAuthHandler> defaultAuthHandler) {
         String endpointBasePath = getEndpointBasePath(endpointConfig, endpoint);
         Route endpointRoute = rootRouter.route(endpointBasePath + "*");
         endpointRoute.handler(new HooksHandler());
@@ -96,7 +96,7 @@ public final class MountableEndpoint {
         Optional<List<AuthHandlerConfig>> effectiveAuthChainConfig =
                 Optional.ofNullable(endpointConfig.getAuthChainConfig())
                         .or(() -> Optional.ofNullable(endpoint.getDefaultConfig().getAuthChainConfig()));
-        effectiveAuthChainConfig.map(authChainConfig -> AuthChainHandler.create(vertx, authChainConfig))
+        effectiveAuthChainConfig.map(authChainConfig -> ChainAuthHandler.create(vertx, authChainConfig))
                 .or(() -> defaultAuthHandler).ifPresent(endpointRoute::handler);
 
         if (LOGGER.isInfoEnabled()) {

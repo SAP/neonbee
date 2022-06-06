@@ -22,8 +22,8 @@ import io.neonbee.config.ServerConfig.SessionHandling;
 import io.neonbee.endpoint.Endpoint;
 import io.neonbee.endpoint.MountableEndpoint;
 import io.neonbee.handler.ErrorHandler;
-import io.neonbee.internal.handler.AuthChainHandler;
 import io.neonbee.internal.handler.CacheControlHandler;
+import io.neonbee.internal.handler.ChainAuthHandler;
 import io.neonbee.internal.handler.CorrelationIdHandler;
 import io.neonbee.internal.handler.DefaultErrorHandler;
 import io.neonbee.internal.handler.InstanceInfoHandler;
@@ -69,8 +69,8 @@ public class ServerVerticle extends AbstractVerticle {
 
         ServerConfig config = new ServerConfig(config());
         createRouter(config).compose(router -> {
-            Optional<AuthChainHandler> defaultAuthHandler =
-                    Optional.ofNullable(config.getAuthChainConfig()).map(c -> AuthChainHandler.create(vertx, c));
+            Optional<ChainAuthHandler> defaultAuthHandler =
+                    Optional.ofNullable(config.getAuthChainConfig()).map(c -> ChainAuthHandler.create(vertx, c));
             return mountEndpoints(router, config.getEndpointConfigs(), defaultAuthHandler).onSuccess(v -> {
                 // the NotFoundHandler fails the routing context finally.
                 // To ensure that no handler will be added after it, it is added here.
@@ -165,7 +165,7 @@ public class ServerVerticle extends AbstractVerticle {
      */
     @VisibleForTesting
     protected Future<Void> mountEndpoints(Router router, List<EndpointConfig> endpointConfigs,
-            Optional<AuthChainHandler> defaultAuthHandler) {
+            Optional<ChainAuthHandler> defaultAuthHandler) {
         if (endpointConfigs.isEmpty()) {
             LOGGER.warn("No endpoints configured");
             return succeededFuture();
