@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.1 (2022-06-06)
+
+### Bug Fixes
+
+- broken ChainAuthHandler ([a9d770ca](https://github.com/SAP/neonbee/commit/a9d770cad9b73a2260ff16a6f34577b0d5de1b27))
+
+
 ## 0.11.0 (2022-06-03)
 
 ### BREAKING CHANGES
