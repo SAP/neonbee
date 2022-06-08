@@ -17,6 +17,8 @@ import org.mockito.stubbing.Answer;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.config.NeonBeeConfig;
+import io.neonbee.data.DataQuery;
+import io.neonbee.internal.codec.DataQueryMessageCodec;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Closeable;
 import io.vertx.core.DeploymentOptions;
@@ -244,7 +246,13 @@ public final class NeonBeeMockHelper {
      * @param config  the NeonBee config
      * @return the mocked NeonBee instance
      */
+    @SuppressWarnings("PMD.EmptyCatchBlock")
     public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config) {
+        try {
+            vertx.eventBus().registerDefaultCodec(DataQuery.class, new DataQueryMessageCodec());
+        } catch (IllegalStateException ignored) {
+            // Fall through
+        }
         return new NeonBee(vertx, options, config, new CompositeMeterRegistry(), new HazelcastClusterManager());
     }
 }

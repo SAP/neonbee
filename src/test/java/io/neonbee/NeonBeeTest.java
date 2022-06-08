@@ -49,6 +49,7 @@ import io.neonbee.internal.tracking.MessageDirection;
 import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
 import io.neonbee.internal.tracking.TrackingInterceptor;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
+import io.neonbee.internal.verticle.HealthCheckVerticle;
 import io.neonbee.internal.verticle.LoggerManagerVerticle;
 import io.neonbee.internal.verticle.MetricsVerticle;
 import io.neonbee.test.base.NeonBeeTestBase;
@@ -126,7 +127,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     @DisplayName("NeonBee should deploy all system verticles")
     void testDeploySystemVerticles(Vertx vertx) {
         assertThat(getDeployedVerticles(vertx)).containsExactly(MetricsVerticle.class, ConsolidationVerticle.class,
-                LoggerManagerVerticle.class);
+                LoggerManagerVerticle.class, HealthCheckVerticle.class);
     }
 
     @Test

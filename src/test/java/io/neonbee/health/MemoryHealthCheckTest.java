@@ -60,8 +60,8 @@ class MemoryHealthCheckTest {
 
         when(neonBee.getConfig()).thenReturn(new NeonBeeConfig().setHealthConfig(new HealthConfig()));
 
-        assertThat(memoryHealthCheck.isGlobal()).isTrue();
-        assertThat(memoryHealthCheck.getId()).startsWith("os/");
+        assertThat(memoryHealthCheck.isGlobal()).isFalse();
+        assertThat(memoryHealthCheck.getId()).startsWith("os.");
     }
 
     @Test
