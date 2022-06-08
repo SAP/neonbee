@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableBiMap;
 
+import io.neonbee.endpoint.health.HealthEndpoint;
 import io.neonbee.endpoint.metrics.MetricsEndpoint;
 import io.neonbee.endpoint.odatav4.ODataV4Endpoint;
 import io.neonbee.endpoint.raw.RawEndpoint;
@@ -82,6 +83,12 @@ import io.vertx.ext.web.handler.ErrorHandler;
  *       type: "io.neonbee.endpoint.metrics.MetricsEndpoint", // provides an Prometheus scraping endpoint for Micrometer.io metrics
  *       enabled: boolean, // enable the metrics endpoint, defaults to true
  *       basePath: string // the base path to map this endpoint to, defaults to /metrics/
+ *       authenticationChain: array, // a specific authentication chain for this endpoint, defaults to an empty array / no auth.
+ *     }
+ *     health: {
+ *       type: "io.neonbee.endpoint.health.HealthEndpoint", // provides an endpoint with health information
+ *       enabled: boolean, // enable the metrics endpoint, defaults to true
+ *       basePath: string // the base path to map this endpoint to, defaults to /health/
  *       authenticationChain: array, // a specific authentication chain for this endpoint, defaults to an empty array / no auth.
  *     }
  *   ],
@@ -192,7 +199,7 @@ public class ServerConfig extends HttpServerOptions {
     private static final String PROPERTY_PORT = "port";
 
     private static final List<EndpointConfig> DEFAULT_ENDPOINT_CONFIGS = Collections.unmodifiableList(Stream
-            .of(RawEndpoint.class, ODataV4Endpoint.class, MetricsEndpoint.class)
+            .of(RawEndpoint.class, ODataV4Endpoint.class, MetricsEndpoint.class, HealthEndpoint.class)
             .map(endpointClass -> new EndpointConfig().setType(endpointClass.getName())).collect(Collectors.toList()));
 
     private static final ImmutableBiMap<String, String> REPHRASE_MAP =
