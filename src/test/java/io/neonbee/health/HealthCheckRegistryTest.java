@@ -2,21 +2,16 @@ package io.neonbee.health;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
-import static io.vertx.core.Future.failedFuture;
-import static io.vertx.core.Future.succeededFuture;
+import static io.neonbee.test.helper.ReflectionHelper.setValueOfPrivateField;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.endsWith;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -25,22 +20,25 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.MockedStatic;
 
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeMockHelper;
-import io.neonbee.NeonBeeOptions;
 import io.neonbee.config.HealthConfig;
 import io.neonbee.config.NeonBeeConfig;
+import io.neonbee.data.DataContext;
+import io.neonbee.data.DataQuery;
 import io.neonbee.health.internal.HealthCheck;
+import io.neonbee.internal.SharedDataAccessor;
+import io.neonbee.internal.helper.AsyncHelper;
+import io.neonbee.internal.verticle.HealthCheckVerticle;
+import io.neonbee.test.helper.DeploymentHelper;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.file.FileSystem;
-import io.vertx.core.file.FileSystemException;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.healthchecks.HealthChecks;
+import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.ext.healthchecks.Status;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
@@ -50,15 +48,11 @@ import io.vertx.junit5.VertxTestContext;
 @ExtendWith(VertxExtension.class)
 class HealthCheckRegistryTest {
 
-    private static final String DUMMY_ID = "dummy-group/check-0";
-
-    private static final String NODE_ID = "this-is-a-fake-uuid";
+    private static final String DUMMY_ID = "dummy-group.check-0";
 
     private static final long RETENTION_TIME = 12L;
 
-    private Vertx vertxMock;
-
-    private AbstractHealthCheck dummyCheck;
+    private NeonBee neonBee;
 
     private static class DummyCheck extends AbstractHealthCheck {
         DummyCheck(NeonBee neonBee) {
@@ -82,18 +76,16 @@ class HealthCheckRegistryTest {
     }
 
     @BeforeEach
-    void setUp() {
-        vertxMock = NeonBeeMockHelper.defaultVertxMock();
-        NeonBee neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertxMock, defaultOptions(),
+    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
+    void setUp(Vertx vertx) {
+        neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(false),
                 new NeonBeeConfig().setHealthConfig(new HealthConfig().setEnabled(true).setTimeout(2)));
-
-        dummyCheck = new DummyCheck(neonBee);
     }
 
     @Test
     @DisplayName("it can list all health checks")
-    void getHealthChecks() {
-        HealthCheckRegistry registry = new HealthCheckRegistry(vertxMock);
+    void getHealthChecks(Vertx vertx) {
+        HealthCheckRegistry registry = new HealthCheckRegistry(vertx);
 
         assertThat(registry.getHealthChecks()).isEmpty();
         registry.checks.put("check-1", mock(HealthCheck.class));
@@ -103,158 +95,185 @@ class HealthCheckRegistryTest {
     @Test
     @DisplayName("it can register global checks")
     void registerGlobalCheck() throws HealthCheckException {
-        NeonBee neonBeeMock = mock(NeonBee.class);
-        when(neonBeeMock.getNodeId()).thenReturn(NODE_ID);
-        when(neonBeeMock.getConfig()).thenReturn(new NeonBeeConfig().setHealthConfig(new HealthConfig()));
+        HealthCheck healthCheck = neonBee.getHealthCheckRegistry().registerGlobalCheck(DUMMY_ID, RETENTION_TIME,
+                nb -> p -> p.complete(new Status()), new JsonObject());
 
-        try (MockedStatic<NeonBee> mocked = mockStatic(NeonBee.class)) {
-            mocked.when(() -> NeonBee.get(any(Vertx.class))).thenReturn(neonBeeMock);
-
-            HealthCheckRegistry registry = new HealthCheckRegistry(vertxMock);
-            HealthCheck healthCheck = registry.registerGlobalCheck(DUMMY_ID, RETENTION_TIME,
-                    nb -> p -> p.complete(new Status()), new JsonObject());
-
-            assertThat(healthCheck.getId()).contains(DUMMY_ID);
-            assertThat(healthCheck.getRetentionTime()).isEqualTo(RETENTION_TIME);
-            assertThat(registry.getHealthChecks().size()).isEqualTo(1);
-        }
+        assertThat(healthCheck.getId()).contains(DUMMY_ID);
+        assertThat(healthCheck.getRetentionTime()).isEqualTo(RETENTION_TIME);
+        assertThat(neonBee.getHealthCheckRegistry().getHealthChecks().size()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("it can register node checks")
     void registerNodeCheck() throws HealthCheckException {
-        NeonBee neonBeeMock = mock(NeonBee.class);
-        when(neonBeeMock.getNodeId()).thenReturn(NODE_ID);
-        when(neonBeeMock.getConfig()).thenReturn(new NeonBeeConfig().setHealthConfig(new HealthConfig()));
+        HealthCheck healthCheck = neonBee.getHealthCheckRegistry().registerNodeCheck(DUMMY_ID, RETENTION_TIME,
+                nb -> p -> p.complete(new Status()), new JsonObject());
 
-        try (MockedStatic<NeonBee> mocked = mockStatic(NeonBee.class)) {
-            mocked.when(() -> NeonBee.get(any(Vertx.class))).thenReturn(neonBeeMock);
+        assertThat(healthCheck.getId()).matches(Pattern.compile("node." + neonBee.getNodeId() + "." + DUMMY_ID));
+        assertThat(healthCheck.getRetentionTime()).isEqualTo(RETENTION_TIME);
+        assertThat(neonBee.getHealthCheckRegistry().getHealthChecks().size()).isEqualTo(1);
+    }
 
-            HealthCheckRegistry registry = new HealthCheckRegistry(vertxMock);
-            HealthCheck healthCheck = registry.registerNodeCheck(DUMMY_ID, RETENTION_TIME,
-                    nb -> p -> p.complete(new Status()), new JsonObject());
+    @Test
+    @DisplayName("it can register HealthChecks via object")
+    void register() {
+        AbstractHealthCheck check = spy(new MemoryHealthCheck(neonBee));
+        neonBee.getHealthCheckRegistry().register(check);
 
-            assertThat(healthCheck.getId()).matches(Pattern.compile("node/" + NODE_ID + "/" + DUMMY_ID));
-            assertThat(healthCheck.getRetentionTime()).isEqualTo(RETENTION_TIME);
-            assertThat(registry.getHealthChecks().size()).isEqualTo(1);
-        }
+        verify(check).register(eq(neonBee.getHealthCheckRegistry()));
     }
 
     @Test
     @DisplayName("it can only register health checks with unique names")
-    void register(VertxTestContext testContext) {
-        Checkpoint cp = testContext.checkpoint(3);
+    void registerHealthCheckOnlyOnce() throws HealthCheckException {
+        neonBee.getHealthCheckRegistry().registerGlobalCheck(DUMMY_ID, RETENTION_TIME,
+                nb -> p -> p.complete(new Status()), new JsonObject());
 
-        HealthCheckRegistry registry = new HealthCheckRegistry(vertxMock);
-        registry.register(dummyCheck).onComplete(testContext.succeeding(hc -> testContext.verify(() -> {
-            assertThat(registry.checks.size()).isEqualTo(1);
-            assertThat(registry.checks.get(DUMMY_ID).getId()).isEqualTo(DUMMY_ID);
-            cp.flag();
+        HealthCheckException exception = assertThrows(HealthCheckException.class, () -> neonBee.getHealthCheckRegistry()
+                .registerGlobalCheck(DUMMY_ID, RETENTION_TIME, nb -> p -> p.complete(new Status()), new JsonObject()));
 
-            registry.register(dummyCheck).onComplete(testContext.failing(t -> testContext.verify(() -> {
-                assertThat(t.getMessage()).isEqualTo("HealthCheck '" + DUMMY_ID + "' already registered.");
-                assertThat(t).isInstanceOf(HealthCheckException.class);
-                assertThat(registry.checks.size()).isEqualTo(1);
-                cp.flag();
-
-                AbstractHealthCheck otherCheck = new AbstractHealthCheck(NeonBee.get(vertxMock)) {
-                    @Override
-                    Function<NeonBee, Handler<Promise<Status>>> createProcedure() {
-                        return neonBee -> p -> p.complete(new Status().setOK());
-                    }
-
-                    @Override
-                    public String getId() {
-                        return "other-dummy";
-                    }
-
-                    @Override
-                    public boolean isGlobal() {
-                        return true;
-                    }
-                };
-
-                registry.register(otherCheck).onComplete(testContext.succeeding(v -> testContext.verify(() -> {
-                    assertThat(registry.checks.size()).isEqualTo(2);
-                    cp.flag();
-                })));
-            })));
-        })));
+        assertThat(exception.getMessage()).isEqualTo("HealthCheck '" + DUMMY_ID + "' already registered.");
+        assertThat(neonBee.getHealthCheckRegistry().checks.size()).isEqualTo(1);
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should prefer disabling of health checks from health check config of config folder")
-    void testCustomConfigEnabled(VertxTestContext testContext) {
-        NeonBeeMockHelper.registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")),
+    void testCustomConfigEnabled(Vertx vertx) throws HealthCheckException {
+        neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions(),
                 new NeonBeeConfig().setHealthConfig(new HealthConfig().setEnabled(true)));
-        HealthCheckRegistry registry = new HealthCheckRegistry(vertxMock);
-        FileSystem fileSystemMock = vertxMock.fileSystem();
 
-        when(fileSystemMock.readFile(any()))
-                .thenReturn(failedFuture(new FileSystemException(new NoSuchFileException("file"))));
-        when(fileSystemMock.readFile(endsWith(".yml")))
-                .thenReturn(succeededFuture(Buffer.buffer("---\nenabled: false")));
+        HealthCheck check = neonBee.getHealthCheckRegistry().registerGlobalCheck(DUMMY_ID, RETENTION_TIME,
+                nb -> p -> p.complete(new Status()), new JsonObject().put("enabled", false));
 
-        dummyCheck.register(registry).onComplete(testContext.succeeding(check -> testContext.verify(() -> {
-            String path =
-                    NeonBee.get(vertxMock).getOptions().getConfigDirectory().resolve(dummyCheck.getClass().getName())
-                            + ".yaml";
-            verify(fileSystemMock).readFile(eq(path));
-            assertThat(check).isNull();
-            testContext.completeNow();
-        })));
+        assertThat(check).isNull();
     }
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should prefer enablement of health checks and timeout from health check config of config folder")
-    void testCustomConfigDisabled(VertxTestContext testContext) {
-        NeonBeeMockHelper.registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")),
+    void testCustomConfigDisabled(Vertx vertx) throws HealthCheckException {
+        neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions(),
                 new NeonBeeConfig().setHealthConfig(new HealthConfig().setEnabled(false).setTimeout(2)));
-        HealthCheckRegistry registry = new HealthCheckRegistry(vertxMock);
-        HealthChecks mockedChecks = mock(HealthChecks.class);
+        neonBee.getHealthCheckRegistry().healthChecks = spy(neonBee.getHealthCheckRegistry().healthChecks);
 
-        when(mockedChecks.register(anyString(), anyLong(), any())).thenReturn(mockedChecks);
-        registry.healthChecks = mockedChecks;
-        FileSystem fileSystemMock = vertxMock.fileSystem();
-        when(fileSystemMock.readFile(any()))
-                .thenReturn(failedFuture(new FileSystemException(new NoSuchFileException("file"))));
-        when(fileSystemMock.readFile(endsWith(".yml")))
-                .thenReturn(succeededFuture(Buffer.buffer("---\nenabled: true\ntimeout: 3")));
+        neonBee.getHealthCheckRegistry().registerGlobalCheck(DUMMY_ID, RETENTION_TIME,
+                nb -> p -> p.complete(new Status()), new JsonObject().put("enabled", true).put("timeout", 3));
 
-        dummyCheck.register(registry).onComplete(testContext.succeeding(check -> testContext.verify(() -> {
-            String path =
-                    NeonBee.get(vertxMock).getOptions().getConfigDirectory().resolve(dummyCheck.getClass().getName())
-                            + ".yaml";
-            verify(fileSystemMock).readFile(eq(path));
-            verify(registry.healthChecks).register(eq(DUMMY_ID), eq(3000L), any());
-            assertThat(registry.checks.size()).isEqualTo(1);
-            testContext.completeNow();
-        })));
+        verify(neonBee.getHealthCheckRegistry().healthChecks).register(eq(DUMMY_ID), eq(3000L), any());
+        assertThat(neonBee.getHealthCheckRegistry().checks.size()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("it can unregister health checks by health object and id")
-    void testUnregister() {
-        HealthCheckRegistry registry = new HealthCheckRegistry(vertxMock);
-        HealthChecks mockedChecks = mock(HealthChecks.class);
-        when(mockedChecks.register(anyString(), anyLong(), any())).thenReturn(mockedChecks);
-        registry.healthChecks = mockedChecks;
+    void testUnregister(VertxTestContext testContext) {
+        HealthCheckRegistry registry = neonBee.getHealthCheckRegistry();
+        registry.healthChecks = spy(registry.healthChecks);
+        AbstractHealthCheck check = new DummyCheck(neonBee);
 
-        registry.register(dummyCheck);
-        assertThat(registry.checks.size()).isEqualTo(1);
+        registry.register(check).compose(v -> {
+            testContext.verify(() -> {
+                assertThat(registry.checks.size()).isEqualTo(1);
+                registry.unregister(check);
+                assertThat(registry.checks.size()).isEqualTo(0);
+            });
+            return registry.register(check);
+        }).onComplete(testContext.succeeding(v -> {
+            testContext.verify(() -> {
+                assertThat(registry.checks.size()).isEqualTo(1);
+                registry.unregister(check.getId());
+                assertThat(registry.checks.size()).isEqualTo(0);
 
-        registry.unregister(dummyCheck);
-        assertThat(registry.checks.size()).isEqualTo(0);
+                verify(registry.healthChecks, times(2)).register(eq(check.getId()), eq(2000L), any());
+                verify(registry.healthChecks, times(2)).unregister(eq(check.getId()));
+            });
+            testContext.completeNow();
+        }));
+    }
 
-        registry.register(dummyCheck);
-        assertThat(registry.checks.size()).isEqualTo(1);
+    @Test
+    @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("it can request data from all health check verticles registered in shared map and consolidates the result")
+    void testConsolidateHealthCheckResultsClustered(Vertx vertx, VertxTestContext testContext) throws Exception {
+        neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(true));
 
-        registry.unregister(DUMMY_ID);
-        assertThat(registry.checks.size()).isEqualTo(0);
+        Checkpoint requestReceivedVerticle1 = testContext.checkpoint();
+        Checkpoint requestReceivedVerticle2 = testContext.checkpoint();
+        Checkpoint receivedResultsValidated = testContext.checkpoint();
 
-        verify(mockedChecks, times(2)).register(eq(DUMMY_ID), eq(2000L), any());
-        verify(mockedChecks, times(2)).unregister(eq(DUMMY_ID));
+        HealthCheckVerticle healthCheckVerticle1 = new HealthCheckVerticle() {
+            @Override
+            public String getName() {
+                return super.getName() + "-test1";
+            }
+
+            @Override
+            public Future<JsonArray> retrieveData(DataQuery query, DataContext context) {
+                requestReceivedVerticle1.flag();
+                return super.retrieveData(query, context);
+            }
+        };
+        HealthCheckVerticle healthCheckVerticle2 = new HealthCheckVerticle() {
+            @Override
+            public String getName() {
+                return super.getName() + "-test2";
+            }
+
+            @Override
+            public Future<JsonArray> retrieveData(DataQuery query, DataContext context) {
+                requestReceivedVerticle2.flag();
+                return super.retrieveData(query, context);
+            }
+        };
+
+        String sharedMapName = "#sharedMap";
+        AsyncMap<String, Object> sharedMap = new SharedDataAccessor(vertx, HealthCheckVerticle.class)
+                .<String, Object>getAsyncMap(sharedMapName).result();
+        setValueOfPrivateField(neonBee, "sharedAsyncMap", sharedMap);
+
+        // undeploy the system deployed health check verticles of neonbee
+        DeploymentHelper.undeployAllVerticlesOfClass(neonBee.getVertx(), HealthCheckVerticle.class)
+                .compose(v -> AsyncHelper.allComposite(
+                        List.of(vertx.deployVerticle(healthCheckVerticle1), vertx.deployVerticle(healthCheckVerticle2),
+                                neonBee.getHealthCheckRegistry().register(new DummyCheck(neonBee)))))
+                .onSuccess(v -> {
+                    neonBee.getHealthCheckRegistry().collectHealthCheckResults()
+                            .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
+                                Function<String, Long> matchingNameCount = id -> result.getJsonArray("checks").stream()
+                                        .filter(c -> ((JsonObject) c).getString("id").endsWith(id)).count();
+
+                                assertThat(matchingNameCount.apply(DUMMY_ID)).isEqualTo(1);
+                                // only one check each, because two health check verticles are deployed, but on the same
+                                // node -> thus the check id is the same and does not get added twice to the result.
+
+                                assertThat(result.getString("outcome")).isNotNull();
+                                assertThat(result.getString("status")).isEqualTo(result.getString("outcome"));
+                                receivedResultsValidated.flag();
+                            })));
+                }).onFailure(testContext::failNow);
+    }
+
+    @Test
+    @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("it requests data from local registry only if in non-clustered mode")
+    void testConsolidateHealthCheckResultsNonClustered(Vertx vertx, VertxTestContext testContext) {
+        Checkpoint cp = testContext.checkpoint(2);
+
+        HealthCheckRegistry mock = new HealthCheckRegistry(vertx) {
+            @Override
+            Future<List<JsonObject>> getLocalHealthCheckResults() {
+                cp.flag();
+                return super.getLocalHealthCheckResults();
+            }
+        };
+
+        mock.register(new DummyCheck(neonBee)).compose(hc -> mock.collectHealthCheckResults())
+                .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
+                    Function<String, Long> matchingNameCount = id -> result.getJsonArray("checks").stream()
+                            .filter(c -> ((JsonObject) c).getString("id").equals(id)).count();
+                    assertThat(matchingNameCount.apply(DUMMY_ID)).isEqualTo(1);
+                    assertThat(result.getString("outcome")).isEqualTo("UP");
+                    assertThat(result.getString("status")).isEqualTo("UP");
+                    cp.flag();
+                })));
     }
 }

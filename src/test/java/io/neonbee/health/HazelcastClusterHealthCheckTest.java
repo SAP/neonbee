@@ -73,7 +73,7 @@ class HazelcastClusterHealthCheckTest {
         when(mockedHazelcast.getCluster()).thenReturn(mockedCluster);
 
         assertThat(clusterHealthCheck.isGlobal()).isTrue();
-        assertThat(clusterHealthCheck.getId()).startsWith("cluster/");
+        assertThat(clusterHealthCheck.getId()).startsWith("cluster.");
     }
 
     private static Stream<Arguments> provideStatus() {
@@ -85,7 +85,7 @@ class HazelcastClusterHealthCheckTest {
     @MethodSource("provideStatus")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should set health status only to UP, when cluster state is healthy")
-    void testCreateProcedure(boolean clusterUp, boolean serviceUp, Vertx vertx, VertxTestContext testContext) {
+    void testCreateProcedure(boolean clusterUp, boolean serviceUp, VertxTestContext testContext) {
         when(mockedPartitionService.isClusterSafe()).thenReturn(clusterUp);
         when(mockedHazelcast.getPartitionService()).thenReturn(mockedPartitionService);
         when(mockedLifecycleService.isRunning()).thenReturn(serviceUp);
@@ -114,7 +114,7 @@ class HazelcastClusterHealthCheckTest {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should set health status to DOWN if cluster size does not match the expected from config")
-    void testClusterSizeBelowExpected(Vertx vertx, VertxTestContext testContext) {
+    void testClusterSizeBelowExpected(VertxTestContext testContext) {
         clusterHealthCheck.config = new JsonObject().put(EXPECTED_CLUSTER_SIZE_KEY, 3);
 
         checks.register(HazelcastClusterHealthCheck.NAME, clusterHealthCheck.createProcedure().apply(neonBee));

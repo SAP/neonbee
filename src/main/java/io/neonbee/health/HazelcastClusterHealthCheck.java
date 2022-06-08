@@ -16,7 +16,7 @@ public class HazelcastClusterHealthCheck extends AbstractHealthCheck {
     /**
      * Name of the health check.
      */
-    public static final String NAME = "cluster/hazelcast";
+    public static final String NAME = "cluster.hazelcast";
 
     @VisibleForTesting
     static final String EXPECTED_CLUSTER_SIZE_KEY = "expectedClusterSize";

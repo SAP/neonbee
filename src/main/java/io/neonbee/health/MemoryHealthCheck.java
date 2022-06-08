@@ -17,7 +17,7 @@ public class MemoryHealthCheck extends AbstractHealthCheck {
     /**
      * Name of the health check.
      */
-    public static final String NAME = "os/memory";
+    public static final String NAME = "os.memory";
 
     @VisibleForTesting
     static final String CRITICAL_THRESHOLD_PERCENTAGE_KEY = "criticalThresholdPercentage";
@@ -46,7 +46,7 @@ public class MemoryHealthCheck extends AbstractHealthCheck {
 
     @Override
     public boolean isGlobal() {
-        return true;
+        return false;
     }
 
     @Override

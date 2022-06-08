@@ -71,6 +71,7 @@ import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
 import io.neonbee.internal.tracking.TrackingInterceptor;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.internal.verticle.DeployerVerticle;
+import io.neonbee.internal.verticle.HealthCheckVerticle;
 import io.neonbee.internal.verticle.LoggerManagerVerticle;
 import io.neonbee.internal.verticle.MetricsVerticle;
 import io.neonbee.internal.verticle.ModelRefreshVerticle;
@@ -477,6 +478,7 @@ public class NeonBee {
         List<Future<? extends Deployable>> requiredVerticles = new ArrayList<>();
         requiredVerticles.add(fromClass(vertx, ConsolidationVerticle.class, new JsonObject().put("instances", 1)));
         requiredVerticles.add(fromVerticle(vertx, new MetricsVerticle(1, TimeUnit.SECONDS)));
+        requiredVerticles.add(fromVerticle(vertx, new HealthCheckVerticle()));
         requiredVerticles.add(fromClass(vertx, LoggerManagerVerticle.class));
 
         List<Future<Optional<? extends Deployable>>> optionalVerticles = new ArrayList<>();
@@ -734,6 +736,15 @@ public class NeonBee {
      */
     public String getNodeId() {
         return NODE_ID;
+    }
+
+    /**
+     * Get the health check registry associated to the NeonBee instance.
+     *
+     * @return an instance of {@link HealthCheckRegistry}
+     */
+    public HealthCheckRegistry getHealthCheckRegistry() {
+        return healthRegistry;
     }
 
     /**
