@@ -10,6 +10,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.neonbee.NeonBee;
 import io.neonbee.health.internal.HealthCheck;
+import io.neonbee.internal.json.ImmutableJsonObject;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
@@ -22,10 +23,12 @@ public abstract class AbstractHealthCheck implements HealthCheck {
     @VisibleForTesting
     static final long DEFAULT_RETENTION_TIME = 0L;
 
-    /**
-     * The health check config as {@link JsonObject}.
-     */
-    public JsonObject config;
+    @VisibleForTesting
+    static final ImmutableJsonObject DEFAULT_HEALTH_CHECK_CONFIG =
+            new ImmutableJsonObject(new JsonObject().put("enabled", true));
+
+    @VisibleForTesting
+    JsonObject config;
 
     private final NeonBee neonBee;
 
@@ -36,6 +39,7 @@ public abstract class AbstractHealthCheck implements HealthCheck {
      */
     public AbstractHealthCheck(NeonBee neonBee) {
         this.neonBee = neonBee;
+        this.config = DEFAULT_HEALTH_CHECK_CONFIG.mutableCopy();
     }
 
     /**
@@ -63,15 +67,30 @@ public abstract class AbstractHealthCheck implements HealthCheck {
      * @return the {@link HealthCheck} for fluent use
      */
     public Future<HealthCheck> register(HealthCheckRegistry registry) {
-        return readConfig(neonBee.getVertx(), this.getClass().getName()).compose(c -> {
-            this.config = c;
+        return mergeHealthCheckConfig().compose(c -> {
             try {
-                return succeededFuture(
-                        isGlobal() ? registry.registerGlobalCheck(getId(), getRetentionTime(), createProcedure(), c)
-                                : registry.registerNodeCheck(getId(), getRetentionTime(), createProcedure(), c));
+                return succeededFuture(isGlobal()
+                        ? registry.registerGlobalCheck(getId(), getRetentionTime(), createProcedure(), c.copy())
+                        : registry.registerNodeCheck(getId(), getRetentionTime(), createProcedure(), c.copy()));
             } catch (HealthCheckException e) {
                 return failedFuture(e);
             }
         });
+    }
+
+    /**
+     * Gets the health check config as {@link JsonObject}.
+     *
+     * @return the config as {@link JsonObject}
+     */
+    public JsonObject getConfig() {
+        return config.copy();
+    }
+
+    @VisibleForTesting
+    Future<JsonObject> mergeHealthCheckConfig() {
+        return readConfig(neonBee.getVertx(), this.getClass().getName())
+                .onSuccess(configFromFile -> this.config.mergeIn(configFromFile))
+                .transform(v -> succeededFuture(this.config));
     }
 }

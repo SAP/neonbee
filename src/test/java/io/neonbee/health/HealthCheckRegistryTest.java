@@ -60,27 +60,34 @@ class HealthCheckRegistryTest {
 
     private AbstractHealthCheck dummyCheck;
 
+    private static class DummyCheck extends AbstractHealthCheck {
+        DummyCheck(NeonBee neonBee) {
+            super(neonBee);
+        }
+
+        @Override
+        Function<NeonBee, Handler<Promise<Status>>> createProcedure() {
+            return nb -> p -> p.complete(new Status().setOK());
+        }
+
+        @Override
+        public String getId() {
+            return DUMMY_ID;
+        }
+
+        @Override
+        public boolean isGlobal() {
+            return true;
+        }
+    }
+
     @BeforeEach
     void setUp() {
         vertxMock = NeonBeeMockHelper.defaultVertxMock();
         NeonBee neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertxMock, defaultOptions(),
                 new NeonBeeConfig().setHealthConfig(new HealthConfig().setEnabled(true).setTimeout(2)));
-        dummyCheck = new AbstractHealthCheck(neonBee) {
-            @Override
-            Function<NeonBee, Handler<Promise<Status>>> createProcedure() {
-                return nb -> p -> p.complete(new Status().setOK());
-            }
 
-            @Override
-            public String getId() {
-                return DUMMY_ID;
-            }
-
-            @Override
-            public boolean isGlobal() {
-                return true;
-            }
-        };
+        dummyCheck = new DummyCheck(neonBee);
     }
 
     @Test
@@ -179,10 +186,10 @@ class HealthCheckRegistryTest {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should prefer disabling of health checks from health check config of config folder")
     void testCustomConfigEnabled(VertxTestContext testContext) {
-        FileSystem fileSystemMock = vertxMock.fileSystem();
         NeonBeeMockHelper.registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")),
                 new NeonBeeConfig().setHealthConfig(new HealthConfig().setEnabled(true)));
         HealthCheckRegistry registry = new HealthCheckRegistry(vertxMock);
+        FileSystem fileSystemMock = vertxMock.fileSystem();
 
         when(fileSystemMock.readFile(any()))
                 .thenReturn(failedFuture(new FileSystemException(new NoSuchFileException("file"))));
@@ -190,6 +197,10 @@ class HealthCheckRegistryTest {
                 .thenReturn(succeededFuture(Buffer.buffer("---\nenabled: false")));
 
         dummyCheck.register(registry).onComplete(testContext.succeeding(check -> testContext.verify(() -> {
+            String path =
+                    NeonBee.get(vertxMock).getOptions().getConfigDirectory().resolve(dummyCheck.getClass().getName())
+                            + ".yaml";
+            verify(fileSystemMock).readFile(eq(path));
             assertThat(check).isNull();
             testContext.completeNow();
         })));
@@ -199,7 +210,6 @@ class HealthCheckRegistryTest {
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should prefer enablement of health checks and timeout from health check config of config folder")
     void testCustomConfigDisabled(VertxTestContext testContext) {
-        FileSystem fileSystemMock = vertxMock.fileSystem();
         NeonBeeMockHelper.registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")),
                 new NeonBeeConfig().setHealthConfig(new HealthConfig().setEnabled(false).setTimeout(2)));
         HealthCheckRegistry registry = new HealthCheckRegistry(vertxMock);
@@ -207,14 +217,19 @@ class HealthCheckRegistryTest {
 
         when(mockedChecks.register(anyString(), anyLong(), any())).thenReturn(mockedChecks);
         registry.healthChecks = mockedChecks;
+        FileSystem fileSystemMock = vertxMock.fileSystem();
         when(fileSystemMock.readFile(any()))
                 .thenReturn(failedFuture(new FileSystemException(new NoSuchFileException("file"))));
         when(fileSystemMock.readFile(endsWith(".yml")))
                 .thenReturn(succeededFuture(Buffer.buffer("---\nenabled: true\ntimeout: 3")));
 
         dummyCheck.register(registry).onComplete(testContext.succeeding(check -> testContext.verify(() -> {
-            assertThat(registry.checks.size()).isEqualTo(1);
+            String path =
+                    NeonBee.get(vertxMock).getOptions().getConfigDirectory().resolve(dummyCheck.getClass().getName())
+                            + ".yaml";
+            verify(fileSystemMock).readFile(eq(path));
             verify(registry.healthChecks).register(eq(DUMMY_ID), eq(3000L), any());
+            assertThat(registry.checks.size()).isEqualTo(1);
             testContext.completeNow();
         })));
     }
