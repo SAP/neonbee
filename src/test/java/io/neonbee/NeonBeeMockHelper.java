@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -17,7 +18,7 @@ import org.mockito.stubbing.Answer;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.config.NeonBeeConfig;
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
+import io.vertx.core.Closeable;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -27,6 +28,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.file.FileSystem;
+import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 public final class NeonBeeMockHelper {
@@ -43,7 +46,9 @@ public final class NeonBeeMockHelper {
      */
     @SuppressWarnings({ "unchecked", "ReturnValueIgnored" })
     public static Vertx defaultVertxMock() {
-        Vertx vertxMock = mock(Vertx.class);
+        VertxInternal vertxMock = mock(VertxInternal.class);
+
+        doNothing().when(vertxMock).addCloseHook(any(Closeable.class));
 
         // mock deployment and undeployment of verticles
         when(vertxMock.deployVerticle((Verticle) any())).thenReturn(succeededFuture());
@@ -79,7 +84,7 @@ public final class NeonBeeMockHelper {
         doAnswer(handleAnswer).when(vertxMock).undeploy((String) any(), (Handler<AsyncResult<Void>>) any());
 
         // mock context creation
-        Context contextMock = mock(Context.class);
+        ContextInternal contextMock = mock(ContextInternal.class);
         when(vertxMock.getOrCreateContext()).thenReturn(contextMock);
         when(contextMock.deploymentID()).thenReturn("any-deployment-guid");
 
