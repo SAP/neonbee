@@ -13,12 +13,9 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import org.mockito.stubbing.Answer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.config.NeonBeeConfig;
-import io.neonbee.test.helper.ReflectionHelper;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
@@ -243,18 +240,6 @@ public final class NeonBeeMockHelper {
      * @return the mocked NeonBee instance
      */
     public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config) {
-        createLogger(); // the logger is only created internally, create one manually if required
         return new NeonBee(vertx, options, config, new CompositeMeterRegistry(), new HazelcastClusterManager());
-    }
-
-    @SuppressWarnings({ "CatchAndPrintStackTrace", "PMD.AvoidPrintStackTrace" })
-    private static void createLogger() {
-        try {
-            Logger logger = (Logger) ReflectionHelper.getValueOfPrivateStaticField(NeonBee.class, "logger");
-            logger = logger == null ? LoggerFactory.getLogger(NeonBee.class) : logger;
-            ReflectionHelper.setValueOfPrivateStaticField(NeonBee.class, "logger", logger);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }
