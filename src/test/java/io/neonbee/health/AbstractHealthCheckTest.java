@@ -162,7 +162,7 @@ class AbstractHealthCheckTest {
     private AbstractHealthCheck createDummyHealthCheck(boolean global, boolean ok, JsonObject data) {
         return new AbstractHealthCheck(NeonBee.get(vertxMock)) {
             @Override
-            Function<NeonBee, Handler<Promise<Status>>> createProcedure() {
+            public Function<NeonBee, Handler<Promise<Status>>> createProcedure() {
                 return nb -> p -> p.complete(new Status().setOk(ok).setData(data));
             }
 

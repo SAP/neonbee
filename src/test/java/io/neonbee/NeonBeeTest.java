@@ -11,6 +11,7 @@ import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.NeonBeeProfile.STABLE;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
+import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,8 +23,13 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -44,6 +50,13 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import io.neonbee.config.NeonBeeConfig;
+import io.neonbee.health.DummyHealthCheck;
+import io.neonbee.health.DummyHealthCheckProvider;
+import io.neonbee.health.HazelcastClusterHealthCheck;
+import io.neonbee.health.HealthCheckProvider;
+import io.neonbee.health.HealthCheckRegistry;
+import io.neonbee.health.MemoryHealthCheck;
+import io.neonbee.health.internal.HealthCheck;
 import io.neonbee.internal.NeonBeeModuleJar;
 import io.neonbee.internal.tracking.MessageDirection;
 import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
@@ -78,6 +91,10 @@ class NeonBeeTest extends NeonBeeTestBase {
         case "testDeployCoreVerticlesFromClassPath":
             options.addActiveProfile(CORE);
             options.setIgnoreClassPath(false);
+            break;
+        case "testRegisterClusterHealthChecks":
+            options.setClustered(true);
+            options.setClusterConfigResource("hazelcast-local.xml");
             break;
         case "testDeployModule":
             try {
@@ -200,6 +217,72 @@ class NeonBeeTest extends NeonBeeTestBase {
         assertThat(getNeonBee().isLocalConsumerAvailable(address)).isTrue();
         getNeonBee().unregisterLocalConsumer(address);
         assertThat(getNeonBee().isLocalConsumerAvailable(address)).isFalse();
+    }
+
+    @Test
+    @DisplayName("NeonBee should register all default health checks")
+    void testRegisterDefaultHealthChecks() {
+        Map<String, HealthCheck> registeredChecks = getNeonBee().getHealthCheckRegistry().getHealthChecks();
+        assertThat(registeredChecks.size()).isEqualTo(1);
+        assertThat(registeredChecks.containsKey("node." + getNeonBee().getNodeId() + "." + MemoryHealthCheck.NAME))
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("NeonBee should register all cluster + default health checks if started clustered")
+    void testRegisterClusterHealthChecks() {
+        Map<String, HealthCheck> registeredChecks = getNeonBee().getHealthCheckRegistry().getHealthChecks();
+        assertThat(registeredChecks.size()).isEqualTo(2);
+        assertThat(registeredChecks.containsKey(HazelcastClusterHealthCheck.NAME)).isTrue();
+    }
+
+    @Test
+    @Timeout(value = 1, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("NeonBee should register all SPI-provided + default health checks")
+    void testRegisterSpiAndDefaultHealthChecks(VertxTestContext testContext) {
+        HealthCheckRegistry registry = getNeonBee().getHealthCheckRegistry();
+        Set<String> healthCheckMap = registry.getHealthChecks().keySet();
+        for (String checkId : healthCheckMap) {
+            registry.unregister(checkId);
+        }
+
+        runWithMetaInfService(HealthCheckProvider.class, DummyHealthCheckProvider.class.getName(), testContext, () -> {
+            getNeonBee().registerHealthChecks().onComplete(testContext.succeeding(v -> testContext.verify(() -> {
+                Map<String, HealthCheck> registeredChecks = registry.getHealthChecks();
+                assertThat(registeredChecks.size()).isEqualTo(2);
+                assertThat(
+                        registeredChecks.containsKey("node." + getNeonBee().getNodeId() + "." + MemoryHealthCheck.NAME))
+                                .isTrue();
+                assertThat(registeredChecks.containsKey(DummyHealthCheck.DUMMY_ID)).isTrue();
+                testContext.completeNow();
+            })));
+        });
+    }
+
+    private void runWithMetaInfService(Class<?> service, String content, VertxTestContext context, Runnable runnable) {
+        Path providerPath = TEST_RESOURCES.resolve("META-INF/services/" + service.getName());
+        ClassLoader classLoader;
+        try {
+            Files.write(providerPath, content.getBytes(StandardCharsets.UTF_8));
+            classLoader = new URLClassLoader(new URL[] { TEST_RESOURCES.resolve(".").toUri().toURL() });
+        } catch (IOException e) {
+            context.failNow(e);
+            return;
+        }
+        Thread thread = Thread.currentThread();
+        ClassLoader original = thread.getContextClassLoader();
+        thread.setContextClassLoader(classLoader);
+
+        try {
+            runnable.run();
+        } finally {
+            thread.setContextClassLoader(original);
+            try {
+                Files.deleteIfExists(providerPath);
+            } catch (IOException e) {
+                context.failNow(e);
+            }
+        }
     }
 
     @Test

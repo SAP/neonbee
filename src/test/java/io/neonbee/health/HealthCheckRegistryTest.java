@@ -1,6 +1,7 @@
 package io.neonbee.health;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.health.DummyHealthCheck.DUMMY_ID;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static io.neonbee.test.helper.ReflectionHelper.setValueOfPrivateField;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,8 +34,6 @@ import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.verticle.HealthCheckVerticle;
 import io.neonbee.test.helper.DeploymentHelper;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -47,33 +46,9 @@ import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
 class HealthCheckRegistryTest {
-
-    private static final String DUMMY_ID = "dummy-group.check-0";
-
     private static final long RETENTION_TIME = 12L;
 
     private NeonBee neonBee;
-
-    private static class DummyCheck extends AbstractHealthCheck {
-        DummyCheck(NeonBee neonBee) {
-            super(neonBee);
-        }
-
-        @Override
-        Function<NeonBee, Handler<Promise<Status>>> createProcedure() {
-            return nb -> p -> p.complete(new Status().setOK());
-        }
-
-        @Override
-        public String getId() {
-            return DUMMY_ID;
-        }
-
-        @Override
-        public boolean isGlobal() {
-            return true;
-        }
-    }
 
     @BeforeEach
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
@@ -168,7 +143,7 @@ class HealthCheckRegistryTest {
     void testUnregister(VertxTestContext testContext) {
         HealthCheckRegistry registry = neonBee.getHealthCheckRegistry();
         registry.healthChecks = spy(registry.healthChecks);
-        AbstractHealthCheck check = new DummyCheck(neonBee);
+        AbstractHealthCheck check = new DummyHealthCheck(neonBee);
 
         registry.register(check).compose(v -> {
             testContext.verify(() -> {
@@ -234,7 +209,7 @@ class HealthCheckRegistryTest {
         DeploymentHelper.undeployAllVerticlesOfClass(neonBee.getVertx(), HealthCheckVerticle.class)
                 .compose(v -> AsyncHelper.allComposite(
                         List.of(vertx.deployVerticle(healthCheckVerticle1), vertx.deployVerticle(healthCheckVerticle2),
-                                neonBee.getHealthCheckRegistry().register(new DummyCheck(neonBee)))))
+                                neonBee.getHealthCheckRegistry().register(new DummyHealthCheck(neonBee)))))
                 .onSuccess(v -> {
                     neonBee.getHealthCheckRegistry().collectHealthCheckResults()
                             .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
@@ -266,7 +241,7 @@ class HealthCheckRegistryTest {
             }
         };
 
-        mock.register(new DummyCheck(neonBee)).compose(hc -> mock.collectHealthCheckResults())
+        mock.register(new DummyHealthCheck(neonBee)).compose(hc -> mock.collectHealthCheckResults())
                 .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
                     Function<String, Long> matchingNameCount = id -> result.getJsonArray("checks").stream()
                             .filter(c -> ((JsonObject) c).getString("id").equals(id)).count();

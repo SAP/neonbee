@@ -45,7 +45,7 @@ public class HazelcastClusterHealthCheck extends AbstractHealthCheck {
     }
 
     @Override
-    Function<NeonBee, Handler<Promise<Status>>> createProcedure() {
+    public Function<NeonBee, Handler<Promise<Status>>> createProcedure() {
         return neonBee -> healthCheckPromise -> neonBee.getVertx().executeBlocking(promise -> {
             HazelcastInstance instance = clusterManager.getHazelcastInstance();
             boolean lifecycleServiceRunning = instance.getLifecycleService().isRunning();
