@@ -47,7 +47,7 @@ public abstract class AbstractHealthCheck implements HealthCheck {
      *
      * @return a function which returns a handler with a Status
      */
-    abstract Function<NeonBee, Handler<Promise<Status>>> createProcedure();
+    public abstract Function<NeonBee, Handler<Promise<Status>>> createProcedure();
 
     @Override
     public long getRetentionTime() {

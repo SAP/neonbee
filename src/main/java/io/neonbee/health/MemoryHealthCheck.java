@@ -50,7 +50,7 @@ public class MemoryHealthCheck extends AbstractHealthCheck {
     }
 
     @Override
-    Function<NeonBee, Handler<Promise<Status>>> createProcedure() {
+    public Function<NeonBee, Handler<Promise<Status>>> createProcedure() {
         return neonBee -> healthCheckPromise -> {
             long usedMemory = memoryStats.getUsedHeap();
             double memoryUsedOfTotalPercentage = (PERCENTAGE_MULTIPLIER * usedMemory) / memoryStats.getCommittedHeap();

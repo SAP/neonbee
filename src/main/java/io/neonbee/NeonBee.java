@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -45,6 +46,7 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.entity.EntityModelManager;
 import io.neonbee.entity.EntityWrapper;
 import io.neonbee.health.HazelcastClusterHealthCheck;
+import io.neonbee.health.HealthCheckProvider;
 import io.neonbee.health.HealthCheckRegistry;
 import io.neonbee.health.MemoryHealthCheck;
 import io.neonbee.health.internal.HealthCheck;
@@ -328,7 +330,8 @@ public class NeonBee {
      *
      * @return a Future
      */
-    private Future<Void> registerHealthChecks() {
+    @VisibleForTesting
+    Future<Void> registerHealthChecks() {
         List<Future<HealthCheck>> healthChecks = new ArrayList<>();
 
         if (Optional.ofNullable(config.getHealthConfig()).map(HealthConfig::isEnabled).orElse(true)) {
@@ -337,6 +340,12 @@ public class NeonBee {
             if (options.isClustered()) {
                 healthChecks.add(healthRegistry.register(new HazelcastClusterHealthCheck(this, clusterManager)));
             }
+
+            ServiceLoader.load(HealthCheckProvider.class).forEach(provider -> provider.get(vertx).forEach(check -> {
+                if (!healthRegistry.getHealthChecks().containsKey(check.getId())) {
+                    healthChecks.add(healthRegistry.register(check));
+                }
+            }));
         }
 
         return joinComposite(healthChecks).recover(v -> {
