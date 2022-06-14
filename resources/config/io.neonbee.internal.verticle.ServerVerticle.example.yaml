@@ -91,3 +91,13 @@ config:
             # the authentication provider to be set for this handler# any of: HTDIGEST, HTPASSWD, JDBC, JWT, MONGO, OAUTH2, mandatory attribute
             type: string
             # ... more authentication provider options (see the specific provider implementations)
+
+    #  default handler factories. The order of handler factories has to take the priority of the returned handlers into account.
+    handlerFactories:
+    - io.neonbee.internal.handler.factories.LoggerHandlerFactory
+    - io.neonbee.internal.handler.factories.InstanceInfoHandlerFactory
+    - io.neonbee.internal.handler.factories.CorrelationIdHandlerFactory
+    - io.neonbee.internal.handler.factories.TimeoutHandlerFactory
+    - io.neonbee.internal.handler.factories.SessionHandlerFactory
+    - io.neonbee.internal.handler.factories.CacheControlHandlerFactory
+    - io.neonbee.internal.handler.factories.DisallowingFileUploadBodyHandlerFactory
