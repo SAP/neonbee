@@ -4,6 +4,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.config.ServerConfig.DEFAULT_COMPRESSION_LEVEL;
 import static io.neonbee.config.ServerConfig.DEFAULT_COMPRESSION_SUPPORTED;
 import static io.neonbee.config.ServerConfig.DEFAULT_DECOMPRESSION_SUPPORTED;
+import static io.neonbee.config.ServerConfig.DEFAULT_HANDLER_FACTORIES_CLASS_NAMES;
 import static io.neonbee.config.ServerConfig.DEFAULT_PORT;
 import static io.neonbee.config.ServerConfig.DEFAULT_USE_ALPN;
 
@@ -19,6 +20,8 @@ import io.neonbee.config.AuthHandlerConfig.AuthHandlerType;
 import io.neonbee.config.ServerConfig.CorrelationStrategy;
 import io.neonbee.config.ServerConfig.SessionHandling;
 import io.neonbee.endpoint.raw.RawEndpoint;
+import io.neonbee.internal.handler.factories.CacheControlHandlerFactory;
+import io.neonbee.internal.handler.factories.CorrelationIdHandlerFactory;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.Http2Settings;
@@ -41,6 +44,9 @@ class ServerConfigTest {
 
     private static final String ERROR_TEMPLATE = "custom-template.html";
 
+    private static final List<String> FACTORY_CLASS_NAME_LIST =
+            List.of(CacheControlHandlerFactory.class.getName(), CorrelationIdHandlerFactory.class.getName());
+
     @Test
     @DisplayName("test toJson")
     void testToJson() {
@@ -59,12 +65,17 @@ class ServerConfigTest {
         sc.setCorrelationStrategy(correlationStrategy).setTimeoutStatusCode(timeoutStatusCode);
         sc.setEndpointConfigs(endpointConfigs).setAuthChainConfig(authHandlerConfig);
         sc.setErrorHandlerClassName(ERROR_HANDLER).setErrorHandlerTemplate(ERROR_TEMPLATE);
+        sc.setHandlerFactoriesClassNames(FACTORY_CLASS_NAME_LIST);
 
         JsonObject expected = new JsonObject().put("timeout", timeout).put("sessionHandling", sessionHandling.name());
         expected.put("sessionCookieName", sessionCookieName).put("correlationStrategy", correlationStrategy.name());
         expected.put("timeoutStatusCode", timeoutStatusCode).put("endpoints", new JsonArray().add(epc.toJson()));
         expected.put("authenticationChain", new JsonArray().add(ahc.toJson()));
         expected.put("errorHandler", ERROR_HANDLER).put("errorTemplate", ERROR_TEMPLATE);
+
+        JsonArray expectedHandlerFactories = new JsonArray();
+        FACTORY_CLASS_NAME_LIST.forEach(expectedHandlerFactories::add);
+        expected.put("handlerFactories", expectedHandlerFactories);
 
         assertThat(sc.toJson()).containsAtLeastElementsIn(expected);
     }
@@ -86,6 +97,10 @@ class ServerConfigTest {
         json.put("authenticationChain", new JsonArray().add(ahc.toJson()));
         json.put("errorHandler", ERROR_HANDLER);
         json.put("errorTemplate", ERROR_TEMPLATE);
+
+        JsonArray handlerFactories = new JsonArray();
+        FACTORY_CLASS_NAME_LIST.forEach(handlerFactories::add);
+        json.put("handlerFactories", handlerFactories);
 
         ServerConfig sc = new ServerConfig(json);
         assertThat(sc.getTimeout()).isEqualTo(timeout);
@@ -109,6 +124,7 @@ class ServerConfigTest {
         assertThat(sc.isCompressionSupported()).isEqualTo(DEFAULT_COMPRESSION_SUPPORTED);
         assertThat(sc.getCompressionLevel()).isEqualTo(DEFAULT_COMPRESSION_LEVEL);
         assertThat(sc.isDecompressionSupported()).isEqualTo(DEFAULT_DECOMPRESSION_SUPPORTED);
+        assertThat(sc.getHandlerFactoriesClassNames()).isEqualTo(DEFAULT_HANDLER_FACTORIES_CLASS_NAMES);
     }
 
     @Test
@@ -146,6 +162,9 @@ class ServerConfigTest {
 
         assertThat(sc.setErrorHandlerTemplate(ERROR_TEMPLATE)).isSameInstanceAs(sc);
         assertThat(sc.getErrorHandlerTemplate()).isEqualTo(ERROR_TEMPLATE);
+
+        assertThat(sc.setHandlerFactoriesClassNames(FACTORY_CLASS_NAME_LIST)).isSameInstanceAs(sc);
+        assertThat(sc.getHandlerFactoriesClassNames()).isEqualTo(FACTORY_CLASS_NAME_LIST);
     }
 
     @Test
@@ -366,5 +385,8 @@ class ServerConfigTest {
         List<String> subProtocols = List.of("");
         assertThat(sc.setWebSocketSubProtocols(subProtocols)).isSameInstanceAs(sc);
         assertThat(sc.getWebSocketSubProtocols()).containsExactlyElementsIn(subProtocols);
+
+        assertThat(sc.setHandlerFactoriesClassNames(FACTORY_CLASS_NAME_LIST)).isSameInstanceAs(sc);
+        assertThat(sc.getHandlerFactoriesClassNames()).containsExactlyElementsIn(FACTORY_CLASS_NAME_LIST);
     }
 }

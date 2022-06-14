@@ -55,6 +55,16 @@ public class ServerConfigConverter {
                     obj.setErrorHandlerTemplate((String) member.getValue());
                 }
                 break;
+            case "handlerFactoriesClassNames":
+                if (member.getValue() instanceof JsonArray) {
+                    java.util.ArrayList<java.lang.String> list = new java.util.ArrayList<>();
+                    ((Iterable<Object>) member.getValue()).forEach(item -> {
+                        if (item instanceof String)
+                            list.add((String) item);
+                    });
+                    obj.setHandlerFactoriesClassNames(list);
+                }
+                break;
             case "sessionCookieName":
                 if (member.getValue() instanceof String) {
                     obj.setSessionCookieName((String) member.getValue());
@@ -103,6 +113,11 @@ public class ServerConfigConverter {
         }
         if (obj.getErrorHandlerTemplate() != null) {
             json.put("errorHandlerTemplate", obj.getErrorHandlerTemplate());
+        }
+        if (obj.getHandlerFactoriesClassNames() != null) {
+            JsonArray array = new JsonArray();
+            obj.getHandlerFactoriesClassNames().forEach(item -> array.add(item));
+            json.put("handlerFactoriesClassNames", array);
         }
         if (obj.getSessionCookieName() != null) {
             json.put("sessionCookieName", obj.getSessionCookieName());
