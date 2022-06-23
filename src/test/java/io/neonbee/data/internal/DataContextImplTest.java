@@ -36,6 +36,8 @@ import com.google.common.collect.Streams;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataContext.DataVerticleCoordinate;
 import io.neonbee.data.DataException;
+import io.neonbee.data.DataQuery;
+import io.neonbee.data.DataRequest;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
@@ -326,7 +328,8 @@ class DataContextImplTest {
     @ParameterizedTest(name = "{index}: with session: {0}")
     @MethodSource("withSessions")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    @SuppressWarnings("PMD.UnusedFormalParameter") // Required for display name
+    @SuppressWarnings("PMD.UnusedFormalParameter")
+    // Required for display name
     @DisplayName("Constructor that accepts RoutingContext works correct")
     void testWithRoutingContext(Session sessionMock, String expectedSessionValue) {
         RoutingContext routingContextMock = mock(RoutingContext.class);
@@ -362,17 +365,59 @@ class DataContextImplTest {
     @Test
     @DisplayName("test encoding / decoding context")
     void testEncodeDecode() {
-        DataContext dataContext = DataContextImpl
-                .decodeContextFromString(DataContextImpl.encodeContextToString(new DataContextImpl("expected1",
-                        "expectedSessionId", "expected2", new JsonObject().put("expectedKey", "expectedValue"),
-                        new JsonObject().put("expected1", "expected2").put("expectedArray", new JsonArray().add(0))
-                                .put("expectedNull", (Object) null).getMap())));
-        assertThat(dataContext.correlationId()).isEqualTo("expected1");
-        assertThat(dataContext.sessionId()).isEqualTo("expectedSessionId");
-        assertThat(dataContext.bearerToken()).isEqualTo("expected2");
-        assertThat(dataContext.userPrincipal()).isEqualTo(new JsonObject().put("expectedKey", "expectedValue"));
-        assertThat(new JsonObject(dataContext.data())).isEqualTo(new JsonObject().put("expected1", "expected2")
-                .put("expectedArray", new JsonArray().add(0)).put("expectedNull", (Object) null));
+        DataContext dataContext = DataContextImpl.decodeContextFromString(DataContextImpl.encodeContextToString(
+                new DataContextImpl("correlationId", "sessionId", "token", new JsonObject().put("user", "pass"),
+                        new JsonObject().put("data1", "data1").put("dataArray", new JsonArray().add(0))
+                                .put("dataNull", (Object) null).getMap(),
+                        new JsonObject().put("responseData1", "data1").put("responseArray", new JsonArray().add(0))
+                                .put("responseNull", (Object) null).getMap(),
+                        null)));
+        assertThat(dataContext.correlationId()).isEqualTo("correlationId");
+        assertThat(dataContext.sessionId()).isEqualTo("sessionId");
+        assertThat(dataContext.bearerToken()).isEqualTo("token");
+        assertThat(dataContext.userPrincipal()).isEqualTo(new JsonObject().put("user", "pass"));
+        assertThat(new JsonObject(dataContext.data())).isEqualTo(new JsonObject().put("data1", "data1")
+                .put("dataArray", new JsonArray().add(0)).put("dataNull", (Object) null));
+        assertThat(new JsonObject(dataContext.responseData())).isEqualTo(new JsonObject().put("responseData1", "data1")
+                .put("responseArray", new JsonArray().add(0)).put("responseNull", (Object) null));
+    }
+
+    @Test
+    @DisplayName("test response meta data handling")
+    void testResponseData() {
+        DataContext context = new DataContextImpl();
+        assertThat(context.responseData()).isEmpty();
+        context.mergeResponseData(Map.of("key", "value"));
+        assertThat(context.responseData()).hasSize(1);
+        assertThat(context.responseData().get("key")).isEqualTo("value");
+        context.responseData().put("key", "newvalue");
+        assertThat(context.responseData().get("key")).isEqualTo("newvalue");
+        context.mergeResponseData(Map.of("key", "value"));
+        context.mergeResponseData(Map.of("key", "newvalue"));
+        assertThat(context.responseData()).hasSize(1);
+        assertThat(context.responseData().get("key")).isEqualTo("newvalue");
+        DataRequest request1 = new DataRequest("fqn1");
+        DataRequest request2 = new DataRequest("fqn2");
+        context.setReceivedData(
+                Map.of(request1, Map.of("content", "pdf", "length", 125), request2, Map.of("content", "json")));
+        assertThat(context.receivedData().get(request1).get("content")).isEqualTo("pdf");
+        assertThat(context.receivedData().get(request1).get("length")).isEqualTo(125);
+        assertThat(context.receivedData().get(request2).get("content")).isEqualTo("json");
+    }
+
+    @Test
+    @DisplayName("test received data handling")
+    void testReceivedData() {
+        DataContext context = new DataContextImpl();
+        DataRequest request1 = new DataRequest("target1", new DataQuery());
+        DataRequest request2 = new DataRequest("target2", new DataQuery());
+        DataRequest request3 = new DataRequest("target2", new DataQuery());
+
+        context.setReceivedData(Map.of(request1, Map.of("key1", "value1"), request2, Map.of("key2", "value2"), request3,
+                Map.of("key3", "value3")));
+        assertThat(context.findReceivedData(request1).get("key1")).isEqualTo("value1");
+        assertThat(context.findFirstReceivedData(request1.getQualifiedName()).get().get("key1")).isEqualTo("value1");
+        assertThat(context.findAllReceivedData(request2.getQualifiedName())).hasSize(2);
     }
 
     private int contextPathSize(DataContext context) {

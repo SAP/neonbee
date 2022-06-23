@@ -2,6 +2,7 @@ package io.neonbee.data.internal;
 
 import static com.google.common.collect.Iterators.unmodifiableIterator;
 import static io.neonbee.internal.handler.CorrelationIdHandler.CORRELATION_ID;
+import static io.neonbee.internal.helper.CollectionHelper.isNullOrEmpty;
 import static io.neonbee.internal.helper.CollectionHelper.mutableCopyOf;
 import static io.neonbee.internal.helper.HostHelper.getHostIp;
 
@@ -24,6 +25,7 @@ import com.google.common.collect.Streams;
 
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataException;
+import io.neonbee.data.DataRequest;
 import io.neonbee.internal.handler.CorrelationIdHandler;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.http.HttpHeaders;
@@ -52,6 +54,8 @@ public class DataContextImpl implements DataContext {
 
     private static final Pattern BEARER_AUTHENTICATION_PATTERN = Pattern.compile("Bearer\\s(.+)");
 
+    private static final String RESPONSE_METADATA_KEY = "responsedata";
+
     private final String correlationId;
 
     private final String bearerToken;
@@ -62,7 +66,15 @@ public class DataContextImpl implements DataContext {
 
     private Map<String, Object> data;
 
+    private Map<String, Object> responseData;
+
     private Deque<DataVerticleCoordinate> pathStack;
+
+    /**
+     * This is a map between {@link DataRequest} to an invoked verticle and the received response data for the request.
+     * This map will not be propagated to the upstream verticles by default.
+     */
+    private Map<DataRequest, Map<String, Object>> receivedData;
 
     public DataContextImpl() {
         // initialize an empty context (w/ will also create an empty path stack)
@@ -104,9 +116,16 @@ public class DataContextImpl implements DataContext {
         this(correlationId, null, bearerToken, userPrincipal, data, paths);
     }
 
-    @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
+    @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod", "ChainingConstructorIgnoresParameter",
+            "PMD.UnusedFormalParameter" })
     public DataContextImpl(String correlationId, String sessionId, String bearerToken, JsonObject userPrincipal,
             Map<String, Object> data, Deque<DataVerticleCoordinate> paths) {
+        this(correlationId, sessionId, bearerToken, userPrincipal, data, null, paths);
+    }
+
+    @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod" })
+    public DataContextImpl(String correlationId, String sessionId, String bearerToken, JsonObject userPrincipal,
+            Map<String, Object> data, Map<String, Object> responseData, Deque<DataVerticleCoordinate> paths) {
         this.correlationId = correlationId;
         this.sessionId = sessionId;
         this.bearerToken = bearerToken;
@@ -114,6 +133,7 @@ public class DataContextImpl implements DataContext {
         this.userPrincipal = Optional.ofNullable(userPrincipal).map(JsonObject::getMap)
                 .map(Collections::unmodifiableMap).map(JsonObject::new).orElse(null);
         this.setData(data); // create a mutable copy of the map
+        this.responseData = mutableCopyOf(responseData);
         this.setPath(paths); // create a mutable copy of the dequeue
     }
 
@@ -228,6 +248,58 @@ public class DataContextImpl implements DataContext {
         return (T) value;
     }
 
+    @Override
+    public Map<String, Object> responseData() {
+        if (this.responseData == null) {
+            this.responseData = new HashMap<>();
+        }
+        return this.responseData;
+    }
+
+    @Override
+    public DataContext mergeResponseData(Map<String, Object> data) {
+        if (!isNullOrEmpty(data)) {
+            // instead of putAll, might be worth it to write a more sophisticated logic using .merge()
+            this.responseData().putAll(mutableCopyOf(data));
+        }
+        return this;
+    }
+
+    @Override
+    public Map<DataRequest, Map<String, Object>> receivedData() {
+        return this.receivedData;
+    }
+
+    @Override
+    public DataContext setReceivedData(Map<DataRequest, Map<String, Object>> map) {
+        this.receivedData = Collections.unmodifiableMap(map);
+        return this;
+    }
+
+    @Override
+    public Map<String, Object> findReceivedData(DataRequest dataRequest) {
+        return this.receivedData.getOrDefault(dataRequest, Map.of());
+    }
+
+    @Override
+    public Optional<Map<String, Object>> findFirstReceivedData(String qualifiedName) {
+        return this.receivedData.entrySet().stream()
+                .filter(entry -> qualifiedName.equals(entry.getKey().getQualifiedName())).findFirst()
+                .map(Map.Entry::getValue);
+    }
+
+    @Override
+    public List<Map<String, Object>> findAllReceivedData(String qualifiedName) {
+        return this.receivedData.entrySet().stream()
+                .filter(entry -> qualifiedName.equals(entry.getKey().getQualifiedName())).map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void propagateReceivedData() {
+        receivedData.values().stream().forEach(data -> this.mergeResponseData(data));
+    }
+
     /**
      * Encodes a given {@link DataContext} to string.
      *
@@ -241,7 +313,9 @@ public class DataContextImpl implements DataContext {
         }
         return new JsonObject().put(CORRELATION_ID, context.correlationId()).put(SESSION_ID_KEY, context.sessionId())
                 .put(BEARER_TOKEN_KEY, context.bearerToken()).put(USER_PRINCIPAL_KEY, context.userPrincipal())
-                .put(DATA_KEY, context.data()).put(PATH_KEY, pathToJson(context.path())).toString();
+                .put(DATA_KEY, new JsonObject(context.data()))
+                .put(RESPONSE_METADATA_KEY, new JsonObject(context.responseData()))
+                .put(PATH_KEY, pathToJson(context.path())).toString();
     }
 
     private static JsonArray pathToJson(Iterator<DataVerticleCoordinate> path) {
@@ -264,6 +338,8 @@ public class DataContextImpl implements DataContext {
         return new DataContextImpl(contextJson.getString(CORRELATION_ID), contextJson.getString(SESSION_ID_KEY),
                 contextJson.getString(BEARER_TOKEN_KEY), contextJson.getJsonObject(USER_PRINCIPAL_KEY),
                 Optional.ofNullable(contextJson.getJsonObject(DATA_KEY)).map(JsonObject::getMap).orElse(null),
+                Optional.ofNullable(contextJson.getJsonObject(RESPONSE_METADATA_KEY)).map(JsonObject::getMap)
+                        .orElse(null),
                 Optional.ofNullable(contextJson.getJsonArray(PATH_KEY)).map(DataContextImpl::pathFromJson)
                         .orElse(null));
     }

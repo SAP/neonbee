@@ -163,6 +163,29 @@ public final class CollectionHelper {
     }
 
     /**
+     * Returns true, when a collection is null or empty.
+     *
+     * @param <T>        the type of entries
+     * @param collection collection to check
+     * @return true, when a collection is null or empty
+     */
+    public static <T> boolean isNullOrEmpty(Collection<T> collection) {
+        return collection == null || collection.isEmpty();
+    }
+
+    /**
+     * Returns true, when a map is null or empty.
+     *
+     * @param <K> the type of key
+     * @param <V> the type of entry
+     * @param map map to check
+     * @return true, when a map is null or empty
+     */
+    public static <K, V> boolean isNullOrEmpty(Map<K, V> map) {
+        return map == null || map.isEmpty();
+    }
+
+    /**
      * A merging {@link HashMap} which may take null values into merging.
      *
      * @param <K> the key type

@@ -81,6 +81,200 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
     private DataVerticleMetrics dataVerticleMetrics;
 
     /**
+     * Requesting data from other DataSources or Data/EntityVerticles.
+     *
+     * @param vertx   The Vertx instance
+     * @param request The DataRequest specifying the data to request
+     * @param context The {@link DataContext data context} which keeps track of all the request-level data during a
+     *                request
+     * @param <U>     The type of the returned future
+     * @return a future to the data requested
+     */
+    public static <U> Future<U> requestData(Vertx vertx, DataRequest request, DataContext context) {
+        DataSource<?> dataSource = request.getDataSource();
+
+        if (dataSource != null) {
+            return dataSource.retrieveData(request.getQuery(), context).map(FunctionalHelper::uncheckedMapper);
+        }
+
+        DataSink<?> dataSink = request.getDataSink();
+        if (dataSink != null) {
+            return dataSink.manipulateData(request.getQuery(), context).map(FunctionalHelper::uncheckedMapper);
+        }
+
+        String qualifiedName = request.getQualifiedName();
+        if (qualifiedName != null) {
+            /*
+             * Event bus outbound message handling.
+             */
+            LOGGER.correlateWith(context).debug("Sending message via the event bus to {}", qualifiedName);
+            String address = getAddress(qualifiedName);
+            return vertx.eventBus()
+                    .<U>request(address, request.getQuery(), requestDeliveryOptions(vertx, request, context, address))
+                    .transform(asyncReply -> {
+                        LOGGER.correlateWith(context).debug("Received event bus reply");
+
+                        if (asyncReply.succeeded()) {
+                            DataContext responseDataContext =
+                                    decodeContextFromString(asyncReply.result().headers().get(CONTEXT_HEADER));
+                            context.setData(
+                                    Optional.ofNullable(responseDataContext).map(DataContext::data).orElse(null));
+                            context.mergeResponseData(Optional.ofNullable(responseDataContext)
+                                    .map(DataContext::responseData).orElse(null));
+                            return succeededFuture(asyncReply.result().body());
+
+                        } else {
+                            Throwable cause = asyncReply.cause();
+                            if (LOGGER.isWarnEnabled()) {
+                                LOGGER.correlateWith(context).warn("Failed to receive event bus reply from {}",
+                                        qualifiedName, cause);
+                            }
+                            return failedFuture(mapException(cause));
+                        }
+                    });
+        }
+
+        FullQualifiedName entityTypeName = request.getEntityTypeName();
+        if (entityTypeName != null) {
+            return requestEntity(vertx, request, context).map(FunctionalHelper::uncheckedMapper);
+        }
+
+        return failedFuture(new IllegalArgumentException("Data request did not specify what data to request"));
+    }
+
+    /**
+     * Convenience method for calling the {@link #requestData(Vertx, DataRequest, DataContext)} method.
+     *
+     * @param request The DataRequest specifying the data to request
+     * @param context The {@link DataContext data context} which keeps track of all the request-level information during
+     *                the lifecycle of requesting data
+     * @param <U>     The type of the returned {@link Future}
+     * @return a future to the data requested
+     * @see #requestData(Vertx, DataRequest, DataContext)
+     */
+    public <U> Future<U> requestData(DataRequest request, DataContext context) {
+        LOGGER.correlateWith(context).debug("Data verticle {} requesting data from {}", getQualifiedName(), request);
+
+        Future<U> future = requestData(vertx, request, context);
+        reportRequestDataMetrics(request, future);
+        return future;
+    }
+
+    /**
+     * Return a qualified name string for a verticle under a namespace.
+     *
+     * @param namespace    Namespace of the verticle
+     * @param verticleName Name of the verticle
+     * @return Qualified name of namespace and verticle name
+     */
+    public static String createQualifiedName(String namespace, String verticleName) {
+        return String.format("%s/%s", namespace.toLowerCase(Locale.ROOT), verticleName);
+    }
+
+    /**
+     * Computes the event bus address of this data verticle.
+     *
+     * @return A unique event bus address
+     */
+    protected final String getAddress() {
+        return getAddress(getQualifiedName());
+    }
+
+    /**
+     * Computes the event bus address for a given data verticle.
+     *
+     * @param qualifiedName The qualified name of the verticle to compute the address for
+     * @return A unique event bus address
+     */
+    protected static String getAddress(String qualifiedName) {
+        return String.format("%s[%s]", DataVerticle.class.getSimpleName(), qualifiedName);
+    }
+
+    /**
+     * Creates a new delivery options object for any given data request and context.
+     *
+     * @param vertx   the vertx instance
+     * @param request the data request
+     * @param context the data context
+     * @param address request address
+     * @return a new DeliveryOptions
+     */
+    private static DeliveryOptions requestDeliveryOptions(Vertx vertx, DataRequest request, DataContext context,
+            String address) {
+        if (context instanceof DataContextImpl) { // will also perform a null check!
+            // before encoding the context header, add the current qualified name of the verticle to the path stack
+            ((DataContextImpl) context).pushVerticleToPath(request.getQualifiedName());
+        }
+        DeliveryOptions deliveryOptions = deliveryOptions(vertx, null, context);
+        if (context instanceof DataContextImpl) { // will also perform a null check!
+            // remove the verticle right after, as the same context (w/o copying) may be reused for multiple requests
+            ((DataContextImpl) context).popVerticleFromPath();
+        }
+
+        // adapt further delivery options based on the request
+        boolean localOnly = request.isLocalOnly()
+                || (request.isLocalPreferred() && NeonBee.get(vertx).isLocalConsumerAvailable(address));
+        deliveryOptions.setLocalOnly(localOnly);
+        if (request.getSendTimeout() > 0) {
+            deliveryOptions.setSendTimeout(request.getSendTimeout());
+        }
+
+        Optional.ofNullable(request.getResolutionStrategy()).map(ResolutionStrategy::name)
+                .ifPresent(value -> deliveryOptions.addHeader(RESOLUTION_STRATEGY_HEADER, value));
+
+        return deliveryOptions;
+    }
+
+    /**
+     * Creates a new delivery options object for any given context.
+     *
+     * @param vertx   the vertx instance
+     * @param codec   the message codec to use (if any)
+     * @param context the data context
+     * @return a new DeliveryOptions
+     */
+    private static DeliveryOptions deliveryOptions(Vertx vertx, MessageCodec<?, ?> codec, DataContext context) {
+        DeliveryOptions deliveryOptions = new DeliveryOptions();
+        deliveryOptions.setSendTimeout(SECONDS.toMillis(NeonBee.get(vertx).getConfig().getEventBusTimeout()))
+                .setCodecName(Optional.ofNullable(codec).map(MessageCodec::name).orElse(null));
+        Optional.ofNullable(context).map(DataContextImpl::encodeContextToString)
+                .ifPresent(value -> deliveryOptions.addHeader(CONTEXT_HEADER, value));
+        return deliveryOptions;
+    }
+
+    /**
+     * Creates a new data exception for any given throwable cause.
+     *
+     * @param cause any throwable cause
+     * @return a DataException passing the failure code in case it is a ReplyException
+     */
+    private static DataException mapException(Throwable cause) {
+        if (cause instanceof DataException) {
+            return (DataException) cause;
+        }
+
+        int failureCode = FAILURE_CODE_PROCESSING_FAILED;
+        String message = cause.getMessage();
+
+        if (cause instanceof ReplyException) {
+            ReplyException replyException = (ReplyException) cause;
+            switch (replyException.failureType()) {
+            case NO_HANDLERS:
+                failureCode = FAILURE_CODE_NO_HANDLERS;
+                break;
+            case TIMEOUT:
+                failureCode = FAILURE_CODE_TIMEOUT;
+                break;
+            default:
+                failureCode = replyException.failureCode();
+                break;
+            }
+        }
+
+        return new DataException(failureCode, message);
+    }
+
+    /**
      * The name of this data verticle (must be unique in one cluster)
      * <p>
      * Similar to the EventBus in Vert.x, NeonBee doesn't bother with any fancy naming schemes. The name is simply a
@@ -290,83 +484,6 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
         return retrieveData(query, context);
     }
 
-    /**
-     * Convenience method for calling the {@link #requestData(Vertx, DataRequest, DataContext)} method.
-     *
-     * @see #requestData(Vertx, DataRequest, DataContext)
-     * @param request The DataRequest specifying the data to request
-     * @param context The {@link DataContext data context} which keeps track of all the request-level information during
-     *                the lifecycle of requesting data
-     * @param <U>     The type of the returned {@link Future}
-     * @return a future to the data requested
-     */
-    public <U> Future<U> requestData(DataRequest request, DataContext context) {
-        LOGGER.correlateWith(context).debug("Data verticle {} requesting data from {}", getQualifiedName(), request);
-
-        Future<U> future = requestData(vertx, request, context);
-        reportRequestDataMetrics(request, future);
-        return future;
-    }
-
-    /**
-     * Requesting data from other DataSources or Data/EntityVerticles.
-     *
-     * @param vertx   The Vertx instance
-     * @param request The DataRequest specifying the data to request
-     * @param context The {@link DataContext data context} which keeps track of all the request-level data during a
-     *                request
-     * @param <U>     The type of the returned future
-     * @return a future to the data requested
-     */
-    public static <U> Future<U> requestData(Vertx vertx, DataRequest request, DataContext context) {
-        DataSource<?> dataSource = request.getDataSource();
-
-        if (dataSource != null) {
-            return dataSource.retrieveData(request.getQuery(), context).map(FunctionalHelper::uncheckedMapper);
-        }
-
-        DataSink<?> dataSink = request.getDataSink();
-        if (dataSink != null) {
-            return dataSink.manipulateData(request.getQuery(), context).map(FunctionalHelper::uncheckedMapper);
-        }
-
-        String qualifiedName = request.getQualifiedName();
-        if (qualifiedName != null) {
-            /*
-             * Event bus outbound message handling.
-             */
-            LOGGER.correlateWith(context).debug("Sending message via the event bus to {}", qualifiedName);
-            String address = getAddress(qualifiedName);
-            return vertx.eventBus()
-                    .<U>request(address, request.getQuery(), requestDeliveryOptions(vertx, request, context, address))
-                    .transform(asyncReply -> {
-                        LOGGER.correlateWith(context).debug("Received event bus reply");
-
-                        if (asyncReply.succeeded()) {
-                            context.setData(Optional
-                                    .ofNullable(
-                                            decodeContextFromString(asyncReply.result().headers().get(CONTEXT_HEADER)))
-                                    .map(DataContext::data).orElse(null));
-                            return succeededFuture(asyncReply.result().body());
-                        } else {
-                            Throwable cause = asyncReply.cause();
-                            if (LOGGER.isWarnEnabled()) {
-                                LOGGER.correlateWith(context).warn("Failed to receive event bus reply from {}",
-                                        qualifiedName, cause);
-                            }
-                            return failedFuture(mapException(cause));
-                        }
-                    });
-        }
-
-        FullQualifiedName entityTypeName = request.getEntityTypeName();
-        if (entityTypeName != null) {
-            return requestEntity(vertx, request, context).map(FunctionalHelper::uncheckedMapper);
-        }
-
-        return failedFuture(new IllegalArgumentException("Data request did not specify what data to request"));
-    }
-
     private <U> void reportRequestDataMetrics(DataRequest request, Future<U> future) {
         List<Tag> tags;
         if (request.getQuery() == null || request.getQuery().getQuery() == null) {
@@ -396,120 +513,6 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
         String name = getName();
         String namespace = getNamespace();
         return namespace != null ? createQualifiedName(namespace, name) : name;
-    }
-
-    /**
-     * Return a qualified name string for a verticle under a namespace.
-     *
-     * @param namespace    Namespace of the verticle
-     * @param verticleName Name of the verticle
-     * @return Qualified name of namespace and verticle name
-     */
-    public static String createQualifiedName(String namespace, String verticleName) {
-        return String.format("%s/%s", namespace.toLowerCase(Locale.ROOT), verticleName);
-    }
-
-    /**
-     * Computes the event bus address of this data verticle.
-     *
-     * @return A unique event bus address
-     */
-    protected final String getAddress() {
-        return getAddress(getQualifiedName());
-    }
-
-    /**
-     * Computes the event bus address for a given data verticle.
-     *
-     * @param qualifiedName The qualified name of the verticle to compute the address for
-     * @return A unique event bus address
-     */
-    protected static String getAddress(String qualifiedName) {
-        return String.format("%s[%s]", DataVerticle.class.getSimpleName(), qualifiedName);
-    }
-
-    /**
-     * Creates a new delivery options object for any given data request and context.
-     *
-     * @param vertx   the vertx instance
-     * @param request the data request
-     * @param context the data context
-     * @param address request address
-     * @return a new DeliveryOptions
-     */
-    private static DeliveryOptions requestDeliveryOptions(Vertx vertx, DataRequest request, DataContext context,
-            String address) {
-        if (context instanceof DataContextImpl) { // will also perform a null check!
-            // before encoding the context header, add the current qualified name of the verticle to the path stack
-            ((DataContextImpl) context).pushVerticleToPath(request.getQualifiedName());
-        }
-        DeliveryOptions deliveryOptions = deliveryOptions(vertx, null, context);
-        if (context instanceof DataContextImpl) { // will also perform a null check!
-            // remove the verticle right after, as the same context (w/o copying) may be reused for multiple requests
-            ((DataContextImpl) context).popVerticleFromPath();
-        }
-
-        // adapt further delivery options based on the request
-        boolean localOnly = request.isLocalOnly()
-                || (request.isLocalPreferred() && NeonBee.get(vertx).isLocalConsumerAvailable(address));
-        deliveryOptions.setLocalOnly(localOnly);
-        if (request.getSendTimeout() > 0) {
-            deliveryOptions.setSendTimeout(request.getSendTimeout());
-        }
-
-        Optional.ofNullable(request.getResolutionStrategy()).map(ResolutionStrategy::name)
-                .ifPresent(value -> deliveryOptions.addHeader(RESOLUTION_STRATEGY_HEADER, value));
-
-        return deliveryOptions;
-    }
-
-    /**
-     * Creates a new delivery options object for any given context.
-     *
-     * @param vertx   the vertx instance
-     * @param codec   the message codec to use (if any)
-     * @param context the data context
-     * @return a new DeliveryOptions
-     */
-    private static DeliveryOptions deliveryOptions(Vertx vertx, MessageCodec<?, ?> codec, DataContext context) {
-        DeliveryOptions deliveryOptions = new DeliveryOptions();
-        deliveryOptions.setSendTimeout(SECONDS.toMillis(NeonBee.get(vertx).getConfig().getEventBusTimeout()))
-                .setCodecName(Optional.ofNullable(codec).map(MessageCodec::name).orElse(null));
-        Optional.ofNullable(context).map(DataContextImpl::encodeContextToString)
-                .ifPresent(value -> deliveryOptions.addHeader(CONTEXT_HEADER, value));
-        return deliveryOptions;
-    }
-
-    /**
-     * Creates a new data exception for any given throwable cause.
-     *
-     * @param cause any throwable cause
-     * @return a DataException passing the failure code in case it is a ReplyException
-     */
-    private static DataException mapException(Throwable cause) {
-        if (cause instanceof DataException) {
-            return (DataException) cause;
-        }
-
-        int failureCode = FAILURE_CODE_PROCESSING_FAILED;
-        String message = cause.getMessage();
-
-        if (cause instanceof ReplyException) {
-            ReplyException replyException = (ReplyException) cause;
-            switch (replyException.failureType()) {
-            case NO_HANDLERS:
-                failureCode = FAILURE_CODE_NO_HANDLERS;
-                break;
-            case TIMEOUT:
-                failureCode = FAILURE_CODE_TIMEOUT;
-                break;
-            default:
-                failureCode = replyException.failureCode();
-                break;
-            }
-        }
-
-        return new DataException(failureCode, message);
     }
 
     /**
@@ -548,18 +551,28 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
             // order, as the collection returned via requireData. This also favours the previous implementation of
             // requireData(), where any index of the requireData array corresponded with the indexes of the data array
             Map<DataRequest, AsyncResult<?>> requestResults = new LinkedHashMap<>();
+            Map<DataRequest, DataContext> receivedDataContextMap = new LinkedHashMap<>();
             return requireData(query, context).compose(requests -> {
                 // ignore the result of the require data composite future (otherwiseEmpty), the retrieve data method
                 // should decide if it needs to handle success or failure of any of the individual asynchronous results
-                return CompositeFuture.join(Optional.ofNullable(requests).map(Collection::stream).orElse(Stream.empty())
-                        .map(request -> requestResults.computeIfAbsent(request, mapRequest -> {
-                            Future<Object> future = requestData(vertx, request, context.copy());
-                            reportRequestDataMetrics(request, future);
-                            return future;
-                        })).map(Future.class::cast).collect(Collectors.toList())).otherwiseEmpty();
+                return CompositeFuture.join(
+                        Optional.ofNullable(requests).map(Collection::stream).orElse(Stream.empty()).map(request -> {
+                            // use one copy of DataContext for each request to avoid data clash
+                            DataContext requestContext = context.copy();
+                            receivedDataContextMap.put(request, requestContext);
+                            return requestResults.computeIfAbsent(request, mapRequest -> {
+                                Future<Object> future = requestData(vertx, request, requestContext);
+                                reportRequestDataMetrics(request, future);
+                                return future;
+                            });
+                        }).map(Future.class::cast).collect(Collectors.toList())).otherwiseEmpty();
             }).compose(requiredCompositeOrNothing -> {
                 List<Tag> tags = retrieveDataTags();
                 try {
+                    Map<DataRequest, Map<String, Object>> receivedData = receivedDataContextMap.entrySet().stream()
+                            .map(entry -> Map.entry(entry.getKey(), entry.getValue().responseData()))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    context.setReceivedData(receivedData);
                     Future<T> future = retrieveData(query, new DataMap(requestResults), context);
                     reportRetrieveDataMetrics(tags, future);
                     return future;
@@ -571,32 +584,33 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                 }
             });
         }
-    }
 
-    /**
-     * @return tags for the retrieve data metrics.
-     */
-    private List<Tag> retrieveDataTags() {
-        List<Tag> tags = new ArrayList<>(2);
-        String name = getName();
-        if (name != null) {
-            tags.add(new ImmutableTag("name", name));
+        /**
+         * @return tags for the retrieve data metrics.
+         */
+        private List<Tag> retrieveDataTags() {
+            List<Tag> tags = new ArrayList<>(2);
+            String name = getName();
+            if (name != null) {
+                tags.add(new ImmutableTag("name", name));
+            }
+            String namespace = getNamespace();
+            if (namespace != null) {
+                tags.add(new ImmutableTag("namespace", namespace));
+            }
+            return tags;
         }
-        String namespace = getNamespace();
-        if (namespace != null) {
-            tags.add(new ImmutableTag("namespace", namespace));
-        }
-        return tags;
-    }
 
-    private void reportRetrieveDataMetrics(List<Tag> tags, Future<T> future) {
-        String address = getAddress();
-        dataVerticleMetrics.reportTimingMetric("retrieve.data.timer." + address, "Time to retrieve data", tags, future);
-        dataVerticleMetrics.reportStatusCounter("retrieve.data.counter." + address, SUCCEEDED_RESPONSE_COUNT, tags,
-                future);
-        dataVerticleMetrics.reportActiveRequestsGauge("retrieve.data.active.requests." + address,
-                "Number of requests waiting for a response", tags, future);
-        dataVerticleMetrics.reportNumberOfRequests("retrieve.counter." + address, "Number of requests sent", tags);
+        private void reportRetrieveDataMetrics(List<Tag> tags, Future<T> future) {
+            String address = getAddress();
+            dataVerticleMetrics.reportTimingMetric("retrieve.data.timer." + address, "Time to retrieve data", tags,
+                    future);
+            dataVerticleMetrics.reportStatusCounter("retrieve.data.counter." + address, SUCCEEDED_RESPONSE_COUNT, tags,
+                    future);
+            dataVerticleMetrics.reportActiveRequestsGauge("retrieve.data.active.requests." + address,
+                    "Number of requests waiting for a response", tags, future);
+            dataVerticleMetrics.reportNumberOfRequests("retrieve.counter." + address, "Number of requests sent", tags);
+        }
     }
 
     private class OptimizedResolutionRoutine implements ResolutionRoutine {

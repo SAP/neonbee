@@ -212,6 +212,19 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
                 .onComplete(testContext.succeeding(v -> {}));
     }
 
+    @Test
+    @Timeout(value = 200, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("Test OData response hint")
+    void testODataResponseHint(VertxTestContext testContext) {
+        EntityVerticle dummy = createDummyEntityVerticle(TEST_USERS).withDynamicResponse((dataQuery, dataContext) -> {
+            dataContext.responseData().put("OData.filter", Boolean.TRUE);
+            return new EntityWrapper(TEST_USERS, (Entity) null);
+        });
+
+        deployVerticle(dummy).compose(v -> requestOData(new ODataRequest(TEST_USERS)))
+                .onComplete(testContext.succeeding(result -> testContext.verify(() -> testContext.completeNow())));
+    }
+
     private static void assertTS1Handler(Buffer body) {
         assertThat(body.toString()).contains("Namespace=\"io.neonbee.handler.TestService\"");
     }
