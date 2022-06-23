@@ -1,7 +1,9 @@
 package io.neonbee.data;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
 
@@ -95,6 +97,68 @@ public interface DataContext {
      * @return the previous data associated with the key, as expected from {@link JsonObject#remove(String)}
      */
     <T> T remove(String key);
+
+    /**
+     * Arbitrary response data of this context, which is passed backwards from callee to caller.
+     *
+     * @return all the context response data as a map.
+     */
+    Map<String, Object> responseData();
+
+    /**
+     * Merges a given map from a response into the current response data map.
+     * <p>
+     * Note: This method does not perform a deep merge operation, but overrides already existing elements w/o merging
+     *
+     * @param data the response data to merge, must be compatible to {@link JsonObject#JsonObject(Map)}
+     * @return a reference to this DataContext for chaining
+     */
+    DataContext mergeResponseData(Map<String, Object> data);
+
+    /**
+     * Returns a map between {@link DataRequest} and received data map. Received data are response data returned by the
+     * verticles, which are called by the current data verticle.
+     *
+     * @return a map between {@link DataRequest} and received data map
+     */
+    Map<DataRequest, Map<String, Object>> receivedData();
+
+    /**
+     * Sets the response data map for all {@link DataRequest}s.
+     *
+     * @param map a map between {@link DataRequest} and received response data for the request.
+     * @return a reference to this DataContext for chaining
+     */
+    DataContext setReceivedData(Map<DataRequest, Map<String, Object>> map);
+
+    /**
+     * Retrieves the received data map for one {@link DataRequest}.
+     *
+     * @param dataRequest a data request
+     * @return response data map for this request
+     */
+    Map<String, Object> findReceivedData(DataRequest dataRequest);
+
+    /**
+     * Retrieves the received data map for one verticle identified by the verticle name.
+     *
+     * @param qualifiedName qualified name of a Received verticle
+     * @return first received data for the request verticle name, if available
+     */
+    Optional<Map<String, Object>> findFirstReceivedData(String qualifiedName);
+
+    /**
+     * Retrieves all received data maps for all verticles identified by the name.
+     *
+     * @param qualifiedName qualified name of a verticle
+     * @return all received data maps from verticles with the name
+     */
+    List<Map<String, Object>> findAllReceivedData(String qualifiedName);
+
+    /**
+     * Propagate the received data from all invoked verticles into the current verticle's context.
+     */
+    void propagateReceivedData();
 
     /**
      * Returns the path of verticle this context was involved in.

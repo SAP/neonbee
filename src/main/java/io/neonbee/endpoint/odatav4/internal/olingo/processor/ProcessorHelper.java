@@ -10,7 +10,10 @@ import org.apache.olingo.server.api.ODataRequest;
 import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import io.neonbee.data.DataAction;
+import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.internal.DataContextImpl;
@@ -22,6 +25,28 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.RoutingContext;
 
 public final class ProcessorHelper {
+
+    /** Response prefix in routing context. */
+    public static final String RESPONSE_HEADER_PREFIX = "response.";
+
+    /** OData filter key. */
+    public static final String ODATA_FILTER_KEY = "OData.filter";
+
+    /** OData orderBy key. */
+    public static final String ODATA_ORDER_BY_KEY = "OData.orderby";
+
+    /** OData skip key. */
+    public static final String ODATA_SKIP_KEY = "OData.skip";
+
+    /** OData top key. */
+    public static final String ODATA_TOP_KEY = "OData.top";
+
+    /** OData expand key. */
+    public static final String ODATA_EXPAND_KEY = "OData.expand";
+
+    /** OData key predicate key. */
+    public static final String ODATA_KEY_PREDICATE_KEY = "OData.key";
+
     private ProcessorHelper() {}
 
     private static DataQuery odataRequestToQuery(ODataRequest request, DataAction action, Buffer body) {
@@ -69,8 +94,23 @@ public final class ProcessorHelper {
         Buffer body = Optional.ofNullable(entity)
                 .map(e -> new EntityWrapper(entityType.getFullQualifiedName(), e).toBuffer(vertx)).orElse(null);
         DataQuery query = odataRequestToQuery(request, action, body);
+        DataContext dataContext = new DataContextImpl(routingContext);
+        return requestEntity(vertx, new DataRequest(entityType.getFullQualifiedName(), query), dataContext)
+                .map(result -> {
+                    transferResponseHint(dataContext, routingContext);
+                    return result;
+                }).onFailure(processPromise::fail);
+    }
 
-        return requestEntity(vertx, new DataRequest(entityType.getFullQualifiedName(), query),
-                new DataContextImpl(routingContext)).onFailure(processPromise::fail);
+    /**
+     * Transfer response hints from data context into routing context.
+     *
+     * @param dataContext    data context
+     * @param routingContext routing context
+     */
+    @VisibleForTesting
+    static void transferResponseHint(DataContext dataContext, RoutingContext routingContext) {
+        dataContext.responseData().entrySet()
+                .forEach(entry -> routingContext.put(RESPONSE_HEADER_PREFIX + entry.getKey(), entry.getValue()));
     }
 }

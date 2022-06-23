@@ -4,8 +4,16 @@ import static io.neonbee.data.DataAction.READ;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.EntityProcessor.findEntityByKeyPredicates;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.chooseEntitySet;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.fetchNavigationTargetEntities;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_EXPAND_KEY;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_FILTER_KEY;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_ORDER_BY_KEY;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_SKIP_KEY;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_TOP_KEY;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.RESPONSE_HEADER_PREFIX;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.forwardRequest;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.vertx.core.Future.succeededFuture;
+import static java.util.Optional.ofNullable;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -103,15 +111,36 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
 
         // Fetch the data from backend
         forwardRequest(request, READ, uriInfo, vertx, routingContext, processPromise).onSuccess(ew -> {
+            boolean expandExecuted = ofNullable(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_EXPAND_KEY))
+                    .orElse(Boolean.FALSE);
             if (resourceParts.size() == 1) {
                 try {
-                    List<Entity> resultEntityList = applyFilterQueryOption(uriInfo.getFilterOption(), ew.getEntities());
+                    boolean filterExecuted =
+                            ofNullable(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_FILTER_KEY))
+                                    .orElse(Boolean.FALSE);
+                    List<Entity> resultEntityList = filterExecuted ? ew.getEntities()
+                            : applyFilterQueryOption(uriInfo.getFilterOption(), ew.getEntities());
                     applyCountOption(uriInfo.getCountOption(), resultEntityList, entityCollection);
                     if (!resultEntityList.isEmpty()) {
-                        applyOrderByQueryOption(uriInfo.getOrderByOption(), resultEntityList);
-                        resultEntityList = applySkipQueryOption(uriInfo.getSkipOption(), resultEntityList);
-                        resultEntityList = applyTopQueryOption(uriInfo.getTopOption(), resultEntityList);
-                        applyExpandQueryOptions(uriInfo, resultEntityList).onComplete(responsePromise);
+                        boolean orderByExecuted =
+                                ofNullable(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_ORDER_BY_KEY))
+                                        .orElse(Boolean.FALSE);
+                        if (!orderByExecuted) {
+                            applyOrderByQueryOption(uriInfo.getOrderByOption(), resultEntityList);
+                        }
+                        boolean skipExecuted =
+                                ofNullable(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_SKIP_KEY))
+                                        .orElse(Boolean.FALSE);
+                        resultEntityList = skipExecuted ? resultEntityList
+                                : applySkipQueryOption(uriInfo.getSkipOption(), resultEntityList);
+                        boolean topExecuted =
+                                ofNullable(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_TOP_KEY))
+                                        .orElse(Boolean.FALSE);
+                        resultEntityList = topExecuted ? resultEntityList
+                                : applyTopQueryOption(uriInfo.getTopOption(), resultEntityList);
+                        Future<List<Entity>> resultEntityListFuture = expandExecuted ? succeededFuture(resultEntityList)
+                                : applyExpandQueryOptions(uriInfo, resultEntityList);
+                        resultEntityListFuture.onComplete(responsePromise);
                     } else {
                         responsePromise.complete(resultEntityList);
                     }
@@ -120,10 +149,15 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
                 }
             } else {
                 try {
-                    Entity foundEntity =
-                            findEntityByKeyPredicates(routingContext, uriResourceEntitySet, ew.getEntities());
-                    fetchNavigationTargetEntities(resourceParts.get(1), foundEntity, vertx, routingContext)
-                            .onComplete(responsePromise);
+                    boolean keyPredicateExecuted =
+                            ofNullable(routingContext.<Boolean>get(ProcessorHelper.ODATA_KEY_PREDICATE_KEY))
+                                    .orElse(Boolean.FALSE);
+                    Entity foundEntity = keyPredicateExecuted ? ew.getEntities().get(0)
+                            : findEntityByKeyPredicates(routingContext, uriResourceEntitySet, ew.getEntities());
+                    if (!expandExecuted) {
+                        fetchNavigationTargetEntities(resourceParts.get(1), foundEntity, vertx, routingContext)
+                                .onComplete(responsePromise);
+                    }
                 } catch (ODataApplicationException e) {
                     processPromise.fail(e);
                 }

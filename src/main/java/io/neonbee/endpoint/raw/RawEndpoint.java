@@ -27,6 +27,7 @@ import static java.lang.Character.isUpperCase;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -145,6 +146,7 @@ public class RawEndpoint implements Endpoint {
                     decodedQueryPath, multiMapToMap(request.headers()), routingContext.body().buffer())
                             .addHeader("X-HTTP-Method", request.method().name());
 
+            DataContextImpl context = new DataContextImpl(routingContext);
             requestData(routingContext.vertx(), new DataRequest(qualifiedName, query),
                     new DataContextImpl(routingContext)).onComplete(asyncResult -> {
                         if (asyncResult.failed()) {
@@ -176,7 +178,9 @@ public class RawEndpoint implements Endpoint {
                         }
 
                         HttpServerResponse response = routingContext.response()//
-                                .putHeader("Content-Type", "application/json");
+                                .putHeader("Content-Type",
+                                        Optional.ofNullable(context.responseData().get("Content-Type"))
+                                                .map(String.class::cast).orElse("application/json"));
                         if (result instanceof JsonObject) {
                             result = ((JsonObject) result).toBuffer();
                         } else if (result instanceof JsonArray) {
