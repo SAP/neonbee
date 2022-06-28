@@ -14,18 +14,13 @@ import org.junit.platform.launcher.TestPlan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.SetMultimap;
-import io.vertx.core.Vertx;
-
 /**
  * The {@link StaleThreadChecker} checks for any stale threads after test execution. Generally after a test finishes to
  * execute it must clean up all resources. If not this listener will print an error to the logs.
  */
 public class StaleThreadChecker implements TestExecutionListener {
-    public static final SetMultimap<Vertx, String> VERTX_TEST_MAP = HashMultimap.create();
 
-    static final String VERTX_THREAD_NAME_PREFIX = "vert.x-";
+    static final String VERTX_EVENTLOOP_THREAD_NAME_PREFIX = "vert.x-eventloop";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StaleThreadChecker.class);
 
@@ -51,7 +46,7 @@ public class StaleThreadChecker implements TestExecutionListener {
     @Override
     public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
         if (!parallelExecution) {
-            checkForStaleThreads("Vert.x", VERTX_THREAD_NAME_PREFIX);
+            checkForStaleThreads("Vert.x", VERTX_EVENTLOOP_THREAD_NAME_PREFIX);
             checkForStaleThreads("Hazelcast", "hz.");
             checkForStaleThreads("WatchService", "FileSystemWatch");
         }

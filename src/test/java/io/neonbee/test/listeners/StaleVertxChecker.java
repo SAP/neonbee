@@ -88,8 +88,8 @@ public class StaleVertxChecker extends StaleThreadChecker {
         LOGGER.info("Checking for stale Vert.x instances");
 
         // first try to determine all Vert.x instances that are currently available (and running?)
-        Set<Vertx> vertxInstances = findStaleThreads(VERTX_THREAD_NAME_PREFIX).filter(VertxThread.class::isInstance)
-                .map(VertxThread.class::cast).map(thread -> {
+        Set<Vertx> vertxInstances = findStaleThreads(VERTX_EVENTLOOP_THREAD_NAME_PREFIX)
+                .filter(VertxThread.class::isInstance).map(VertxThread.class::cast).map(thread -> {
                     try {
                         Context context = (Context) CONTEXT_METHOD.invoke(thread);
                         if (context == null) {
