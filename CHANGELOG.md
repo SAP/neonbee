@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.12.0 (2022-07-12)
+
+### Bug Fixes
+
+- **health**: succeed if health check config not found ([ae371b28](https://github.com/SAP/neonbee/commit/ae371b285e1b1e41c454d4517fe356b50f8a4c4c))
+- do not mock NeonBee logger in NeonBeeMockHelper ([8238ec8d](https://github.com/SAP/neonbee/commit/8238ec8d1aebca301e0b17333c83c17dd5f31100)), closes [#130](https://github.com/SAP/neonbee/issues/130)
+- avoid printing warnings when using NeonBeeMockHelper ([03d9e535](https://github.com/SAP/neonbee/commit/03d9e5350fd3fc7dbd5dcf12dacec9f1220e0009))
+
+
+### Features
+
+- **health**: add health check verticle ([7fbd10e4](https://github.com/SAP/neonbee/commit/7fbd10e4d30878f9c7534bb0c53caf9cffccfe7e))
+- **health**: provide a `/health` endpoint ([151cf6e2](https://github.com/SAP/neonbee/commit/151cf6e211aed7d8de50fe76eb90ab5c3ba3145c))
+- add metrics to DataVerticle ([1afca66c](https://github.com/SAP/neonbee/commit/1afca66cda6a0eff520035a6ddf177bf4a4ce5a7))
+- make health checks addable via SPI ([71e754e1](https://github.com/SAP/neonbee/commit/71e754e1278fd48da21820cf0eb4cef46114d88e))
+
+
 ## 0.11.1 (2022-06-06)
 
 ### Bug Fixes
