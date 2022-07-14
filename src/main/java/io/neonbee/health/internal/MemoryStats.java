@@ -1,7 +1,5 @@
 package io.neonbee.health.internal;
 
-import static com.hazelcast.internal.memory.MemoryStatsSupport.freePhysicalMemory;
-
 public class MemoryStats {
     private final Runtime runtime = Runtime.getRuntime();
 
@@ -42,15 +40,5 @@ public class MemoryStats {
      */
     public long getFreeHeap() {
         return runtime.freeMemory();
-    }
-
-    /**
-     * Returns the free physical memory available in OS.
-     *
-     * @return the free physical memory in bytes.
-     * @see com.hazelcast.internal.memory.MemoryStatsSupport#freePhysicalMemory()
-     */
-    public long getFreePhysical() {
-        return freePhysicalMemory();
     }
 }
