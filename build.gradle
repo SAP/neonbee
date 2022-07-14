@@ -56,25 +56,25 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-hazelcast', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-health-check', version: vertx_version
 
-    def jackson_version = '2.13.1'
+    def jackson_version = '2.13.3'
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jackson_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jackson_version
 
-    def olingo_version = '4.8.0'
+    def olingo_version = '4.9.0'
     implementation(group: 'org.apache.olingo', name: 'odata-server-core', version: olingo_version) {
         exclude group: 'io.netty'
     }
     implementation group: 'org.apache.olingo', name: 'odata-server-core-ext', version: olingo_version
 
-    implementation group: 'com.sap.cds', name: 'cds4j-core', version: '1.25.0'
-    implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.8.1'
+    implementation group: 'com.sap.cds', name: 'cds4j-core', version: '1.30.0'
+    implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.9.2'
     implementation group: 'org.ow2.asm', name: 'asm', version: '9.3'
 
-    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.32'
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.9'
-    implementation group: 'com.google.guava', name: 'guava', version: '31.0.1-jre'
-    implementation group: 'com.google.code.findbugs', name: 'annotations', version: '3.0.1'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.11'
+    implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre'
+    implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.7.1'
 
     // Compile only
     compileOnly group: 'io.vertx', name: 'vertx-codegen', version: vertx_version
@@ -89,7 +89,7 @@ dependencies {
     testImplementation group: 'com.google.truth', name: 'truth', version: truth_version
     testImplementation group: 'com.google.truth.extensions', name: 'truth-java8-extension', version: truth_version
 
-    def mockito_version = '4.2.0'
+    def mockito_version = '4.6.1'
     testImplementation group: 'org.mockito', name: 'mockito-inline', version: mockito_version
     testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: mockito_version
 
@@ -98,7 +98,7 @@ dependencies {
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: jupiter_version
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: jupiter_version
 
-    testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: '1.5.0'
+    testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: '1.5.1'
 
     // Required for Eclipse to run Unit tests.
     def junit_platform_version = '1.8.2'
