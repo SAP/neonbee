@@ -1,6 +1,21 @@
 # Changelog
 
-## 0.12.0 (2022-07-12)
+## 0.12.1 (2022-07-14)
+
+### Chores
+
+- log the NeonBee Id ([40203a3c](https://github.com/SAP/neonbee/commit/40203a3c0cafd5daf835a57c7440dd2242915672))
+- remove physical memory from health check data ([367eef5b](https://github.com/SAP/neonbee/commit/367eef5b690666dc91b08939d940073b172a6599))
+
+
+### Build System
+
+- **deps**: upgrade `vertx` to 4.3.2 ([edae6e0b](https://github.com/SAP/neonbee/commit/edae6e0bf80460a2d186093dec49c5924b5d1fcc))
+- **deps**: upgrade org.ow2.asm to version 9.3 ([88d89b1e](https://github.com/SAP/neonbee/commit/88d89b1e45bebec5d60bf754f8e98920d0f696ec))
+- **deps**: upgrade dependencies ([479456f9](https://github.com/SAP/neonbee/commit/479456f99ae643f4dcc0f68c3186911d5fd3ec42))
+
+
+## 0.12.0 (2022-07-13)
 
 ### Bug Fixes
 

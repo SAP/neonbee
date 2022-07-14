@@ -1,27 +1,267 @@
 {
   "nextVersion" : {
     "major" : 0,
-    "minor" : 13,
-    "patch" : 0,
+    "minor" : 12,
+    "patch" : 2,
     "preReleaseParts" : [ ],
     "buildMetaDataParts" : [ ],
     "preRelease" : "",
     "buildMetaData" : "",
-    "stable" : true,
-    "initialDevelopment" : true
+    "initialDevelopment" : true,
+    "stable" : true
   },
   "lastVersion" : {
     "major" : 0,
     "minor" : 12,
-    "patch" : 0,
+    "patch" : 1,
     "preReleaseParts" : [ ],
     "buildMetaDataParts" : [ ],
     "preRelease" : "",
     "buildMetaData" : "",
-    "stable" : true,
-    "initialDevelopment" : true
+    "initialDevelopment" : true,
+    "stable" : true
   },
   "tags" : [ {
+    "version" : {
+      "major" : 0,
+      "minor" : 12,
+      "patch" : 1,
+      "preReleaseParts" : [ ],
+      "buildMetaDataParts" : [ ],
+      "preRelease" : "",
+      "buildMetaData" : "",
+      "initialDevelopment" : true,
+      "stable" : true
+    },
+    "releaseDate" : "2022-07-14 16:02:45.000 +0200",
+    "sections" : [ {
+      "title" : "Chores",
+      "commits" : [ {
+        "hashFull" : "40203a3c0cafd5daf835a57c7440dd2242915672",
+        "hash" : "40203a3c0cafd5d",
+        "hash7" : "40203a3",
+        "hash8" : "40203a3c",
+        "commitTime" : "2022-07-14 16:02:36.000 +0200",
+        "commitTimeLong" : 1657807356,
+        "message" : "chore: log the NeonBee Id\n\nLogging the NeonBee Id is helpful for correlating the started NeonBee\nwith an instance in case of a multi-node clustered deployment.\nEspecially, for node-specific health checks this is necessary in order\nto identify the nodes.\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-07-14 14:19:43.000 +0200",
+          "name" : "Sebastian Heid",
+          "email" : "sebastian.heid@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-07-14 16:02:36.000 +0200",
+          "name" : "Sebastian Heid",
+          "email" : "sebastian.heid@sap.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/40203a3c0cafd5daf835a57c7440dd2242915672",
+        "commitType" : "chore",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "log the NeonBee Id",
+        "commitBody" : "Logging the NeonBee Id is helpful for correlating the started NeonBee\nwith an instance in case of a multi-node clustered deployment.\nEspecially, for node-specific health checks this is necessary in order\nto identify the nodes.",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "chore",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "log the NeonBee Id",
+        "messageTitle" : "chore: log the NeonBee Id",
+        "messageBody" : "Logging the NeonBee Id is helpful for correlating the started NeonBee\nwith an instance in case of a multi-node clustered deployment.\nEspecially, for node-specific health checks this is necessary in order\nto identify the nodes."
+      }, {
+        "hashFull" : "367eef5b690666dc91b08939d940073b172a6599",
+        "hash" : "367eef5b690666d",
+        "hash7" : "367eef5",
+        "hash8" : "367eef5b",
+        "commitTime" : "2022-07-14 16:02:36.000 +0200",
+        "commitTimeLong" : 1657807356,
+        "message" : "chore: remove physical memory from health check data\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-07-14 14:29:49.000 +0200",
+          "name" : "Sebastian Heid",
+          "email" : "sebastian.heid@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-07-14 16:02:36.000 +0200",
+          "name" : "Sebastian Heid",
+          "email" : "sebastian.heid@sap.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/367eef5b690666dc91b08939d940073b172a6599",
+        "commitType" : "chore",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "remove physical memory from health check data",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "chore",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "remove physical memory from health check data",
+        "messageTitle" : "chore: remove physical memory from health check data",
+        "messageBody" : ""
+      } ]
+    }, {
+      "title" : "Build System",
+      "commits" : [ {
+        "hashFull" : "edae6e0bf80460a2d186093dec49c5924b5d1fcc",
+        "hash" : "edae6e0bf80460a",
+        "hash7" : "edae6e0",
+        "hash8" : "edae6e0b",
+        "commitTime" : "2022-07-13 08:59:48.000 +0200",
+        "commitTimeLong" : 1657695588,
+        "message" : "build(deps): upgrade `vertx` to 4.3.2\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-05-13 02:12:04.000 +0200",
+          "name" : "github-actions[bot]",
+          "email" : "github-actions[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-07-13 08:59:48.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/edae6e0bf80460a2d186093dec49c5924b5d1fcc",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "upgrade `vertx` to 4.3.2",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "upgrade `vertx` to 4.3.2",
+        "messageTitle" : "build(deps): upgrade `vertx` to 4.3.2",
+        "messageBody" : ""
+      }, {
+        "hashFull" : "88d89b1e45bebec5d60bf754f8e98920d0f696ec",
+        "hash" : "88d89b1e45bebec",
+        "hash7" : "88d89b1",
+        "hash8" : "88d89b1e",
+        "commitTime" : "2022-07-14 13:56:52.000 +0200",
+        "commitTimeLong" : 1657799812,
+        "message" : "build(deps): upgrade org.ow2.asm to version 9.3\n\nUpgrading asm to version 9.3 is required, otherwise NeonBee ClasspathScanner is\nno longer able to scan class files compiled with java 12 or higher.\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-07-14 10:53:17.000 +0200",
+          "name" : "Pascal Krause",
+          "email" : "pascal.krause@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-07-14 13:56:52.000 +0200",
+          "name" : "Sebastian Heid",
+          "email" : "sebastian.heid@sap.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/88d89b1e45bebec5d60bf754f8e98920d0f696ec",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "upgrade org.ow2.asm to version 9.3",
+        "commitBody" : "Upgrading asm to version 9.3 is required, otherwise NeonBee ClasspathScanner is\nno longer able to scan class files compiled with java 12 or higher.",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "upgrade org.ow2.asm to version 9.3",
+        "messageTitle" : "build(deps): upgrade org.ow2.asm to version 9.3",
+        "messageBody" : "Upgrading asm to version 9.3 is required, otherwise NeonBee ClasspathScanner is\nno longer able to scan class files compiled with java 12 or higher."
+      }, {
+        "hashFull" : "479456f99ae643f4dcc0f68c3186911d5fd3ec42",
+        "hash" : "479456f99ae643f",
+        "hash7" : "479456f",
+        "hash8" : "479456f9",
+        "commitTime" : "2022-07-14 16:02:45.000 +0200",
+        "commitTimeLong" : 1657807365,
+        "message" : "build(deps): upgrade dependencies\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-07-14 14:25:02.000 +0200",
+          "name" : "Sebastian Heid",
+          "email" : "sebastian.heid@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-07-14 16:02:45.000 +0200",
+          "name" : "Sebastian Heid",
+          "email" : "sebastian.heid@sap.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/479456f99ae643f4dcc0f68c3186911d5fd3ec42",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "upgrade dependencies",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "upgrade dependencies",
+        "messageTitle" : "build(deps): upgrade dependencies",
+        "messageBody" : ""
+      } ]
+    } ]
+  }, {
     "version" : {
       "major" : 0,
       "minor" : 12,
@@ -30,10 +270,10 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
-    "releaseDate" : "2022-07-12 16:41:21.000 +0200",
+    "releaseDate" : "2022-07-13 08:29:40.000 +0200",
     "sections" : [ {
       "title" : "Bug Fixes",
       "commits" : [ {
@@ -370,8 +610,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-06-06 16:06:00.000 +0200",
     "sections" : [ {
@@ -431,8 +671,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-06-03 12:13:06.000 +0200",
     "sections" : [ {
@@ -1044,8 +1284,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-03-07 22:17:58.000 +0100",
     "sections" : [ {
@@ -1378,8 +1618,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-02-17 17:52:27.000 +0100",
     "sections" : [ {
@@ -1439,8 +1679,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-02-15 17:58:20.000 +0100",
     "sections" : [ {
@@ -1591,8 +1831,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-01-27 11:41:02.000 +0100",
     "sections" : [ {
@@ -2199,8 +2439,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-12-15 15:08:44.000 +0100",
     "sections" : [ {
@@ -2442,8 +2682,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-11-23 12:25:14.000 +0100",
     "sections" : [ {
@@ -2550,8 +2790,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-10-05 13:44:34.000 +0200",
     "sections" : [ {
@@ -2611,8 +2851,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-10-04 15:47:42.000 +0200",
     "sections" : [ {
@@ -4098,8 +4338,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-07-27 09:22:26.000 +0200",
     "sections" : [ {
@@ -4432,8 +4672,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-06-07 07:52:14.000 +0200",
     "sections" : [ {
@@ -6007,8 +6247,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-03-18 14:45:15.000 +0100",
     "sections" : [ {
@@ -6391,8 +6631,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-03-10 16:24:12.000 +0100",
     "sections" : [ {
