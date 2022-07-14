@@ -73,7 +73,7 @@ class MemoryHealthCheckTest {
         checks.register(MemoryHealthCheck.NAME, memoryHealthCheck.createProcedure().apply(neonBee));
         checks.checkStatus(MemoryHealthCheck.NAME)
                 .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
-                    assertThat(result.getData().size()).isEqualTo(4);
+                    assertThat(result.getData().size()).isEqualTo(3);
                     assertThat(result.getData().getString("freeHeapMemory")).isEqualTo("122 MB");
                     assertThat(result.getData().getString("memoryUsedOfTotalPercentage")).matches("50[,.]{1}00%");
                     assertThat(result.getData().getString("memoryUsedOfMaxPercentage")).matches("25[,.]{1}00%");
@@ -91,7 +91,7 @@ class MemoryHealthCheckTest {
         checks.register(MemoryHealthCheck.NAME, memoryHealthCheck.createProcedure().apply(neonBee));
         checks.checkStatus(MemoryHealthCheck.NAME)
                 .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
-                    assertThat(result.getData().size()).isEqualTo(4);
+                    assertThat(result.getData().size()).isEqualTo(3);
                     assertThat(result.getData().getString("freeHeapMemory")).isEqualTo("122 MB");
                     assertThat(result.getData().getString("memoryUsedOfTotalPercentage")).matches("50[,.]{1}00%");
                     assertThat(result.getData().getString("memoryUsedOfMaxPercentage")).matches("25[,.]{1}00%");

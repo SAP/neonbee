@@ -60,7 +60,6 @@ public class MemoryHealthCheck extends AbstractHealthCheck {
 
             healthCheckPromise.complete(new Status().setOk(!critical).setData(
                     new JsonObject().put("freeHeapMemory", MemorySize.toPrettyString(memoryStats.getFreeHeap()))
-                            .put("freePhysicalMemory", MemorySize.toPrettyString(memoryStats.getFreePhysical()))
                             .put("memoryUsedOfTotalPercentage", printPercentage(memoryUsedOfTotalPercentage))
                             .put("memoryUsedOfMaxPercentage", printPercentage(memoryUsedOfMaxPercentage))));
         };
