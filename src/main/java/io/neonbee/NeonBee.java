@@ -311,7 +311,7 @@ public class NeonBee {
     }
 
     private Future<Void> boot() {
-        LOGGER.info("Booting NeonBee ...");
+        LOGGER.info("Booting NeonBee (ID: {})", NODE_ID);
         return registerHooks().compose(nothing -> hookRegistry.executeHooks(HookType.BEFORE_BOOTSTRAP))
                 .onSuccess(anything -> {
                     // set the default timezone and overwrite any configured user.timezone property
@@ -322,7 +322,7 @@ public class NeonBee {
                 .compose(nothing -> all(deployVerticles(), deployModules())) // deployment of verticles & modules
                 .compose(nothing -> registerHealthChecks())
                 .compose(nothing -> hookRegistry.executeHooks(HookType.AFTER_STARTUP))
-                .onSuccess(result -> LOGGER.info("Successfully booted NeonBee!")).mapEmpty();
+                .onSuccess(result -> LOGGER.info("Successfully booted NeonBee (ID: {}})!", NODE_ID)).mapEmpty();
     }
 
     /**
