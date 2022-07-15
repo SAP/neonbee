@@ -28,6 +28,8 @@ import io.neonbee.data.DataVerticle;
 import io.neonbee.data.internal.DataContextImpl;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
@@ -65,7 +67,7 @@ class LocalPreferredClusterTest extends NeonBeeExtension.TestBase {
     }
 
     @Test
-    @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
+    @Timeout(value = 200, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that localPreferred requests are dispatched to remote consumers when no local consumer is available")
     void testLocalPreferredRequestWithoutLocalConsumer(VertxTestContext testContext) {
         // Create a localPreferred request
@@ -123,6 +125,8 @@ class LocalPreferredClusterTest extends NeonBeeExtension.TestBase {
     private static class ConsumerVerticle extends DataVerticle<String> {
         public static final String NAME = "Consumer";
 
+        private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerVerticle.class);
+
         private final String node;
 
         ConsumerVerticle(String node) {
@@ -137,6 +141,7 @@ class LocalPreferredClusterTest extends NeonBeeExtension.TestBase {
 
         @Override
         public Future<String> retrieveData(DataQuery query, DataMap require, DataContext context) {
+            LOGGER.info("in retrieveData");
             return succeededFuture(node);
         }
     }

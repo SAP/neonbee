@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
@@ -31,11 +32,16 @@ import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.FileSystemHelper;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public due to static methods)
+public class EntityModelManagerTest extends NeonBeeTestBase {
+    public static final String REFERENCE_SERVICE_CSN = "ReferenceService.csn";
+
+    public static final String REFERENCE_SERVICE_EDMX = "io.neonbee.reference.ReferenceService.edmx";
+
     @Override
     protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
         options.addActiveProfile(NO_WEB);
@@ -176,11 +182,11 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
         EntityModelManager modelManager = neonBee.getModelManager();
 
         // Create modelsbuildModelEntry
-        Map.Entry<String, byte[]> referenceModel = buildModelEntry("ReferenceService.csn");
+        Map.Entry<String, byte[]> referenceModel = buildModelEntry(REFERENCE_SERVICE_CSN);
         Map<String, byte[]> models = Map.ofEntries(referenceModel);
 
         // Create extension models
-        Map.Entry<String, byte[]> referenceExtModel = buildModelEntry("io.neonbee.reference.ReferenceService.edmx");
+        Map.Entry<String, byte[]> referenceExtModel = buildModelEntry(REFERENCE_SERVICE_EDMX);
         Map<String, byte[]> extendedModels = Map.ofEntries(referenceExtModel);
 
         EntityModelDefinition modelDefinition = new EntityModelDefinition(models, extendedModels);
@@ -206,11 +212,11 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
         EntityModelManager modelManager = neonBee.getModelManager();
 
         // Create 1st models
-        Map.Entry<String, byte[]> referenceModel = buildModelEntry("ReferenceService.csn");
+        Map.Entry<String, byte[]> referenceModel = buildModelEntry(REFERENCE_SERVICE_CSN);
         Map<String, byte[]> referenceModels = Map.ofEntries(referenceModel);
 
         // Create 1st extension models
-        Map.Entry<String, byte[]> referenceExtModel = buildModelEntry("io.neonbee.reference.ReferenceService.edmx");
+        Map.Entry<String, byte[]> referenceExtModel = buildModelEntry(REFERENCE_SERVICE_EDMX);
         Map<String, byte[]> referenceExtendedModels = Map.ofEntries(referenceExtModel);
 
         // Create 2nd models
@@ -236,6 +242,42 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
                                 assertThat(modelManager.getBufferedModel("AnnotatedService")).isNull();
                                 testContext.completeNow();
                             })));
+                })));
+    }
+
+    @Test
+    @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("models push into and obtain from shared memory.")
+    void sharedMemoryPushAndObtain(Vertx vertx, VertxTestContext testContext) throws IOException {
+        Path workingDirectory = getNeonBee().getOptions().getWorkingDirectory();
+        NeonBee neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx,
+                defaultOptions().clearActiveProfiles().setWorkingDirectory(workingDirectory));
+        String modelsDirectory = neonBee.getOptions().getModelsDirectory().toFile().getAbsolutePath();
+        EntityModelManager modelManager = neonBee.getModelManager();
+
+        // Create modelsbuildModelEntry
+        Map.Entry<String, byte[]> referenceModel = buildModelEntry(REFERENCE_SERVICE_CSN);
+        Map<String, byte[]> models = Map.ofEntries(referenceModel);
+
+        // Create extension models
+        Map.Entry<String, byte[]> referenceExtModel = buildModelEntry(REFERENCE_SERVICE_EDMX);
+        Map<String, byte[]> extendedModels = Map.ofEntries(referenceExtModel);
+
+        EntityModelDefinition modelDefinition = new EntityModelDefinition(models, extendedModels);
+        File referenceCsnFile = TEST_RESOURCES.resolveRelated(REFERENCE_SERVICE_CSN).toFile();
+        File referenceEdmxFile = TEST_RESOURCES.resolveRelated(REFERENCE_SERVICE_EDMX).toFile();
+        vertx.fileSystem().copy(referenceCsnFile.getAbsolutePath(), modelsDirectory + '/' + referenceCsnFile.getName())
+                .compose(dummy -> vertx.fileSystem().copy(referenceEdmxFile.getAbsolutePath(),
+                        modelsDirectory + '/' + referenceEdmxFile.getName()))
+                .compose(dummy2 -> modelManager.registerModels(modelDefinition).compose(dummy -> {
+                    testContext.verify(() -> {
+                        assertThat(modelManager.getBufferedModels()).hasSize(1);
+                    });
+                    return Future.succeededFuture();
+                })).compose(dummy -> modelManager.reloadRemoteModels(vertx))
+                .onComplete(testContext.succeeding(res -> testContext.verify(() -> {
+                    assertThat(modelManager.getBufferedModels()).hasSize(1);
+                    testContext.completeNow();
                 })));
     }
 

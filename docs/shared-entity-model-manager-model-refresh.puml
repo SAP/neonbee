@@ -1,0 +1,81 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+package vertx {
+    interface EventBus {
+        publish( address, message)
+    }
+    interface SharedData {
+        getAsyncMap()
+
+        putInAsyncMap()
+    }
+    interface MessageCodec
+}
+
+package neonbee {
+    class ModelRefreshVerticle extends WatchVerticle {
+        observedCreateOrModify()
+    }
+    class EntityModelManager {
+        Map<String, EntityModel> reloadModels()
+    }
+
+    class EntityModel {
+        CdsModel csnModel;
+        Map<String, ServiceMetadata> edmxMap;
+    }
+
+    class EntityModelLoader {
+        Map<String, EntityModel>> load()
+
+        scanDir(Path path)
+
+        loadModelFromBuffer(): new method
+    }
+
+    class EntityWrapperMessageCodec implements MessageCodec {
+    }
+}
+
+package neonbee.changes {
+    class SharedEntityModelManager extends EntityModelManager {
+
+        reloadRemoteModels()
+
+        mergeRemoteModels(Map<String, EntityModel> newModels)
+    }
+    class Timer {
+        every5Minutes()
+    }
+
+    class DistributedFileSystem {
+        pushChanges()
+
+        /**
+        contains relative path and
+        content of distributed files
+        */
+        Map<String, byte[]> files
+
+        obtainChanges()
+    }
+}
+
+
+
+ModelRefreshVerticle::observedCreateOrModify ..> EntityModelManager::reloadModels: 1
+EntityModelManager::reloadModels ..> EntityModelLoader::load: 2
+EntityModelLoader::load ..> EntityModelLoader::scanDir: 3
+EntityModelLoader::load ..> DistributedFileSystem::pushChanges: 4
+DistributedFileSystem::pushChanges ..> SharedData::putInAsyncMap: 5
+EntityModelManager::reloadModels ..> EventBus::publish: 6  EVENT_BUS_MODELS_LOADED_ADDRESS, local only
+
+Timer::every5Minutes ..> SharedEntityModelManager::reloadRemoteModels: 1
+SharedEntityModelManager::reloadRemoteModels ..> DistributedFileSystem::obtainChanges: 2
+DistributedFileSystem::obtainChanges ..> SharedData::getAsyncMap: 3
+SharedEntityModelManager::reloadRemoteModels ..> EntityModelLoader::loadModelFromBuffer: 4
+SharedEntityModelManager::reloadRemoteModels ..> SharedEntityModelManager::mergeRemoteModels: 5
+EntityWrapperMessageCodec ..> EntityModelManager
+
+@enduml

@@ -17,9 +17,14 @@ public class InstanceInfoHandler implements PlatformHandler {
             }
 
             // Sets the NeonBee instance name as default
-            String instanceName = NeonBee.get(routingContext.vertx()).getOptions().getInstanceName();
-            if (instanceName != null && !instanceName.isBlank()) {
-                headers.set(X_INSTANCE_INFO_HEADER, instanceName);
+            String instanceName = null;
+            NeonBee neonbee = NeonBee.get(routingContext.vertx());
+            if (neonbee != null) {
+                instanceName = NeonBee.get(routingContext.vertx()).getOptions().getInstanceName();
+
+                if (instanceName != null && !instanceName.isBlank()) {
+                    headers.set(X_INSTANCE_INFO_HEADER, instanceName);
+                }
             }
         });
         routingContext.next();
