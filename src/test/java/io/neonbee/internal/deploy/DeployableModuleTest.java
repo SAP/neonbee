@@ -108,7 +108,7 @@ class DeployableModuleTest {
         assertThat(deployableModels.get(0).modelDefinition.getCSNModelDefinitions())
                 .comparingValuesUsing(Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))
                 .containsExactlyEntriesIn(NeonBeeModuleJar.DUMMY_MODELS);
-        assertThat(deployableModels.get(0).modelDefinition.getAssociatedModelDefinitions())
+        assertThat(deployableModels.get(0).modelDefinition.getAssociatedData())
                 .comparingValuesUsing(Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))
                 .containsExactlyEntriesIn(NeonBeeModuleJar.DUMMY_EXTENSION_MODELS);
         assertThat(deployables.stream().filter(DeployableVerticle.class::isInstance).map(DeployableVerticle.class::cast)
@@ -141,7 +141,7 @@ class DeployableModuleTest {
         assertThat(deployableModels.get(0).modelDefinition.getCSNModelDefinitions())
                 .comparingValuesUsing(Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))
                 .containsExactlyEntriesIn(NeonBeeModuleJar.DUMMY_MODELS);
-        assertThat(deployableModels.get(0).modelDefinition.getAssociatedModelDefinitions())
+        assertThat(deployableModels.get(0).modelDefinition.getAssociatedData())
                 .comparingValuesUsing(Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))
                 .containsExactlyEntriesIn(NeonBeeModuleJar.DUMMY_EXTENSION_MODELS);
         assertThat(deployables.stream().filter(DeployableVerticle.class::isInstance)).isEmpty();

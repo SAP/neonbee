@@ -123,7 +123,7 @@ class DeployableModelsTest {
 
         EntityModelDefinition definition = deployable.result().modelDefinition;
         assertThat(definition.getCSNModelDefinitions().keySet()).containsExactly("entry");
-        assertThat(definition.getAssociatedModelDefinitions().keySet()).containsExactly("entry");
+        assertThat(definition.getAssociatedData().keySet()).containsExactly("entry");
     }
 
     @Test
@@ -135,7 +135,7 @@ class DeployableModelsTest {
         assertThat(deployable.result().modelDefinition.getCSNModelDefinitions())
                 .comparingValuesUsing(Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))
                 .containsExactlyEntriesIn(NeonBeeModuleJar.DUMMY_MODELS);
-        assertThat(deployable.result().modelDefinition.getAssociatedModelDefinitions())
+        assertThat(deployable.result().modelDefinition.getAssociatedData())
                 .comparingValuesUsing(Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))
                 .containsExactlyEntriesIn(NeonBeeModuleJar.DUMMY_EXTENSION_MODELS);
     }

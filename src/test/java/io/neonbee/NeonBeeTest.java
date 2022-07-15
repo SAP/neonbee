@@ -66,6 +66,7 @@ import io.neonbee.internal.NeonBeeModuleJar;
 import io.neonbee.internal.tracking.MessageDirection;
 import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
 import io.neonbee.internal.tracking.TrackingInterceptor;
+import io.neonbee.internal.verticle.ClusterEntityModelReloadVerticle;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.internal.verticle.HealthCheckVerticle;
 import io.neonbee.internal.verticle.LoggerManagerVerticle;
@@ -146,7 +147,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     @DisplayName("NeonBee should deploy all none optional system verticles")
     void testDeployNoneOptionalSystemVerticles(Vertx vertx) {
         assertThat(getDeployedVerticles(vertx)).containsExactly(ConsolidationVerticle.class,
-                LoggerManagerVerticle.class);
+                LoggerManagerVerticle.class, ClusterEntityModelReloadVerticle.class);
     }
 
     @Test
@@ -154,7 +155,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     @DisplayName("NeonBee should deploy all none optional system verticles plus HealthCheckVerticle")
     void testDeployNoneOptionalSystemVerticlesPlusHealthCheckVerticle(Vertx vertx) {
         assertThat(getDeployedVerticles(vertx)).containsExactly(ConsolidationVerticle.class,
-                LoggerManagerVerticle.class, HealthCheckVerticle.class);
+                LoggerManagerVerticle.class, ClusterEntityModelReloadVerticle.class, HealthCheckVerticle.class);
     }
 
     @Test

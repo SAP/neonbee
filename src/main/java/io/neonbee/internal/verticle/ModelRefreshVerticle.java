@@ -49,6 +49,7 @@ public class ModelRefreshVerticle extends WatchVerticle {
     }
 
     private void triggerRefresh(Promise<Void> finishPromise) {
+        LOGGER.debug("in trigger refresh");
         NeonBee.get(vertx).getModelManager().reloadModels().map((Void) null).onComplete(asyncResult -> {
             LOGGER.debug("Models have been refreshed.");
             finishPromise.handle(asyncResult);

@@ -77,6 +77,7 @@ import io.neonbee.internal.tracking.MessageDirection;
 import io.neonbee.internal.tracking.TrackingDataHandlingStrategy;
 import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
 import io.neonbee.internal.tracking.TrackingInterceptor;
+import io.neonbee.internal.verticle.ClusterEntityModelReloadVerticle;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.internal.verticle.DeployerVerticle;
 import io.neonbee.internal.verticle.HealthCheckVerticle;
@@ -498,6 +499,7 @@ public class NeonBee {
         List<Future<? extends Deployable>> requiredVerticles = new ArrayList<>();
         requiredVerticles.add(fromClass(vertx, ConsolidationVerticle.class, new JsonObject().put("instances", 1)));
         requiredVerticles.add(fromClass(vertx, LoggerManagerVerticle.class));
+        requiredVerticles.add(fromClass(vertx, ClusterEntityModelReloadVerticle.class));
 
         List<Future<Optional<? extends Deployable>>> optionalVerticles = new ArrayList<>();
         if (Optional.ofNullable(config.getHealthConfig()).map(HealthConfig::isEnabled).orElse(true)) {

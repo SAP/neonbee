@@ -55,6 +55,8 @@ public class DeployerVerticle extends WatchVerticle {
             return;
         }
 
+        LOGGER.debug("in trigger deployment");
+
         DeployableModule.fromJar(vertx, affectedPath).compose(deployableModule -> {
             // The deploy method automatically cleans up in case of failure.
             return deployableModule.deploy(NeonBee.get(vertx)).compose(deployment -> {
@@ -71,7 +73,11 @@ public class DeployerVerticle extends WatchVerticle {
                             affectedPath.toAbsolutePath(), throwable);
                 }
             });
-        }).onComplete(finishPromise);
+        }).compose(dummy -> NeonBee.get(vertx).getModelManager().reloadModels().map((Void) null))
+                .onComplete(asyncResult -> {
+                    LOGGER.debug("Models have been refreshed.");
+                    finishPromise.handle(asyncResult);
+                });
     }
 
     @Override

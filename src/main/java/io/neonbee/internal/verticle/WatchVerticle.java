@@ -165,6 +165,7 @@ public class WatchVerticle extends AbstractVerticle {
 
         try {
             watcher = watchPath.getFileSystem().newWatchService();
+            LOGGER.debug("observing folder " + watchPath.toFile().getAbsolutePath());
         } catch (IOException e) {
             startPromise.fail(e);
             return;
