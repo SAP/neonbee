@@ -1,0 +1,90 @@
+# NeonBee TypedDataVerticle RFC 1
+
+### Contents
+- [Abstract](#abstract)
+- [Motivation](#Motivation)
+- [Technical Details](#technical-details)
+- [Performance Considerations](#performance-considerations)
+- [Impact on Existing Functionalities](#impact-on-existing-functionalities)
+- [Open Questions](#open-questions)
+
+
+### Abstract
+
+Current DataVerticle<JSONObject> handles passing or delivering JSON payloads.
+The structure of the JSON is not known to the consumer. It can be inferred from a non empty response how ever this is not reliable.
+
+Even harder are parameters, there is no programatic way to determine verticles parameters.
+
+Some use cases require the (meta) transparency of OData, but can't fit into the odata constrains (nested JSON objects).
+
+### Motivation
+
+##Potential no UI code end2end
+
+take any verticle that has read & write operations for an example.
+when schema is provided a UI can be generated for it (edit & view).
+this would enable creating editor card for example on the fly no UI code needed.
+
+#examples:
+user settings verticle
+feature toggles
+any micro service provided using raw json
+GraphQL interface
+
+##Generate typed client api
+
+client api can be generated based on schemas.
+this would allow better readability of data type while developing.
+the parameters can be validated by language service whilst the developer is writing the request's code.
+this can be useful for writing java request, but also can help with typescript later on.
+
+
+### Technical Details
+
+## Proposal: create TypedDataVerticle<JSONObject>
+
+The verticle should accept request for metadata
+"backend/core/TypedVerticle/$metadata/" => "backend/core/TypedVerticle?$schema"
+The response should be a JSON describing input & output structures.
+schema base structure is to be determined, ex:
+{
+  "ALL": {
+    parameters: ...
+    subroutes: ...
+  }
+  "GET": {
+    responseSchema: {
+      properties: [{...}]
+    }
+  }
+  "POST": {
+    payloadSchema: {
+      properties: [{...}]
+    }
+  }
+}
+
+
+when requesting data from the Verticle it should validate the payload using the same JSON schema.
+
+
+
+### Performance Considerations
+
+Give an option (boolean property) to disable validation for certain usecases.
+
+### Impact on Existing Functionalities
+
+Existing vertcles could implement own schema, this should result in automatic validation of payloads.
+
+
+### Open Questions
+
+should dynamic scemas be considered?
+In some use cases, the structure of the response can depend on requests params.
+the schema could include subscemas for sub-routes
+
+should scema delivery be code or config?
+coding the schema getter can be necessary for dynamic schemas
+using config based solution would benefit the usage since it could potentially be updated at runtime.
