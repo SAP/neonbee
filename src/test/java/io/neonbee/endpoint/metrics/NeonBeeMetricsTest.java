@@ -65,6 +65,7 @@ public class NeonBeeMetricsTest {
 
         NeonBeeOptions.Mutable mutable = new NeonBeeOptions.Mutable();
         mutable.setServerPort(PORT);
+        mutable.setIgnoreClassPath(true);
         mutable.setWorkingDirectory(Path.of("src", "test", "resources", "io", "neonbee", "endpoint", "metrics"));
 
         NeonBee.create(mutable).onComplete(context.succeeding(event -> httpGet(vertx, TEST_ENDPOINT_URI)
