@@ -95,7 +95,7 @@ import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 @SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass" })
 public class NeonBee {
-    /** // @formatter:off
+    /* // @formatter:off
      *
      *                             ,"`  ´\,                                     -" ,+´\
      *                            ` \     ",                                  /   '    \
@@ -149,10 +149,10 @@ public class NeonBee {
 
     private static final int NUMBER_DEFAULT_INSTANCES = 4;
 
-    private static final String NODE_ID = UUID.randomUUID().toString();
-
     @VisibleForTesting
     final NeonBeeConfig config;
+
+    private final String nodeId = UUID.randomUUID().toString();
 
     private final Vertx vertx;
 
@@ -311,7 +311,7 @@ public class NeonBee {
     }
 
     private Future<Void> boot() {
-        LOGGER.info("Booting NeonBee (ID: {})", NODE_ID);
+        LOGGER.info("Booting NeonBee (ID: {})", nodeId);
         return registerHooks().compose(nothing -> hookRegistry.executeHooks(HookType.BEFORE_BOOTSTRAP))
                 .onSuccess(anything -> {
                     // set the default timezone and overwrite any configured user.timezone property
@@ -322,7 +322,7 @@ public class NeonBee {
                 .compose(nothing -> all(deployVerticles(), deployModules())) // deployment of verticles & modules
                 .compose(nothing -> registerHealthChecks())
                 .compose(nothing -> hookRegistry.executeHooks(HookType.AFTER_STARTUP))
-                .onSuccess(result -> LOGGER.info("Successfully booted NeonBee (ID: {}})!", NODE_ID)).mapEmpty();
+                .onSuccess(result -> LOGGER.info("Successfully booted NeonBee (ID: {}})!", nodeId)).mapEmpty();
     }
 
     /**
@@ -744,7 +744,7 @@ public class NeonBee {
      * @return the id
      */
     public String getNodeId() {
-        return NODE_ID;
+        return nodeId;
     }
 
     /**
