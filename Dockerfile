@@ -1,20 +1,31 @@
-# Use an the sapmachine runtime as a parent image
-FROM sapmachine/jdk11
+FROM gradle:7.4.2-jdk11 AS builder
 
-# The build NeonBee version
-ARG NEONBEE_VERSION
+RUN mkdir app
+WORKDIR /app
+COPY . /app
+RUN gradle -x test -x spotlessJava \
+    -x spotlessCheck -x spotlessJavaCheck \
+    -x spotbugsMain -x spotbugsTest \
+    -x pmdMain -x pmdTest \
+    -x checkstyleMain -x checkstyleTest \
+    -x violations \
+    -x reportCoverage \
+    -x testJar -x testSourcesJar \
+    -x javadoc -x javadocJar -x testJavadoc -x testJavadocJar \
+    --no-daemon clean build
 
-# Set the working directory to /neonbee
-WORKDIR /neonbee
+FROM sapmachine:11.0.15.0.1
 
-# Copy the current directory contents into the container at /neonbee
-ADD neonbee-dist-${NEONBEE_VERSION}.tar.gz /neonbee/
+# Creates app working directory and a system user (r) with
+# no password, no home directory, no shell.
+RUN mkdir -p /opt/neonbee/working_dir/config && \
+    groupadd -r bee && useradd -r -s /bin/false -g bee bee && \
+    chown -R bee /opt/neonbee
 
-# Make port 8080 available to the world outside this container
-EXPOSE 8080
+COPY --chown=bee:bee --from=builder /app/build/neonbee-core-*-shadow.jar /opt/neonbee/neonbee-core.jar
+COPY --chown=bee:bee --from=builder /app/resources/config /opt/neonbee/
 
-# Make NeonBee start script executable
-RUN chmod +x start.sh
+USER bee
 
-# Run start.sh when the container launches
-CMD ["/neonbee/start.sh"]
+ENTRYPOINT ["java","-jar","/opt/neonbee/neonbee-core.jar","-cwd","/opt/neonbee/working_dir"]
+CMD ["-port","8080"]
