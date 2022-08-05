@@ -36,6 +36,6 @@ Copyright: 2019 SAP SE or an SAP affiliate company and NeonBee contributors
 License: EPL-2.0
 
 #### Tools
-Files: .editorconfig  .gitignore  .gitattributes  .vscode/settings.json
+Files: .editorconfig  .gitignore  .gitattributes  .dockerignore  .vscode/settings.json
 Copyright: 2019 SAP SE or an SAP affiliate company and NeonBee contributors
 License: CC0-1.0

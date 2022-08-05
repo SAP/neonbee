@@ -1,0 +1,10 @@
+# https://docs.docker.com/engine/reference/builder/#dockerignore-file
+*.md
+*.json
+*.txt
+*.bat
+/bin
+/docs
+/logs
+/out
+LICENSES
