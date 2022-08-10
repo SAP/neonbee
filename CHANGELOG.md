@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.13.0 (2022-08-10)
+
+### Bug Fixes
+
+- speed up the test execution ([c59f6d86](https://github.com/SAP/neonbee/commit/c59f6d8668a1c94df78eb88080e8ad655b291b94))
+- disable unstable test on github ([1e29e130](https://github.com/SAP/neonbee/commit/1e29e130dde52f14f55e9a3498e843baf9ab2b34))
+
+
+### Features
+
+- make ServerVerticle handler configurable ([deff579c](https://github.com/SAP/neonbee/commit/deff579ccf34f5e55512a2fc4c4141ab813e9bfe))
+
+
+### Documentation
+
+- **health**: add documentation for the health feature ([99be11b7](https://github.com/SAP/neonbee/commit/99be11b7657f6589aa23552294055de5fd221aa2))
+
+
+### Build System
+
+- **deps**: upgrade `vertx` to 4.3.3 ([e0f366ca](https://github.com/SAP/neonbee/commit/e0f366ca1ce86e0e516f853b2997f6fc0e1b5489))
+
+
 ## 0.12.1 (2022-07-14)
 
 ### Chores
