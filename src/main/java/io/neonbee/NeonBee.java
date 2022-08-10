@@ -42,6 +42,7 @@ import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.config.HealthConfig;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.config.ServerConfig;
+import io.neonbee.data.DataException;
 import io.neonbee.data.DataQuery;
 import io.neonbee.entity.EntityModelManager;
 import io.neonbee.entity.EntityWrapper;
@@ -55,6 +56,7 @@ import io.neonbee.hook.HookType;
 import io.neonbee.hook.internal.DefaultHookRegistry;
 import io.neonbee.internal.SharedDataAccessor;
 import io.neonbee.internal.buffer.ImmutableBuffer;
+import io.neonbee.internal.codec.DataExceptionMessageCodec;
 import io.neonbee.internal.codec.DataQueryMessageCodec;
 import io.neonbee.internal.codec.EntityWrapperMessageCodec;
 import io.neonbee.internal.codec.ImmutableBufferMessageCodec;
@@ -410,7 +412,8 @@ public class NeonBee {
                     .registerDefaultCodec(EntityWrapper.class, new EntityWrapperMessageCodec(vertx))
                     .registerDefaultCodec(ImmutableBuffer.class, new ImmutableBufferMessageCodec())
                     .registerDefaultCodec(ImmutableJsonArray.class, new ImmutableJsonArrayMessageCodec())
-                    .registerDefaultCodec(ImmutableJsonObject.class, new ImmutableJsonObjectMessageCodec());
+                    .registerDefaultCodec(ImmutableJsonObject.class, new ImmutableJsonObjectMessageCodec())
+                    .registerDefaultCodec(DataException.class, new DataExceptionMessageCodec());
 
             // add any additional default codecs configured in NeonBeeConfig
             config.getEventBusCodecs().forEach(this::registerCodec);

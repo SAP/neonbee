@@ -115,14 +115,22 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                         LOGGER.correlateWith(context).debug("Received event bus reply");
 
                         if (asyncReply.succeeded()) {
-                            DataContext responseDataContext =
-                                    decodeContextFromString(asyncReply.result().headers().get(CONTEXT_HEADER));
-                            context.setData(
-                                    Optional.ofNullable(responseDataContext).map(DataContext::data).orElse(null));
-                            context.mergeResponseData(Optional.ofNullable(responseDataContext)
-                                    .map(DataContext::responseData).orElse(null));
-                            return succeededFuture(asyncReply.result().body());
-
+                            U body = asyncReply.result().body();
+                            if (body instanceof DataException) {
+                                if (LOGGER.isWarnEnabled()) {
+                                    LOGGER.correlateWith(context).warn("Received a event bus reply failure from {}",
+                                            qualifiedName, (DataException) body);
+                                }
+                                return failedFuture((DataException) body);
+                            } else {
+                                DataContext responseDataContext =
+                                        decodeContextFromString(asyncReply.result().headers().get(CONTEXT_HEADER));
+                                context.setData(
+                                        Optional.ofNullable(responseDataContext).map(DataContext::data).orElse(null));
+                                context.mergeResponseData(Optional.ofNullable(responseDataContext)
+                                        .map(DataContext::responseData).orElse(null));
+                                return succeededFuture(asyncReply.result().body());
+                            }
                         } else {
                             Throwable cause = asyncReply.cause();
                             if (LOGGER.isWarnEnabled()) {
@@ -412,7 +420,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                             }
 
                             if (cause instanceof DataException) {
-                                message.fail(((DataException) cause).failureCode(), cause.getMessage());
+                                message.reply(cause);
                             } else {
                                 message.fail(FAILURE_CODE_PROCESSING_FAILED,
                                         "Processing of message failed. " + cause.getMessage());
