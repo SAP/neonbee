@@ -1,9 +1,15 @@
 package io.neonbee.data;
 
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static java.util.Objects.requireNonNull;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 @SuppressWarnings({ "OverrideThrowableToString", "checkstyle:JavadocVariable" })
 public class DataException extends RuntimeException {
@@ -20,6 +26,8 @@ public class DataException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     private final int failureCode;
+
+    private final Map<String, Object> failureDetail;
 
     /**
      * Create a DataException.
@@ -53,8 +61,22 @@ public class DataException extends RuntimeException {
      * @param message     the failure message
      */
     public DataException(int failureCode, String message) {
+        this(failureCode, message, Map.of());
+    }
+
+    /**
+     * Create a DataException.
+     *
+     * @param failureCode   the failure code
+     * @param message       the failure message
+     * @param failureDetail the failure detail message to be propagated to the invoker, but should not be exposed to the
+     *                      consumer. Must be compatible to {@link JsonObject#JsonObject(Map)}. The type of the passed
+     *                      object must be either: {@link String} or {@link JsonObject} or {@link JsonArray}
+     */
+    public DataException(int failureCode, String message, Map<String, Object> failureDetail) {
         super(message);
         this.failureCode = failureCode;
+        this.failureDetail = requireNonNull(failureDetail);
     }
 
     /**
@@ -66,9 +88,18 @@ public class DataException extends RuntimeException {
         return failureCode;
     }
 
+    /**
+     * Get the failure detail message.
+     *
+     * @return the failure detail
+     */
+    public Map<String, Object> failureDetail() {
+        return Collections.unmodifiableMap(failureDetail);
+    }
+
     @Override
     public int hashCode() {
-        return Objects.hash(failureCode, getMessage());
+        return Objects.hash(failureCode, getMessage(), failureDetail);
     }
 
     @Override
@@ -83,11 +114,14 @@ public class DataException extends RuntimeException {
             return false;
         }
         DataException other = (DataException) obj;
-        return failureCode == other.failureCode && getMessage().equals(other.getMessage());
+        return failureCode == other.failureCode
+                && Optional.ofNullable(getMessage()).orElse(EMPTY)
+                        .equals(Optional.ofNullable(other.getMessage()).orElse(EMPTY))
+                && failureDetail().equals(other.failureDetail());
     }
 
     @Override
     public String toString() {
-        return "(" + failureCode + ") " + Optional.ofNullable(getMessage()).orElse(EMPTY);
+        return "(" + failureCode + ")" + Optional.ofNullable(getMessage()).map(msg -> " " + msg).orElse(EMPTY);
     }
 }
