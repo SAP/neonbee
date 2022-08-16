@@ -14,6 +14,8 @@ import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -34,7 +36,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -52,6 +53,7 @@ import org.mockito.Mockito;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.health.DummyHealthCheck;
 import io.neonbee.health.DummyHealthCheckProvider;
+import io.neonbee.health.EventLoopHealthCheck;
 import io.neonbee.health.HazelcastClusterHealthCheck;
 import io.neonbee.health.HealthCheckProvider;
 import io.neonbee.health.HealthCheckRegistry;
@@ -163,7 +165,7 @@ class NeonBeeTest extends NeonBeeTestBase {
 
     private static Set<Class<? extends Verticle>> getDeployedVerticles(Vertx vertx) {
         return vertx.deploymentIDs().stream().map(((VertxInternal) vertx)::getDeployment).map(Deployment::getVerticles)
-                .flatMap(Set::stream).map(Verticle::getClass).collect(Collectors.toSet());
+                .flatMap(Set::stream).map(Verticle::getClass).collect(toSet());
     }
 
     @Test
@@ -223,36 +225,33 @@ class NeonBeeTest extends NeonBeeTestBase {
     @DisplayName("NeonBee should register all default health checks")
     void testRegisterDefaultHealthChecks() {
         Map<String, HealthCheck> registeredChecks = getNeonBee().getHealthCheckRegistry().getHealthChecks();
-        assertThat(registeredChecks.size()).isEqualTo(1);
-        assertThat(registeredChecks.containsKey("node." + getNeonBee().getNodeId() + "." + MemoryHealthCheck.NAME))
-                .isTrue();
+        assertThat(registeredChecks.size()).isEqualTo(2);
+        String nodePrefix = "node." + getNeonBee().getNodeId() + ".";
+        assertThat(registeredChecks.containsKey(nodePrefix + EventLoopHealthCheck.NAME)).isTrue();
+        assertThat(registeredChecks.containsKey(nodePrefix + MemoryHealthCheck.NAME)).isTrue();
     }
 
     @Test
     @DisplayName("NeonBee should register all cluster + default health checks if started clustered")
     void testRegisterClusterHealthChecks() {
         Map<String, HealthCheck> registeredChecks = getNeonBee().getHealthCheckRegistry().getHealthChecks();
-        assertThat(registeredChecks.size()).isEqualTo(2);
+        assertThat(registeredChecks.size()).isEqualTo(3);
         assertThat(registeredChecks.containsKey(HazelcastClusterHealthCheck.NAME)).isTrue();
     }
 
     @Test
-    @Timeout(value = 1, timeUnit = TimeUnit.SECONDS)
+    @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should register all SPI-provided + default health checks")
     void testRegisterSpiAndDefaultHealthChecks(VertxTestContext testContext) {
         HealthCheckRegistry registry = getNeonBee().getHealthCheckRegistry();
-        Set<String> healthCheckMap = registry.getHealthChecks().keySet();
-        for (String checkId : healthCheckMap) {
+        for (String checkId : registry.getHealthChecks().keySet().stream().collect(toUnmodifiableList())) {
             registry.unregister(checkId);
         }
 
         runWithMetaInfService(HealthCheckProvider.class, DummyHealthCheckProvider.class.getName(), testContext, () -> {
             getNeonBee().registerHealthChecks().onComplete(testContext.succeeding(v -> testContext.verify(() -> {
                 Map<String, HealthCheck> registeredChecks = registry.getHealthChecks();
-                assertThat(registeredChecks.size()).isEqualTo(2);
-                assertThat(
-                        registeredChecks.containsKey("node." + getNeonBee().getNodeId() + "." + MemoryHealthCheck.NAME))
-                                .isTrue();
+                assertThat(registeredChecks.size()).isEqualTo(3);
                 assertThat(registeredChecks.containsKey(DummyHealthCheck.DUMMY_ID)).isTrue();
                 testContext.completeNow();
             })));

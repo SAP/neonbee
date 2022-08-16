@@ -46,6 +46,7 @@ import io.neonbee.data.DataException;
 import io.neonbee.data.DataQuery;
 import io.neonbee.entity.EntityModelManager;
 import io.neonbee.entity.EntityWrapper;
+import io.neonbee.health.EventLoopHealthCheck;
 import io.neonbee.health.HazelcastClusterHealthCheck;
 import io.neonbee.health.HealthCheckProvider;
 import io.neonbee.health.HealthCheckRegistry;
@@ -338,6 +339,7 @@ public class NeonBee {
 
         if (Optional.ofNullable(config.getHealthConfig()).map(HealthConfig::isEnabled).orElse(true)) {
             healthChecks.add(healthRegistry.register(new MemoryHealthCheck(this)));
+            healthChecks.add(healthRegistry.register(new EventLoopHealthCheck(this)));
 
             if (options.isClustered()) {
                 healthChecks.add(healthRegistry.register(new HazelcastClusterHealthCheck(this, clusterManager)));

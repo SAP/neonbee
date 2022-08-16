@@ -41,7 +41,6 @@ class HealthCheckVerticleTest extends DataVerticleTestBase {
         Future<JsonArray> response = requestData(req);
 
         assertData(response, resp -> {
-            assertThat(resp.size()).isEqualTo(1);
             JsonObject firstCheck = resp.getJsonObject(0);
             assertThat(firstCheck.containsKey("id")).isTrue();
             assertThat(firstCheck.containsKey("status")).isTrue();

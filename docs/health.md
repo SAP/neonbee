@@ -41,10 +41,11 @@ File name (example): `/config/io.neonbee.health.CustomHealthCheck.yaml`
 
 NeonBee built-in checks have the following configuration options:
 
-| class name                    | type   | property                      | default | description                                                |
-| ----------------------------- | ------ | ----------------------------- | ------- | ---------------------------------------------------------- |
-| `MemoryHealthCheck`           | node   | `criticalThresholdPercentage` | 90      | Criticality ratio of the used / max memory in percentage.  |
+| class name                    | type   | property                      | default | description                                                                              |
+|-------------------------------|--------|-------------------------------|---------|------------------------------------------------------------------------------------------|
+| `MemoryHealthCheck`           | node   | `criticalThresholdPercentage` | 90      | Criticality ratio of the used / max memory in percentage.                                |
 | `HazelcastClusterHealthCheck` | global | `expectedClusterSize`         | -       | The expected cluster size that must match the actual size. Is checked only if specified. |
+| `EventLoopHealthCheck`        | node   | `criticalEventLoopSize`       | 5       | Number of pending tasks that are allowed per event loop before check becomes unhealthy.  |
 
 ## Register Custom Checks
 
