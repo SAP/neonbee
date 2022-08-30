@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.14.0 (2022-08-29)
+
+### Bug Fixes
+
+- same NeonBee nodeId for multiple instances ([3b48202c](https://github.com/SAP/neonbee/commit/3b48202cb0e4ff7d3433562589f28c53c322acb0))
+- pass vertx instance to NeonBee for the metrics config ([05559de7](https://github.com/SAP/neonbee/commit/05559de7245b1828487465eee93b3f8641e84bd5))
+
+
+### Features
+
+- support response hint ([88cb66f5](https://github.com/SAP/neonbee/commit/88cb66f59449542a16bd17a8afed4b4b2cb23305))
+- add failureDetail to DataException ([c7fa2bdb](https://github.com/SAP/neonbee/commit/c7fa2bdb0b80fea421d95175a5af88bcde0c4cf7))
+
+
 ## 0.13.0 (2022-08-10)
 
 ### Bug Fixes
