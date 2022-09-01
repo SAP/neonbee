@@ -83,6 +83,7 @@ dependencies {
     annotationProcessor group: 'io.vertx', name: 'vertx-codegen', classifier: 'processor', version: vertx_version
 
     // Framework test dependencies
+    testImplementation group: 'io.vertx', name: 'vertx-core', classifier: 'tests', version: vertx_version
     testImplementation group: 'io.vertx', name: 'vertx-junit5', version: vertx_version
 
     def truth_version = '1.1.3'
@@ -108,6 +109,9 @@ dependencies {
     // Gradle plugin dependencies
     errorprone group: 'com.google.errorprone', name: 'error_prone_core', version: '2.10.0'
     checkstyle group: 'com.puppycrawl.tools', name: 'checkstyle', version: '9.2'
+
+    // Without this the IDE can't find the test source files which are needed for debugging
+    testCompileOnly group: 'io.vertx', name: 'vertx-core', classifier: 'test-sources', version: vertx_version
 }
 
 // we need to define the generated source set first, because it is needed by staticCodeCheck

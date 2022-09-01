@@ -33,7 +33,7 @@ import io.vertx.core.file.FileSystem;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.micrometer.impl.VertxMetricsFactoryImpl;
-import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import io.vertx.test.fakecluster.FakeClusterManager;
 
 public final class NeonBeeMockHelper {
     /**
@@ -193,7 +193,7 @@ public final class NeonBeeMockHelper {
                 new VertxMetricsFactoryImpl().metrics(vertxOptions);
             }
             return succeededFuture(vertx);
-        }, options, null);
+        }, opts -> new FakeClusterManager(), options, null);
     }
 
     /**
@@ -259,6 +259,6 @@ public final class NeonBeeMockHelper {
         } catch (IllegalStateException ignored) {
             // Fall through
         }
-        return new NeonBee(vertx, options, config, new CompositeMeterRegistry(), new HazelcastClusterManager());
+        return new NeonBee(vertx, options, config, new CompositeMeterRegistry());
     }
 }

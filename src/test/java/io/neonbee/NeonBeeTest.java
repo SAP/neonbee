@@ -2,6 +2,7 @@ package io.neonbee;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
+import static io.neonbee.NeonBee.HAZELCAST_FACTORY;
 import static io.neonbee.NeonBeeMockHelper.defaultVertxMock;
 import static io.neonbee.NeonBeeMockHelper.registerNeonBeeMock;
 import static io.neonbee.NeonBeeProfile.ALL;
@@ -78,6 +79,7 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
+import io.vertx.test.fakecluster.FakeClusterManager;
 
 class NeonBeeTest extends NeonBeeTestBase {
     private Vertx vertx;
@@ -89,10 +91,6 @@ class NeonBeeTest extends NeonBeeTestBase {
         case "testDeployCoreVerticlesFromClassPath":
             options.addActiveProfile(CORE);
             options.setIgnoreClassPath(false);
-            break;
-        case "testRegisterClusterHealthChecks":
-            options.setClustered(true);
-            options.setClusterConfigResource("hazelcast-local.xml");
             break;
         case "testDeployModule":
             try {
@@ -177,28 +175,28 @@ class NeonBeeTest extends NeonBeeTestBase {
 
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    @DisplayName("Vert.x should start in non-clustered mode. ")
+    @DisplayName("Vert.x should start in non-clustered mode")
     void testStandaloneInitialization(VertxTestContext testContext) {
-        NeonBee.newVertx(new VertxOptions(), defaultOptions().clearActiveProfiles())
-                .onComplete(testContext.succeeding(vertx -> {
-                    testContext.verify(() -> {
-                        assertThat((this.vertx = vertx).isClustered()).isFalse();
-                        testContext.completeNow();
-                    });
-                }));
+        NeonBeeOptions options = defaultOptions().clearActiveProfiles();
+        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options),
+                opts -> new FakeClusterManager(), options, null)
+                .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
+                    assertThat((vertx = neonBee.getVertx()).isClustered()).isFalse();
+                    testContext.completeNow();
+                })));
     }
 
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
-    @DisplayName("Vert.x should start in clustered mode.")
+    @DisplayName("Vert.x should start in clustered mode")
     void testClusterInitialization(VertxTestContext testContext) {
-        NeonBee.newVertx(new VertxOptions(), defaultOptions().clearActiveProfiles().setClustered(true)
-                .setClusterConfigResource("hazelcast-local.xml")).onComplete(testContext.succeeding(vertx -> {
-                    testContext.verify(() -> {
-                        assertThat((this.vertx = vertx).isClustered()).isTrue();
-                        testContext.completeNow();
-                    });
-                }));
+        NeonBeeOptions options = defaultOptions().setClustered(true);
+        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options),
+                opts -> new FakeClusterManager(), options, null)
+                .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
+                    assertThat((vertx = neonBee.getVertx()).isClustered()).isTrue();
+                    testContext.completeNow();
+                })));
     }
 
     @Test
@@ -224,10 +222,17 @@ class NeonBeeTest extends NeonBeeTestBase {
 
     @Test
     @DisplayName("NeonBee should register all cluster + default health checks if started clustered")
-    void testRegisterClusterHealthChecks() {
-        Map<String, HealthCheck> registeredChecks = getNeonBee().getHealthCheckRegistry().getHealthChecks();
-        assertThat(registeredChecks.size()).isEqualTo(3);
-        assertThat(registeredChecks.containsKey(HazelcastClusterHealthCheck.NAME)).isTrue();
+    void testRegisterClusterHealthChecks(VertxTestContext testContext) {
+        NeonBeeOptions options = defaultOptions().setClustered(true).addActiveProfile(NO_WEB);
+        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options),
+                HAZELCAST_FACTORY, options, null)
+                .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
+                    vertx = neonBee.getVertx(); // ensure new Vert.x instance gets closed in afterEach
+                    Map<String, HealthCheck> registeredChecks = neonBee.getHealthCheckRegistry().getHealthChecks();
+                    assertThat(registeredChecks.size()).isEqualTo(3);
+                    assertThat(registeredChecks.containsKey(HazelcastClusterHealthCheck.NAME)).isTrue();
+                    testContext.completeNow();
+                })));
     }
 
     @Test
@@ -341,7 +346,7 @@ class NeonBeeTest extends NeonBeeTestBase {
         try (MockedStatic<NeonBee> mocked = mockStatic(NeonBee.class)) {
             mocked.when(() -> NeonBee.loadConfig(any(), any()))
                     .thenReturn(failedFuture(new RuntimeException("Failing Vert.x!")));
-            mocked.when(() -> NeonBee.create(any(), any(), any())).thenCallRealMethod();
+            mocked.when(() -> NeonBee.create(any(), any(), any(), any())).thenCallRealMethod();
 
             Vertx failingVertxMock = mock(Vertx.class);
             when(failingVertxMock.close()).thenReturn(result);
@@ -353,7 +358,7 @@ class NeonBeeTest extends NeonBeeTestBase {
                 vertxFunction = (vertxOptions) -> succeededFuture(failingVertxMock);
             }
 
-            NeonBee.create(vertxFunction, defaultOptions().clearActiveProfiles(), null)
+            NeonBee.create(vertxFunction, HAZELCAST_FACTORY, defaultOptions().clearActiveProfiles(), null)
                     .onComplete(testContext.failing(throwable -> {
                         testContext.verify(() -> {
                             // assert that the original message why the boot failed to start is propagated

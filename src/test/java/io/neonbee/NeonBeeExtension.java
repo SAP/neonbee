@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,18 +27,11 @@ import org.junit.jupiter.api.extension.ExtensionContext.Store;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.hazelcast.core.LifecycleService;
-
-import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
-import io.vertx.core.impl.VertxImpl;
-import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
-import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import io.vertx.test.fakecluster.FakeClusterManager;
 
 @SuppressWarnings({ "rawtypes", "PMD.GodClass" })
 public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionCallback, AfterTestExecutionCallback,
@@ -48,8 +40,6 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
     public static final int DEFAULT_TIMEOUT_DURATION = 60;
 
     public static final TimeUnit DEFAULT_TIMEOUT_UNIT = TimeUnit.SECONDS;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(NeonBeeExtension.class);
 
     private static class ContextList extends ArrayList<VertxTestContext> {
 
@@ -129,6 +119,7 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
 
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
+        FakeClusterManager.reset();
         // We may wait on test contexts from @BeforeAll methods
         joinActiveTestContexts(context);
     }
@@ -230,15 +221,16 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         AtomicReference<NeonBee> neonBeeBox = new AtomicReference<>();
         AtomicReference<Throwable> errorBox = new AtomicReference<>();
 
-        NeonBee.create(options).onComplete(ar -> {
-            if (ar.succeeded()) {
-                neonBeeBox.set(ar.result());
-            } else {
-                errorBox.set(ar.cause());
-            }
+        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options),
+                (opts) -> new FakeClusterManager(), options, null).onComplete(ar -> {
+                    if (ar.succeeded()) {
+                        neonBeeBox.set(ar.result());
+                    } else {
+                        errorBox.set(ar.cause());
+                    }
 
-            latch.countDown();
-        });
+                    latch.countDown();
+                });
 
         try {
             if (!latch.await(DEFAULT_TIMEOUT_DURATION, DEFAULT_TIMEOUT_UNIT)) {
@@ -265,28 +257,6 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         return neonBee -> {
             CountDownLatch latch = new CountDownLatch(1);
             AtomicReference<Throwable> errorBox = new AtomicReference<>();
-
-            // additional logic for tests, due to Hazelcast clusters tend to get stuck, after test execution finishes
-            Vertx vertx = neonBee.getVertx();
-            if (vertx instanceof VertxImpl) {
-                ClusterManager clusterManager = ((VertxImpl) vertx).getClusterManager();
-                if (clusterManager instanceof HazelcastClusterManager) {
-                    LifecycleService clusterLifecycleService =
-                            ((HazelcastClusterManager) clusterManager).getHazelcastInstance().getLifecycleService();
-                    Executors.newSingleThreadScheduledExecutor(runnable -> {
-                        Thread thread = new Thread(runnable, "neonbee-cluster-terminator");
-                        thread.setDaemon(true);
-                        return thread;
-                    }).schedule(() -> {
-                        if (clusterLifecycleService.isRunning()) {
-                            LOGGER.warn("Forcefully terminating Hazelcast cluster after test");
-                        }
-
-                        // terminate the cluster in any case, if already terminated, this call will do nothing
-                        clusterLifecycleService.terminate();
-                    }, 10, TimeUnit.SECONDS);
-                }
-            }
 
             neonBee.getVertx().close(ar -> {
                 if (ar.failed()) {

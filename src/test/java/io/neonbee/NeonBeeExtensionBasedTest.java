@@ -7,24 +7,25 @@ import static io.neonbee.NeonBeeProfile.STABLE;
 import static io.neonbee.NeonBeeProfile.WEB;
 import static io.vertx.core.Future.succeededFuture;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import com.hazelcast.core.Hazelcast;
-
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataMap;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.test.helper.DeploymentHelper;
+import io.neonbee.test.helper.ReflectionHelper;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
+import io.vertx.test.fakecluster.FakeClusterManager;
 
 @ExtendWith(NeonBeeExtension.class)
 class NeonBeeExtensionBasedTest {
@@ -80,7 +81,8 @@ class NeonBeeExtensionBasedTest {
     @DisplayName("3 NeonBee instances with WEB, CORE and STABLE profiles should be started and join one cluster.")
     void testNeonBeeWithClusters(@NeonBeeInstanceConfiguration(activeProfiles = WEB, clustered = true) NeonBee web,
             @NeonBeeInstanceConfiguration(activeProfiles = CORE, clustered = true) NeonBee core,
-            @NeonBeeInstanceConfiguration(activeProfiles = STABLE, clustered = true) NeonBee stable) {
+            @NeonBeeInstanceConfiguration(activeProfiles = STABLE, clustered = true) NeonBee stable)
+            throws NoSuchFieldException, IllegalAccessException {
         assertThat(web).isNotNull();
         assertThat(web.getOptions().getActiveProfiles()).contains(WEB);
         assertThat(web.getVertx().isClustered()).isTrue();
@@ -96,7 +98,8 @@ class NeonBeeExtensionBasedTest {
         assertThat(stable.getVertx().isClustered()).isTrue();
         assertThat(isClustered(stable)).isTrue();
 
-        assertThat(Hazelcast.getAllHazelcastInstances().size()).isAtLeast(3);
+        Map<?, ?> nodes = ReflectionHelper.getValueOfPrivateStaticField(FakeClusterManager.class, "nodes");
+        assertThat(nodes.size()).isEqualTo(3);
     }
 
     @NeonBeeDeployable(profile = CORE)
