@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.hazelcast.config.ClasspathXmlConfig;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
@@ -90,9 +91,11 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.impl.ConcurrentHashSet;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.LocalMap;
+import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
@@ -142,6 +145,9 @@ public class NeonBee {
      *
      */ // @formatter:on
 
+    static final Function<NeonBeeOptions, ClusterManager> HAZELCAST_FACTORY =
+            options -> new HazelcastClusterManager(new ClasspathXmlConfig(options.getClusterConfig()));
+
     private static final String CORRELATION_ID = "Initializing-NeonBee";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NeonBee.class);
@@ -175,15 +181,13 @@ public class NeonBee {
 
     private final CompositeMeterRegistry compositeMeterRegistry;
 
-    private final HazelcastClusterManager clusterManager;
-
     /**
      * Convenience method for returning the current NeonBee instance.
      * <p>
      * Important: Will only return a value in case a Vert.x context is available, otherwise returns null. Attention:
      * This method is NOT signature compliant to {@link Vertx#vertx()}! It will NOT create a new NeonBee instance,
      * please use {@link NeonBee#create(NeonBeeOptions)} or
-     * {@link NeonBee#create(Function, NeonBeeOptions, NeonBeeConfig)} instead.
+     * {@link NeonBee#create(Function, Function, NeonBeeOptions, NeonBeeConfig)} instead.
      *
      * @return A NeonBee instance or null
      */
@@ -220,7 +224,7 @@ public class NeonBee {
      * @return the future to a new NeonBee instance initialized with default options and a new Vert.x instance
      */
     public static Future<NeonBee> create(NeonBeeOptions options) {
-        return create((OwnVertxFactory) (vertxOptions) -> newVertx(vertxOptions, options), options, null);
+        return create(options, null);
     }
 
     /**
@@ -233,12 +237,14 @@ public class NeonBee {
      * @return the future to a new NeonBee instance initialized with default options and a new Vert.x instance
      */
     public static Future<NeonBee> create(NeonBeeOptions options, NeonBeeConfig config) {
-        return create((OwnVertxFactory) (vertxOptions) -> newVertx(vertxOptions, options), options, config);
+        return create((OwnVertxFactory) (vertxOptions) -> newVertx(vertxOptions, options), HAZELCAST_FACTORY, options,
+                config);
     }
 
     @VisibleForTesting
     @SuppressWarnings({ "PMD.EmptyCatchBlock", "PMD.AvoidCatchingThrowable" })
-    static Future<NeonBee> create(Function<VertxOptions, Future<Vertx>> vertxFactory, NeonBeeOptions options,
+    static Future<NeonBee> create(Function<VertxOptions, Future<Vertx>> vertxFactory,
+            Function<NeonBeeOptions, ClusterManager> clusterManagerFactory, NeonBeeOptions options,
             NeonBeeConfig config) {
         try {
             // create the NeonBee working and logging directory (as the only mandatory directory for NeonBee)
@@ -252,12 +258,10 @@ public class NeonBee {
                 .setWorkerPoolSize(options.getWorkerPoolSize());
 
         CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
-        HazelcastClusterManager clusterManager =
-                options.isClustered() ? new HazelcastClusterManager(options.getClusterConfig()) : null;
         vertxOptions.setMetricsOptions(
                 new MicrometerMetricsOptions().setMicrometerRegistry(compositeMeterRegistry).setEnabled(true));
         if (options.isClustered()) {
-            vertxOptions.setClusterManager(clusterManager);
+            vertxOptions.setClusterManager(clusterManagerFactory.apply(options));
         }
 
         // create a Vert.x instance (clustered or unclustered)
@@ -289,7 +293,7 @@ public class NeonBee {
 
                 Future<NeonBee> neonBeeFuture = neonBeeConfigFuture
                         // create a NeonBee instance, hook registry and close handler
-                        .map(c -> new NeonBee(vertx, options, c, compositeMeterRegistry, clusterManager));
+                        .map(c -> new NeonBee(vertx, options, c, compositeMeterRegistry));
                 // boot NeonBee, on failure close Vert.x
                 return neonBeeFuture.compose(NeonBee::boot).recover(closeVertx).compose(unused -> neonBeeFuture);
             } catch (Throwable t) {
@@ -341,8 +345,12 @@ public class NeonBee {
             healthChecks.add(healthRegistry.register(new MemoryHealthCheck(this)));
             healthChecks.add(healthRegistry.register(new EventLoopHealthCheck(this)));
 
-            if (options.isClustered()) {
-                healthChecks.add(healthRegistry.register(new HazelcastClusterHealthCheck(this, clusterManager)));
+            if (vertx instanceof VertxInternal) {
+                VertxInternal vertxInternal = (VertxInternal) vertx;
+                if (vertxInternal.getClusterManager() instanceof HazelcastClusterManager) {
+                    HazelcastClusterManager cm = (HazelcastClusterManager) vertxInternal.getClusterManager();
+                    healthChecks.add(healthRegistry.register(new HazelcastClusterHealthCheck(this, cm)));
+                }
             }
 
             ServiceLoader.load(HealthCheckProvider.class).forEach(provider -> provider.get(vertx).forEach(check -> {
@@ -582,13 +590,11 @@ public class NeonBee {
     }
 
     @VisibleForTesting
-    NeonBee(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config, CompositeMeterRegistry compositeMeterRegistry,
-            HazelcastClusterManager clusterManager) {
+    NeonBee(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config, CompositeMeterRegistry compositeMeterRegistry) {
         this.vertx = vertx;
         this.options = options;
         this.config = config;
 
-        this.clusterManager = clusterManager;
         this.healthRegistry = new HealthCheckRegistry(vertx);
         this.modelManager = new EntityModelManager(this);
         this.compositeMeterRegistry = compositeMeterRegistry;

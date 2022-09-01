@@ -17,8 +17,6 @@ import java.util.stream.Collectors;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.hazelcast.config.ClasspathXmlConfig;
-import com.hazelcast.config.Config;
 
 import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.verticle.WatchVerticle;
@@ -155,7 +153,7 @@ public interface NeonBeeOptions {
      *
      * @return Hazelcast cluster configuration
      */
-    Config getClusterConfig();
+    String getClusterConfig();
 
     /**
      * Get the port number of the server verticle. If not set, the port number will be retrieved from the server
@@ -205,7 +203,7 @@ public interface NeonBeeOptions {
 
         private boolean clustered;
 
-        private Config clusterConfig;
+        private String clusterConfig = DEFAULT_CLUSTER_CONFIG;
 
         private String instanceName;
 
@@ -412,34 +410,21 @@ public interface NeonBeeOptions {
         }
 
         @Override
-        public Config getClusterConfig() {
-            if (clusterConfig == null) {
-                setClusterConfigResource(DEFAULT_CLUSTER_CONFIG);
-            }
+        public String getClusterConfig() {
             return clusterConfig;
-        }
-
-        /**
-         * Set the cluster config.
-         *
-         * @param config the cluster config
-         * @return this instance for chaining
-         */
-        public Mutable setClusterConfig(Config config) {
-            this.clusterConfig = config;
-            return this;
         }
 
         /**
          * Set a cluster config by loading a resource from the class path (blocking).
          *
-         * @param resource the resource, an XML configuration file from the class path
+         * @param clusterConfig the resource, an XML configuration file from the class path
          * @return this instance for chaining
          */
         @Option(longName = "cluster-config", shortName = "cc")
-        @Description("Set the cluster/Hazelast configuration file path")
-        public Mutable setClusterConfigResource(String resource) {
-            return setClusterConfig(new ClasspathXmlConfig(resource));
+        @Description("Set the cluster configuration file path")
+        public Mutable setClusterConfig(String clusterConfig) {
+            this.clusterConfig = clusterConfig;
+            return this;
         }
 
         @Override

@@ -28,8 +28,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.MockedStatic;
 
-import com.hazelcast.config.ClasspathXmlConfig;
-
 import io.neonbee.Launcher.EnvironmentAwareCommandLine;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.test.helper.FileSystemHelper;
@@ -228,10 +226,7 @@ class LauncherTest {
         NeonBeeOptions neonBeeOptions = parseArgs();
         assertThat(neonBeeOptions.getClusterPort()).isEqualTo(10000);
         assertThat(neonBeeOptions.isClustered()).isTrue();
-        assertThat(neonBeeOptions.getClusterConfig()).isInstanceOf(ClasspathXmlConfig.class);
-
-        ClasspathXmlConfig xmlConfig = (ClasspathXmlConfig) neonBeeOptions.getClusterConfig();
-        assertThat(xmlConfig.getNetworkConfig().getPort()).isEqualTo(20000);
+        assertThat(neonBeeOptions.getClusterConfig()).isEqualTo("hazelcast-local.xml");
     }
 
     private NeonBeeOptions parseArgs() {

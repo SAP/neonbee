@@ -1,6 +1,7 @@
 package io.neonbee;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeOptions.Mutable.DEFAULT_CLUSTER_CONFIG;
 import static io.neonbee.NeonBeeProfile.ALL;
 import static io.neonbee.NeonBeeProfile.CORE;
 import static io.neonbee.NeonBeeProfile.WEB;
@@ -16,8 +17,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import com.hazelcast.config.Config;
 
 import io.neonbee.NeonBeeOptions.Mutable;
 import io.neonbee.test.helper.FileSystemHelper;
@@ -170,15 +169,13 @@ class NeonBeeOptionsTest {
     @DisplayName("Test clusterConfig getter and setter")
     void testClusterConfig() {
         Mutable mutable = new NeonBeeOptions.Mutable();
-        Config defaultConfig = mutable.getClusterConfig();
-        assertThat(defaultConfig.getNetworkConfig().getPort()).isEqualTo(50000);
+        assertThat(mutable.getClusterConfig()).isEqualTo(DEFAULT_CLUSTER_CONFIG);
 
-        mutable.setClusterConfigResource("hazelcast-local.xml");
-        Config localConfig = mutable.getClusterConfig();
-        assertThat(localConfig.getNetworkConfig().getPort()).isEqualTo(20000);
+        mutable.setClusterConfig("hazelcast-local.xml");
+        assertThat(mutable.getClusterConfig()).isEqualTo("hazelcast-local.xml");
 
-        mutable = new NeonBeeOptions.Mutable().setClusterConfig(localConfig);
-        assertThat(mutable.getClusterConfig().getNetworkConfig().getPort()).isEqualTo(20000);
+        mutable = new NeonBeeOptions.Mutable().setClusterConfig("hazelcast-local.xml");
+        assertThat(mutable.getClusterConfig()).isEqualTo("hazelcast-local.xml");
     }
 
     @Test

@@ -53,7 +53,7 @@ public final class OptionsHelper {
         NeonBeeOptions.Mutable options = new NeonBeeOptions.Mutable();
 
         options.setActiveProfiles(Arrays.<NeonBeeProfile>asList(config.activeProfiles()))
-                .setClusterConfigResource(config.clusterConfigFile()).setClustered(config.clustered())
+                .setClusterConfig(config.clusterConfigFile()).setClustered(config.clustered())
                 .setClusterPort(config.clusterPort()).setDisableJobScheduling(config.disableJobScheduling())
                 .setDoNotWatchFiles(config.doNotWatchFiles()).setEventLoopPoolSize(config.eventLoopPoolSize())
                 .setIgnoreClassPath(config.ignoreClassPath()).setServerPort(port)
