@@ -10,11 +10,11 @@ import static io.neonbee.NeonBeeProfile.INCUBATOR;
 import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.NeonBeeProfile.STABLE;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.neonbee.test.helper.DeploymentHelper.getDeployedVerticles;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
-import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -32,7 +32,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -72,13 +71,10 @@ import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.DeliveryContext;
 import io.vertx.core.eventbus.EventBus;
-import io.vertx.core.impl.Deployment;
-import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
@@ -161,11 +157,6 @@ class NeonBeeTest extends NeonBeeTestBase {
     @DisplayName("NeonBee should deploy module JAR")
     void testDeployModule(Vertx vertx) {
         assertThat(getDeployedVerticles(vertx).stream().map(Class::getName)).containsAtLeast("ClassA", "ClassB");
-    }
-
-    private static Set<Class<? extends Verticle>> getDeployedVerticles(Vertx vertx) {
-        return vertx.deploymentIDs().stream().map(((VertxInternal) vertx)::getDeployment).map(Deployment::getVerticles)
-                .flatMap(Set::stream).map(Verticle::getClass).collect(toSet());
     }
 
     @Test

@@ -1,13 +1,17 @@
 package io.neonbee.test.helper;
 
+import static java.util.stream.Collectors.toList;
+
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.VertxImpl;
+import io.vertx.core.impl.Deployment;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
 
@@ -59,17 +63,33 @@ public final class DeploymentHelper {
      * @return A succeeded future, or a failed future with the cause.
      */
     public static Future<Void> undeployAllVerticlesOfClass(Vertx vertx, Class<? extends Verticle> verticleClass) {
-        return CompositeFuture.all(vertx.deploymentIDs().stream().map(((VertxImpl) vertx)::getDeployment)
-                .filter(deployment -> deployment.getVerticles().stream()
-                        .anyMatch(verticle -> verticleClass.isInstance(verticle)))
-                .map(deployment -> undeployVerticle(vertx, deployment.deploymentID())).collect(Collectors.toList()))
+        return CompositeFuture
+                .all(getAllDeployments(vertx)
+                        .filter(deployment -> deployment.getVerticles().stream().anyMatch(verticleClass::isInstance))
+                        .map(deployment -> undeployVerticle(vertx, deployment.deploymentID())).collect(toList()))
                 .mapEmpty();
     }
 
     public static boolean isVerticleDeployed(Vertx vertx, Class<? extends Verticle> verticleToCheck) {
-        return vertx.deploymentIDs().stream()
-                .flatMap(deploymentId -> ((VertxInternal) vertx).getDeployment(deploymentId).getVerticles().stream())
-                .anyMatch(verticleToCheck::isInstance);
+        return getAllDeployedVerticles(vertx).anyMatch(verticleToCheck::isInstance);
+    }
+
+    /**
+     * Provides a Set of the classes of the deployed Verticles.
+     *
+     * @param vertx The related Vert.x instance
+     * @return A Set of the classes of the deployed Verticles.
+     */
+    public static Set<Class<? extends Verticle>> getDeployedVerticles(Vertx vertx) {
+        return getAllDeployedVerticles(vertx).map(Verticle::getClass).collect(Collectors.toSet());
+    }
+
+    private static Stream<Deployment> getAllDeployments(Vertx vertx) {
+        return vertx.deploymentIDs().stream().map(((VertxInternal) vertx)::getDeployment);
+    }
+
+    private static Stream<Verticle> getAllDeployedVerticles(Vertx vertx) {
+        return getAllDeployments(vertx).map(Deployment::getVerticles).flatMap(Set::stream);
     }
 
     private DeploymentHelper() {
