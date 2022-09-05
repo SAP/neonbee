@@ -198,7 +198,7 @@ public class NeonBeeTestBase {
     }
 
     /**
-     * Override this method to influence the options to start {@link NeonBee} with. By default the (very restrictive)
+     * Override this method to influence the options to start {@link NeonBee} with. By default, the (very restrictive)
      * options of {@link NeonBeeInstanceConfiguration} will be applied, which for instance does disable class path
      * scanning, watching files and job scheduling. It does however apply all profiles by default. Some examples how to
      * use this method:

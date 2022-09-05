@@ -32,6 +32,7 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
+import io.vertx.micrometer.impl.VertxMetricsFactoryImpl;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 public final class NeonBeeMockHelper {
@@ -187,7 +188,12 @@ public final class NeonBeeMockHelper {
      * @return the mocked NeonBee instance
      */
     public static Future<NeonBee> createNeonBee(Vertx vertx, NeonBeeOptions options) {
-        return NeonBee.create((vertxOptions) -> succeededFuture(vertx), options, null);
+        return NeonBee.create((vertxOptions) -> {
+            if (vertxOptions.getMetricsOptions() != null) {
+                new VertxMetricsFactoryImpl().metrics(vertxOptions);
+            }
+            return succeededFuture(vertx);
+        }, options, null);
     }
 
     /**
