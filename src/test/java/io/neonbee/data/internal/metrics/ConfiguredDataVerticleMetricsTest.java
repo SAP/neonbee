@@ -12,15 +12,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.mockito.MockedStatic;
 
 import io.micrometer.core.instrument.ImmutableTag;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.neonbee.test.helper.ReflectionHelper;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.micrometer.backends.BackendRegistries;
@@ -57,13 +58,11 @@ class ConfiguredDataVerticleMetricsTest {
         assertThat(instance).isInstanceOf(NoopDataVerticleMetrics.class);
     }
 
-    @DisabledIfEnvironmentVariable(named = "GITHUB_ACTIONS", matches = "true",
-            disabledReason = "This test fails on github and needs to be fixed.")
     @Test
     @DisplayName("backend meter registry is null")
-    void backendMeterRegistriesNull() {
+    void backendMeterRegistriesNull() throws NoSuchFieldException, IllegalAccessException {
+        resetBackendRegestries();
         JsonObject config = new JsonObject().put(ConfiguredDataVerticleMetrics.ENABLED, true);
-
         DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(config);
         assertThat(instance).isInstanceOf(NoopDataVerticleMetrics.class);
     }
@@ -184,4 +183,7 @@ class ConfiguredDataVerticleMetricsTest {
         verify(spyReportTimingMetric, never()).reportStatusCounter(eq("name"), eq("description"), eq(tags), any());
     }
 
+    private static void resetBackendRegestries() throws NoSuchFieldException, IllegalAccessException {
+        ((Map) ReflectionHelper.getValueOfPrivateStaticField(BackendRegistries.class, "REGISTRIES")).clear();
+    }
 }
