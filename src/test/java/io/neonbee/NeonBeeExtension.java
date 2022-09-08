@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -27,15 +28,25 @@ import org.junit.jupiter.api.extension.ExtensionContext.Store;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.hazelcast.core.LifecycleService;
+
+import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
+import io.vertx.core.impl.VertxImpl;
+import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
+import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import io.vertx.test.fakecluster.FakeClusterManager;
 
 @SuppressWarnings({ "rawtypes", "PMD.GodClass" })
 public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionCallback, AfterTestExecutionCallback,
         BeforeEachCallback, AfterEachCallback, BeforeAllCallback, AfterAllCallback {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(NeonBeeExtension.class);
 
     public static final int DEFAULT_TIMEOUT_DURATION = 60;
 
@@ -71,15 +82,21 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         Class<?> type = parameterContext.getParameter().getType();
         if (type == NeonBee.class) {
             NeonBeeOptions options;
+            Optional<NeonBeeInstanceConfiguration> neonBeeInstanceConfiguration;
 
             try {
-                options = options(parameterContext.findAnnotation(NeonBeeInstanceConfiguration.class));
+                neonBeeInstanceConfiguration = parameterContext.findAnnotation(NeonBeeInstanceConfiguration.class);
+                options = options(neonBeeInstanceConfiguration);
             } catch (RuntimeException e) {
                 throw new ParameterResolutionException("Error while finding a free port for server verticle.", e);
             }
 
             return unpack(store(extensionContext).getOrComputeIfAbsent(options.getInstanceName(),
-                    key -> new ScopedObject<NeonBee>(createNeonBee(options), closeNeonBee())));
+                    key -> new ScopedObject<NeonBee>(
+                            createNeonBee(options,
+                                    neonBeeInstanceConfiguration.map(NeonBeeInstanceConfiguration::clusterManager)
+                                            .orElse(NeonBeeInstanceConfiguration.ClusterManager.FAKE)),
+                            closeNeonBee())));
         }
         if (type == VertxTestContext.class) {
             return newTestContext(extensionContext);
@@ -216,13 +233,13 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         }
     }
 
-    private NeonBee createNeonBee(NeonBeeOptions options) {
+    private NeonBee createNeonBee(NeonBeeOptions options, NeonBeeInstanceConfiguration.ClusterManager clusterManager) {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<NeonBee> neonBeeBox = new AtomicReference<>();
         AtomicReference<Throwable> errorBox = new AtomicReference<>();
 
         NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options),
-                (opts) -> new FakeClusterManager(), options, null).onComplete(ar -> {
+                clusterManager.factory(), options, null).onComplete(ar -> {
                     if (ar.succeeded()) {
                         neonBeeBox.set(ar.result());
                     } else {
@@ -257,6 +274,28 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         return neonBee -> {
             CountDownLatch latch = new CountDownLatch(1);
             AtomicReference<Throwable> errorBox = new AtomicReference<>();
+
+            // additional logic for tests, due to Hazelcast clusters tend to get stuck, after test execution finishes
+            Vertx vertx = neonBee.getVertx();
+            if (vertx instanceof VertxImpl) {
+                ClusterManager clusterManager = ((VertxImpl) vertx).getClusterManager();
+                if (clusterManager instanceof HazelcastClusterManager) {
+                    LifecycleService clusterLifecycleService =
+                            ((HazelcastClusterManager) clusterManager).getHazelcastInstance().getLifecycleService();
+                    Executors.newSingleThreadScheduledExecutor(runnable -> {
+                        Thread thread = new Thread(runnable, "neonbee-cluster-terminator");
+                        thread.setDaemon(true);
+                        return thread;
+                    }).schedule(() -> {
+                        if (clusterLifecycleService.isRunning()) {
+                            LOGGER.warn("Forcefully terminating Hazelcast cluster after test");
+                        }
+
+                        // terminate the cluster in any case, if already terminated, this call will do nothing
+                        clusterLifecycleService.terminate();
+                    }, 10, TimeUnit.SECONDS);
+                }
+            }
 
             neonBee.getVertx().close(ar -> {
                 if (ar.failed()) {
