@@ -1,0 +1,53 @@
+{
+  "namespace": "io.neonbee",
+  "definitions": {
+    "io.neonbee.ugly.UglyUriTests": {
+      "kind": "service"
+    },
+    "io.neonbee.ugly.UglyUriTests.TestEntity": {
+      "kind": "entity",
+      "elements": {
+        "ID": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "sysnr": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "sysid": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "sysroleExtDescr": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "name": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "datacenter": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "officialProdName": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "customerId": {
+          "type": "cds.String",
+          "notNull": true
+        },
+        "customerName": {
+          "type": "cds.String",
+          "notNull": true
+        }
+      }
+    }
+  },
+  "meta": {
+    "creator": "CDS Compiler v1.26.2"
+  },
+  "$version": "1.0"
+}
