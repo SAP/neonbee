@@ -2,7 +2,7 @@ package io.neonbee;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
-import static io.neonbee.NeonBee.HAZELCAST_FACTORY;
+import static io.neonbee.NeonBeeInstanceConfiguration.ClusterManager.HAZELCAST;
 import static io.neonbee.NeonBeeMockHelper.defaultVertxMock;
 import static io.neonbee.NeonBeeMockHelper.registerNeonBeeMock;
 import static io.neonbee.NeonBeeProfile.ALL;
@@ -50,6 +50,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import io.neonbee.NeonBeeInstanceConfiguration.ClusterManager;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.health.DummyHealthCheck;
 import io.neonbee.health.DummyHealthCheckProvider;
@@ -79,7 +80,6 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
-import io.vertx.test.fakecluster.FakeClusterManager;
 
 class NeonBeeTest extends NeonBeeTestBase {
     private Vertx vertx;
@@ -179,7 +179,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     void testStandaloneInitialization(VertxTestContext testContext) {
         NeonBeeOptions options = defaultOptions().clearActiveProfiles();
         NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options),
-                opts -> new FakeClusterManager(), options, null)
+                ClusterManager.FAKE.factory(), options, null)
                 .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
                     assertThat((vertx = neonBee.getVertx()).isClustered()).isFalse();
                     testContext.completeNow();
@@ -192,7 +192,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     void testClusterInitialization(VertxTestContext testContext) {
         NeonBeeOptions options = defaultOptions().setClustered(true);
         NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options),
-                opts -> new FakeClusterManager(), options, null)
+                ClusterManager.FAKE.factory(), options, null)
                 .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
                     assertThat((vertx = neonBee.getVertx()).isClustered()).isTrue();
                     testContext.completeNow();
@@ -225,7 +225,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     void testRegisterClusterHealthChecks(VertxTestContext testContext) {
         NeonBeeOptions options = defaultOptions().setClustered(true).addActiveProfile(NO_WEB);
         NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options),
-                HAZELCAST_FACTORY, options, null)
+                HAZELCAST.factory(), options, null)
                 .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
                     vertx = neonBee.getVertx(); // ensure new Vert.x instance gets closed in afterEach
                     Map<String, HealthCheck> registeredChecks = neonBee.getHealthCheckRegistry().getHealthChecks();
@@ -358,7 +358,7 @@ class NeonBeeTest extends NeonBeeTestBase {
                 vertxFunction = (vertxOptions) -> succeededFuture(failingVertxMock);
             }
 
-            NeonBee.create(vertxFunction, HAZELCAST_FACTORY, defaultOptions().clearActiveProfiles(), null)
+            NeonBee.create(vertxFunction, HAZELCAST.factory(), defaultOptions().clearActiveProfiles(), null)
                     .onComplete(testContext.failing(throwable -> {
                         testContext.verify(() -> {
                             // assert that the original message why the boot failed to start is propagated

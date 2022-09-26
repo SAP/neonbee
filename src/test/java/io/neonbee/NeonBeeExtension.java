@@ -68,6 +68,7 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
     static {
         setProperty(CONFIG_FILE_PROPERTY, Path.of("working_dir/config/logback.xml").toString());
         setProperty("hazelcast.logging.type", "slf4j");
+        setProperty("org.jboss.logging.provider", "slf4j");
     }
 
     @Override

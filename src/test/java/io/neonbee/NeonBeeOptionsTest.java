@@ -1,10 +1,11 @@
 package io.neonbee;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.NeonBeeOptions.Mutable.DEFAULT_CLUSTER_CONFIG;
 import static io.neonbee.NeonBeeProfile.ALL;
 import static io.neonbee.NeonBeeProfile.CORE;
 import static io.neonbee.NeonBeeProfile.WEB;
+import static io.neonbee.cluster.ClusterManagerFactory.HAZELCAST_FACTORY;
+import static io.neonbee.cluster.ClusterManagerFactory.INFINISPAN_FACTORY;
 import static io.neonbee.test.helper.FileSystemHelper.createTempDirectory;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -169,13 +170,20 @@ class NeonBeeOptionsTest {
     @DisplayName("Test clusterConfig getter and setter")
     void testClusterConfig() {
         Mutable mutable = new NeonBeeOptions.Mutable();
-        assertThat(mutable.getClusterConfig()).isEqualTo(DEFAULT_CLUSTER_CONFIG);
+        assertThat(mutable.getClusterConfig()).isNull();
 
         mutable.setClusterConfig("hazelcast-local.xml");
         assertThat(mutable.getClusterConfig()).isEqualTo("hazelcast-local.xml");
+    }
 
-        mutable = new NeonBeeOptions.Mutable().setClusterConfig("hazelcast-local.xml");
-        assertThat(mutable.getClusterConfig()).isEqualTo("hazelcast-local.xml");
+    @Test
+    @DisplayName("Test clusterManager getter and setter")
+    void testClusterManager() {
+        Mutable mutable = new NeonBeeOptions.Mutable();
+        assertThat(mutable.getClusterManager()).isEqualTo(HAZELCAST_FACTORY);
+
+        mutable.setClusterManager(INFINISPAN_FACTORY);
+        assertThat(mutable.getClusterManager()).isEqualTo(INFINISPAN_FACTORY);
     }
 
     @Test

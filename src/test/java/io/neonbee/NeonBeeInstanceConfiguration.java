@@ -1,6 +1,7 @@
 package io.neonbee;
 
 import static io.neonbee.NeonBeeProfile.ALL;
+import static io.vertx.core.Future.succeededFuture;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -8,8 +9,9 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.function.Function;
 
+import io.neonbee.cluster.ClusterManagerFactory;
+import io.vertx.core.Future;
 import io.vertx.test.fakecluster.FakeClusterManager;
 
 /**
@@ -29,7 +31,7 @@ public @interface NeonBeeInstanceConfiguration {
 
     boolean clustered() default false;
 
-    String clusterConfigFile() default "hazelcast-localtcp.xml";
+    String clusterConfigFile() default "";
 
     String instanceName() default "";
 
@@ -48,21 +50,36 @@ public @interface NeonBeeInstanceConfiguration {
     enum ClusterManager {
         FAKE {
             @Override
-            Function<NeonBeeOptions, io.vertx.core.spi.cluster.ClusterManager> factory() {
-                return (opts) -> new FakeClusterManager();
+            ClusterManagerFactory factory() {
+                return new ClusterManagerFactory() {
+                    @Override
+                    protected String getDefaultConfig() {
+                        return null;
+                    }
+
+                    @Override
+                    public Future<io.vertx.core.spi.cluster.ClusterManager> create(NeonBeeOptions options) {
+                        return succeededFuture(new FakeClusterManager());
+                    }
+                };
             }
         },
-
         HAZELCAST {
             @Override
-            Function<NeonBeeOptions, io.vertx.core.spi.cluster.ClusterManager> factory() {
-                return NeonBee.HAZELCAST_FACTORY;
+            ClusterManagerFactory factory() {
+                return ClusterManagerFactory.HAZELCAST_FACTORY;
+            }
+        },
+        INFINISPAN {
+            @Override
+            ClusterManagerFactory factory() {
+                return ClusterManagerFactory.INFINISPAN_FACTORY;
             }
         };
 
         /**
          * @return factory for creating the {@link io.vertx.core.spi.cluster.ClusterManager}
          */
-        abstract Function<NeonBeeOptions, io.vertx.core.spi.cluster.ClusterManager> factory();
+        abstract ClusterManagerFactory factory();
     }
 }

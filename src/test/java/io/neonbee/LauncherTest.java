@@ -3,6 +3,8 @@ package io.neonbee;
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.Launcher.parseCommandLine;
 import static io.neonbee.Launcher.startNeonBee;
+import static io.neonbee.cluster.ClusterManagerFactory.HAZELCAST_FACTORY;
+import static io.neonbee.cluster.ClusterManagerFactory.INFINISPAN_FACTORY;
 import static io.neonbee.test.helper.FileSystemHelper.createTempDirectory;
 import static io.neonbee.test.helper.SystemHelper.withEnvironment;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -20,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,6 +32,7 @@ import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.MockedStatic;
 
 import io.neonbee.Launcher.EnvironmentAwareCommandLine;
+import io.neonbee.cluster.ClusterManagerFactory;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.test.helper.FileSystemHelper;
 import io.vertx.core.Future;
@@ -153,13 +157,46 @@ class LauncherTest {
     @Test
     @DisplayName("should generate expected clustered neonbee options")
     void testExpectedClusterNeonBeeOptions() throws Exception {
-        args = new String[] { "-cwd", workDir, "-cl", "-cc", "hazelcast-local.xml", "-clp", "10000" };
-        assertClusteredOptions();
+        BiConsumer<String, ClusterManagerFactory> assertClusteredOptions = (config, cmf) -> {
+            NeonBeeOptions neonBeeOptions = parseArgs();
+            assertThat(neonBeeOptions.getClusterPort()).isEqualTo(10000);
+            assertThat(neonBeeOptions.isClustered()).isTrue();
+            assertThat(neonBeeOptions.getClusterConfig()).isEqualTo(config);
+            assertThat(neonBeeOptions.getClusterManager()).isEqualTo(cmf);
+
+        };
+
+        // default
+        args = new String[] { "-cwd", workDir, "-cl", "-clp", "10000" };
+        assertClusteredOptions.accept(null, HAZELCAST_FACTORY);
 
         args = new String[] {};
-        Map<String, String> envMap = Map.of("NEONBEE_WORKING_DIR", workDir, "NEONBEE_CLUSTERED", "true",
-                "NEONBEE_CLUSTER_CONFIG", "hazelcast-local.xml", "NEONBEE_CLUSTER_PORT", "10000");
-        withEnvironment(envMap, this::assertClusteredOptions);
+        Map<String, String> envMapDefault =
+                Map.of("NEONBEE_WORKING_DIR", workDir, "NEONBEE_CLUSTERED", "true", "NEONBEE_CLUSTER_PORT", "10000");
+        withEnvironment(envMapDefault, () -> assertClusteredOptions.accept(null, HAZELCAST_FACTORY));
+
+        // Hazelcast
+        args = new String[] { "-cwd", workDir, "-cl", "-cm", "hazelcast", "-cc", "hazelcast-local.xml", "-clp",
+                "10000" };
+        assertClusteredOptions.accept("hazelcast-local.xml", HAZELCAST_FACTORY);
+
+        args = new String[] {};
+        Map<String, String> envMapHazelcast =
+                Map.of("NEONBEE_WORKING_DIR", workDir, "NEONBEE_CLUSTERED", "true", "NEONBEE_CLUSTER_MANAGER",
+                        "hazelcast", "NEONBEE_CLUSTER_CONFIG", "hazelcast-local.xml", "NEONBEE_CLUSTER_PORT", "10000");
+        withEnvironment(envMapHazelcast, () -> assertClusteredOptions.accept("hazelcast-local.xml", HAZELCAST_FACTORY));
+
+        // Infinispan
+        args = new String[] { "-cwd", workDir, "-cl", "-cm", "infinispan", "-cc", "infinispan-local.xml", "-clp",
+                "10000" };
+        assertClusteredOptions.accept("infinispan-local.xml", INFINISPAN_FACTORY);
+
+        args = new String[] {};
+        Map<String, String> envMapInfinispan = Map.of("NEONBEE_WORKING_DIR", workDir, "NEONBEE_CLUSTERED", "true",
+                "NEONBEE_CLUSTER_MANAGER", "infinispan", "NEONBEE_CLUSTER_CONFIG", "infinispan-local.xml",
+                "NEONBEE_CLUSTER_PORT", "10000");
+        withEnvironment(envMapInfinispan,
+                () -> assertClusteredOptions.accept("infinispan-local.xml", INFINISPAN_FACTORY));
     }
 
     @Test
@@ -220,13 +257,6 @@ class LauncherTest {
         assertThat(neonBeeOptions.getServerPort()).isEqualTo(9000);
         assertThat(neonBeeOptions.getModuleJarPaths()).containsExactly(Path.of("path1"), Path.of("path2"),
                 Path.of("path3"), Path.of("path4"));
-    }
-
-    private void assertClusteredOptions() {
-        NeonBeeOptions neonBeeOptions = parseArgs();
-        assertThat(neonBeeOptions.getClusterPort()).isEqualTo(10000);
-        assertThat(neonBeeOptions.isClustered()).isTrue();
-        assertThat(neonBeeOptions.getClusterConfig()).isEqualTo("hazelcast-local.xml");
     }
 
     private NeonBeeOptions parseArgs() {
