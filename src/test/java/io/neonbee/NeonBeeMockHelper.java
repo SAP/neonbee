@@ -16,6 +16,7 @@ import java.util.function.Supplier;
 import org.mockito.stubbing.Answer;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.neonbee.NeonBeeInstanceConfiguration.ClusterManager;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.data.DataQuery;
 import io.neonbee.internal.codec.DataQueryMessageCodec;
@@ -33,7 +34,6 @@ import io.vertx.core.file.FileSystem;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.micrometer.impl.VertxMetricsFactoryImpl;
-import io.vertx.test.fakecluster.FakeClusterManager;
 
 public final class NeonBeeMockHelper {
     /**
@@ -193,7 +193,7 @@ public final class NeonBeeMockHelper {
                 new VertxMetricsFactoryImpl().metrics(vertxOptions);
             }
             return succeededFuture(vertx);
-        }, opts -> new FakeClusterManager(), options, null);
+        }, ClusterManager.FAKE.factory(), options, null);
     }
 
     /**

@@ -36,10 +36,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.hazelcast.config.ClasspathXmlConfig;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.neonbee.cluster.ClusterManagerFactory;
 import io.neonbee.config.HealthConfig;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.config.ServerConfig;
@@ -95,7 +95,6 @@ import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.LocalMap;
-import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
@@ -145,9 +144,6 @@ public class NeonBee {
      *
      */ // @formatter:on
 
-    static final Function<NeonBeeOptions, ClusterManager> HAZELCAST_FACTORY =
-            options -> new HazelcastClusterManager(new ClasspathXmlConfig(options.getClusterConfig()));
-
     private static final String CORRELATION_ID = "Initializing-NeonBee";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NeonBee.class);
@@ -187,7 +183,7 @@ public class NeonBee {
      * Important: Will only return a value in case a Vert.x context is available, otherwise returns null. Attention:
      * This method is NOT signature compliant to {@link Vertx#vertx()}! It will NOT create a new NeonBee instance,
      * please use {@link NeonBee#create(NeonBeeOptions)} or
-     * {@link NeonBee#create(Function, Function, NeonBeeOptions, NeonBeeConfig)} instead.
+     * {@link NeonBee#create(Function, ClusterManagerFactory, NeonBeeOptions, NeonBeeConfig)} instead.
      *
      * @return A NeonBee instance or null
      */
@@ -237,15 +233,14 @@ public class NeonBee {
      * @return the future to a new NeonBee instance initialized with default options and a new Vert.x instance
      */
     public static Future<NeonBee> create(NeonBeeOptions options, NeonBeeConfig config) {
-        return create((OwnVertxFactory) (vertxOptions) -> newVertx(vertxOptions, options), HAZELCAST_FACTORY, options,
-                config);
+        return create((OwnVertxFactory) vertxOptions -> newVertx(vertxOptions, options), options.getClusterManager(),
+                options, config);
     }
 
     @VisibleForTesting
     @SuppressWarnings({ "PMD.EmptyCatchBlock", "PMD.AvoidCatchingThrowable" })
     static Future<NeonBee> create(Function<VertxOptions, Future<Vertx>> vertxFactory,
-            Function<NeonBeeOptions, ClusterManager> clusterManagerFactory, NeonBeeOptions options,
-            NeonBeeConfig config) {
+            ClusterManagerFactory clusterManagerFactory, NeonBeeOptions options, NeonBeeConfig config) {
         try {
             // create the NeonBee working and logging directory (as the only mandatory directory for NeonBee)
             Files.createDirectories(options.getLogDirectory());
@@ -260,12 +255,17 @@ public class NeonBee {
         CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
         vertxOptions.setMetricsOptions(
                 new MicrometerMetricsOptions().setMicrometerRegistry(compositeMeterRegistry).setEnabled(true));
-        if (options.isClustered()) {
-            vertxOptions.setClusterManager(clusterManagerFactory.apply(options));
-        }
+
+        Future<VertxOptions> loadClusterManager = Future.future(p -> {
+            if (options.isClustered()) {
+                p.handle(clusterManagerFactory.create(options).map(vertxOptions::setClusterManager));
+            } else {
+                p.complete(vertxOptions);
+            }
+        });
 
         // create a Vert.x instance (clustered or unclustered)
-        return vertxFactory.apply(vertxOptions).compose(vertx -> {
+        return loadClusterManager.compose(vertxFactory).compose(vertx -> {
             // at this point at any failure that occurs, it is in our responsibility to properly close down the created
             // Vert.x instance again. we have to be vigilant the fact that a runtime exception could happen anytime!
             Function<Throwable, Future<Void>> closeVertx = throwable -> {
@@ -361,9 +361,8 @@ public class NeonBee {
         }
 
         return joinComposite(healthChecks).recover(v -> {
-            healthChecks.stream().filter(Future::failed).map(Future::cause).forEach(t -> {
-                LOGGER.error("Failed to register health checks to registry.", t);
-            });
+            healthChecks.stream().filter(Future::failed).map(Future::cause)
+                    .forEach(t -> LOGGER.error("Failed to register health checks to registry.", t));
             return succeededFuture();
         }).mapEmpty();
     }
@@ -523,7 +522,7 @@ public class NeonBee {
         }
 
         return FileSystemHelper.exists(vertx, dirPath).compose(exists -> {
-            if (!exists) {
+            if (Boolean.FALSE.equals(exists)) {
                 if (LOGGER.isWarnEnabled()) {
                     String dirName = dirPath.getFileName().toString();
                     LOGGER.warn("No " + dirName + " directory, " + dirName + " are not being watched");
@@ -650,7 +649,7 @@ public class NeonBee {
     }
 
     /**
-     * Returns the the (command-line) options.
+     * Returns the (command-line) options.
      *
      * @return the (command-line) options
      */

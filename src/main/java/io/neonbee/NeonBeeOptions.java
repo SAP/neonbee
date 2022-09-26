@@ -1,6 +1,8 @@
 package io.neonbee;
 
 import static io.neonbee.NeonBeeProfile.parseProfiles;
+import static io.neonbee.cluster.ClusterManagerFactory.HAZELCAST_FACTORY;
+import static io.neonbee.cluster.ClusterManagerFactory.INFINISPAN_FACTORY;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static java.util.Objects.requireNonNull;
 
@@ -18,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
+import io.neonbee.cluster.ClusterManagerFactory;
 import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.verticle.WatchVerticle;
 import io.neonbee.job.JobVerticle;
@@ -149,11 +152,18 @@ public interface NeonBeeOptions {
     boolean isClustered();
 
     /**
-     * Gets Hazelcast cluster configuration.
+     * Gets the cluster configuration file path.
      *
-     * @return Hazelcast cluster configuration
+     * @return cluster configuration file path.
      */
     String getClusterConfig();
+
+    /**
+     * Gets the factory to create the chosen cluster manager.
+     *
+     * @return cluster manager factory to create the chosen cluster manager.
+     */
+    ClusterManagerFactory getClusterManager();
 
     /**
      * Get the port number of the server verticle. If not set, the port number will be retrieved from the server
@@ -186,11 +196,6 @@ public interface NeonBeeOptions {
     @Summary("A command line interface for starting and configuring a NeonBee and its associated Vert.x instance")
     class Mutable implements NeonBeeOptions {
         /**
-         * The default cluster configuration file name.
-         */
-        public static final String DEFAULT_CLUSTER_CONFIG = "hazelcast-cf.xml";
-
-        /**
          * The default active profiles.
          */
         public static final String DEFAULT_ACTIVE_PROFILES = "ALL";
@@ -203,7 +208,9 @@ public interface NeonBeeOptions {
 
         private boolean clustered;
 
-        private String clusterConfig = DEFAULT_CLUSTER_CONFIG;
+        private String clusterConfig;
+
+        private ClusterManagerFactory clusterManagerFactory = HAZELCAST_FACTORY;
 
         private String instanceName;
 
@@ -235,7 +242,7 @@ public interface NeonBeeOptions {
 
         /**
          * Set the maximum number of event loop threads to be used by the NeonBee instance. The number of threads must
-         * be larger then 0.
+         * be larger than 0.
          *
          * @param eventLoopPoolSize the number of threads
          * @return a reference to this, so the API can be used fluently
@@ -428,6 +435,26 @@ public interface NeonBeeOptions {
         }
 
         @Override
+        public ClusterManagerFactory getClusterManager() {
+            return clusterManagerFactory;
+        }
+
+        /**
+         * Chooses the factory to create the cluster manager.
+         *
+         * @param clusterManagerFactory the factory to create the cluster manager.
+         * @return this instance for chaining
+         */
+        @Option(longName = "cluster-manager", shortName = "cm")
+        @Description("Set the cluster manager \"infinispan\" or \"hazelcast\" (default)")
+        @DefaultValue("hazelcast")
+        @ConvertedBy(ClusterManagerFactoryConverter.class)
+        public Mutable setClusterManager(ClusterManagerFactory clusterManagerFactory) {
+            this.clusterManagerFactory = clusterManagerFactory;
+            return this;
+        }
+
+        @Override
         public Integer getServerPort() {
             return this.serverPort;
         }
@@ -565,6 +592,20 @@ public interface NeonBeeOptions {
         @Override
         public Path fromString(String s) {
             return Path.of(s);
+        }
+    }
+
+    class ClusterManagerFactoryConverter implements Converter<ClusterManagerFactory> {
+        @Override
+        public ClusterManagerFactory fromString(String s) {
+            if ("hazelcast".equalsIgnoreCase(s)) {
+                return HAZELCAST_FACTORY;
+            } else if ("infinispan".equalsIgnoreCase(s)) {
+                return INFINISPAN_FACTORY;
+            } else {
+                throw new IllegalArgumentException(
+                        "Value for cluster-manager MUST be \"hazelcast\" or \"infinispan\".");
+            }
         }
     }
 }

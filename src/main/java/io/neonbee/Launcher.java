@@ -32,6 +32,8 @@ public class Launcher {
     // logging parameterization, like the logging configuration, and the internal loggers for Netty.
     private static final String HAZELCAST_LOGGING_TYPE = "hazelcast.logging.type";
 
+    private static final String INFINISPAN_LOGGING_TYPE = "org.jboss.logging.provider";
+
     private static final String LOG_DIR_PROPERTY = "LOG_DIR";
 
     @VisibleForTesting
@@ -116,6 +118,7 @@ public class Launcher {
     private static void configureLogging(NeonBeeOptions options) {
         setProperty(CONFIG_FILE_PROPERTY, options.getConfigDirectory().resolve("logback.xml").toString());
         setProperty(HAZELCAST_LOGGING_TYPE, "slf4j");
+        setProperty(INFINISPAN_LOGGING_TYPE, "slf4j");
         setProperty(LOG_DIR_PROPERTY, options.getLogDirectory().toAbsolutePath().toString());
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
     }

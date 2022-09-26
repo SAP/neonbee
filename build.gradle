@@ -55,6 +55,7 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-auth-oauth2', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-hazelcast', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-health-check', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-infinispan', version: vertx_version
 
     def jackson_version = '2.13.3'
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
