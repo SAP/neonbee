@@ -249,14 +249,16 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     @DisplayName("test special uris")
     void uglyUris(Vertx vertx, VertxTestContext testContext) {
         String uri = "/io.neonbee.ugly.UglyUriTests/TestEntity";
-        String query = "?$count=true&$orderby=sysnr&$filter="
-                + "(contains(tolower(sysnr),tolower(%27&%27))%20or%20contains(tolower(sysid),tolower(%27&%27))%20or%20"
-                + "contains(tolower(name),tolower(%27&%27))%20or%20contains(tolower(sysroleExtDescr),tolower(%27&%27))%20or%20"
-                + "contains(tolower(datacenter),tolower(%27&%27))%20or%20contains(tolower(officialProdName),"
-                + "tolower(%27&%27))%20or%20contains(tolower(customerName),tolower(%27&%27))%20or%20"
-                + "contains(tolower(customerId),tolower(%27&%27)))&$skip=0&$top=10";
+        String query = "?$count=true&$orderby=sysnr&$filter=(" +
+            "contains(tolower(sysnr),tolower('&')) or " +
+            "contains(tolower(sysid),tolower('&')) or contains(tolower(name),tolower('&')) or " +
+            "contains(tolower(sysroleExtDescr),tolower('&')) or contains(tolower(datacenter),tolower('&')) or " +
+            "contains(tolower(officialProdName),tolower('&')) or contains(tolower(customerName),tolower('&')) or " +
+            "contains(tolower(customerId),tolower('&'))" +
+            ")&$skip=0&$top=10";
 
         // String query = "?contains('&')";
+        //String query = "?$orderby=postedOn%20desc&$filter=(category%20eq%20%27My%20SAP%20Notes%20%26%20KBA%27)&$skip=0&$top=20";
         DataQuery dataQuery = new DataQuery(uri, query);
         var parameters = dataQuery.getParameters();
         assertThat(parameters).isNotNull();
