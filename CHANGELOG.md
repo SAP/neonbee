@@ -1,6 +1,42 @@
 # Changelog
 
-## 0.14.0 (2022-08-29)
+## 0.15.0 (2022-10-05)
+
+### Bug Fixes
+
+- failing metrics test on Github ([56eedff2](https://github.com/SAP/neonbee/commit/56eedff2346e020346108e681e25bb97bc32f323))
+
+
+### Features
+
+- **health**: add event-loop health check ([1a2fa4be](https://github.com/SAP/neonbee/commit/1a2fa4be43a9d71aeb6d7841d14c71052bfd7751))
+- use Vert.x FakeClusterManager in NeonBeeExtension ([e522452f](https://github.com/SAP/neonbee/commit/e522452fd9dc647b3d3d36ac25f8968258f08bbb))
+- make test cluster manager configurable ([32e5d120](https://github.com/SAP/neonbee/commit/32e5d120aabf42801494f17f2d2d61252d7d9c83))
+- add Infinispan ClusterManager ([26bb382e](https://github.com/SAP/neonbee/commit/26bb382e86532383e2ac9ceca19776eae93d09cf))
+
+
+### Code Refactoring
+
+- remove redundant code ([ce6f3490](https://github.com/SAP/neonbee/commit/ce6f3490d624810e7571273cd8b6af99f2b473fc))
+
+
+### Documentation
+
+- add docker login step to docs ([bf2707df](https://github.com/SAP/neonbee/commit/bf2707df21c071479e47f50448fab7e538189c26))
+
+
+### Build System
+
+- **deps**: upgrade `vertx` to 4.3.4 ([fedab717](https://github.com/SAP/neonbee/commit/fedab7173486469348bb5a26191c5d26cad20802))
+
+
+### Continuous Integration
+
+- **github**: update issue templates ([65f5db6e](https://github.com/SAP/neonbee/commit/65f5db6edefefe3b91b0525a2ec3b75799baf607))
+- add workflow step to publish docker image to ghcr ([7152dba0](https://github.com/SAP/neonbee/commit/7152dba0bfb8cd93b8aea5aa6d74e1e3c0f87fad))
+
+
+## 0.14.0 (2022-08-30)
 
 ### Bug Fixes
 
