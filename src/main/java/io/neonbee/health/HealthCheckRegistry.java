@@ -173,17 +173,27 @@ public class HealthCheckRegistry {
         List<Future<JsonObject>> asyncCheckResults =
                 getHealthChecks().values().stream().map(hc -> hc.result().map(CheckResult::toJson)).collect(toList());
 
-        return AsyncHelper.allComposite(asyncCheckResults).map(resolvedCheckResults -> resolvedCheckResults.list()
-                .stream().map(JsonObject.class::cast).peek(result -> result.remove("outcome")).collect(toList()));
+        return AsyncHelper.joinComposite(asyncCheckResults).transform(v -> {
+            List<JsonObject> allSucceeded = asyncCheckResults.stream().filter(Future::succeeded).map(Future::result)
+                    .peek(result -> result.remove("outcome")).collect(toList());
+
+            return Future.succeededFuture(allSucceeded);
+        });
     }
 
     private Future<List<JsonObject>> getClusteredHealthCheckResults(DataContext dataContext) {
         return NeonBee.get(vertx).getAsyncMap().get(SHARED_MAP_KEY)
                 .map(qualifiedNames -> (qualifiedNames != null ? (JsonArray) qualifiedNames : new JsonArray()))
-                .compose(qualifiedNames -> AsyncHelper.allComposite(sendDataRequests(qualifiedNames, dataContext)))
-                .map(resolvedRequests -> {
-                    return resolvedRequests.list().stream().map(JsonArray.class::cast).flatMap(JsonArray::stream)
-                            .map(JsonObject.class::cast).collect(toList());
+                .compose(qualifiedNames -> {
+                    List<Future<JsonArray>> asyncCheckResults = sendDataRequests(qualifiedNames, dataContext);
+
+                    return AsyncHelper.joinComposite(asyncCheckResults).transform(v -> {
+                        List<JsonObject> allSucceeded =
+                                asyncCheckResults.stream().filter(Future::succeeded).map(Future::result)
+                                        .flatMap(JsonArray::stream).map(JsonObject.class::cast).collect(toList());
+
+                        return Future.succeededFuture(allSucceeded);
+                    });
                 });
     }
 
