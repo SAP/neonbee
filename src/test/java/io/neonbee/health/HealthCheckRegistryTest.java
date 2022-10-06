@@ -2,6 +2,7 @@ package io.neonbee.health;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.health.DummyHealthCheck.DUMMY_ID;
+import static io.neonbee.internal.verticle.HealthCheckVerticle.SHARED_MAP_KEY;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static io.neonbee.test.helper.ReflectionHelper.setValueOfPrivateField;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -200,9 +201,8 @@ class HealthCheckRegistryTest {
             }
         };
 
-        String sharedMapName = "#sharedMap";
         AsyncMap<String, Object> sharedMap = new SharedDataAccessor(vertx, HealthCheckVerticle.class)
-                .<String, Object>getAsyncMap(sharedMapName).result();
+                .<String, Object>getAsyncMap("#sharedMap").result();
         setValueOfPrivateField(neonBee, "sharedAsyncMap", sharedMap);
 
         // undeploy the system deployed health check verticles of neonbee
@@ -250,5 +250,32 @@ class HealthCheckRegistryTest {
                     assertThat(result.getString("status")).isEqualTo("UP");
                     cp.flag();
                 })));
+    }
+
+    @Test
+    @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("it does not fail if some verticle addresses are not reachable")
+    void test(Vertx vertx, VertxTestContext testContext) throws NoSuchFieldException, IllegalAccessException {
+        neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(true));
+        AsyncMap<String, Object> sharedMap = new SharedDataAccessor(vertx, HealthCheckVerticle.class)
+                .<String, Object>getAsyncMap("#sharedMap").result();
+        String verticleName = "not-existing-verticle-name";
+        sharedMap.put(SHARED_MAP_KEY, new JsonArray().add(verticleName));
+        setValueOfPrivateField(neonBee, "sharedAsyncMap", sharedMap);
+
+        DeploymentHelper.undeployAllVerticlesOfClass(neonBee.getVertx(), HealthCheckVerticle.class)
+                .compose(v -> AsyncHelper.allComposite(List.of(vertx.deployVerticle(new HealthCheckVerticle()),
+                        neonBee.getHealthCheckRegistry().register(new DummyHealthCheck(neonBee)))))
+                .onSuccess(v -> neonBee.getHealthCheckRegistry().collectHealthCheckResults()
+                        .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
+                            neonBee.getAsyncMap().get(SHARED_MAP_KEY).map(JsonArray.class::cast)
+                                    .onComplete(testContext.succeeding(registeredVerticles -> testContext.verify(() -> {
+                                        assertThat(registeredVerticles).hasSize(2);
+                                        assertThat(registeredVerticles).contains(verticleName);
+                                        assertThat(result.getString("status")).isEqualTo("UP");
+                                        testContext.completeNow();
+                                    })));
+                        }))))
+                .onFailure(testContext::failNow);
     }
 }
