@@ -27,7 +27,7 @@ jobs:
           version="$(./gradlew properties -q | grep -w "version:" | awk '{print $2}')"
           echo ::set-output name=releaseVersion::"${version}"
           if [[ $version == *SNAPSHOT ]]; then
-              echo ::set-output name=dockerTag::"{{branch}}-{{sha}}"
+              echo ::set-output name=dockerTag::"{{branch}}"
           else
               echo ::set-output name=dockerTag::"${version}"
           fi
