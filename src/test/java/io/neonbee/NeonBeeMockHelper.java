@@ -254,11 +254,16 @@ public final class NeonBeeMockHelper {
      */
     @SuppressWarnings("PMD.EmptyCatchBlock")
     public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config) {
-        try {
-            vertx.eventBus().registerDefaultCodec(DataQuery.class, new DataQueryMessageCodec());
-        } catch (IllegalStateException ignored) {
-            // Fall through
+        // the Vert.x mock might not implement the event bus
+        EventBus eventBus = vertx.eventBus();
+        if (eventBus != null) {
+            try {
+                vertx.eventBus().registerDefaultCodec(DataQuery.class, new DataQueryMessageCodec());
+            } catch (IllegalStateException ignored) {
+                // fall through
+            }
         }
+
         return new NeonBee(vertx, options, config, new CompositeMeterRegistry());
     }
 }
