@@ -3,6 +3,7 @@ package io.neonbee.cluster;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
+import static java.lang.ClassLoader.getSystemClassLoader;
 
 import java.io.IOException;
 
@@ -48,6 +49,7 @@ public abstract class ClusterManagerFactory {
             String effectiveConfig = getEffectiveConfig(neonBeeOptions);
 
             try {
+                Thread.currentThread().setContextClassLoader(getSystemClassLoader());
                 return succeededFuture(new InfinispanClusterManager(new DefaultCacheManager(effectiveConfig, true)));
             } catch (IOException e) {
                 return failedFuture(e);
