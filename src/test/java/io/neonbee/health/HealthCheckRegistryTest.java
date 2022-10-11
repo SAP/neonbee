@@ -31,6 +31,7 @@ import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.health.internal.HealthCheck;
 import io.neonbee.internal.SharedDataAccessor;
+import io.neonbee.internal.codec.DataQueryMessageCodec;
 import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.verticle.HealthCheckVerticle;
 import io.neonbee.test.helper.DeploymentHelper;
@@ -54,6 +55,12 @@ class HealthCheckRegistryTest {
     @BeforeEach
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(Vertx vertx) {
+        try {
+            vertx.eventBus().registerDefaultCodec(DataQuery.class, new DataQueryMessageCodec());
+        } catch (IllegalStateException ignored) {
+            // fall through
+        }
+
         neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(false),
                 new NeonBeeConfig().setHealthConfig(new HealthConfig().setEnabled(true).setTimeout(2)));
     }
