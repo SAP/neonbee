@@ -1,27 +1,314 @@
 {
   "nextVersion" : {
     "major" : 0,
+    "minor" : 17,
+    "patch" : 0,
+    "preReleaseParts" : [ ],
+    "buildMetaDataParts" : [ ],
+    "preRelease" : "",
+    "buildMetaData" : "",
+    "initialDevelopment" : true,
+    "stable" : true
+  },
+  "lastVersion" : {
+    "major" : 0,
     "minor" : 16,
     "patch" : 0,
     "preReleaseParts" : [ ],
     "buildMetaDataParts" : [ ],
     "preRelease" : "",
     "buildMetaData" : "",
-    "stable" : true,
-    "initialDevelopment" : true
-  },
-  "lastVersion" : {
-    "major" : 0,
-    "minor" : 15,
-    "patch" : 0,
-    "preReleaseParts" : [ ],
-    "buildMetaDataParts" : [ ],
-    "preRelease" : "",
-    "buildMetaData" : "",
-    "stable" : true,
-    "initialDevelopment" : true
+    "initialDevelopment" : true,
+    "stable" : true
   },
   "tags" : [ {
+    "version" : {
+      "major" : 0,
+      "minor" : 16,
+      "patch" : 0,
+      "preReleaseParts" : [ ],
+      "buildMetaDataParts" : [ ],
+      "preRelease" : "",
+      "buildMetaData" : "",
+      "initialDevelopment" : true,
+      "stable" : true
+    },
+    "releaseDate" : "2022-10-11 10:41:59.000 +0200",
+    "sections" : [ {
+      "title" : "Bug Fixes",
+      "commits" : [ {
+        "hashFull" : "5421607b2580d6979603d1d4f53f60e71965a9c5",
+        "hash" : "5421607b2580d69",
+        "hash7" : "5421607",
+        "hash8" : "5421607b",
+        "commitTime" : "2022-10-10 09:54:13.000 +0200",
+        "commitTimeLong" : 1665388453,
+        "message" : "fix(health): make health check collection more resilient\n\nWhenever a health check verticle did not answer, a failed future was\nreturned by the health check registry in the attempt of collecting all\nhealth check data. Especially in the clustered case this might\nhappen quite often due to restarts caused by a deployment, for instance.\nIn that case an error would be reported, although all relevent data\nmight be available.\n\nTherefore, this change makes the data collection more resilient by\nrespecting that some verticles might not be able to answer.\n\nOnce the de-registering of health check verticles from the shared map is\navailable/implemented, it should be less likely that this situation\nhappens, but still possible.\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-06 14:38:49.000 +0200",
+          "name" : "Sebastian Heid",
+          "email" : "sebastian.heid@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-10-10 09:54:13.000 +0200",
+          "name" : "Sebastian Heid",
+          "email" : "sebastian.heid@sap.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/5421607b2580d6979603d1d4f53f60e71965a9c5",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : "health",
+        "commitSubject" : "make health check collection more resilient",
+        "commitBody" : "Whenever a health check verticle did not answer, a failed future was\nreturned by the health check registry in the attempt of collecting all\nhealth check data. Especially in the clustered case this might\nhappen quite often due to restarts caused by a deployment, for instance.\nIn that case an error would be reported, although all relevent data\nmight be available.\n\nTherefore, this change makes the data collection more resilient by\nrespecting that some verticles might not be able to answer.\n\nOnce the de-registering of health check verticles from the shared map is\navailable/implemented, it should be less likely that this situation\nhappens, but still possible.",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : "health",
+        "rawCommitSubject" : "make health check collection more resilient",
+        "messageTitle" : "fix(health): make health check collection more resilient",
+        "messageBody" : "Whenever a health check verticle did not answer, a failed future was\nreturned by the health check registry in the attempt of collecting all\nhealth check data. Especially in the clustered case this might\nhappen quite often due to restarts caused by a deployment, for instance.\nIn that case an error would be reported, although all relevent data\nmight be available.\n\nTherefore, this change makes the data collection more resilient by\nrespecting that some verticles might not be able to answer.\n\nOnce the de-registering of health check verticles from the shared map is\navailable/implemented, it should be less likely that this situation\nhappens, but still possible."
+      }, {
+        "hashFull" : "44cd03799231f03e99fe2779e9869db0b6b8eab9",
+        "hash" : "44cd03799231f03",
+        "hash7" : "44cd037",
+        "hash8" : "44cd0379",
+        "commitTime" : "2022-10-07 10:31:58.000 +0200",
+        "commitTimeLong" : 1665131518,
+        "message" : "fix: removed docker image tag with sha\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-07 09:59:31.000 +0200",
+          "name" : "i536037",
+          "email" : "matthias.michel@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-10-07 10:31:58.000 +0200",
+          "name" : "Sebastian Heid",
+          "email" : "sebastian.heid@sap.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/44cd03799231f03e99fe2779e9869db0b6b8eab9",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "removed docker image tag with sha",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "removed docker image tag with sha",
+        "messageTitle" : "fix: removed docker image tag with sha",
+        "messageBody" : ""
+      }, {
+        "hashFull" : "5d3999b2cd152521e39703d1ffd0b62f164b2af1",
+        "hash" : "5d3999b2cd15252",
+        "hash7" : "5d3999b",
+        "hash8" : "5d3999b2",
+        "commitTime" : "2022-10-10 18:31:14.000 +0200",
+        "commitTimeLong" : 1665419474,
+        "message" : "fix: register NeonBee mock\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-10 17:20:01.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "committerIdent" : {
+          "when" : "2022-10-10 18:31:14.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/5d3999b2cd152521e39703d1ffd0b62f164b2af1",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "register NeonBee mock",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "register NeonBee mock",
+        "messageTitle" : "fix: register NeonBee mock",
+        "messageBody" : ""
+      }, {
+        "hashFull" : "d8b9b1f2fde33df7127ba03b31124db05f8ddc0f",
+        "hash" : "d8b9b1f2fde33df",
+        "hash7" : "d8b9b1f",
+        "hash8" : "d8b9b1f2",
+        "commitTime" : "2022-10-11 09:44:52.000 +0200",
+        "commitTimeLong" : 1665474292,
+        "message" : "fix: make SystemClassLoader available to Infinispan\n\nWhen Infinispan is initialized it is using the ContextClassLoader of the current Thread to resolve resources. The ContextClassLoader of a Vert.x event loop is initially null, which causes Infinispan to fail.\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-10 15:30:35.000 +0200",
+          "name" : "Pascal Krause",
+          "email" : "pascal.krause@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-10-11 09:44:52.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/d8b9b1f2fde33df7127ba03b31124db05f8ddc0f",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "make SystemClassLoader available to Infinispan",
+        "commitBody" : "When Infinispan is initialized it is using the ContextClassLoader of the current Thread to resolve resources. The ContextClassLoader of a Vert.x event loop is initially null, which causes Infinispan to fail.",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "make SystemClassLoader available to Infinispan",
+        "messageTitle" : "fix: make SystemClassLoader available to Infinispan",
+        "messageBody" : "When Infinispan is initialized it is using the ContextClassLoader of the current Thread to resolve resources. The ContextClassLoader of a Vert.x event loop is initially null, which causes Infinispan to fail."
+      } ]
+    }, {
+      "title" : "Features",
+      "commits" : [ {
+        "hashFull" : "194cbb2bdc4148ff6c76636f786bb42d53448a26",
+        "hash" : "194cbb2bdc4148f",
+        "hash7" : "194cbb2",
+        "hash8" : "194cbb2b",
+        "commitTime" : "2022-10-11 10:41:59.000 +0200",
+        "commitTimeLong" : 1665477719,
+        "message" : "feat: add option to set metrics registry name\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-11 09:53:55.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "committerIdent" : {
+          "when" : "2022-10-11 10:41:59.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/194cbb2bdc4148ff6c76636f786bb42d53448a26",
+        "commitType" : "feat",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "add option to set metrics registry name",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "feat",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "add option to set metrics registry name",
+        "messageTitle" : "feat: add option to set metrics registry name",
+        "messageBody" : ""
+      } ]
+    }, {
+      "title" : "Code Refactoring",
+      "commits" : [ {
+        "hashFull" : "d392975ff867717e59486cfa0da71a002acd2a4b",
+        "hash" : "d392975ff867717",
+        "hash7" : "d392975",
+        "hash8" : "d392975f",
+        "commitTime" : "2022-10-11 10:29:52.000 +0200",
+        "commitTimeLong" : 1665476992,
+        "message" : "refactor: registerNeonBeeMock should not influence mock\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-11 09:26:31.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "committerIdent" : {
+          "when" : "2022-10-11 10:29:52.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/d392975ff867717e59486cfa0da71a002acd2a4b",
+        "commitType" : "refactor",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "registerNeonBeeMock should not influence mock",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "refactor",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "registerNeonBeeMock should not influence mock",
+        "messageTitle" : "refactor: registerNeonBeeMock should not influence mock",
+        "messageBody" : ""
+      } ]
+    } ]
+  }, {
     "version" : {
       "major" : 0,
       "minor" : 15,
@@ -30,10 +317,10 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
-    "releaseDate" : "2022-10-05 10:50:45.000 +0200",
+    "releaseDate" : "2022-10-05 11:46:05.000 +0200",
     "sections" : [ {
       "title" : "Bug Fixes",
       "commits" : [ {
@@ -502,8 +789,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-08-30 13:15:07.000 +0200",
     "sections" : [ {
@@ -698,8 +985,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-08-10 09:09:11.000 +0200",
     "sections" : [ {
@@ -944,8 +1231,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-07-14 16:23:19.000 +0200",
     "sections" : [ {
@@ -1184,8 +1471,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-07-13 08:29:40.000 +0200",
     "sections" : [ {
@@ -1524,8 +1811,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-06-06 16:06:00.000 +0200",
     "sections" : [ {
@@ -1585,8 +1872,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-06-03 12:13:06.000 +0200",
     "sections" : [ {
@@ -2198,8 +2485,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-03-07 22:17:58.000 +0100",
     "sections" : [ {
@@ -2532,8 +2819,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-02-17 17:52:27.000 +0100",
     "sections" : [ {
@@ -2593,8 +2880,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-02-15 17:58:20.000 +0100",
     "sections" : [ {
@@ -2745,8 +3032,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2022-01-27 11:41:02.000 +0100",
     "sections" : [ {
@@ -3353,8 +3640,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-12-15 15:08:44.000 +0100",
     "sections" : [ {
@@ -3596,8 +3883,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-11-23 12:25:14.000 +0100",
     "sections" : [ {
@@ -3704,8 +3991,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-10-05 13:44:34.000 +0200",
     "sections" : [ {
@@ -3765,8 +4052,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-10-04 15:47:42.000 +0200",
     "sections" : [ {
@@ -5252,8 +5539,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-07-27 09:22:26.000 +0200",
     "sections" : [ {
@@ -5586,8 +5873,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-06-07 07:52:14.000 +0200",
     "sections" : [ {
@@ -7161,8 +7448,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-03-18 14:45:15.000 +0100",
     "sections" : [ {
@@ -7545,8 +7832,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "stable" : true,
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "stable" : true
     },
     "releaseDate" : "2021-03-10 16:24:12.000 +0100",
     "sections" : [ {
