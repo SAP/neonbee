@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.16.0 (2022-10-11)
+
+### Bug Fixes
+
+- **health**: make health check collection more resilient ([5421607b](https://github.com/SAP/neonbee/commit/5421607b2580d6979603d1d4f53f60e71965a9c5))
+- removed docker image tag with sha ([44cd0379](https://github.com/SAP/neonbee/commit/44cd03799231f03e99fe2779e9869db0b6b8eab9))
+- register NeonBee mock ([5d3999b2](https://github.com/SAP/neonbee/commit/5d3999b2cd152521e39703d1ffd0b62f164b2af1))
+- make SystemClassLoader available to Infinispan ([d8b9b1f2](https://github.com/SAP/neonbee/commit/d8b9b1f2fde33df7127ba03b31124db05f8ddc0f))
+
+
+### Features
+
+- add option to set metrics registry name ([194cbb2b](https://github.com/SAP/neonbee/commit/194cbb2bdc4148ff6c76636f786bb42d53448a26))
+
+
+### Code Refactoring
+
+- registerNeonBeeMock should not influence mock ([d392975f](https://github.com/SAP/neonbee/commit/d392975ff867717e59486cfa0da71a002acd2a4b))
+
+
 ## 0.15.0 (2022-10-05)
 
 ### Bug Fixes
