@@ -1,6 +1,7 @@
 package io.neonbee.data.internal.metrics;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.NeonBeeMockHelper.registerNeonBeeMock;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.verify;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -21,24 +23,36 @@ import org.mockito.MockedStatic;
 import io.micrometer.core.instrument.ImmutableTag;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.neonbee.NeonBee;
+import io.neonbee.NeonBeeMockHelper;
 import io.neonbee.test.helper.ReflectionHelper;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.micrometer.backends.BackendRegistries;
 
 class ConfiguredDataVerticleMetricsTest {
+    Vertx vertx;
+
+    NeonBee neonBee;
+
+    @BeforeEach
+    void setUp() {
+        vertx = NeonBeeMockHelper.defaultVertxMock();
+        neonBee = registerNeonBeeMock(vertx);
+    }
 
     @Test
     @DisplayName("Test null config")
     void nullConfig() {
-        DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(null);
+        DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(null, null);
         assertThat(instance).isInstanceOf(NoopDataVerticleMetrics.class);
     }
 
     @Test
     @DisplayName("Test no config")
     void noConfig() {
-        DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(new JsonObject());
+        DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(null, new JsonObject());
         assertThat(instance).isInstanceOf(NoopDataVerticleMetrics.class);
     }
 
@@ -46,7 +60,7 @@ class ConfiguredDataVerticleMetricsTest {
     @DisplayName("Test metrics disabled")
     void disabled() {
         JsonObject config = new JsonObject().put(ConfiguredDataVerticleMetrics.ENABLED, false);
-        DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(config);
+        DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(null, config);
         assertThat(instance).isInstanceOf(NoopDataVerticleMetrics.class);
     }
 
@@ -54,16 +68,16 @@ class ConfiguredDataVerticleMetricsTest {
     @DisplayName("Test metrics disabled, enabled is null")
     void disabledNull() {
         JsonObject config = new JsonObject().put(ConfiguredDataVerticleMetrics.ENABLED, null);
-        DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(config);
+        DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(null, config);
         assertThat(instance).isInstanceOf(NoopDataVerticleMetrics.class);
     }
 
     @Test
     @DisplayName("backend meter registry is null")
     void backendMeterRegistriesNull() throws NoSuchFieldException, IllegalAccessException {
-        resetBackendRegestries();
+        resetBackendRegistries();
         JsonObject config = new JsonObject().put(ConfiguredDataVerticleMetrics.ENABLED, true);
-        DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(config);
+        DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(neonBee, config);
         assertThat(instance).isInstanceOf(NoopDataVerticleMetrics.class);
     }
 
@@ -76,7 +90,7 @@ class ConfiguredDataVerticleMetricsTest {
         try (MockedStatic<BackendRegistries> registry = mockStatic(BackendRegistries.class)) {
             registry.when(() -> BackendRegistries.getNow(anyString())).thenReturn(mockRegistry);
 
-            DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(config);
+            DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(neonBee, config);
             assertThat(instance).isInstanceOf(DataVerticleMetricsImpl.class);
         }
     }
@@ -85,7 +99,7 @@ class ConfiguredDataVerticleMetricsTest {
     @DisplayName("Test config with all values provided")
     void configWithAllValuesEnabled() {
         JsonObject config = new JsonObject().put(ConfiguredDataVerticleMetrics.ENABLED, true)
-                .put(ConfiguredDataVerticleMetrics.METER_REGISTRY_NAME, "SomeRegistryName")
+                .put(ConfiguredDataVerticleMetrics.METRICS_REGISTRY_NAME, "SomeRegistryName")
                 .put(ConfiguredDataVerticleMetrics.NUMBER_OF_REQUESTS, true)
                 .put(ConfiguredDataVerticleMetrics.ACTIVE_REQUESTS, true)
                 .put(ConfiguredDataVerticleMetrics.STATUS_COUNTER, true)
@@ -95,7 +109,7 @@ class ConfiguredDataVerticleMetricsTest {
         try (MockedStatic<BackendRegistries> registry = mockStatic(BackendRegistries.class)) {
             registry.when(() -> BackendRegistries.getNow(anyString())).thenReturn(mockRegistry);
 
-            DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(config);
+            DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(neonBee, config);
             assertThat(instance).isInstanceOf(ConfiguredDataVerticleMetrics.class);
             ConfiguredDataVerticleMetrics configuredInstance = (ConfiguredDataVerticleMetrics) instance;
 
@@ -110,7 +124,7 @@ class ConfiguredDataVerticleMetricsTest {
     @DisplayName("Test config with all values provided but disabled")
     void configWithAllValuesDisabled() {
         JsonObject config = new JsonObject().put(ConfiguredDataVerticleMetrics.ENABLED, true)
-                .put(ConfiguredDataVerticleMetrics.METER_REGISTRY_NAME, "SomeRegistryName")
+                .put(ConfiguredDataVerticleMetrics.METRICS_REGISTRY_NAME, "SomeRegistryName")
                 .put(ConfiguredDataVerticleMetrics.NUMBER_OF_REQUESTS, false)
                 .put(ConfiguredDataVerticleMetrics.ACTIVE_REQUESTS, false)
                 .put(ConfiguredDataVerticleMetrics.STATUS_COUNTER, false)
@@ -120,7 +134,7 @@ class ConfiguredDataVerticleMetricsTest {
         try (MockedStatic<BackendRegistries> registry = mockStatic(BackendRegistries.class)) {
             registry.when(() -> BackendRegistries.getNow(anyString())).thenReturn(mockRegistry);
 
-            DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(config);
+            DataVerticleMetrics instance = ConfiguredDataVerticleMetrics.configureMetricsReporting(neonBee, config);
             assertThat(instance).isInstanceOf(ConfiguredDataVerticleMetrics.class);
             ConfiguredDataVerticleMetrics configuredInstance = (ConfiguredDataVerticleMetrics) instance;
 
@@ -183,7 +197,7 @@ class ConfiguredDataVerticleMetricsTest {
         verify(spyReportTimingMetric, never()).reportStatusCounter(eq("name"), eq("description"), eq(tags), any());
     }
 
-    private static void resetBackendRegestries() throws NoSuchFieldException, IllegalAccessException {
+    private static void resetBackendRegistries() throws NoSuchFieldException, IllegalAccessException {
         ((Map) ReflectionHelper.getValueOfPrivateStaticField(BackendRegistries.class, "REGISTRIES")).clear();
     }
 }

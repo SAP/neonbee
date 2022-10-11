@@ -333,7 +333,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
     public void init(Vertx vertx, Context context) {
         super.init(vertx, context);
         JsonObject metrics = getMetricsConfig(NeonBee.get(vertx).getConfig().getMetricsConfig());
-        this.dataVerticleMetrics = ConfiguredDataVerticleMetrics.configureMetricsReporting(metrics);
+        this.dataVerticleMetrics = ConfiguredDataVerticleMetrics.configureMetricsReporting(NeonBee.get(vertx), metrics);
 
         // if present, register the custom codec. IMPORTANT: do NOT register the codec in the start method, as the
         // codec will need to be available on all instances, even if no instance of the verticle is started later on

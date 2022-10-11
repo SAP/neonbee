@@ -47,6 +47,8 @@ public @interface NeonBeeInstanceConfiguration {
 
     ClusterManager clusterManager() default ClusterManager.FAKE;
 
+    String metricsRegistryName() default "";
+
     enum ClusterManager {
         FAKE {
             @Override

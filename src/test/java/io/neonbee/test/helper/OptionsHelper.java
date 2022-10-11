@@ -62,6 +62,9 @@ public final class OptionsHelper {
         if (!Strings.isNullOrEmpty(config.instanceName())) {
             options.setInstanceName(config.instanceName());
         }
+        if (!Strings.isNullOrEmpty(config.metricsRegistryName())) {
+            options.setMetricsRegistryName(config.metricsRegistryName());
+        }
 
         return options;
     }

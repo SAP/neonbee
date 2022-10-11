@@ -33,6 +33,7 @@ import io.vertx.core.cli.annotations.Option;
 import io.vertx.core.cli.annotations.Summary;
 import io.vertx.core.cli.converters.Converter;
 import io.vertx.core.eventbus.EventBusOptions;
+import io.vertx.micrometer.MicrometerMetricsOptions;
 
 @SuppressWarnings("PMD.ExcessivePublicCount")
 public interface NeonBeeOptions {
@@ -188,6 +189,13 @@ public interface NeonBeeOptions {
     List<Path> getModuleJarPaths();
 
     /**
+     * Returns the name of the metrics registry to use.
+     *
+     * @return the metrics registry name
+     */
+    String getMetricsRegistryName();
+
+    /**
      * Create a mutable NeonBeeOptions similar to VertxOptions, but as NeonBeeOptions are exposed only the interface
      * shall be used, otherwise configuration changes could cause runtime errors. To initialize a new Vertx instance use
      * this Mutable inner class.
@@ -227,6 +235,8 @@ public interface NeonBeeOptions {
         private Set<NeonBeeProfile> activeProfiles = parseProfiles(DEFAULT_ACTIVE_PROFILES);
 
         private List<Path> moduleJarPaths = Collections.emptyList();
+
+        private String metricsRegistryName = MicrometerMetricsOptions.DEFAULT_REGISTRY_NAME;
 
         /**
          * Instantiates a mutable {@link NeonBeeOptions} instance.
@@ -581,6 +591,22 @@ public interface NeonBeeOptions {
         public Mutable setModuleJarPaths(String... moduleJarPaths) {
             return this.setModuleJarPaths(Arrays.stream(moduleJarPaths).map(FileSystemHelper::parsePaths)
                     .flatMap(Collection::stream).collect(Collectors.toList()));
+        }
+
+        @Override
+        public String getMetricsRegistryName() {
+            return metricsRegistryName;
+        }
+
+        /**
+         * Set a new metrics registry name to use.
+         *
+         * @param registryName the metrics registry name
+         * @return this instance for chaining
+         */
+        public Mutable setMetricsRegistryName(String registryName) {
+            this.metricsRegistryName = registryName;
+            return this;
         }
 
         private String generateName() {

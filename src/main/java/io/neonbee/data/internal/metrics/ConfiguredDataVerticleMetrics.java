@@ -6,18 +6,17 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.neonbee.NeonBee;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.backends.BackendRegistries;
 
 /**
  * This class configures the metrics to report for a {@link DataVerticle}.
  */
 public class ConfiguredDataVerticleMetrics implements DataVerticleMetrics {
-
     /**
      * Key to enable metrics.
      */
@@ -25,8 +24,16 @@ public class ConfiguredDataVerticleMetrics implements DataVerticleMetrics {
 
     /**
      * Key for the name of the registry to use.
+     *
+     * @deprecated use {@link #METRICS_REGISTRY_NAME} instead
      */
+    @Deprecated(forRemoval = true)
     public static final String METER_REGISTRY_NAME = "meterRegistryName";
+
+    /**
+     * Key for the name of the registry to use for metrics reporting of this verticle.
+     */
+    public static final String METRICS_REGISTRY_NAME = "metricsRegistryName";
 
     /**
      * Key for reporting the request count.
@@ -100,16 +107,17 @@ public class ConfiguredDataVerticleMetrics implements DataVerticleMetrics {
      * }
      * </pre>
      *
+     * @param neonBee       the NeonBee instance used for this metrics reporting
      * @param metricsConfig {@link JsonObject} containing the metrics configuration.
      * @return configured {@link DataVerticleMetrics}
      */
-    public static DataVerticleMetrics configureMetricsReporting(JsonObject metricsConfig) {
+    public static DataVerticleMetrics configureMetricsReporting(NeonBee neonBee, JsonObject metricsConfig) {
         if (metricsConfig == null || !Boolean.TRUE.equals(metricsConfig.getBoolean(ENABLED))) {
             return DUMMY_IMPL;
         }
 
         String meterRegistryName =
-                metricsConfig.getString(METER_REGISTRY_NAME, MicrometerMetricsOptions.DEFAULT_REGISTRY_NAME);
+                metricsConfig.getString(METRICS_REGISTRY_NAME, neonBee.getOptions().getMetricsRegistryName());
         MeterRegistry registry = BackendRegistries.getNow(meterRegistryName);
 
         if (registry == null) {
@@ -118,14 +126,14 @@ public class ConfiguredDataVerticleMetrics implements DataVerticleMetrics {
             return DUMMY_IMPL;
         } else {
             DataVerticleMetrics metricsImpl = new DataVerticleMetricsImpl(registry);
-            return configureDataVericleMetrics(metricsConfig, metricsImpl);
+            return configureDataVerticleMetrics(metricsConfig, metricsImpl);
         }
     }
 
-    private static DataVerticleMetrics configureDataVericleMetrics(JsonObject metricsConfig,
+    private static DataVerticleMetrics configureDataVerticleMetrics(JsonObject metricsConfig,
             DataVerticleMetrics metricsImpl) {
 
-        int fieldNameSize = metricsConfig.containsKey(METER_REGISTRY_NAME) ? 2 : 1;
+        int fieldNameSize = metricsConfig.containsKey(METRICS_REGISTRY_NAME) ? 2 : 1;
         boolean activateAllMetrics = metricsConfig.size() == fieldNameSize;
         if (activateAllMetrics) {
             return metricsImpl;

@@ -46,6 +46,7 @@ public class MetricsEndpoint implements Endpoint {
     @Override
     public Future<Router> createEndpointRouter(Vertx vertx, String basePath, JsonObject config) {
         addRegistry(vertx);
-        return succeededFuture(createRouter(vertx, new PrometheusScrapingHandler(config.getString("registryName"))));
+        return succeededFuture(createRouter(vertx, new PrometheusScrapingHandler(
+                config.getString("registryName", NeonBee.get(vertx).getOptions().getMetricsRegistryName()))));
     }
 }
