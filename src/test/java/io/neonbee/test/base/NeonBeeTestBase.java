@@ -25,6 +25,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
+import org.jgroups.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -74,6 +75,7 @@ import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import io.vertx.micrometer.backends.BackendRegistries;
 
 @ExtendWith(VertxExtension.class)
 public class NeonBeeTestBase {
@@ -91,6 +93,8 @@ public class NeonBeeTestBase {
 
     private boolean isDummyServerVerticleDeployed;
 
+    private String randomMetricsRegistryName;
+
     @BeforeEach
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @SuppressWarnings("ReferenceEquality")
@@ -103,8 +107,14 @@ public class NeonBeeTestBase {
         workingDirPath = FileSystemHelper.createTempDirectory();
         provideWorkingDirectoryBuilder(testInfo, testContext).build(workingDirPath);
 
-        // create a default set of options for NeonBee and adapt them if necessary
+        // create a default set of options for NeonBee
         NeonBeeOptions.Mutable options = defaultOptions();
+
+        // by default use a random metrics registry name in tests
+        randomMetricsRegistryName = UUID.randomUUID().toString();
+        options.setMetricsRegistryName(randomMetricsRegistryName);
+
+        // adapt the options in tests if necessary
         adaptOptions(testInfo, options);
         options.setWorkingDirectory(workingDirPath);
 
@@ -185,6 +195,12 @@ public class NeonBeeTestBase {
     @AfterEach
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     void tearDown(Vertx vertx, VertxTestContext testContext) throws IOException {
+        // if the metrics registry is still the same random id generated in this test run and was not changed by the
+        // adaptOptions method, stop the metrics registry that was (likely) started by NeonBee
+        if (randomMetricsRegistryName.equals(neonBee.getOptions().getMetricsRegistryName())) {
+            BackendRegistries.stop(randomMetricsRegistryName);
+        }
+
         FileSystemHelper.deleteRecursive(vertx, workingDirPath).recover(throwable -> {
             if (throwable.getCause() instanceof DirectoryNotEmptyException) {
                 // especially on windows machines, open file handles sometimes cause an issue that the directory cannot

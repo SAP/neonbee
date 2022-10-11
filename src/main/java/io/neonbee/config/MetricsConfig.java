@@ -12,12 +12,12 @@ public class MetricsConfig {
     private boolean enabled;
 
     /**
-     * Creates a {@linkplain MicrometerRegistryConfig}.
+     * Creates a {@linkplain MetricsConfig}.
      */
     public MetricsConfig() {}
 
     /**
-     * Creates a {@linkplain MicrometerRegistryConfig} parsing a given JSON object.
+     * Creates a {@linkplain MetricsConfig} parsing a given JSON object.
      *
      * @param json the JSON object to parse
      */

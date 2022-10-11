@@ -253,8 +253,8 @@ public class NeonBee {
                 .setWorkerPoolSize(options.getWorkerPoolSize());
 
         CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
-        vertxOptions.setMetricsOptions(
-                new MicrometerMetricsOptions().setMicrometerRegistry(compositeMeterRegistry).setEnabled(true));
+        vertxOptions.setMetricsOptions(new MicrometerMetricsOptions().setRegistryName(options.getMetricsRegistryName())
+                .setMicrometerRegistry(compositeMeterRegistry).setEnabled(true));
 
         Future<VertxOptions> loadClusterManager = Future.future(p -> {
             if (options.isClustered()) {
