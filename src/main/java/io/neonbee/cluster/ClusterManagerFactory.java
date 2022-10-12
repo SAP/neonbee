@@ -31,7 +31,8 @@ public abstract class ClusterManagerFactory {
         @Override
         public Future<ClusterManager> create(NeonBeeOptions neonBeeOptions) {
             String effectiveConfig = getEffectiveConfig(neonBeeOptions);
-            return succeededFuture(new HazelcastClusterManager(new ClasspathXmlConfig(effectiveConfig)));
+            return succeededFuture(new HazelcastClusterManager(
+                    new ClasspathXmlConfig(getSystemClassLoader(), effectiveConfig, System.getProperties())));
         }
     };
 
