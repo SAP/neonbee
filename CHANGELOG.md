@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.16.1 (2022-10-12)
+
+### Bug Fixes
+
+- pass SystemClassLoader to cluster manager configuration ([ab258a7b](https://github.com/SAP/neonbee/commit/ab258a7bbf04da6bd85a5cf2b5dc046a854c8226))
+
+
 ## 0.16.0 (2022-10-11)
 
 ### Bug Fixes
