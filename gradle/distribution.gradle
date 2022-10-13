@@ -11,9 +11,8 @@ task coreJar(type: Jar) {
     destinationDirectory = file("${buildDir}")
 
     manifest {
-        attributes(
-            'Main-Class': "${mainClass}"
-        )
+        attributes 'Main-Class': "${mainClass}"
+        attributes 'Multi-Release': 'true' // see https://github.com/infinispan/infinispan-quarkus/issues/55#issuecomment-995027501
     }
 
     exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/NOTICE', 'META-INF/LICENSE'
@@ -44,6 +43,7 @@ shadowJar {
     destinationDirectory = file("${buildDir}")
     manifest {
         attributes 'Main-Class': "${mainClass}"
+        attributes 'Multi-Release': 'true' // see https://github.com/infinispan/infinispan-quarkus/issues/55#issuecomment-995027501
     }
     exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/NOTICE', 'META-INF/LICENSE', 'META-INF/DEPENDENCIES'
     archiveExtension = 'jar'
