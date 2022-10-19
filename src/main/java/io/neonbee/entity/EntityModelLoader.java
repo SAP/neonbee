@@ -19,11 +19,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.apache.olingo.commons.api.edm.Edm;
+import org.apache.olingo.commons.api.edm.EdmEntityContainer;
 import org.apache.olingo.server.api.ServiceMetadata;
 import org.apache.olingo.server.api.etag.ServiceMetadataETagSupport;
 import org.apache.olingo.server.core.MetadataParser;
@@ -187,26 +189,43 @@ class EntityModelLoader {
     }
 
     Future<Void> parseModel(String csnFile, byte[] csnPayload, Map<String, byte[]> associatedModels) {
-        return parseCsnModel(csnPayload)
-                .compose(cdsModel -> CompositeFuture
-                        .all(EntityModelDefinition.resolveEdmxPaths(Path.of(csnFile), cdsModel).stream()
-                                .map(Path::toString).map(path -> {
-                                    // we do not know if the path uses windows / unix path separators, try both!
-                                    return FileSystemHelper.getPathFromMap(associatedModels, path);
-                                }).map(this::parseEdmxModel).collect(Collectors.toList()))
-                        .onSuccess(compositeFuture -> {
-                            buildModelMap(cdsModel, compositeFuture.<ServiceMetadata>list());
-                        }))
-                .mapEmpty();
+        return parseCsnModel(csnPayload).compose(cdsModel -> CompositeFuture
+                .all(EntityModelDefinition.resolveEdmxPaths(Path.of(csnFile), cdsModel).stream().map(Path::toString)
+                        .map(path -> {
+                            // we do not know if the path uses windows / unix path separators, try both!
+                            return FileSystemHelper.getPathFromMap(associatedModels, path);
+                        }).map(this::parseEdmxModel).collect(Collectors.toList()))
+                .compose(compositeFuture -> buildModelMap(cdsModel, compositeFuture.list()))).mapEmpty();
     }
 
-    private void buildModelMap(CdsModel cdsModel, List<ServiceMetadata> edmxModels) {
-        Map<String, ServiceMetadata> edmxMap = edmxModels.stream().collect(Collectors.toMap(
-                serviceMetaData -> serviceMetaData.getEdm().getEntityContainer().getNamespace(), Function.identity()));
-        EntityModel entityModel = EntityModel.of(cdsModel, edmxMap);
-        String namespace = EntityModelDefinition.getNamespace(cdsModel);
-        models.put(namespace, entityModel);
-        LOGGER.info("Entity model of model with schema namespace {} was added the entity model map.", namespace);
+    private Future<Void> buildModelMap(CdsModel cdsModel, List<ServiceMetadata> edmxModels) {
+        if (cdsModel == null || edmxModels == null) {
+            return failedFuture("Cannot build model map. Model is null.");
+        }
+
+        Map<String, ServiceMetadata> edmxMap = new HashMap<>();
+        for (ServiceMetadata serviceMetaData : edmxModels) {
+            Optional<EdmEntityContainer> entityContainer =
+                    Optional.ofNullable(serviceMetaData.getEdm()).map(Edm::getEntityContainer);
+            if (entityContainer.isEmpty()) {
+                return failedFuture("Cannot build model map. Entity Container is empty.");
+            }
+            edmxMap.put(entityContainer.get().getNamespace(), serviceMetaData);
+        }
+
+        return succeededFuture().map(v -> EntityModelDefinition.getNamespace(cdsModel)).compose(namespace -> {
+
+            EntityModel entityModel;
+            try {
+                entityModel = EntityModel.of(cdsModel, edmxMap);
+            } catch (NullPointerException e) {
+                return failedFuture("Cannot build model map. entity model is empty. " + e.getMessage());
+            }
+
+            models.put(namespace, entityModel);
+            LOGGER.info("Entity model of model with schema namespace {} was added the entity model map.", namespace);
+            return succeededFuture();
+        });
     }
 
     /**
