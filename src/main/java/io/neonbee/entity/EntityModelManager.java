@@ -18,6 +18,7 @@ import com.google.common.base.Functions;
 
 import io.neonbee.NeonBee;
 import io.neonbee.internal.SharedDataAccessor;
+import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -38,6 +39,8 @@ public class EntityModelManager {
     private static final ThreadLocal<OData> THREAD_LOCAL_ODATA = ThreadLocal.withInitial(OData::newInstance);
 
     private static final DeliveryOptions LOCAL_DELIVERY = new DeliveryOptions().setLocalOnly(true);
+
+    private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     /**
      * @deprecated remove with {@link #unregisterModels(Vertx, String)}
@@ -357,11 +360,18 @@ public class EntityModelManager {
      * @return a {@link Future} to a map from schema namespace to EntityModel
      */
     public Future<Map<String, EntityModel>> reloadModels() {
+        LOGGER.info("Reload models");
         return EntityModelLoader.load(neonBee.getVertx(), externalModelDefinitions).onSuccess(models -> {
             bufferedModels = Collections.unmodifiableMap(models);
 
             // publish the event local only! models must be present locally on very instance in a cluster!
             neonBee.getVertx().eventBus().publish(EVENT_BUS_MODELS_LOADED_ADDRESS, null, LOCAL_DELIVERY);
+
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info("Reloading models succeeded, size of new buffered models map {}", models.size());
+            }
+        }).onFailure(throwable -> {
+            LOGGER.error("Failed to reload models", throwable);
         }).map(Functions.forSupplier(() -> bufferedModels));
     }
 
@@ -411,7 +421,8 @@ public class EntityModelManager {
      * @return a {@link Future} to a map from schema namespace to EntityModel
      */
     public Future<Map<String, EntityModel>> registerModels(EntityModelDefinition modelDefinition) {
-        return externalModelDefinitions.add(modelDefinition) ? reloadModels() : getSharedModels();
+        return modelDefinition != null && !modelDefinition.getCSNModelDefinitions().isEmpty()
+                && externalModelDefinitions.add(modelDefinition) ? reloadModels() : getSharedModels();
     }
 
     /**
