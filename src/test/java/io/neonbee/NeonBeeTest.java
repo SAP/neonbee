@@ -41,8 +41,10 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -81,6 +83,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
+@Isolated("Some of the methods in this test class run clustered and use the FakeClusterManager for it. The FakeClusterManager uses a static state and can therefore not be run with other clustered tests.")
 class NeonBeeTest extends NeonBeeTestBase {
     private Vertx vertx;
 
@@ -176,12 +179,13 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Vert.x should start in non-clustered mode")
+    @Tag(DOESNT_REQUIRE_NEONBEE)
     void testStandaloneInitialization(VertxTestContext testContext) {
-        NeonBeeOptions options = defaultOptions().clearActiveProfiles();
-        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options),
-                ClusterManager.FAKE.factory(), options, null)
+        NeonBeeOptions options = defaultOptions().clearActiveProfiles().addActiveProfile(NO_WEB);
+        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options)
+                .onSuccess(newVertx -> vertx = newVertx), ClusterManager.FAKE.factory(), options, null)
                 .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
-                    assertThat((vertx = neonBee.getVertx()).isClustered()).isFalse();
+                    assertThat(neonBee.getVertx().isClustered()).isFalse();
                     testContext.completeNow();
                 })));
     }
@@ -189,12 +193,13 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Vert.x should start in clustered mode")
+    @Tag(DOESNT_REQUIRE_NEONBEE)
     void testClusterInitialization(VertxTestContext testContext) {
-        NeonBeeOptions options = defaultOptions().setClustered(true);
-        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options),
-                ClusterManager.FAKE.factory(), options, null)
+        NeonBeeOptions options = defaultOptions().clearActiveProfiles().addActiveProfile(NO_WEB).setClustered(true);
+        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options)
+                .onSuccess(newVertx -> vertx = newVertx), ClusterManager.FAKE.factory(), options, null)
                 .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
-                    assertThat((vertx = neonBee.getVertx()).isClustered()).isTrue();
+                    assertThat(neonBee.getVertx().isClustered()).isTrue();
                     testContext.completeNow();
                 })));
     }
@@ -222,12 +227,12 @@ class NeonBeeTest extends NeonBeeTestBase {
 
     @Test
     @DisplayName("NeonBee should register all cluster + default health checks if started clustered")
+    @Tag(DOESNT_REQUIRE_NEONBEE)
     void testRegisterClusterHealthChecks(VertxTestContext testContext) {
-        NeonBeeOptions options = defaultOptions().setClustered(true).addActiveProfile(NO_WEB);
-        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options),
-                HAZELCAST.factory(), options, null)
+        NeonBeeOptions options = defaultOptions().clearActiveProfiles().addActiveProfile(NO_WEB).setClustered(true);
+        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options)
+                .onSuccess(newVertx -> vertx = newVertx), HAZELCAST.factory(), options, null)
                 .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
-                    vertx = neonBee.getVertx(); // ensure new Vert.x instance gets closed in afterEach
                     Map<String, HealthCheck> registeredChecks = neonBee.getHealthCheckRegistry().getHealthChecks();
                     assertThat(registeredChecks.size()).isEqualTo(3);
                     assertThat(registeredChecks.containsKey(HazelcastClusterHealthCheck.NAME)).isTrue();
@@ -341,6 +346,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Timeout(timeUnit = TimeUnit.SECONDS, value = 10)
     @DisplayName("NeonBee should close only self-owned Vert.x instances if boot fails")
     @SuppressWarnings("PMD.UnusedFormalParameter")
+    @Tag(DOESNT_REQUIRE_NEONBEE)
     void checkTestCloseVertxOnError(String description, boolean ownVertx, Future<Void> result,
             VertxTestContext testContext) {
         try (MockedStatic<NeonBee> mocked = mockStatic(NeonBee.class)) {
@@ -358,7 +364,8 @@ class NeonBeeTest extends NeonBeeTestBase {
                 vertxFunction = (vertxOptions) -> succeededFuture(failingVertxMock);
             }
 
-            NeonBee.create(vertxFunction, HAZELCAST.factory(), defaultOptions().clearActiveProfiles(), null)
+            NeonBee.create(vertxFunction, HAZELCAST.factory(),
+                    defaultOptions().clearActiveProfiles().addActiveProfile(NO_WEB), null)
                     .onComplete(testContext.failing(throwable -> {
                         testContext.verify(() -> {
                             // assert that the original message why the boot failed to start is propagated

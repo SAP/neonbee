@@ -4,6 +4,7 @@ import static ch.qos.logback.classic.util.ContextInitializer.CONFIG_FILE_PROPERT
 import static io.neonbee.test.helper.OptionsHelper.options;
 import static java.lang.System.setProperty;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -16,6 +17,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.DefaultCacheManager;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
@@ -37,6 +41,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.impl.VertxImpl;
 import io.vertx.core.spi.cluster.ClusterManager;
+import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
@@ -144,6 +149,7 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
 
     @Override
     public void afterEach(ExtensionContext context) throws Exception {
+        FakeClusterManager.reset();
         // We may wait on test contexts from @AfterEach methods
         joinActiveTestContexts(context);
     }
@@ -276,32 +282,66 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
             CountDownLatch latch = new CountDownLatch(1);
             AtomicReference<Throwable> errorBox = new AtomicReference<>();
 
-            // additional logic for tests, due to Hazelcast clusters tend to get stuck, after test execution finishes
+            // additional logic for tests, due to Hazelcast / Infinispan clusters tend to get stuck, after test
+            // execution finishes, thus we forcefully will terminate the clusters at some point in time
             Vertx vertx = neonBee.getVertx();
-            if (vertx instanceof VertxImpl) {
-                ClusterManager clusterManager = ((VertxImpl) vertx).getClusterManager();
-                if (clusterManager instanceof HazelcastClusterManager) {
-                    LifecycleService clusterLifecycleService =
-                            ((HazelcastClusterManager) clusterManager).getHazelcastInstance().getLifecycleService();
-                    Executors.newSingleThreadScheduledExecutor(runnable -> {
-                        Thread thread = new Thread(runnable, "neonbee-cluster-terminator");
-                        thread.setDaemon(true);
-                        return thread;
-                    }).schedule(() -> {
+            ClusterManager clusterManager = vertx instanceof VertxImpl ? ((VertxImpl) vertx).getClusterManager() : null;
+            if (clusterManager != null) {
+                Executors.newSingleThreadScheduledExecutor(runnable -> {
+                    Thread thread = new Thread(runnable, "neonbee-cluster-terminator");
+                    thread.setDaemon(true);
+                    return thread;
+                }).schedule(() -> {
+                    if (clusterManager instanceof HazelcastClusterManager) {
+                        LifecycleService clusterLifecycleService =
+                                ((HazelcastClusterManager) clusterManager).getHazelcastInstance().getLifecycleService();
+
                         if (clusterLifecycleService.isRunning()) {
                             LOGGER.warn("Forcefully terminating Hazelcast cluster after test");
                         }
 
                         // terminate the cluster in any case, if already terminated, this call will do nothing
                         clusterLifecycleService.terminate();
-                    }, 10, TimeUnit.SECONDS);
-                }
+                    } else if (clusterManager instanceof InfinispanClusterManager) {
+                        BasicCacheContainer cacheContainer =
+                                ((InfinispanClusterManager) clusterManager).getCacheContainer();
+
+                        if (cacheContainer instanceof DefaultCacheManager) {
+                            DefaultCacheManager cacheManager = (DefaultCacheManager) cacheContainer;
+
+                            if (!ComponentStatus.TERMINATED.equals(cacheManager.getStatus())) {
+                                LOGGER.warn("Forcefully terminating Infinispan cluster after test");
+                            }
+
+                            try {
+                                cacheManager.close();
+                            } catch (IOException e) {
+                                LOGGER.warn("Failed to terminate Infinispan cache container / manager", e);
+                            }
+                        } else {
+                            LOGGER.warn("Unknown Infinispan cache container type");
+                        }
+                    } else if (clusterManager instanceof FakeClusterManager) {
+                        FakeClusterManager.reset();
+                    }
+                }, 10, TimeUnit.SECONDS);
             }
 
-            neonBee.getVertx().close(ar -> {
-                if (ar.failed()) {
-                    errorBox.set(ar.cause());
+            neonBee.getVertx().close().onComplete(result -> {
+                if (result.failed()) {
+                    errorBox.set(result.cause());
                 }
+
+                // for Infinispan we create the DefaultCacheManager, thus let's shut it down as well
+                if (clusterManager instanceof InfinispanClusterManager && ((InfinispanClusterManager) clusterManager)
+                        .getCacheContainer() instanceof DefaultCacheManager) {
+                    try {
+                        ((DefaultCacheManager) ((InfinispanClusterManager) clusterManager).getCacheContainer()).close();
+                    } catch (IOException e) {
+                        LOGGER.warn("Failed to close Infinispan cluster manager after test", e);
+                    }
+                }
+
                 latch.countDown();
             });
 

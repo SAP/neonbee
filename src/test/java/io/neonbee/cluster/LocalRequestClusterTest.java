@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeExtension;
@@ -26,6 +27,7 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(NeonBeeExtension.class)
+@Isolated("Some of the methods in this test class run clustered and use the FakeClusterManager for it. The FakeClusterManager uses a static state and can therefore not be run with other clustered tests.")
 class LocalRequestClusterTest {
     private static final DataVerticle<JsonObject> LOCAL_TARGET_VERTICLE = new DataVerticle<>() {
         @Override

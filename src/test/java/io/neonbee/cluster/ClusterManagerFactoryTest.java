@@ -4,9 +4,11 @@ import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.cluster.ClusterManagerFactory.HAZELCAST_FACTORY;
 import static io.neonbee.cluster.ClusterManagerFactory.INFINISPAN_FACTORY;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.infinispan.manager.DefaultCacheManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +19,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.NeonBeeOptions.Mutable;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
 import io.vertx.junit5.Timeout;
@@ -63,13 +66,21 @@ class ClusterManagerFactoryTest {
     @ParameterizedTest(name = "{index}: for {2}")
     @MethodSource("withClusterManagers")
     @DisplayName("Test ClusterManagerFactory")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
-    void testDefaultFactories(ClusterManagerFactory cmf, String defaultConfig, Class clusterManagerImpl,
+    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
+    void testDefaultFactories(ClusterManagerFactory cmf, String defaultConfig, Class clusterManagerImpl, Vertx vertx,
             VertxTestContext testContext) {
         assertThat(cmf.getDefaultConfig()).isEqualTo(defaultConfig);
 
         cmf.create(new Mutable()).onComplete(testContext.succeeding(cm -> {
             testContext.verify(() -> assertThat(cm).isInstanceOf(clusterManagerImpl));
+            // the INFINISPAN_FACTORY creates a DefaultCacheManager, which creates Threads that we have to stop!
+            if (cm instanceof InfinispanClusterManager) {
+                try {
+                    ((DefaultCacheManager) ((InfinispanClusterManager) cm).getCacheContainer()).close();
+                } catch (IOException e) {
+                    testContext.failNow(e);
+                }
+            }
             testContext.completeNow();
         }));
     }
