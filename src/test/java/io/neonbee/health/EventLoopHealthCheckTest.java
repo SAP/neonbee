@@ -5,7 +5,6 @@ import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 
 import java.util.Optional;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -81,15 +80,16 @@ class EventLoopHealthCheckTest {
      * @param vertx    the current Vert.x instance
      * @param runnable the runnable which contains the workload that should be executed while the event-loop is blocked
      */
+    @SuppressWarnings("FutureReturnValueIgnored")
     private static void blockEventLoopThreads(Vertx vertx, Runnable runnable) {
         ScheduledExecutorService executorService =
                 Executors.newSingleThreadScheduledExecutor(Executors.defaultThreadFactory());
-        Future<?> unusedVerificationFuture = executorService.schedule(runnable, 100, TimeUnit.MILLISECONDS);
+        executorService.schedule(runnable, 100, TimeUnit.MILLISECONDS);
 
         Context context = vertx.getOrCreateContext();
         AtomicInteger scheduleCounter = new AtomicInteger(10);
-        Future<?> unusedBlockingFuture = executorService.scheduleAtFixedRate(() -> {
-            if (scheduleCounter.get() > 0) {
+        executorService.scheduleAtFixedRate(() -> {
+            if (scheduleCounter.getAndDecrement() > 0) {
                 context.runOnContext(unused -> {
                     try {
                         Thread.sleep(100L); // blocking event-loop thread
@@ -97,7 +97,6 @@ class EventLoopHealthCheckTest {
                         throw new RuntimeException(e);
                     }
                 });
-                scheduleCounter.getAndDecrement();
             } else {
                 executorService.shutdown();
             }

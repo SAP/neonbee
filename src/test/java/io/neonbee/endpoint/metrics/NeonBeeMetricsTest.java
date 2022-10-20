@@ -2,117 +2,99 @@ package io.neonbee.endpoint.metrics;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.TestInfo;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.neonbee.NeonBee;
-import io.neonbee.NeonBeeOptions;
+import io.neonbee.NeonBeeOptions.Mutable;
+import io.neonbee.NeonBeeProfile;
 import io.neonbee.config.EndpointConfig;
+import io.neonbee.config.ServerConfig;
 import io.neonbee.endpoint.Endpoint;
+import io.neonbee.internal.verticle.ServerVerticle;
+import io.neonbee.test.base.NeonBeeTestBase;
+import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
-import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.micrometer.backends.BackendRegistries;
 
-@ExtendWith(VertxExtension.class)
 @SuppressWarnings("PMD.AvoidUnnecessaryTestClassesModifier")
-public class NeonBeeMetricsTest {
-    private static final int PORT = 10808;
-
-    private static final String HOST = "localhost";
-
+public class NeonBeeMetricsTest extends NeonBeeTestBase {
     private static final String TEST_ENDPOINT_URI = "/testendpoint/";
 
     private static final String METRICS_ENDPOINT_URI = "/metrics/";
 
-    private static TestEndpointHandler testEndpointHandler;
-
-    private static final int OK = HttpResponseStatus.OK.code();
-
-    @BeforeEach
-    void init() {
-        testEndpointHandler = new TestEndpointHandler();
+    @Override
+    protected void adaptOptions(TestInfo testInfo, Mutable options) {
+        options.clearActiveProfiles().addActiveProfile(NeonBeeProfile.WEB);
     }
 
-    @AfterEach
-    @SuppressWarnings("PMD.NullAssignment")
-    void reset() {
-        testEndpointHandler = null;
+    @Override
+    protected WorkingDirectoryBuilder provideWorkingDirectoryBuilder(TestInfo testInfo, VertxTestContext testContext) {
+        return super.provideWorkingDirectoryBuilder(testInfo, testContext).setCustomTask(root -> {
+            DeploymentOptions opts = WorkingDirectoryBuilder.readDeploymentOptions(ServerVerticle.class, root);
+            EndpointConfig epc1 = new EndpointConfig().setType(MetricsEndpoint.class.getName());
+            EndpointConfig epc2 = new EndpointConfig().setType(TestEndpoint.class.getName());
+            ServerConfig sc = new ServerConfig(opts.getConfig()).setEndpointConfigs(List.of(epc1, epc2));
+            opts.setConfig(sc.toJson());
+            WorkingDirectoryBuilder.writeDeploymentOptions(ServerVerticle.class, opts, root);
+        });
     }
 
     @Test
-    @Timeout(value = 1, timeUnit = TimeUnit.MINUTES)
-    void testCustomMetric(Vertx vertx, VertxTestContext context) {
-        Checkpoint prometheusCheckpoint = context.checkpoint(1);
-
-        NeonBeeOptions.Mutable mutable = new NeonBeeOptions.Mutable();
-        mutable.setServerPort(PORT);
-        mutable.setIgnoreClassPath(true);
-        mutable.setWorkingDirectory(Path.of("src", "test", "resources", "io", "neonbee", "endpoint", "metrics"));
-
-        NeonBee.create(mutable).onComplete(context.succeeding(event -> httpGet(vertx, TEST_ENDPOINT_URI)
-                .onComplete(response -> context.succeeding(
-                        httpResponse -> context.verify(() -> assertThat(response.result().statusCode()).isEqualTo(OK))))
-                .compose(
-                        response -> httpGet(vertx, METRICS_ENDPOINT_URI).onComplete(context.succeeding(httpResponse -> {
-                            context.verify(() -> assertThat(httpResponse.statusCode()).isEqualTo(OK));
-
-                            httpResponse.bodyHandler(bodyBuffer -> context.verify(() -> {
-                                assertThat(bodyBuffer.toString())
-                                        .contains("TestEndpointCounter_total{TestTag1=\"TestValue\",} 1.0");
-                                prometheusCheckpoint.flag();
-                            }));
-                        })))));
-    }
-
-    static Future<HttpClientResponse> httpGet(Vertx vertx, String requestUri) {
-        return vertx.createHttpClient().request(HttpMethod.GET, PORT, HOST, requestUri)
-                .compose(HttpClientRequest::send);
+    @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
+    void testCustomMetric(Vertx vertx, VertxTestContext testContext) {
+        createRequest(HttpMethod.GET, TEST_ENDPOINT_URI).send()
+                .onComplete(testContext.succeeding(httpResponse -> testContext
+                        .verify(() -> assertThat(httpResponse.statusCode()).isEqualTo(HttpResponseStatus.OK.code()))))
+                .compose(response -> createRequest(HttpMethod.GET, METRICS_ENDPOINT_URI).send()
+                        .onComplete(testContext.succeeding(httpResponse -> {
+                            testContext.verify(() -> assertThat(httpResponse.statusCode())
+                                    .isEqualTo(HttpResponseStatus.OK.code()));
+                            assertThat(httpResponse.bodyAsString())
+                                    .contains("TestEndpointCounter_total{TestTag1=\"TestValue\",} 1.0");
+                            testContext.completeNow();
+                        })));
     }
 
     public static class TestEndpoint implements Endpoint {
-
         @Override
         public EndpointConfig getDefaultConfig() {
-            return new EndpointConfig().setType(MetricsEndpoint.class.getName()).setBasePath(TEST_ENDPOINT_URI);
+            return new EndpointConfig().setType(TestEndpoint.class.getName()).setBasePath(TEST_ENDPOINT_URI);
         }
 
         @Override
         public Future<Router> createEndpointRouter(Vertx vertx, String basePath, JsonObject config) {
-            return Future.succeededFuture(Endpoint.createRouter(vertx, testEndpointHandler));
+            return Future.succeededFuture(Endpoint.createRouter(vertx, new TestEndpointHandler()));
         }
     }
 
     private static class TestEndpointHandler implements Handler<RoutingContext> {
-
         @Override
         public void handle(RoutingContext rc) {
-            MeterRegistry backendRegistry = BackendRegistries.getDefaultNow();
+            MeterRegistry backendRegistry =
+                    BackendRegistries.getNow(NeonBee.get(rc.vertx()).getOptions().getMetricsRegistryName());
             double count = Double.NaN;
             if (backendRegistry != null) {
                 Counter counter = backendRegistry.counter("TestEndpointCounter", "TestTag1", "TestValue");
                 counter.increment();
                 count = counter.count();
             }
-            rc.response().setStatusCode(OK).end(Double.toString(count));
+            rc.response().setStatusCode(HttpResponseStatus.OK.code()).end(Double.toString(count));
         }
     }
 }

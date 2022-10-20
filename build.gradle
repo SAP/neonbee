@@ -201,8 +201,7 @@ test {
     // Is required for ReflectionsHelper
     jvmArgs += ['--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED']
 
-    // deactivate parallel execution of tests temporary until parallel execution works again
-    if (false && !org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX()) {
+    if (!org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX()) {
         systemProperties = [
             'junit.jupiter.execution.parallel.enabled' : 'true',
             'junit.jupiter.execution.parallel.mode.default' : 'concurrent',
