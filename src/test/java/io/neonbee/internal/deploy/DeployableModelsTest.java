@@ -32,6 +32,7 @@ import io.neonbee.internal.scanner.ClassPathScanner;
 import io.neonbee.test.helper.ReflectionHelper;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 
 class DeployableModelsTest {
     @Test
@@ -53,7 +54,8 @@ class DeployableModelsTest {
     @Test
     @DisplayName("test deploy and undeploy")
     void testDeployUndeploy() throws NoSuchFieldException, IllegalAccessException {
-        EntityModelDefinition definition = new EntityModelDefinition(Map.of(), Map.of());
+        EntityModelDefinition definition = new EntityModelDefinition(
+                Map.of("okay", new JsonObject().put("namespace", "test").toBuffer().getBytes()), Map.of());
         DeployableModels deployable = new DeployableModels(definition);
 
         Vertx vertxMock = defaultVertxMock();

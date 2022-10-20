@@ -31,6 +31,8 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.shareddata.Lock;
+import io.vertx.core.shareddata.SharedData;
 import io.vertx.micrometer.impl.VertxMetricsFactoryImpl;
 
 public final class NeonBeeMockHelper {
@@ -146,6 +148,17 @@ public final class NeonBeeMockHelper {
         };
         doAnswer(executeFutureAnswer).when(vertxMock).executeBlocking(any(), anyBoolean());
         doAnswer(executeFutureAnswer).when(vertxMock).executeBlocking(any());
+
+        // mock shared data
+        SharedData sharedDataMock = mock(SharedData.class);
+        when(vertxMock.sharedData()).thenReturn(sharedDataMock);
+
+        // mock local locks (and always grant them)
+        when(sharedDataMock.getLocalLock(any())).thenReturn(succeededFuture(mock(Lock.class)));
+        doAnswer(invocation -> {
+            invocation.<Handler<AsyncResult<Lock>>>getArgument(1).handle(succeededFuture(mock(Lock.class)));
+            return null;
+        }).when(sharedDataMock).getLocalLock(any(), any());
 
         return vertxMock;
     }
