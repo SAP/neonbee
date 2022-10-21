@@ -10,8 +10,6 @@ import static io.neonbee.internal.helper.FunctionalHelper.entryFunction;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static io.vertx.core.Future.succeededFuture;
-import static java.net.URLDecoder.decode;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.util.Comparator;
 import java.util.List;
@@ -466,7 +464,7 @@ public class ODataV4Endpoint implements Endpoint {
             fullQualifiedName = entityName != null ? schemaNamespace + '.' + entityName : null;
 
             // construct the full request path and URI, the query is provided by the request
-            requestQuery = decode(nullToEmpty(request.query()), UTF_8);
+            requestQuery = nullToEmpty(request.query());
             requestUri = hostUri + (this.requestPath = basePath + schemaNamespace + resourcePath)
                     + (requestQuery.isEmpty() ? EMPTY : "?" + requestQuery);
         }

@@ -1,6 +1,9 @@
 package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
+import static com.google.common.base.Strings.nullToEmpty;
 import static io.neonbee.entity.EntityVerticle.requestEntity;
+import static java.net.URLDecoder.decode;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.util.Optional;
 
@@ -53,7 +56,7 @@ public final class ProcessorHelper {
         // the uriPath without /odata root path and without query path
         String uriPath = "/" + request.getRawServiceResolutionUri() + request.getRawODataPath();
         // the raw query path
-        String rawQueryPath = request.getRawQueryPath();
+        String rawQueryPath = decode(nullToEmpty(request.getRawQueryPath()), UTF_8);
         return new DataQuery(action, uriPath, rawQueryPath, request.getAllHeaders(), body).addHeader("X-HTTP-Method",
                 request.getMethod().name());
     }
