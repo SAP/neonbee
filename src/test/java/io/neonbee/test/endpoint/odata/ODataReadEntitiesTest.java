@@ -178,4 +178,13 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
         assertOData(requestOData(new ODataRequest(looseFQN).setCount()), "6", testContext)
                 .onComplete(testContext.succeedingThenComplete());
     }
+
+    @Test
+    @Timeout(value = 3, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("test query encoding with special characters")
+    void testCountWithFilter(VertxTestContext testContext) {
+        ODataRequest oDataRequest = new ODataRequest(TEST_ENTITY_SET_FQN);
+        oDataRequest.setQuery(Map.of("$filter", "KeyPropertyString eq '你好ä'")).setCount();
+        assertOData(requestOData(oDataRequest), "0", testContext).onComplete(testContext.succeedingThenComplete());
+    }
 }
