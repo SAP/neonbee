@@ -616,19 +616,18 @@ public class NeonBee {
         try {
             // unfortunately the addCloseHook method is public, but hidden in VertxImpl. As we need to know when the
             // instance shuts down, register a close hook using reflections (might fail due to a SecurityManager)
-            vertx.getClass().getMethod("addCloseHook", Closeable.class).invoke(vertx, (Closeable) handler -> {
+            vertx.getClass().getMethod("addCloseHook", Closeable.class).invoke(vertx, (Closeable) completion -> {
                 /*
                  * Called when Vert.x instance is closed, perform shut-down operations here
                  */
-                handler.handle(
-                        hookRegistry.executeHooks(HookType.BEFORE_SHUTDOWN).compose(shutdownHooksExecutionOutcomes -> {
-                            if (shutdownHooksExecutionOutcomes.failed()) {
-                                shutdownHooksExecutionOutcomes.<Future>list().stream().filter(Future::failed).forEach(
-                                        future -> LOGGER.error("Shutdown hook execution failed", future.cause())); // NOPMD
-                            }
-                            NEONBEE_INSTANCES.remove(vertx);
-                            return succeededFuture();
-                        }).mapEmpty());
+                hookRegistry.executeHooks(HookType.BEFORE_SHUTDOWN).onSuccess(shutdownHooksExecutionOutcomes -> {
+                    if (shutdownHooksExecutionOutcomes.failed()) {
+                        shutdownHooksExecutionOutcomes.<Future>list().stream().filter(Future::failed)
+                                .forEach(future -> LOGGER.error("Shutdown hook execution failed", future.cause())); // NOPMD
+                    }
+
+                    NEONBEE_INSTANCES.remove(vertx);
+                }).<Void>mapEmpty().onComplete(completion);
             });
         } catch (Exception e) {
             LOGGER.warn("Failed to register NeonBee close hook to Vert.x", e);
