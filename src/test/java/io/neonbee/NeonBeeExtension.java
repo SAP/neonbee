@@ -26,12 +26,14 @@ import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
 import org.junit.jupiter.api.extension.ExtensionContext.Store;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +52,21 @@ import io.vertx.test.fakecluster.FakeClusterManager;
 @SuppressWarnings({ "rawtypes", "PMD.GodClass" })
 public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionCallback, AfterTestExecutionCallback,
         BeforeEachCallback, AfterEachCallback, BeforeAllCallback, AfterAllCallback {
+
+    /**
+     * The {@link TestBase} is a little syntax sugar for test classes, that are dealing with clustered tests. This class
+     * essentially wraps two things together and thusly decreases the risk of making a mistake:
+     * <ol>
+     * <li>Cluster tests should always run isolated. Thus the {@link TestBase} is {@link Isolated}.</li>
+     * <li>For clustered tests it is recommended to use the {@link NeonBeeExtension} in order to initialize NeonBee
+     * instances in the cluster. This test base implements the extension out of the box.</li>
+     * </ol>
+     */
+    @Isolated("Clustered NeonBee tests must always run isolated. The default FakeClusterManager has a static state and multiple real cluster manager should never run side-by-side for multiple tests to avoid interfering")
+    @ExtendWith(NeonBeeExtension.class)
+    public static class TestBase {
+        // nothing to add here, everything else is to be configured via the NeonBeeExtension
+    }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NeonBeeExtension.class);
 

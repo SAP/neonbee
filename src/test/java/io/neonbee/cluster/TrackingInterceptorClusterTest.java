@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -34,9 +33,8 @@ import io.vertx.core.Future;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-@ExtendWith({ NeonBeeExtension.class, MockitoExtension.class })
-@Isolated("Some of the methods in this test class run clustered and use the FakeClusterManager for it. The FakeClusterManager uses a static state and can therefore not be run with other clustered tests.")
-class TrackingInterceptorClusterTest {
+@ExtendWith({ MockitoExtension.class })
+class TrackingInterceptorClusterTest extends NeonBeeExtension.TestBase {
 
     @Mock
     private TrackingDataHandlingStrategy strategy;
