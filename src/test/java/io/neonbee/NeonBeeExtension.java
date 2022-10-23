@@ -4,6 +4,7 @@ import static ch.qos.logback.classic.util.ContextInitializer.CONFIG_FILE_PROPERT
 import static io.neonbee.test.helper.OptionsHelper.options;
 import static java.lang.System.setProperty;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
@@ -19,7 +20,7 @@ import java.util.function.Supplier;
 
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
@@ -159,14 +160,14 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
 
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
-        FakeClusterManager.reset();
+        FakeClusterManager.reset(); // better safe than sorry
         // We may wait on test contexts from @BeforeAll methods
         joinActiveTestContexts(context);
     }
 
     @Override
     public void afterEach(ExtensionContext context) throws Exception {
-        FakeClusterManager.reset();
+        FakeClusterManager.reset(); // better safe than sorry
         // We may wait on test contexts from @AfterEach methods
         joinActiveTestContexts(context);
     }
@@ -236,7 +237,6 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
      *
      */
     private static class ScopedObject<T> implements Supplier<T>, ExtensionContext.Store.CloseableResource {
-
         private final T object;
 
         private final ThrowingConsumer<T> cleaner;
@@ -323,24 +323,25 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
                         BasicCacheContainer cacheContainer =
                                 ((InfinispanClusterManager) clusterManager).getCacheContainer();
 
-                        if (cacheContainer instanceof DefaultCacheManager) {
-                            DefaultCacheManager cacheManager = (DefaultCacheManager) cacheContainer;
-
-                            if (!ComponentStatus.TERMINATED.equals(cacheManager.getStatus())) {
-                                LOGGER.warn("Forcefully terminating Infinispan cluster after test");
+                        if (cacheContainer instanceof EmbeddedCacheManager) {
+                            if (!ComponentStatus.TERMINATED
+                                    .equals(((EmbeddedCacheManager) cacheContainer).getStatus())) {
+                                LOGGER.warn("Forcefully terminating Infinispan cache manager after test");
                             }
 
+                            // terminate the cluster in any case, if already terminated, this call will do nothing
                             try {
-                                cacheManager.close();
+                                ((Closeable) cacheContainer).close();
                             } catch (IOException e) {
-                                LOGGER.warn("Failed to terminate Infinispan cache container / manager", e);
+                                LOGGER.warn("Failed to close Infinispan cluster manager after test", e);
                             }
-                        } else {
-                            LOGGER.warn("Unknown Infinispan cache container type");
+                        } else if (cacheContainer != null) {
+                            LOGGER.warn("Unknown Infinispan cache container type {}, cannot check for termination",
+                                    cacheContainer.getClass());
                         }
-                    } else if (clusterManager instanceof FakeClusterManager) {
-                        FakeClusterManager.reset();
                     }
+                    // do not reset the FakeClusterManager here, as 10 seconds after test, another test could already be
+                    // using another instance of the FakeClusterManager, which accesses the same static variables
                 }, 10, TimeUnit.SECONDS);
             }
 
@@ -349,14 +350,9 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
                     errorBox.set(result.cause());
                 }
 
-                // for Infinispan we create the DefaultCacheManager, thus let's shut it down as well
-                if (clusterManager instanceof InfinispanClusterManager && ((InfinispanClusterManager) clusterManager)
-                        .getCacheContainer() instanceof DefaultCacheManager) {
-                    try {
-                        ((DefaultCacheManager) ((InfinispanClusterManager) clusterManager).getCacheContainer()).close();
-                    } catch (IOException e) {
-                        LOGGER.warn("Failed to close Infinispan cluster manager after test", e);
-                    }
+                // if we run with a FakeClusterManager we need to reset it after the test
+                if (clusterManager instanceof FakeClusterManager) {
+                    FakeClusterManager.reset();
                 }
 
                 latch.countDown();

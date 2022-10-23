@@ -64,6 +64,7 @@ import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
@@ -76,6 +77,7 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.micrometer.backends.BackendRegistries;
+import io.vertx.test.fakecluster.FakeClusterManager;
 
 @ExtendWith(VertxExtension.class)
 public class NeonBeeTestBase {
@@ -208,6 +210,12 @@ public class NeonBeeTestBase {
         if (testInfo.getTags().contains(DOESNT_REQUIRE_NEONBEE)) {
             testContext.completeNow();
             return;
+        }
+
+        // in case we had run in clustered mode and used a FakeClusterManager, we will have to reset it
+        if (neonBee.getOptions().isClustered() && vertx instanceof VertxInternal
+                && ((VertxInternal) vertx).getClusterManager() instanceof FakeClusterManager) {
+            FakeClusterManager.reset();
         }
 
         // if the metrics registry is still the same random id generated in this test run and was not changed by the
