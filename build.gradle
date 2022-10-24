@@ -57,10 +57,10 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-health-check', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-infinispan', version: vertx_version
 
-    def jackson_version = '2.13.3'
+    def jackson_version = '2.13.4'
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jackson_version
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jackson_version
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.2'
 
     def olingo_version = '4.9.0'
     implementation(group: 'org.apache.olingo', name: 'odata-server-core', version: olingo_version) {
