@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.17.0 (2022-10-24)
+
+### Bug Fixes
+
+- multi-release issue w/ Infinispan ([cd6ccd99](https://github.com/SAP/neonbee/commit/cd6ccd993ae1310937f0c85162b191325f825b1f))
+- close Infinispan cache container after NeonBee shutdown ([57616a86](https://github.com/SAP/neonbee/commit/57616a86e072af9e04d72d4423ec91cf3223d079))
+- #199, add tracing to EntityModelLoader and improve logging ([d6130468](https://github.com/SAP/neonbee/commit/d6130468bf22e32c42c6c467568c786607f59146))
+- odata query encoding ([869d6875](https://github.com/SAP/neonbee/commit/869d68750e3af4bffe89fa66da3ffde9d53e434e))
+
+
+### Features
+
+- introduce a NeonBeeExtension.TestBase ([9608028c](https://github.com/SAP/neonbee/commit/9608028c02d34ed064992295f8ed23f222b93482))
+
+
+### Continuous Integration
+
+- fix tests ([a058129c](https://github.com/SAP/neonbee/commit/a058129c62eaedc97e3858d84625c27e518d911f))
+
+
 ## 0.16.1 (2022-10-12)
 
 ### Bug Fixes
