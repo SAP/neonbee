@@ -1,8 +1,10 @@
 # Docker Image
 
 ## Pull the image
-To pull the image, be sure to be logged into ghcr.
-Therefore create a token in [https://github.com/settings/tokens](https://github.com/settings/tokens) and select `read:packages`.
+
+To pull the image, be sure to be logged into ghcr. Therefore, create a token in
+[https://github.com/settings/tokens](https://github.com/settings/tokens) and select
+`read:packages`.
 
 Now the token can be used to log into ghcr.
 

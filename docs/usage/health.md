@@ -4,7 +4,7 @@ NeonBee provides an extendable API for system health monitoring. The overall hea
 
 ## Architecture
 
-![Health Checks](./health-checks.png)
+![Health Checks](static/health-checks.png)
 
 - **`HealthCheckRegistry`**: is instantiated once and added to the `NeonBee` instance during the boot phase. All health checks that implement the `HealthChecks` interface, can be registered to this registry. It provides a `collectHealthCheckResults()` method which *collects data* from all `HealthCheckVerticle`s that are deployed at the time of the request, *consolidates* the retrieved results, and *returns* the consolidated health check result.
 - **`HealthCheckVerticle`**: extends a `DataVerticle` and implements the  `retrieveData(...)` method which invokes all health checks that are registered to the (local) `HealthCheckRegistry` and returns the result of all (local) checks. Subsequent requests will return the cached result of the last check if the time difference to the last request which invoked a check is smaller than the configured `retention` time.
@@ -12,16 +12,7 @@ NeonBee provides an extendable API for system health monitoring. The overall hea
 
 ## Configuration
 
-Health checks can be configured in multiple ways. [Global settings](#global-settings-via-neonbeeconfig) apply to *all* checks and can be used to enable / disable all health checks. [Health check specific settings](#health-check-specific-settings-via-config-file-on-health-check-level) on the other hand, apply only to a *single* health check. The precedence order is always; health check specific settings overwrite the global.
-
-### Global settings via NeonBeeConfig
-
-Global settings can be specified on the `health` property in the NeonBeeConfig (i.e., `io.neonbee.NeonBee.yaml`).
-
-| property         | type      | description                                                                                             |
-| ---------------- | --------- | ------------------------------------------------------------------------------------------------------- |
-| `health.enabled` | `boolean` | Whether health checks should be globally enabled. Can be overridden by any node-specific configuration. |
-| `health.timeout` | `int`     | Global timeout (in seconds) for each health check procedure.                                            |
+Health checks can be configured in multiple ways. [Global settings](./neonbee.md#health) apply to *all* checks and can be used to enable / disable all health checks. [Health check specific settings](#health-check-specific-settings-via-config-file-on-health-check-level) on the other hand, apply only to a *single* health check. The precedence order is always; health check specific settings overwrite the global.
 
 ### Health Check specific settings
 

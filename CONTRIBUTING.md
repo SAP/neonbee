@@ -97,7 +97,7 @@ You are welcome to contribute code to NeonBee in order to fix bugs or to impleme
 There are three important things to know:
 
 1. You must be aware of the Eclipse Public License (which describes contributions) and **agree to the [Developer Certificate of Origin](#developer-certificate-of-origin-(dco))***. This is common practice in major Open Source projects. To make this process as simple as possible, we are using *[CLA assistant](https://cla-assistant.io/)* for individual contributions. CLA assistant is an open source tool that integrates with GitHub very well and enables a one-click experience for accepting the DCO. For company contributors, special rules apply. See the respective section below for details.
-2. Follow our **[Development Concept](docs/development_concept.md)**.
+2. Follow our **[Development Concept](docs/development/development_concept.md)**.
 3. **Not all proposed contributions can be accepted**. Some features may just fit a third-party add-on better. The code must match the overall direction of NeonBee and improve it. So there should be some "bang for the byte". For most bug fixes this is a given, but a major feature implementation first needs to be discussed with one of the committers. Possibly, one who touched the related code or module recently. The more effort you invest, the better you should clarify in advance whether the contribution will match the project's direction. The best way would be to just open an enhancement ticket in the issue tracker to discuss the feature you plan to implement (make it clear that you intend to contribute). We will then forward the proposal to the respective code owner. This avoids disappointment.
 
 ### Developer Certificate of Origin (DCO)
@@ -112,7 +112,7 @@ This DCO replaces the previously used CLA ("Contributor License Agreement") as w
     - Also check on the [Issue Tracker](https://github.com/sap/neonbee/issues) whether related tasks are already being worked on, blocked, or in discussion.
 2. Create a branch by forking the repository and apply your change.
 3. Commit and push your change on that branch.
-    - 👉 **Please follow our **[Development Concept](docs/development_concept.md)**, **[Conventions](docs/development_conventions.md)**, [Commit Message Guidelines](docs/commit_msg.md) and [Code Quality Conventions](docs/code_quality.md).**
+    - 👉 **Please follow our **[Development Concept](docs/development/development_concept.md)**, **[Conventions](docs/development/development_conventions.md)**, [Commit Message Guidelines](docs/development/commit_msg.md) and [Code Quality Conventions](docs/development/code_quality.md).**
 4. Create a pull request.
 5. Follow the link posted by the CLA assistant to your pull request and accept it, as described above.
 6. Wait for our code review and approval, possibly enhancing your change on request.

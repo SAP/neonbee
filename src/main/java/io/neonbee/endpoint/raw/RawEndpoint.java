@@ -76,7 +76,7 @@ public class RawEndpoint implements Endpoint {
     public EndpointConfig getDefaultConfig() {
         // as the EndpointConfig stays mutable, do not extract this to a static variable, but return a new object
         return new EndpointConfig().setType(RawEndpoint.class.getName()).setBasePath(DEFAULT_BASE_PATH)
-                .setAdditionalConfig(new JsonObject().put("exposeHiddenVerticles", false));
+                .setAdditionalConfig(new JsonObject().put(CONFIG_EXPOSE_HIDDEN_VERTICLES, false));
     }
 
     @Override
@@ -101,7 +101,7 @@ public class RawEndpoint implements Endpoint {
             // list is specified. if we would add the HIDDEN_VERTICLES_PATTERN to the block list here, this might have
             // side effects for the user of the block list, as if the user would add something only to the allow list
             // the list would behave differently than expected. thus this parameter is checked in addition.
-            exposeHiddenVerticles = config.getBoolean("exposeHiddenVerticles", false);
+            exposeHiddenVerticles = config.getBoolean(CONFIG_EXPOSE_HIDDEN_VERTICLES, false);
 
             // a block / allow list of all verticles that should be exposed via this endpoint (works in conjunction with
             // the exposeHiddenVerticles flag, as described in the previous comment)

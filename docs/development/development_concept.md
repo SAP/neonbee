@@ -23,10 +23,10 @@
 
 Anybody can be a [contributor](#contributor) and contribute to NeonBee. There are only a certain conventions / processes every contributor must stick to.
 
-- NeonBee uses the branching model [BeeFlow](./beeflow.md).
+- NeonBee uses the branching model [BeeFlow](beeflow.md).
 - NeonBee strictly follows the [Semantic Versioning](https://semver.org/) specification.
-- Any contribution must fulfill the NeonBee community conventions for [commit messages](./commit_msg.md).
-- Any contribution must fulfill the NeonBee community conventions for [quality](./code_quality.md).
+- Any contribution must fulfill the NeonBee community conventions for [commit messages](commit_msg.md).
+- Any contribution must fulfill the NeonBee community conventions for [quality](code_quality.md).
 - Confirm these [checks](#Review) before requesting a review.
 
 ## Review
@@ -36,12 +36,12 @@ When the owner of a `topic` branch wants to get feedback on a change the followi
 - A topic branch has been created based on `master`. If the [contributor](#contributor) has no write access, a fork must be created.
 - Each commit is considered a separate logical unit of change to make rollbacks easier.
 - A pull request has been created with the respective issue(s) linked in the commit message (e.g. `Fixes #15`), if those exists.
-- Each commit must be conform to the NeonBee community conventions for [commit messages](./commit_msg.md) and [quality](./code_quality.md).
+- Each commit must be conform to the NeonBee community conventions for [commit messages](commit_msg.md) and [quality](code_quality.md).
 - Each commit **SHOULD** add necessary tests for the changes made and existing tests **MUST NOT** break.
 
 ### Focus and Scope
 
-In general there is no limitation what reviewer can comment and what not, everything else would be censorship, but there are a clear rules what prevents a contribution to be merged into the `master` branch. These rules are defined by the NeonBee community conventions for [commit messages](./commit_msg.md) and [quality](./code_quality.md).
+In general there is no limitation what reviewer can comment and what not, everything else would be censorship, but there are a clear rules what prevents a contribution to be merged into the `master` branch. These rules are defined by the NeonBee community conventions for [commit messages](commit_msg.md) and [quality](code_quality.md).
 
 If a **reviewer want changes** that go **beyond the NeonBee conventions**, they have to **make** these **themselves**, provided the contributor agrees.
 
@@ -53,7 +53,7 @@ In case of multiple proposed solutions consensus is always preferable, but if co
 
 ### Changelog and Artifacts
 
-Releases are generally published in the [releases section](https://github.com/SAP/neonbee/releases) of the project. Each new release contains a stable version of the source code, a [description of the changes](../CHANGELOG.md) and offers [compiled artifacts](./release_artifacts.md) of NeonBee.
+Releases are generally published in the [releases section](https://github.com/SAP/neonbee/releases) of the project. Each new release contains a stable version of the source code, a [description of the changes](../../CHANGELOG.md) and offers [compiled artifacts](release_artifacts.md) of NeonBee.
 
 ### Breaking changes
 
