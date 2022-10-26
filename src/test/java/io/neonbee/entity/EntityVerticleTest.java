@@ -158,6 +158,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Get URI info from query")
+    @SuppressWarnings("deprecation")
     void parseUriInfoTest(Vertx vertx, VertxTestContext testContext) {
         Checkpoint checkpoint = testContext.checkpoint(3);
 
