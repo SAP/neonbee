@@ -24,9 +24,9 @@ import static io.vertx.core.http.HttpMethod.PUT;
 import static io.vertx.ext.web.impl.Utils.pathOffset;
 import static java.lang.Character.isUpperCase;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -131,11 +131,9 @@ public class RawEndpoint implements Endpoint {
                 return;
             }
 
-            String decodedQueryPath = null;
+            Map<String, List<String>> queryParameterMap;
             try {
-                if (!Strings.isNullOrEmpty(request.query())) {
-                    decodedQueryPath = URLDecoder.decode(request.query(), StandardCharsets.UTF_8);
-                }
+                queryParameterMap = DataQuery.parseEncodedQueryString(request.query());
             } catch (IllegalArgumentException e) {
                 routingContext.fail(BAD_REQUEST.code(), new IllegalArgumentException("Invalid request query"));
                 return;
@@ -143,7 +141,7 @@ public class RawEndpoint implements Endpoint {
 
             DataQuery query = new DataQuery(action,
                     pathOffset(routingContext.normalizedPath(), routingContext).substring(qualifiedName.length() + 1),
-                    decodedQueryPath, multiMapToMap(request.headers()), routingContext.body().buffer())
+                    queryParameterMap, multiMapToMap(request.headers()), routingContext.body().buffer())
                             .addHeader("X-HTTP-Method", request.method().name());
 
             DataContextImpl context = new DataContextImpl(routingContext);

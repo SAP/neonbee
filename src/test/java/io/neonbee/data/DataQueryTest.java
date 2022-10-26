@@ -3,6 +3,8 @@ package io.neonbee.data;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +26,7 @@ class DataQueryTest {
 
     @Test
     @DisplayName("setQuery should set a query and reset parameters to null")
+    @SuppressWarnings("deprecation")
     void testSetQuery() {
         query.parameters = Collections.emptyMap();
         query.setQuery("name=Hodor");
@@ -33,6 +36,7 @@ class DataQueryTest {
 
     @Test
     @DisplayName("getQuery should return the parameters joined to a String if parameters is non null")
+    @SuppressWarnings("deprecation")
     void testGetQuery2() {
         query.parameters = Map.of("Hodor", List.of("Hodor"));
         assertThat(query.getQuery()).isEqualTo("Hodor=Hodor");
@@ -43,6 +47,7 @@ class DataQueryTest {
 
     @Test
     @DisplayName("getParameters should return a Map with the query parameters")
+    @SuppressWarnings("deprecation")
     void testGetParameters() {
         query.setQuery("Hodor=Hodor&Jon=Snow&Hodor=Hodor2");
         Map<String, List<String>> expected = Map.of("Hodor", List.of("Hodor", "Hodor2"), "Jon", List.of("Snow"));
@@ -51,6 +56,7 @@ class DataQueryTest {
 
     @Test
     @DisplayName("getParameterValues should return a List with the values for a given parameter")
+    @SuppressWarnings("deprecation")
     void testGetParameterValues() {
         query.setQuery("Hodor=Hodor&Jon=Snow&Hodor=Hodor2");
         List<String> expected = List.of("Hodor", "Hodor2");
@@ -59,6 +65,7 @@ class DataQueryTest {
 
     @Test
     @DisplayName("getParameter should return the value for a given parameter")
+    @SuppressWarnings("deprecation")
     void testGetParameter() {
         query.setQuery("Hodor=Hodor&Jon=Snow&Hodor=Hodor2&Some=Data&Empty=&AlsoEmpty&Test=123");
         assertThat(query.getParameter("Hodor")).isEqualTo("Hodor");
@@ -69,8 +76,39 @@ class DataQueryTest {
         assertThat(query.getParameter("Test")).isEqualTo("123");
     }
 
+    /**
+     * The following query is parsed into the wrong key value pairs.<br>
+     * encoded: q%3D%26%C3%A4=%C3%A4%26=q&$filter=char%20=%20%27%26%27 <br>
+     * decoded: q=&ä=ä&=q&$filter=char = '&'" <br>
+     * this should be parsed into the following key value pairs: <br>
+     * q=&ä -> ä&=q <br>
+     * $filter -> char = '&'<br>
+     * also see: {@link io.neonbee.data.DataQueryTest#testSetRawQuery}
+     */
+    @Test
+    @DisplayName("Test that verifies the method setQuery can not work properly")
+    @SuppressWarnings("deprecation")
+    void testSetQueryNotWorkingCorrectly() {
+        String queryString = "q%3D%26%C3%A4=%C3%A4%26=q&$filter=char%20=%20%27%26%27";
+        query.setQuery(URLDecoder.decode(queryString, StandardCharsets.UTF_8));
+        assertThat(query.getParameter("q")).isEqualTo("");
+        assertThat(query.getParameter("ä")).isEqualTo("ä");
+        assertThat(query.getParameter("$filter")).isEqualTo("char = '");
+        assertThat(query.getParameter("'")).isEqualTo("");
+        assertThat(query.getParameter("")).isEqualTo("q");
+    }
+
+    @Test
+    @DisplayName("getParameter should work")
+    void testSetRawQuery() {
+        query.setRawQuery("q%3D%26%C3%A4=%C3%A4%26=q&$filter=char%20=%20%27%26%27");
+        assertThat(query.getParameter("q=&ä")).isEqualTo("ä&=q");
+        assertThat(query.getParameter("$filter")).isEqualTo("char = '&'");
+    }
+
     @Test
     @DisplayName("getParameter should return the first value for a given parameter")
+    @SuppressWarnings("deprecation")
     void testGetFirstParameter() {
         query.setQuery("Hodor=Hodor&Jon=Snow&Hodor=Hodor2");
         String expected = "Hodor";
@@ -102,6 +140,7 @@ class DataQueryTest {
 
     @Test
     @DisplayName("setParameter should set a given parameter with value(s)")
+    @SuppressWarnings("deprecation")
     void testRemoveParameter() {
         query.parameters = Map.of("Hodor", List.of("Hodor", "Hodor2"), "Jon", List.of("Snow", "Know", "Nothing"));
         query.setQuery(query.getQuery());
@@ -111,7 +150,17 @@ class DataQueryTest {
     }
 
     @Test
+    @DisplayName("test that setRawQuery from getRawQuery create equal DataQuery objects")
+    void testGetSetRawQuery() {
+        query.parameters = Map.of("q=&ä", List.of("ä&=q", "=&"), "$filter", List.of("char = '&'"));
+        DataQuery query2 = new DataQuery().setRawQuery(query.getRawQuery());
+
+        assertThat(query2).isEqualTo(query);
+    }
+
+    @Test
     @DisplayName("parseQueryString should parse a query string correct")
+    @SuppressWarnings("deprecation")
     void testParseQueryString() {
         Map<String, List<String>> expected = Map.of("Hodor", List.of(""));
         assertThat(DataQuery.parseQueryString("Hodor")).containsExactlyEntriesIn(expected);
@@ -147,6 +196,7 @@ class DataQueryTest {
 
     @Test
     @DisplayName("DataQuery should have empty map when no header is passed")
+    @SuppressWarnings("deprecation")
     void testEmptyHeader() {
         DataQuery query = new DataQuery("uri", "name=Hodor");
         assertThat(query.getHeaders()).isEqualTo(Map.of());
@@ -154,6 +204,7 @@ class DataQueryTest {
 
     @Test
     @DisplayName("Equals should return false with different bodies")
+    @SuppressWarnings("deprecation")
     void testEqualsWithDifferentBodies() {
         DataQuery query1 = new DataQuery(DataAction.CREATE, "uri", "name=Hodor", Map.of("header1", List.of("value1")),
                 Buffer.buffer("payload1"));
