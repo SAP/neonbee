@@ -61,7 +61,8 @@ class EntityVerticleTest extends EntityVerticleTestBase {
 
     @Override
     protected List<Path> provideEntityModels() {
-        return List.of(TEST_RESOURCES.resolveRelated("TestService1.csn"));
+        return List.of(TEST_RESOURCES.resolveRelated("TestService1.csn"),
+                TEST_RESOURCES.resolveRelated("UglyUriTests.csn"));
     }
 
     @BeforeEach
@@ -241,6 +242,36 @@ class EntityVerticleTest extends EntityVerticleTestBase {
         deployVerticle(dummyEntityVerticle).onComplete(testContext.succeeding(nextHandler -> {
             testVertx.eventBus().publish(EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS, null);
         }));
+    }
+
+    @Test
+    @Timeout(value = 200, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("test special uris")
+    void uglyUris(Vertx vertx, VertxTestContext testContext) {
+        String uri = "/io.neonbee.ugly.UglyUriTests/TestEntity";
+        String query = "?$count=true&$orderby=sysnr&$filter=(" +
+            "contains(tolower(sysnr),tolower('&')) or " +
+            "contains(tolower(sysid),tolower('&')) or contains(tolower(name),tolower('&')) or " +
+            "contains(tolower(sysroleExtDescr),tolower('&')) or contains(tolower(datacenter),tolower('&')) or " +
+            "contains(tolower(officialProdName),tolower('&')) or contains(tolower(customerName),tolower('&')) or " +
+            "contains(tolower(customerId),tolower('&'))" +
+            ")&$skip=0&$top=10";
+
+        // String query = "?contains('&')";
+        //String query = "?$orderby=postedOn%20desc&$filter=(category%20eq%20%27My%20SAP%20Notes%20%26%20KBA%27)&$skip=0&$top=20";
+        DataQuery dataQuery = new DataQuery(uri, query);
+        var parameters = dataQuery.getParameters();
+        assertThat(parameters).isNotNull();
+        EntityVerticle dummyEntityVerticle = new EntityVerticle() {
+            @Override
+            public Future<Set<FullQualifiedName>> entityTypeNames() {
+                return succeededFuture(null);
+            }
+        };
+        dummyEntityVerticle.parseUriInfo(vertx, dataQuery).onSuccess(uriInfo -> {
+            assertThat(uriInfo).isNotNull();
+            testContext.completeNow();
+        }).onFailure(t -> testContext.failNow(t));
     }
 }
 
