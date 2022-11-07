@@ -51,6 +51,18 @@ shadowJar {
     mergeServiceFiles()
 }
 
+task generateVersionFile {
+    doLast {
+        def resourceDir = sourceSets.main.output.resourcesDir
+        def versionFile = new File(resourceDir, "META-INF/neonbee/neonbee-version.txt")
+        versionFile.text = project.version
+    }
+}
+
+tasks.withType(Jar) {
+    dependsOn generateVersionFile
+}
+
 /** Builds the sources JAR */
 task sourcesJar(type: Jar) {
     from sourceSets.main.allJava
