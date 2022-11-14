@@ -5,12 +5,16 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.lang.ClassLoader.getSystemClassLoader;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.infinispan.manager.DefaultCacheManager;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.hazelcast.config.ClasspathXmlConfig;
+import com.hazelcast.config.Config;
+import com.hazelcast.config.FileSystemXmlConfig;
 
 import io.neonbee.NeonBeeOptions;
 import io.vertx.core.Future;
@@ -23,6 +27,7 @@ public abstract class ClusterManagerFactory {
      * The ClusterManagerFactory for Hazelcast.
      */
     public static final ClusterManagerFactory HAZELCAST_FACTORY = new ClusterManagerFactory() {
+
         @Override
         protected String getDefaultConfig() {
             return "hazelcast-cf.xml";
@@ -31,8 +36,35 @@ public abstract class ClusterManagerFactory {
         @Override
         public Future<ClusterManager> create(NeonBeeOptions neonBeeOptions) {
             String effectiveConfig = getEffectiveConfig(neonBeeOptions);
-            return succeededFuture(new HazelcastClusterManager(
-                    new ClasspathXmlConfig(getSystemClassLoader(), effectiveConfig, System.getProperties())));
+
+            return Future.future(promise -> {
+                Config config;
+                if (exitsInClasspath(effectiveConfig)) {
+                    config = new ClasspathXmlConfig(getSystemClassLoader(), effectiveConfig, System.getProperties());
+                } else {
+                    try {
+                        config = new FileSystemXmlConfig(effectiveConfig, System.getProperties());
+                    } catch (FileNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                promise.complete(new HazelcastClusterManager(config));
+            });
+        }
+
+        /**
+         * check if the file exists on the classpath.
+         *
+         * @param effectiveConfigFileName the file name
+         * @return true if the file exists on the classpath, otherwise flase
+         */
+        private boolean exitsInClasspath(String effectiveConfigFileName) {
+            try (InputStream inputStream = getSystemClassLoader().getResourceAsStream(effectiveConfigFileName)) {
+                return inputStream != null;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     };
 
