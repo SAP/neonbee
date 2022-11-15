@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.18.0 (2022-11-15)
+
+### Bug Fixes
+
+- generated files have changed ([80ef04ec](https://github.com/SAP/neonbee/commit/80ef04ecb21c15db0a56d63409559780815ff629))
+- odata query encoding in EntityVerticle ([ae52053a](https://github.com/SAP/neonbee/commit/ae52053a831c4e8c86931529a5f17445c229bda3))
+- dataquery cannot correctly process query strings ([4cccf60b](https://github.com/SAP/neonbee/commit/4cccf60bd738557c898f24797ebb5405b1334b39))
+
+
+### Features
+
+- include a version file inside jar files ([ed244da5](https://github.com/SAP/neonbee/commit/ed244da594a0af5b31218ad6f18de68a7ab0daaa))
+- load Hazelcast configuration from file ([f721875a](https://github.com/SAP/neonbee/commit/f721875a5edb9454bc2df1dc420d9ca676a6d82a))
+
+
+### Build System
+
+- **deps**: upgrade `com.fasterxml.jackson` to 2.13.4.2 ([4f0bfaea](https://github.com/SAP/neonbee/commit/4f0bfaeabeb58f5efc8ba2c0829642b7dd6a99fa))
+- **docker**: pin gradle version to 7.2 ([cb1be0ed](https://github.com/SAP/neonbee/commit/cb1be0edff012d809bc39e0812a5c5e7751c5bb0))
+
+
 ## 0.17.0 (2022-10-24)
 
 ### Bug Fixes
