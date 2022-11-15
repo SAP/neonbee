@@ -103,7 +103,7 @@ class DefaultHookRegistryTest {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Check that getHookRegistrations works correct")
-    void getHookRegistruationsTest(VertxTestContext testContext) {
+    void getHookRegistrationsTest(VertxTestContext testContext) {
         hookRegistry.registerHooks(classWithValidHook, CORRELATION_ID).compose(hookRegistrations -> {
             return hookRegistry.getHookRegistrations()
                     .onComplete(testContext.succeeding(allRegistrations -> testContext.verify(() -> {
