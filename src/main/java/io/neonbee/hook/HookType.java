@@ -32,10 +32,33 @@ public enum HookType {
     /**
      * The shutdown hook is called before the associated Vert.x instance to a NeonBee object is closed / shut down.
      */
-    BEFORE_SHUTDOWN;
+    BEFORE_SHUTDOWN,
+
+    /**
+     * This hook is called when a node has been added to the cluster.
+     * <p>
+     * Available parameters in the {@linkplain HookContext}:
+     * <p>
+     * {@link #CLUSTER_NODE_ID}
+     */
+    NODE_ADDED,
+
+    /**
+     * This hook is called when a node has left the cluster.
+     * <p>
+     * Available parameters in the {@linkplain HookContext}:
+     * <p>
+     * {@link #CLUSTER_NODE_ID}
+     */
+    NODE_LEFT;
 
     /**
      * Name for the routing context parameter of HookType {@link #ONCE_PER_REQUEST}.
      */
     public static final String ROUTING_CONTEXT = "routingContext";
+
+    /**
+     * Name for the node ID parameter of the cluster node for {@link #NODE_LEFT} and {@link #NODE_ADDED}.
+     */
+    public static final String CLUSTER_NODE_ID = "nodeId";
 }
