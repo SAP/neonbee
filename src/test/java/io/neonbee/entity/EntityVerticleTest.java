@@ -38,13 +38,13 @@ import io.neonbee.data.DataAction;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataVerticle;
+import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.test.base.EntityVerticleTestBase;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
@@ -77,10 +77,11 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Check if entity types are registered in shared entity map")
     void registerEntityTypes(VertxTestContext testContext) {
-        AsyncMap<String, Object> asyncSharedMap = getNeonBee().getAsyncMap();
+        WriteSafeRegistry<String> registry =
+                new WriteSafeRegistry<>(getNeonBee().getVertx(), EntityVerticle.REGISTRY_NAME);
 
         Checkpoint checkpoint = testContext.checkpoint(2);
-        asyncSharedMap.get(sharedEntityMapName(new FullQualifiedName("ERP.Customers")))
+        registry.get(sharedEntityMapName(new FullQualifiedName("ERP.Customers")))
                 .onComplete(testContext.succeeding(result -> {
                     testContext.verify(() -> {
                         assertThat((JsonArray) result).containsExactly(entityVerticleImpl1.getQualifiedName(),
@@ -88,7 +89,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
                     });
                     checkpoint.flag();
                 }));
-        asyncSharedMap.get(sharedEntityMapName(new FullQualifiedName("Sales.Orders")))
+        registry.get(sharedEntityMapName(new FullQualifiedName("Sales.Orders")))
                 .onComplete(testContext.succeeding(result -> {
                     testContext.verify(() -> {
                         assertThat((JsonArray) result).containsExactly(entityVerticleImpl1.getQualifiedName());

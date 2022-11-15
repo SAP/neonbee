@@ -31,6 +31,7 @@ import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.health.internal.HealthCheck;
 import io.neonbee.internal.SharedDataAccessor;
+import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.codec.DataQueryMessageCodec;
 import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.verticle.HealthCheckVerticle;
@@ -264,25 +265,22 @@ class HealthCheckRegistryTest {
     @DisplayName("it does not fail if some verticle addresses are not reachable")
     void test(Vertx vertx, VertxTestContext testContext) throws NoSuchFieldException, IllegalAccessException {
         neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(true));
-        AsyncMap<String, Object> sharedMap = new SharedDataAccessor(vertx, HealthCheckVerticle.class)
-                .<String, Object>getAsyncMap("#sharedMap").result();
         String verticleName = "not-existing-verticle-name";
-        sharedMap.put(SHARED_MAP_KEY, new JsonArray().add(verticleName));
-        setValueOfPrivateField(neonBee, "sharedAsyncMap", sharedMap);
+        WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, HealthCheckRegistry.REGISTRY_NAME);
+        Future<Void> setupFuture = registry.register(SHARED_MAP_KEY, verticleName);
 
-        DeploymentHelper.undeployAllVerticlesOfClass(neonBee.getVertx(), HealthCheckVerticle.class)
+        setupFuture
+                .compose(unused -> DeploymentHelper.undeployAllVerticlesOfClass(neonBee.getVertx(),
+                        HealthCheckVerticle.class))
                 .compose(v -> AsyncHelper.allComposite(List.of(vertx.deployVerticle(new HealthCheckVerticle()),
                         neonBee.getHealthCheckRegistry().register(new DummyHealthCheck(neonBee)))))
-                .onSuccess(v -> neonBee.getHealthCheckRegistry().collectHealthCheckResults()
-                        .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
-                            neonBee.getAsyncMap().get(SHARED_MAP_KEY).map(JsonArray.class::cast)
-                                    .onComplete(testContext.succeeding(registeredVerticles -> testContext.verify(() -> {
-                                        assertThat(registeredVerticles).hasSize(2);
-                                        assertThat(registeredVerticles).contains(verticleName);
-                                        assertThat(result.getString("status")).isEqualTo("UP");
-                                        testContext.completeNow();
-                                    })));
-                        }))))
-                .onFailure(testContext::failNow);
+                .compose(v -> neonBee.getHealthCheckRegistry().collectHealthCheckResults())
+                .onSuccess(result -> testContext.verify(() -> assertThat(result.getString("status")).isEqualTo("UP")))
+                .compose(result -> registry.get(SHARED_MAP_KEY)).map(JsonArray.class::cast)
+                .onSuccess(registeredVerticles -> testContext.verify(() -> {
+                    assertThat(registeredVerticles).hasSize(2);
+                    assertThat(registeredVerticles).contains(verticleName);
+                    testContext.completeNow();
+                })).onFailure(testContext::failNow);
     }
 }

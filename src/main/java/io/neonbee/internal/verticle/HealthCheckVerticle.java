@@ -6,20 +6,21 @@ import static java.util.stream.Collectors.toList;
 import java.util.List;
 import java.util.UUID;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeDeployable;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataVerticle;
-import io.neonbee.internal.SharedDataAccessor;
+import io.neonbee.health.HealthCheckRegistry;
+import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.helper.AsyncHelper;
-import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.ext.healthchecks.CheckResult;
 
 @NeonBeeDeployable(namespace = NEONBEE_NAMESPACE, autoDeploy = false)
@@ -30,14 +31,15 @@ public class HealthCheckVerticle extends DataVerticle<JsonArray> {
      */
     public static final String SHARED_MAP_KEY = "healthCheckVerticles";
 
+    @VisibleForTesting
+    static final String REGISTRY_NAME = HealthCheckRegistry.class.getSimpleName();
+
     private static final String NAME = "_healthCheckVerticle-" + UUID.randomUUID();
 
     /**
      * The qualified name of the health check verticle.
      */
     public static final String QUALIFIED_NAME = DataVerticle.createQualifiedName(NEONBEE_NAMESPACE, NAME);
-
-    private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     @Override
     public void start(Promise<Void> promise) {
@@ -63,25 +65,7 @@ public class HealthCheckVerticle extends DataVerticle<JsonArray> {
     }
 
     private Future<Void> register(Vertx vertx) {
-        AsyncMap<String, Object> sharedMap = NeonBee.get(vertx).getAsyncMap();
-        return new SharedDataAccessor(vertx, HealthCheckVerticle.class).getLock(SHARED_MAP_KEY).onFailure(throwable -> {
-            LOGGER.error("Error acquiring lock with name {}", SHARED_MAP_KEY, throwable);
-        }).compose(lock -> sharedMap.get(SHARED_MAP_KEY).compose(qualifiedNamesOrNull -> {
-            String qualifiedName = getQualifiedName();
-            JsonArray qualifiedNames =
-                    qualifiedNamesOrNull != null ? (JsonArray) qualifiedNamesOrNull : new JsonArray();
-            if (!qualifiedNames.contains(qualifiedName)) {
-                qualifiedNames.add(qualifiedName);
-            }
-
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("Register health check verticle {} of node {}.", qualifiedName,
-                        NeonBee.get(vertx).getNodeId());
-            }
-            return sharedMap.put(SHARED_MAP_KEY, qualifiedNames);
-        }).onComplete(anyResult -> {
-            LOGGER.debug("Releasing lock {}", SHARED_MAP_KEY);
-            lock.release();
-        }));
+        WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, REGISTRY_NAME);
+        return registry.register(SHARED_MAP_KEY, getQualifiedName());
     }
 }
