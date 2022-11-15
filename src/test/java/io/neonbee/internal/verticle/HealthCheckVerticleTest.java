@@ -2,6 +2,7 @@ package io.neonbee.internal.verticle;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.verticle.HealthCheckVerticle.SHARED_MAP_KEY;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -13,10 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.parallel.Isolated;
 
-import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
+import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.deploy.DeployableVerticle;
 import io.neonbee.test.base.DataVerticleTestBase;
 import io.vertx.core.Future;
@@ -54,7 +55,10 @@ class HealthCheckVerticleTest extends DataVerticleTestBase {
     @DisplayName("should register itself in shared map")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testSharedMap(VertxTestContext testContext) {
-        getNeonBee().getAsyncMap().get(SHARED_MAP_KEY)
+        WriteSafeRegistry<String> registry =
+                new WriteSafeRegistry<>(getNeonBee().getVertx(), HealthCheckVerticle.REGISTRY_NAME);
+
+        registry.get(SHARED_MAP_KEY)
                 .onComplete(testContext.succeeding(qualifiedNamesOrNull -> testContext.verify(() -> {
                     String expectedName = HealthCheckVerticle.QUALIFIED_NAME;
                     assertThat((JsonArray) qualifiedNamesOrNull).containsExactly(expectedName);
@@ -66,12 +70,13 @@ class HealthCheckVerticleTest extends DataVerticleTestBase {
     @DisplayName("should not register in shared map when non-clustered mode")
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testStartNonClustered(Vertx vertx, VertxTestContext testContext) {
-        NeonBee neonBeeSpy = spy(getNeonBee());
+        WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, HealthCheckVerticle.REGISTRY_NAME);
+        WriteSafeRegistry<String> registrySpy = spy(registry);
 
         DeployableVerticle.fromVerticle(vertx, new HealthCheckVerticle(), new JsonObject())
-                .compose(deployable -> deployable.deploy(neonBeeSpy))
+                .compose(deployable -> deployable.deploy(getNeonBee()))
                 .onComplete(testContext.succeeding(r -> testContext.verify(() -> {
-                    verify(neonBeeSpy, times(0)).getAsyncMap();
+                    verify(registrySpy, times(0)).register(any(), any());
                 }))).onComplete(testContext.succeedingThenComplete());
     }
 }

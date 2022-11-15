@@ -22,6 +22,7 @@ import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.health.internal.HealthCheck;
+import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
@@ -35,6 +36,9 @@ import io.vertx.ext.healthchecks.HealthChecks;
 import io.vertx.ext.healthchecks.Status;
 
 public class HealthCheckRegistry {
+    @VisibleForTesting
+    static final String REGISTRY_NAME = HealthCheckRegistry.class.getSimpleName();
+
     private static final String UP = "UP";
 
     private static final String DOWN = "DOWN";
@@ -50,10 +54,10 @@ public class HealthCheckRegistry {
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     @VisibleForTesting
-    HealthChecks healthChecks;
+    final Map<String, HealthCheck> checks;
 
     @VisibleForTesting
-    final Map<String, HealthCheck> checks;
+    HealthChecks healthChecks;
 
     private final Vertx vertx;
 
@@ -182,8 +186,9 @@ public class HealthCheckRegistry {
     }
 
     private Future<List<JsonObject>> getClusteredHealthCheckResults(DataContext dataContext) {
-        return NeonBee.get(vertx).getAsyncMap().get(SHARED_MAP_KEY)
-                .map(qualifiedNames -> (qualifiedNames != null ? (JsonArray) qualifiedNames : new JsonArray()))
+        WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, REGISTRY_NAME);
+        return registry.get(SHARED_MAP_KEY)
+                .map(qualifiedNames -> qualifiedNames == null ? new JsonArray() : qualifiedNames)
                 .compose(qualifiedNames -> {
                     List<Future<JsonArray>> asyncCheckResults = sendDataRequests(qualifiedNames, dataContext);
 
