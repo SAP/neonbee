@@ -61,6 +61,7 @@ import io.neonbee.internal.SharedDataAccessor;
 import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.buffer.ImmutableBuffer;
 import io.neonbee.internal.cluster.ClusterHelper;
+import io.neonbee.internal.cluster.entity.ClusterEntityRegistry;
 import io.neonbee.internal.codec.DataExceptionMessageCodec;
 import io.neonbee.internal.codec.DataQueryMessageCodec;
 import io.neonbee.internal.codec.EntityWrapperMessageCodec;
@@ -592,7 +593,12 @@ public class NeonBee {
 
         this.healthRegistry = new HealthCheckRegistry(vertx);
         this.modelManager = new EntityModelManager(this);
-        this.entityRegistry = new WriteSafeRegistry<>(vertx, EntityVerticle.REGISTRY_NAME);
+        if (vertx.isClustered()) {
+            this.entityRegistry = new ClusterEntityRegistry(vertx, EntityVerticle.REGISTRY_NAME);
+        } else {
+            this.entityRegistry = new WriteSafeRegistry<>(vertx, EntityVerticle.REGISTRY_NAME);
+        }
+
         this.compositeMeterRegistry = compositeMeterRegistry;
 
         // to be able to retrieve the NeonBee instance from any point you have a Vert.x instance add it to a global map
