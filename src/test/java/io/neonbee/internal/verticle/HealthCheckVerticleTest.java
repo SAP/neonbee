@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeOptions;
@@ -25,6 +26,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
+@Isolated("Some of the methods in this test class run clustered and use the FakeClusterManager for it. The FakeClusterManager uses a static state and can therefore not be run with other clustered tests.")
 class HealthCheckVerticleTest extends DataVerticleTestBase {
     @Override
     protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {

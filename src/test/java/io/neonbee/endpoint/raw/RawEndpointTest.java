@@ -125,8 +125,8 @@ class RawEndpointTest extends DataVerticleTestBase {
         DataVerticle<String> dummy = createDummyDataVerticle(NEONBEE_NAMESPACE + '/' + verticleName)
                 .withDynamicResponse((query, context) -> {
                     testContext.verify(() -> {
-                        assertThat(query.getQuery()).contains("Hodor=Hodor");
-                        assertThat(query.getQuery()).contains("Foo=123");
+                        assertThat(query.getRawQuery()).contains("Hodor=Hodor");
+                        assertThat(query.getRawQuery()).contains("Foo=123");
                         assertThat(query.getUriPath()).isEqualTo(expectedUriPath);
                     });
                     testContext.completeNow();

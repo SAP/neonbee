@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -52,14 +51,18 @@ class EntityModelDefinitionTest {
         modelBuilder.addService(serviceBuilder);
         cdsModel = modelBuilder.build();
         assertThat(EntityModelDefinition.getNamespace(cdsModel)).isEqualTo("");
+
+        modelBuilder = CdsModelBuilder.create();
+        cdsModel = modelBuilder.build();
+        assertThat(EntityModelDefinition.getNamespace(cdsModel)).isNull();
     }
 
     @Test
-    @DisplayName("Checks if exception will be thrown if no service was found in CDS model")
+    @DisplayName("Checks if null is returned if no service was found in CDS model")
     void getNamespaceFails() {
         CdsModelBuilder modelBuilder = CdsModelBuilder.create();
         CdsModel cdsModel = modelBuilder.build();
-        Assertions.assertThrows(RuntimeException.class, () -> EntityModelDefinition.getNamespace(cdsModel));
+        assertThat(EntityModelDefinition.getNamespace(cdsModel)).isNull();
     }
 
     @Test

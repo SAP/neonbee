@@ -9,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeExtension;
@@ -28,8 +27,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-@ExtendWith(NeonBeeExtension.class)
-class DataExceptionRequestTest {
+class DataExceptionRequestTest extends NeonBeeExtension.TestBase {
     private static final JsonObject FAILURE_OBJECT = new JsonObject().put("code", new JsonArray()
             .add(new JsonObject().put("message", "This is a bad response")).add(new JsonObject().put("lang", "en")));
 
@@ -72,7 +70,7 @@ class DataExceptionRequestTest {
     };
 
     @Test
-    @Timeout(value = 10, timeUnit = TimeUnit.HOURS)
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that DataException can be returned via the event bus")
     void testDataExceptionRequest(@NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee source,
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee target,

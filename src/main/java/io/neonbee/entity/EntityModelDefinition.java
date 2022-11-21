@@ -66,13 +66,13 @@ public final class EntityModelDefinition {
      * Extracts the prefix of the CSN Model Service to get the Namespace.
      *
      * @param csnModel the CSN Model
-     * @return the prefix of the Service or throws a RuntimeException if no service is available in the CDS model
+     * @return the prefix of the service in the CSN model, or null, in case no service was defined
      */
     public static String getNamespace(CdsModel csnModel) {
         return csnModel.services().findAny().map(CdsService::getQualifiedName).map(name -> {
             int lastIndexOf = name.lastIndexOf('.');
             return lastIndexOf == -1 ? "" : name.substring(0, lastIndexOf);
-        }).orElseThrow(() -> new RuntimeException("No service found in CDS model!"));
+        }).orElse(null);
     }
 
     /**

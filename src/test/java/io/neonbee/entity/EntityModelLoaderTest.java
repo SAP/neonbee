@@ -2,12 +2,16 @@ package io.neonbee.entity;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.NeonBeeProfile.NO_WEB;
+import static io.neonbee.entity.EntityModelLoader.createServiceMetadata;
+import static io.neonbee.entity.EntityModelLoader.getSchemaNamespace;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import javax.xml.stream.XMLStreamException;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +24,7 @@ import io.neonbee.test.base.NeonBeeTestBase;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
@@ -144,6 +149,15 @@ class EntityModelLoaderTest extends NeonBeeTestBase {
             assertThat(models).isNull();
             testContext.completeNow();
         }));
+    }
+
+    @Test
+    @DisplayName("get schema namespace")
+    void testGetSchemaNamespace() throws XMLStreamException, IOException {
+        Buffer withEntityContainer = TEST_RESOURCES.getRelated("withEntityContainer.edmx");
+        Buffer withoutEntityContainer = TEST_RESOURCES.getRelated("withoutEntityContainer.edmx");
+        assertThat(getSchemaNamespace(createServiceMetadata(withEntityContainer))).isEqualTo("Test.Service");
+        assertThat(getSchemaNamespace(createServiceMetadata(withoutEntityContainer))).isEqualTo("Test.Service");
     }
 
     private Map.Entry<String, byte[]> buildModelEntry(String modelName) throws IOException {

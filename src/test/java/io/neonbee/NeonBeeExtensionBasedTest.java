@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataMap;
@@ -27,8 +26,7 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.test.fakecluster.FakeClusterManager;
 
-@ExtendWith(NeonBeeExtension.class)
-class NeonBeeExtensionBasedTest {
+class NeonBeeExtensionBasedTest extends NeonBeeExtension.TestBase {
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with default options / default working directory")

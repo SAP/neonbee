@@ -3,6 +3,7 @@ package io.neonbee.test.listeners;
 import static java.lang.Boolean.parseBoolean;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,7 +28,11 @@ public class StaleThreadChecker implements TestExecutionListener {
 
     static final String VERTX_THREAD_NAME_PREFIX = "vert.x-";
 
+    static final boolean VERBOSE = false;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StaleThreadChecker.class);
+
+    protected Set<Thread> ignoredThreads;
 
     protected boolean parallelExecution;
 
@@ -37,14 +42,22 @@ public class StaleThreadChecker implements TestExecutionListener {
         if (parallelExecution) {
             LOGGER.warn("Cannot check for stale threads when running JUnit in parallel execution mode");
         }
+
+        if (LOGGER.isDebugEnabled()) {
+            // do not report the non-daemon threads that are alive even before the test plan executed started
+            (ignoredThreads = findNonDaemonThreads().collect(Collectors.toSet())).stream().forEach(thread -> {
+                LOGGER.debug("Ignoring non-daemon thread {} that has been alive before test plan execution started",
+                        thread);
+            });
+        }
     }
 
     @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Checking for non-daemon threads after test plan execution finished");
-            Thread.getAllStackTraces().keySet().stream().filter(Thread::isAlive).filter(Predicate.not(Thread::isDaemon))
-                    .forEach(thread -> LOGGER.debug("Non-daemon thread {} still is still alive", thread));
+            findNonDaemonThreads().filter(thread -> ignoredThreads == null || !ignoredThreads.contains(thread))
+                    .forEach(thread -> LOGGER.debug("Non-daemon thread {} is still alive", thread));
         }
     }
 
@@ -54,6 +67,10 @@ public class StaleThreadChecker implements TestExecutionListener {
             checkForStaleThreads("Vert.x", VERTX_THREAD_NAME_PREFIX);
             checkForStaleThreads("Hazelcast", "hz.");
             checkForStaleThreads("WatchService", "FileSystemWatch");
+            if (VERBOSE) {
+                // also print non-daemon threads on every execution
+                testPlanExecutionFinished(null);
+            }
         }
     }
 
@@ -64,6 +81,11 @@ public class StaleThreadChecker implements TestExecutionListener {
             LOGGER.error("Stale {} thread(s) detected!! Not closing the thread {} "
                     + "could result in the test runner not signaling completion", name, staleThreads.get(0));
         }
+    }
+
+    protected static Stream<Thread> findNonDaemonThreads() {
+        return Thread.getAllStackTraces().keySet().stream().filter(Thread::isAlive)
+                .filter(Predicate.not(Thread::isDaemon));
     }
 
     protected static Stream<Thread> findStaleThreads(String namePrefix) {

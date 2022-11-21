@@ -1,27 +1,653 @@
 {
   "nextVersion" : {
     "major" : 0,
-    "minor" : 16,
-    "patch" : 2,
+    "minor" : 19,
+    "patch" : 0,
     "preReleaseParts" : [ ],
     "buildMetaDataParts" : [ ],
     "preRelease" : "",
     "buildMetaData" : "",
-    "initialDevelopment" : true,
-    "stable" : true
+    "stable" : true,
+    "initialDevelopment" : true
   },
   "lastVersion" : {
     "major" : 0,
-    "minor" : 16,
-    "patch" : 1,
+    "minor" : 18,
+    "patch" : 0,
     "preReleaseParts" : [ ],
     "buildMetaDataParts" : [ ],
     "preRelease" : "",
     "buildMetaData" : "",
-    "initialDevelopment" : true,
-    "stable" : true
+    "stable" : true,
+    "initialDevelopment" : true
   },
   "tags" : [ {
+    "version" : {
+      "major" : 0,
+      "minor" : 18,
+      "patch" : 0,
+      "preReleaseParts" : [ ],
+      "buildMetaDataParts" : [ ],
+      "preRelease" : "",
+      "buildMetaData" : "",
+      "stable" : true,
+      "initialDevelopment" : true
+    },
+    "releaseDate" : "2022-11-15 10:35:08.000 +0100",
+    "sections" : [ {
+      "title" : "Bug Fixes",
+      "commits" : [ {
+        "hashFull" : "80ef04ecb21c15db0a56d63409559780815ff629",
+        "hash" : "80ef04ecb21c15d",
+        "hash7" : "80ef04e",
+        "hash8" : "80ef04ec",
+        "commitTime" : "2022-10-26 16:00:47.000 +0200",
+        "commitTimeLong" : 1666792847,
+        "message" : "fix: generated files have changed\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-25 14:22:53.000 +0200",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-10-26 16:00:47.000 +0200",
+          "name" : "halber",
+          "email" : "michael.halberstadt@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/80ef04ecb21c15db0a56d63409559780815ff629",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "generated files have changed",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "generated files have changed",
+        "messageBody" : "",
+        "messageTitle" : "fix: generated files have changed"
+      }, {
+        "hashFull" : "ae52053a831c4e8c86931529a5f17445c229bda3",
+        "hash" : "ae52053a831c4e8",
+        "hash7" : "ae52053",
+        "hash8" : "ae52053a",
+        "commitTime" : "2022-11-09 11:28:11.000 +0100",
+        "commitTimeLong" : 1667989691,
+        "message" : "fix: odata query encoding in EntityVerticle\n\nThe parseUri method expects the query parameter to be in percent\nencoding, but it was decoded.\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-27 15:39:48.000 +0200",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-11-09 11:28:11.000 +0100",
+          "name" : "halber",
+          "email" : "michael.halberstadt@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/ae52053a831c4e8c86931529a5f17445c229bda3",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "odata query encoding in EntityVerticle",
+        "commitBody" : "The parseUri method expects the query parameter to be in percent\nencoding, but it was decoded.",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "odata query encoding in EntityVerticle",
+        "messageBody" : "The parseUri method expects the query parameter to be in percent\nencoding, but it was decoded.",
+        "messageTitle" : "fix: odata query encoding in EntityVerticle"
+      }, {
+        "hashFull" : "4cccf60bd738557c898f24797ebb5405b1334b39",
+        "hash" : "4cccf60bd738557",
+        "hash7" : "4cccf60",
+        "hash8" : "4cccf60b",
+        "commitTime" : "2022-11-09 11:28:11.000 +0100",
+        "commitTimeLong" : 1667989691,
+        "message" : "fix: dataquery cannot correctly process query strings\n\nThe DataQuery expects a decoded query string in the setQuery method and\nin the constructors that accept a query parameter. These methods are\nnow deprecated since this cannot be fixed. A new method setRawQuery is\nintroduced which accepts the encoded query string and creates the\nparameters from it.\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-26 15:52:19.000 +0200",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-11-09 11:28:11.000 +0100",
+          "name" : "halber",
+          "email" : "michael.halberstadt@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/4cccf60bd738557c898f24797ebb5405b1334b39",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "dataquery cannot correctly process query strings",
+        "commitBody" : "The DataQuery expects a decoded query string in the setQuery method and\nin the constructors that accept a query parameter. These methods are\nnow deprecated since this cannot be fixed. A new method setRawQuery is\nintroduced which accepts the encoded query string and creates the\nparameters from it.",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "dataquery cannot correctly process query strings",
+        "messageBody" : "The DataQuery expects a decoded query string in the setQuery method and\nin the constructors that accept a query parameter. These methods are\nnow deprecated since this cannot be fixed. A new method setRawQuery is\nintroduced which accepts the encoded query string and creates the\nparameters from it.",
+        "messageTitle" : "fix: dataquery cannot correctly process query strings"
+      } ]
+    }, {
+      "title" : "Features",
+      "commits" : [ {
+        "hashFull" : "ed244da594a0af5b31218ad6f18de68a7ab0daaa",
+        "hash" : "ed244da594a0af5",
+        "hash7" : "ed244da",
+        "hash8" : "ed244da5",
+        "commitTime" : "2022-11-07 10:54:29.000 +0100",
+        "commitTimeLong" : 1667814869,
+        "message" : "feat: include a version file inside jar files\n\ncloses #198\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-11-07 10:22:09.000 +0100",
+          "name" : "Selim Dincer",
+          "email" : "wowselim@live.de"
+        },
+        "committerIdent" : {
+          "when" : "2022-11-07 10:54:29.000 +0100",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ {
+          "repo" : null,
+          "id" : 198,
+          "url" : "https://github.com/SAP/neonbee/issues/198",
+          "action" : null
+        } ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/ed244da594a0af5b31218ad6f18de68a7ab0daaa",
+        "commitType" : "feat",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "include a version file inside jar files",
+        "commitBody" : "closes #198",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "feat",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "include a version file inside jar files",
+        "messageBody" : "closes #198",
+        "messageTitle" : "feat: include a version file inside jar files"
+      }, {
+        "hashFull" : "f721875a5edb9454bc2df1dc420d9ca676a6d82a",
+        "hash" : "f721875a5edb945",
+        "hash7" : "f721875",
+        "hash8" : "f721875a",
+        "commitTime" : "2022-11-15 10:35:08.000 +0100",
+        "commitTimeLong" : 1668504908,
+        "message" : "feat: load Hazelcast configuration from file\n\nAdd loading hazelcast configurations from a file outside the classpath.\nFirst we search for the file on the classpath. If the file cannot be\nfound, we try to load the file with FileSystemXmlConfig.\n\nCo-authored-by: i536037 <matthias.michel@sap.com>\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-11-14 16:30:28.000 +0100",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-11-15 10:35:08.000 +0100",
+          "name" : "halber",
+          "email" : "michael.halberstadt@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/f721875a5edb9454bc2df1dc420d9ca676a6d82a",
+        "commitType" : "feat",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "load Hazelcast configuration from file",
+        "commitBody" : "Add loading hazelcast configurations from a file outside the classpath.\nFirst we search for the file on the classpath. If the file cannot be\nfound, we try to load the file with FileSystemXmlConfig.\n\nCo-authored-by: i536037 <matthias.michel@sap.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "feat",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "load Hazelcast configuration from file",
+        "messageBody" : "Add loading hazelcast configurations from a file outside the classpath.\nFirst we search for the file on the classpath. If the file cannot be\nfound, we try to load the file with FileSystemXmlConfig.\n\nCo-authored-by: i536037 <matthias.michel@sap.com>",
+        "messageTitle" : "feat: load Hazelcast configuration from file"
+      } ]
+    }, {
+      "title" : "Build System",
+      "commits" : [ {
+        "hashFull" : "4f0bfaeabeb58f5efc8ba2c0829642b7dd6a99fa",
+        "hash" : "4f0bfaeabeb58f5",
+        "hash7" : "4f0bfae",
+        "hash8" : "4f0bfaea",
+        "commitTime" : "2022-10-26 16:02:12.000 +0200",
+        "commitTimeLong" : 1666792932,
+        "message" : "build(deps): upgrade `com.fasterxml.jackson` to 2.13.4.2\n\nFixes two CVEs:\n\n- [CVE-2022-42003](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-42003)\n- [CVE-2022-42004](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-42004)\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-24 11:39:40.000 +0200",
+          "name" : "Sebastian Heid",
+          "email" : "sebastian.heid@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-10-26 16:02:12.000 +0200",
+          "name" : "Sebastian Heid",
+          "email" : "sebastian.heid@sap.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/4f0bfaeabeb58f5efc8ba2c0829642b7dd6a99fa",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "upgrade `com.fasterxml.jackson` to 2.13.4.2",
+        "commitBody" : "Fixes two CVEs:\n\n- [CVE-2022-42003](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-42003)\n- [CVE-2022-42004](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-42004)",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "upgrade `com.fasterxml.jackson` to 2.13.4.2",
+        "messageBody" : "Fixes two CVEs:\n\n- [CVE-2022-42003](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-42003)\n- [CVE-2022-42004](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-42004)",
+        "messageTitle" : "build(deps): upgrade `com.fasterxml.jackson` to 2.13.4.2"
+      }, {
+        "hashFull" : "cb1be0edff012d809bc39e0812a5c5e7751c5bb0",
+        "hash" : "cb1be0edff012d8",
+        "hash7" : "cb1be0e",
+        "hash8" : "cb1be0ed",
+        "commitTime" : "2022-11-08 14:02:10.000 +0100",
+        "commitTimeLong" : 1667912530,
+        "message" : "build(docker): pin gradle version to 7.2\n\nKeeps the gradle version of the project in sync with the one used to\nbuild neonbee within docker.\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-11-08 13:33:45.000 +0100",
+          "name" : "Sebastian Heid",
+          "email" : "sebastian.heid@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-11-08 14:02:10.000 +0100",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/cb1be0edff012d809bc39e0812a5c5e7751c5bb0",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "docker",
+        "commitSubject" : "pin gradle version to 7.2",
+        "commitBody" : "Keeps the gradle version of the project in sync with the one used to\nbuild neonbee within docker.",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "docker",
+        "rawCommitSubject" : "pin gradle version to 7.2",
+        "messageBody" : "Keeps the gradle version of the project in sync with the one used to\nbuild neonbee within docker.",
+        "messageTitle" : "build(docker): pin gradle version to 7.2"
+      } ]
+    } ]
+  }, {
+    "version" : {
+      "major" : 0,
+      "minor" : 17,
+      "patch" : 0,
+      "preReleaseParts" : [ ],
+      "buildMetaDataParts" : [ ],
+      "preRelease" : "",
+      "buildMetaData" : "",
+      "stable" : true,
+      "initialDevelopment" : true
+    },
+    "releaseDate" : "2022-10-24 10:44:48.000 +0200",
+    "sections" : [ {
+      "title" : "Bug Fixes",
+      "commits" : [ {
+        "hashFull" : "cd6ccd993ae1310937f0c85162b191325f825b1f",
+        "hash" : "cd6ccd993ae1310",
+        "hash7" : "cd6ccd9",
+        "hash8" : "cd6ccd99",
+        "commitTime" : "2022-10-13 11:56:37.000 +0200",
+        "commitTimeLong" : 1665654997,
+        "message" : "fix: multi-release issue w/ Infinispan\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-13 11:48:09.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "committerIdent" : {
+          "when" : "2022-10-13 11:56:37.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/cd6ccd993ae1310937f0c85162b191325f825b1f",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "multi-release issue w/ Infinispan",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "multi-release issue w/ Infinispan",
+        "messageBody" : "",
+        "messageTitle" : "fix: multi-release issue w/ Infinispan"
+      }, {
+        "hashFull" : "57616a86e072af9e04d72d4423ec91cf3223d079",
+        "hash" : "57616a86e072af9",
+        "hash7" : "57616a8",
+        "hash8" : "57616a86",
+        "commitTime" : "2022-10-24 09:51:00.000 +0200",
+        "commitTimeLong" : 1666597860,
+        "message" : "fix: close Infinispan cache container after NeonBee shutdown\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-23 14:09:22.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "committerIdent" : {
+          "when" : "2022-10-24 09:51:00.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/57616a86e072af9e04d72d4423ec91cf3223d079",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "close Infinispan cache container after NeonBee shutdown",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "close Infinispan cache container after NeonBee shutdown",
+        "messageBody" : "",
+        "messageTitle" : "fix: close Infinispan cache container after NeonBee shutdown"
+      }, {
+        "hashFull" : "d6130468bf22e32c42c6c467568c786607f59146",
+        "hash" : "d6130468bf22e32",
+        "hash7" : "d613046",
+        "hash8" : "d6130468",
+        "commitTime" : "2022-10-24 09:56:06.000 +0200",
+        "commitTimeLong" : 1666598166,
+        "message" : "fix: #199, add tracing to EntityModelLoader and improve logging\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-20 10:34:15.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "committerIdent" : {
+          "when" : "2022-10-24 09:56:06.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/d6130468bf22e32c42c6c467568c786607f59146",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "#199, add tracing to EntityModelLoader and improve logging",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "#199, add tracing to EntityModelLoader and improve logging",
+        "messageBody" : "",
+        "messageTitle" : "fix: #199, add tracing to EntityModelLoader and improve logging"
+      }, {
+        "hashFull" : "869d68750e3af4bffe89fa66da3ffde9d53e434e",
+        "hash" : "869d68750e3af4b",
+        "hash7" : "869d687",
+        "hash8" : "869d6875",
+        "commitTime" : "2022-10-24 10:22:14.000 +0200",
+        "commitTimeLong" : 1666599734,
+        "message" : "fix: odata query encoding\n\nThe OdataRequest RawQueryPath is expected to be in Percent-encoding,\nbut it was decoded.\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-21 15:52:46.000 +0200",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2022-10-24 10:22:14.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/869d68750e3af4bffe89fa66da3ffde9d53e434e",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "odata query encoding",
+        "commitBody" : "The OdataRequest RawQueryPath is expected to be in Percent-encoding,\nbut it was decoded.",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "odata query encoding",
+        "messageBody" : "The OdataRequest RawQueryPath is expected to be in Percent-encoding,\nbut it was decoded.",
+        "messageTitle" : "fix: odata query encoding"
+      } ]
+    }, {
+      "title" : "Features",
+      "commits" : [ {
+        "hashFull" : "9608028c02d34ed064992295f8ed23f222b93482",
+        "hash" : "9608028c02d34ed",
+        "hash7" : "9608028",
+        "hash8" : "9608028c",
+        "commitTime" : "2022-10-24 09:51:00.000 +0200",
+        "commitTimeLong" : 1666597860,
+        "message" : "feat: introduce a NeonBeeExtension.TestBase\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-23 02:05:23.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "committerIdent" : {
+          "when" : "2022-10-24 09:51:00.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/9608028c02d34ed064992295f8ed23f222b93482",
+        "commitType" : "feat",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "introduce a NeonBeeExtension.TestBase",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "feat",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "introduce a NeonBeeExtension.TestBase",
+        "messageBody" : "",
+        "messageTitle" : "feat: introduce a NeonBeeExtension.TestBase"
+      } ]
+    }, {
+      "title" : "Continuous Integration",
+      "commits" : [ {
+        "hashFull" : "a058129c62eaedc97e3858d84625c27e518d911f",
+        "hash" : "a058129c62eaedc",
+        "hash7" : "a058129",
+        "hash8" : "a058129c",
+        "commitTime" : "2022-10-23 01:15:46.000 +0200",
+        "commitTimeLong" : 1666480546,
+        "message" : "ci: fix tests\n\n- Re-enable parallel test execution (old issues are fixed)\n- Better to reset the FakeClusterManager more often than not\n- The Infinispan cluster manager must be stopped after tests\n- A test with a timeout of over a hour is not good\n- Tests that create own Vert.x instances or NeonBee(s) must take care to also shut them down properly, which can be very tricky. Generally it is recommended to use existing test bases or extensios, as they take care to properly shut down the instance(s).\n- Tests that use the FakeClusterManager must run isolated\n- Test methods that are in a NeonBeeTestBase, but not require NeonBee, can now be tagged with a @Tag(DOESNT_REQUIRE_NEONBEE)\n- Improve StaleThreadChecker to locate all tests creating stale threads (set VERBOSE = true, disable parallel execution and enable showStandardStreams in build.gradle to run analysis)\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2022-10-20 22:37:13.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "committerIdent" : {
+          "when" : "2022-10-23 01:15:46.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ {
+          "username" : "Tag(DOESNT_REQUIRE_NEONBEE)\n",
+          "url" : "https://github.com/Tag(DOESNT_REQUIRE_NEONBEE)\n"
+        } ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/a058129c62eaedc97e3858d84625c27e518d911f",
+        "commitType" : "ci",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "fix tests",
+        "commitBody" : "- Re-enable parallel test execution (old issues are fixed)\n- Better to reset the FakeClusterManager more often than not\n- The Infinispan cluster manager must be stopped after tests\n- A test with a timeout of over a hour is not good\n- Tests that create own Vert.x instances or NeonBee(s) must take care to also shut them down properly, which can be very tricky. Generally it is recommended to use existing test bases or extensios, as they take care to properly shut down the instance(s).\n- Tests that use the FakeClusterManager must run isolated\n- Test methods that are in a NeonBeeTestBase, but not require NeonBee, can now be tagged with a @Tag(DOESNT_REQUIRE_NEONBEE)",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "ci",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "fix tests",
+        "messageBody" : "- Re-enable parallel test execution (old issues are fixed)\n- Better to reset the FakeClusterManager more often than not\n- The Infinispan cluster manager must be stopped after tests\n- A test with a timeout of over a hour is not good\n- Tests that create own Vert.x instances or NeonBee(s) must take care to also shut them down properly, which can be very tricky. Generally it is recommended to use existing test bases or extensios, as they take care to properly shut down the instance(s).\n- Tests that use the FakeClusterManager must run isolated\n- Test methods that are in a NeonBeeTestBase, but not require NeonBee, can now be tagged with a @Tag(DOESNT_REQUIRE_NEONBEE)\n- Improve StaleThreadChecker to locate all tests creating stale threads (set VERBOSE = true, disable parallel execution and enable showStandardStreams in build.gradle to run analysis)",
+        "messageTitle" : "ci: fix tests"
+      } ]
+    } ]
+  }, {
     "version" : {
       "major" : 0,
       "minor" : 16,
@@ -30,10 +656,10 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
-    "releaseDate" : "2022-10-12 15:22:32.000 +0200",
+    "releaseDate" : "2022-10-12 17:43:37.000 +0200",
     "sections" : [ {
       "title" : "Bug Fixes",
       "commits" : [ {
@@ -91,8 +717,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-10-11 11:31:42.000 +0200",
     "sections" : [ {
@@ -378,8 +1004,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-10-05 11:46:05.000 +0200",
     "sections" : [ {
@@ -850,8 +1476,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-08-30 13:15:07.000 +0200",
     "sections" : [ {
@@ -1046,8 +1672,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-08-10 09:09:11.000 +0200",
     "sections" : [ {
@@ -1292,8 +1918,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-07-14 16:23:19.000 +0200",
     "sections" : [ {
@@ -1532,8 +2158,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-07-13 08:29:40.000 +0200",
     "sections" : [ {
@@ -1872,8 +2498,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-06-06 16:06:00.000 +0200",
     "sections" : [ {
@@ -1933,8 +2559,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-06-03 12:13:06.000 +0200",
     "sections" : [ {
@@ -2546,8 +3172,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-03-07 22:17:58.000 +0100",
     "sections" : [ {
@@ -2880,8 +3506,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-02-17 17:52:27.000 +0100",
     "sections" : [ {
@@ -2941,8 +3567,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-02-15 17:58:20.000 +0100",
     "sections" : [ {
@@ -3093,8 +3719,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-01-27 11:41:02.000 +0100",
     "sections" : [ {
@@ -3701,8 +4327,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-12-15 15:08:44.000 +0100",
     "sections" : [ {
@@ -3944,8 +4570,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-11-23 12:25:14.000 +0100",
     "sections" : [ {
@@ -4052,8 +4678,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-10-05 13:44:34.000 +0200",
     "sections" : [ {
@@ -4113,8 +4739,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-10-04 15:47:42.000 +0200",
     "sections" : [ {
@@ -5600,8 +6226,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-07-27 09:22:26.000 +0200",
     "sections" : [ {
@@ -5934,8 +6560,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-06-07 07:52:14.000 +0200",
     "sections" : [ {
@@ -7509,8 +8135,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-03-18 14:45:15.000 +0100",
     "sections" : [ {
@@ -7893,8 +8519,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-03-10 16:24:12.000 +0100",
     "sections" : [ {

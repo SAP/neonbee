@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeExtension;
@@ -25,8 +24,7 @@ import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-@ExtendWith(NeonBeeExtension.class)
-class LocalRequestClusterTest {
+class LocalRequestClusterTest extends NeonBeeExtension.TestBase {
     private static final DataVerticle<JsonObject> LOCAL_TARGET_VERTICLE = new DataVerticle<>() {
         @Override
         public String getName() {

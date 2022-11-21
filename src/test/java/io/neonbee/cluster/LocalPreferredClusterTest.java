@@ -14,7 +14,6 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.google.common.collect.Range;
 
@@ -32,8 +31,7 @@ import io.vertx.core.Future;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-@ExtendWith(NeonBeeExtension.class)
-class LocalPreferredClusterTest {
+class LocalPreferredClusterTest extends NeonBeeExtension.TestBase {
     private static final String LOCAL = "local";
 
     private static final String REMOTE = "remote";

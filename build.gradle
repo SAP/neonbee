@@ -22,7 +22,7 @@ plugins {
 }
 
 group = 'io.neonbee'
-version = '0.16.2-SNAPSHOT'
+version = '0.18.1-SNAPSHOT'
 mainClassName = 'io.neonbee.Launcher'
 archivesBaseName = 'neonbee-core'
 sourceCompatibility = 11
@@ -57,16 +57,19 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-health-check', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-infinispan', version: vertx_version
 
-    def jackson_version = '2.13.3'
+    def jackson_version = '2.13.4'
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jackson_version
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jackson_version
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.2'
 
     def olingo_version = '4.9.0'
     implementation(group: 'org.apache.olingo', name: 'odata-server-core', version: olingo_version) {
         exclude group: 'io.netty'
     }
     implementation group: 'org.apache.olingo', name: 'odata-server-core-ext', version: olingo_version
+
+    // required for annotationProcessing and needs to match vertx-infinispan version
+    implementation group: 'org.infinispan', name: 'infinispan-component-annotations', version: '13.0.10.Final'
 
     implementation group: 'com.sap.cds', name: 'cds4j-core', version: '1.30.0'
     implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.9.2'
@@ -201,8 +204,7 @@ test {
     // Is required for ReflectionsHelper
     jvmArgs += ['--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED']
 
-    // deactivate parallel execution of tests temporary until parallel execution works again
-    if (false && !org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX()) {
+    if (!org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX()) {
         systemProperties = [
             'junit.jupiter.execution.parallel.enabled' : 'true',
             'junit.jupiter.execution.parallel.mode.default' : 'concurrent',

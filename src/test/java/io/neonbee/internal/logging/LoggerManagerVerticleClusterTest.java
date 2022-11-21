@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import ch.qos.logback.classic.Level;
 import io.neonbee.NeonBee;
@@ -34,8 +33,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-@ExtendWith(NeonBeeExtension.class)
-class LoggerManagerVerticleClusterTest {
+class LoggerManagerVerticleClusterTest extends NeonBeeExtension.TestBase {
 
     private final DataContext dataContext = new DataContextImpl();
 

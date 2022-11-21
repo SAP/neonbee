@@ -6,6 +6,9 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toCollection;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -122,9 +125,13 @@ public final class DataQuery { // NOPMD not a "god class"
     /**
      * DataQuery with a URI path and query.
      *
+     * @deprecated This constructor is deprecated because it cannot correctly process query strings that contain the
+     *             '&amp;' or '=' characters in the value. Eg. {@code filter=string eq '&'}
+     *
      * @param uriPath The URI path to request
      * @param query   The (URL decoded) query string
      */
+    @Deprecated
     public DataQuery(String uriPath, String query) {
         this(READ, uriPath, query);
     }
@@ -132,10 +139,14 @@ public final class DataQuery { // NOPMD not a "god class"
     /**
      * DataQuery with a URI path and query.
      *
+     * @deprecated This constructor is deprecated because it cannot correctly process query strings that contain the
+     *             '&amp;' or '=' characters in the value. Eg. {@code filter=string eq '&'}
+     *
      * @param action  The action to perform
      * @param uriPath The URI path to request
      * @param query   The (URL decoded) query string
      */
+    @Deprecated
     public DataQuery(DataAction action, String uriPath, String query) {
         this(action, uriPath, query, (Buffer) null);
     }
@@ -143,11 +154,15 @@ public final class DataQuery { // NOPMD not a "god class"
     /**
      * DataQuery with a URI path and query.
      *
+     * @deprecated This constructor is deprecated because it cannot correctly process query strings that contain the
+     *             '&amp;' or '=' characters in the value. Eg. {@code filter=string eq '&'}
+     *
      * @param action  The action to perform
      * @param uriPath The URI path to request
      * @param query   The (URL decoded) query string
      * @param body    The body of this query
      */
+    @Deprecated
     public DataQuery(DataAction action, String uriPath, String query, Buffer body) {
         this(action, uriPath, query, null, body);
     }
@@ -155,10 +170,14 @@ public final class DataQuery { // NOPMD not a "god class"
     /**
      * DataQuery with a URI path, query and headers.
      *
+     * @deprecated This constructor is deprecated because it cannot correctly process query strings that contain the
+     *             '&amp;' or '=' characters in the value. Eg. {@code filter=string eq '&'}
+     *
      * @param uriPath The URI path to request
      * @param query   The (URL decoded) query string
      * @param headers The headers of this query
      */
+    @Deprecated
     public DataQuery(String uriPath, String query, Map<String, List<String>> headers) {
         this(READ, uriPath, query, headers);
     }
@@ -166,11 +185,15 @@ public final class DataQuery { // NOPMD not a "god class"
     /**
      * DataQuery with a URI path, query and headers.
      *
+     * @deprecated This constructor is deprecated because it cannot correctly process query strings that contain the
+     *             '&amp;' or '=' characters in the value. Eg. {@code filter=string eq '&'}
+     *
      * @param action  The action to perform
      * @param uriPath The URI path to request
      * @param query   The (URL decoded) query string
      * @param headers The headers of this query
      */
+    @Deprecated
     public DataQuery(DataAction action, String uriPath, String query, Map<String, List<String>> headers) {
         this(action, uriPath, query, headers, null);
     }
@@ -178,17 +201,39 @@ public final class DataQuery { // NOPMD not a "god class"
     /**
      * DataQuery with a URI path, query and headers.
      *
+     * @deprecated This constructor is deprecated because it cannot correctly process query strings that contain the
+     *             '&amp;' or '=' characters in the value. Eg. {@code filter=string eq '&'}
+     *
      * @param action  The action to perform
      * @param uriPath The URI path to request
      * @param query   The (URL decoded) query string
      * @param headers The headers of this query
      * @param body    The body of this query
      */
+    @Deprecated
     public DataQuery(DataAction action, String uriPath, String query, Map<String, List<String>> headers, Buffer body) {
         this.action = action;
         this.setUriPath(uriPath); // Calling the setter here, because there is an additional check implemented.
         this.headers = CollectionHelper.mapToCaseInsensitiveTreeMap(headers != null ? headers : Map.of());
         this.parameters = parseQueryString(query);
+        this.body = CollectionHelper.copyOf(body);
+    }
+
+    /**
+     * DataQuery with a URI path, query and headers.
+     *
+     * @param action          The action to perform
+     * @param uriPath         The URI path to request
+     * @param queryParameters The query parameters of this query
+     * @param headers         The headers of this query
+     * @param body            The body of this query
+     */
+    public DataQuery(DataAction action, String uriPath, Map<String, List<String>> queryParameters,
+            Map<String, List<String>> headers, Buffer body) {
+        this.action = action;
+        this.setUriPath(uriPath); // Calling the setter here, because there is an additional check implemented.
+        this.headers = CollectionHelper.mutableCopyOf(headers != null ? headers : Map.of());
+        this.parameters = CollectionHelper.mutableCopyOf(queryParameters != null ? queryParameters : Map.of());
         this.body = CollectionHelper.copyOf(body);
     }
 
@@ -237,13 +282,30 @@ public final class DataQuery { // NOPMD not a "god class"
     }
 
     /**
+     * Returns the parameters of this data query represented as a URL encoded string.
+     *
+     * @return the URL encoded query string
+     */
+    public String getRawQuery() {
+        return getQuery(s -> URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20"));
+    }
+
+    /**
      * Returns the parameters of this data query represented as a string.
+     *
+     * @deprecated This method is deprecated because it can generate query strings that can no longer be parsed
+     *             correctly. See {@link DataQuery#setQuery}
      *
      * @return the query
      */
+    @Deprecated
     public String getQuery() {
-        Function<String, Stream<String>> paramBuilder =
-                name -> getParameterValues(name).stream().map(value -> String.format("%s=%s", name, value));
+        return getQuery(Function.identity());
+    }
+
+    private String getQuery(Function<String, String> encoder) {
+        Function<String, Stream<String>> paramBuilder = name -> getParameterValues(name).stream()
+                .map(value -> String.format("%s=%s", encoder.apply(name), encoder.apply(value)));
 
         return parameters.keySet().stream().flatMap(paramBuilder).collect(joining("&"));
     }
@@ -251,11 +313,28 @@ public final class DataQuery { // NOPMD not a "god class"
     /**
      * Set the query string. Please note that this will also remove all previously added parameters.
      *
+     * <b>This method is deprecated because it cannot correctly process query strings that contain the '&amp;' or '='
+     * characters in the value.</b><br>
+     * Eg. {@code filter=string eq '&'}
+     *
      * @param query the (URL decoded) query to set
      * @return the DataQuery for chaining
      */
+    @Deprecated
     public DataQuery setQuery(String query) {
         this.parameters = parseQueryString(query);
+        return this;
+    }
+
+    /**
+     * Set the query string. Please note that this will also remove all previously added parameters.
+     *
+     * @param encodedQuery the (URL encoded) query to set
+     * @return the DataQuery for chaining
+     * @throws IllegalArgumentException if the implementation encounters illegal characters
+     */
+    public DataQuery setRawQuery(String encodedQuery) {
+        this.parameters = parseEncodedQueryString(encodedQuery);
         return this;
     }
 
@@ -337,14 +416,40 @@ public final class DataQuery { // NOPMD not a "god class"
         return this;
     }
 
+    /**
+     * Pars the encoded query parameter string.
+     *
+     * @param encodedQuery the encoded query parameter string
+     * @return the query parameter map
+     * @throws IllegalArgumentException if the implementation encounters illegal characters
+     */
+    public static Map<String, List<String>> parseEncodedQueryString(String encodedQuery) {
+        return parseQueryString(encodedQuery, s -> URLDecoder.decode(s, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * This method is deprecated because it cannot correctly process query strings that contain the '&amp;' or '='
+     * characters in the value.<br>
+     * Eg. {@code filter=string eq '&'}
+     *
+     * @param query the decoded query string
+     * @return map with the query
+     */
     @VisibleForTesting
+    @Deprecated
     static Map<String, List<String>> parseQueryString(String query) {
-        if (Strings.isNullOrEmpty(query)) {
+        return parseQueryString(query, Function.identity());
+    }
+
+    private static Map<String, List<String>> parseQueryString(String encodedQuery, Function<String, String> decoder) {
+        if (Strings.isNullOrEmpty(encodedQuery)) {
             return new HashMap<>();
         }
 
-        return QUERY_SPLIT_PATTERN.splitAsStream(query).map(paramString -> PARAM_SPLIT_PATTERN.split(paramString, 2))
-                .map(paramArray -> Map.entry(paramArray[0], paramArray.length > 1 ? paramArray[1] : ""))
+        return QUERY_SPLIT_PATTERN.splitAsStream(encodedQuery)
+                .map(paramString -> PARAM_SPLIT_PATTERN.split(paramString, 2))
+                .map(paramArray -> Map.entry(decoder.apply(paramArray[0]),
+                        paramArray.length > 1 ? decoder.apply(paramArray[1]) : ""))
                 .collect(groupingBy(Map.Entry::getKey, HashMap::new,
                         mapping(Map.Entry::getValue, toCollection(ArrayList::new))));
     }
@@ -451,7 +556,7 @@ public final class DataQuery { // NOPMD not a "god class"
      * @return a copy of this DataQuery
      */
     public DataQuery copy() {
-        return new DataQuery(action, uriPath, getQuery(), headers, body);
+        return new DataQuery(action, uriPath, parameters, headers, body);
     }
 
     @Override

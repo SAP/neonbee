@@ -4,6 +4,8 @@ import static ch.qos.logback.classic.util.ContextInitializer.CONFIG_FILE_PROPERT
 import static io.neonbee.test.helper.OptionsHelper.options;
 import static java.lang.System.setProperty;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -16,18 +18,23 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
 import org.junit.jupiter.api.extension.ExtensionContext.Store;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +44,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.impl.VertxImpl;
 import io.vertx.core.spi.cluster.ClusterManager;
+import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
@@ -45,6 +53,21 @@ import io.vertx.test.fakecluster.FakeClusterManager;
 @SuppressWarnings({ "rawtypes", "PMD.GodClass" })
 public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionCallback, AfterTestExecutionCallback,
         BeforeEachCallback, AfterEachCallback, BeforeAllCallback, AfterAllCallback {
+
+    /**
+     * The {@link TestBase} is a little syntax sugar for test classes, that are dealing with clustered tests. This class
+     * essentially wraps two things together and thusly decreases the risk of making a mistake:
+     * <ol>
+     * <li>Cluster tests should always run isolated. Thus the {@link TestBase} is {@link Isolated}.</li>
+     * <li>For clustered tests it is recommended to use the {@link NeonBeeExtension} in order to initialize NeonBee
+     * instances in the cluster. This test base implements the extension out of the box.</li>
+     * </ol>
+     */
+    @Isolated("Clustered NeonBee tests must always run isolated. The default FakeClusterManager has a static state and multiple real cluster manager should never run side-by-side for multiple tests to avoid interfering")
+    @ExtendWith(NeonBeeExtension.class)
+    public static class TestBase {
+        // nothing to add here, everything else is to be configured via the NeonBeeExtension
+    }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NeonBeeExtension.class);
 
@@ -137,13 +160,14 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
 
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
-        FakeClusterManager.reset();
+        FakeClusterManager.reset(); // better safe than sorry
         // We may wait on test contexts from @BeforeAll methods
         joinActiveTestContexts(context);
     }
 
     @Override
     public void afterEach(ExtensionContext context) throws Exception {
+        FakeClusterManager.reset(); // better safe than sorry
         // We may wait on test contexts from @AfterEach methods
         joinActiveTestContexts(context);
     }
@@ -213,7 +237,6 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
      *
      */
     private static class ScopedObject<T> implements Supplier<T>, ExtensionContext.Store.CloseableResource {
-
         private final T object;
 
         private final ThrowingConsumer<T> cleaner;
@@ -276,32 +299,62 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
             CountDownLatch latch = new CountDownLatch(1);
             AtomicReference<Throwable> errorBox = new AtomicReference<>();
 
-            // additional logic for tests, due to Hazelcast clusters tend to get stuck, after test execution finishes
+            // additional logic for tests, due to Hazelcast / Infinispan clusters tend to get stuck, after test
+            // execution finishes, thus we forcefully will terminate the clusters at some point in time
             Vertx vertx = neonBee.getVertx();
-            if (vertx instanceof VertxImpl) {
-                ClusterManager clusterManager = ((VertxImpl) vertx).getClusterManager();
-                if (clusterManager instanceof HazelcastClusterManager) {
-                    LifecycleService clusterLifecycleService =
-                            ((HazelcastClusterManager) clusterManager).getHazelcastInstance().getLifecycleService();
-                    Executors.newSingleThreadScheduledExecutor(runnable -> {
-                        Thread thread = new Thread(runnable, "neonbee-cluster-terminator");
-                        thread.setDaemon(true);
-                        return thread;
-                    }).schedule(() -> {
+            ClusterManager clusterManager = vertx instanceof VertxImpl ? ((VertxImpl) vertx).getClusterManager() : null;
+            if (clusterManager != null) {
+                Executors.newSingleThreadScheduledExecutor(runnable -> {
+                    Thread thread = new Thread(runnable, "neonbee-cluster-terminator");
+                    thread.setDaemon(true);
+                    return thread;
+                }).schedule(() -> {
+                    if (clusterManager instanceof HazelcastClusterManager) {
+                        LifecycleService clusterLifecycleService =
+                                ((HazelcastClusterManager) clusterManager).getHazelcastInstance().getLifecycleService();
+
                         if (clusterLifecycleService.isRunning()) {
                             LOGGER.warn("Forcefully terminating Hazelcast cluster after test");
                         }
 
                         // terminate the cluster in any case, if already terminated, this call will do nothing
                         clusterLifecycleService.terminate();
-                    }, 10, TimeUnit.SECONDS);
-                }
+                    } else if (clusterManager instanceof InfinispanClusterManager) {
+                        BasicCacheContainer cacheContainer =
+                                ((InfinispanClusterManager) clusterManager).getCacheContainer();
+
+                        if (cacheContainer instanceof EmbeddedCacheManager) {
+                            if (!ComponentStatus.TERMINATED
+                                    .equals(((EmbeddedCacheManager) cacheContainer).getStatus())) {
+                                LOGGER.warn("Forcefully terminating Infinispan cache manager after test");
+                            }
+
+                            // terminate the cluster in any case, if already terminated, this call will do nothing
+                            try {
+                                ((Closeable) cacheContainer).close();
+                            } catch (IOException e) {
+                                LOGGER.warn("Failed to close Infinispan cluster manager after test", e);
+                            }
+                        } else if (cacheContainer != null) {
+                            LOGGER.warn("Unknown Infinispan cache container type {}, cannot check for termination",
+                                    cacheContainer.getClass());
+                        }
+                    }
+                    // do not reset the FakeClusterManager here, as 10 seconds after test, another test could already be
+                    // using another instance of the FakeClusterManager, which accesses the same static variables
+                }, 10, TimeUnit.SECONDS);
             }
 
-            neonBee.getVertx().close(ar -> {
-                if (ar.failed()) {
-                    errorBox.set(ar.cause());
+            neonBee.getVertx().close().onComplete(result -> {
+                if (result.failed()) {
+                    errorBox.set(result.cause());
                 }
+
+                // if we run with a FakeClusterManager we need to reset it after the test
+                if (clusterManager instanceof FakeClusterManager) {
+                    FakeClusterManager.reset();
+                }
+
                 latch.countDown();
             });
 

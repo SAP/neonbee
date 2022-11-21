@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.apache.olingo.commons.api.edm.Edm;
+import org.apache.olingo.commons.api.edm.EdmEntityContainer;
 import org.apache.olingo.server.api.ServiceMetadata;
 import org.apache.olingo.server.api.etag.ServiceMetadataETagSupport;
 import org.apache.olingo.server.core.MetadataParser;
@@ -33,6 +35,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.sap.cds.reflect.CdsEntity;
 import com.sap.cds.reflect.CdsModel;
 
 import io.neonbee.NeonBee;
@@ -52,7 +55,7 @@ class EntityModelLoader {
     @VisibleForTesting
     static final String NEONBEE_MODELS = "NeonBee-Models";
 
-    private static final LoggingFacade LOGGER = LoggingFacade.create(EntityModelLoader.class);
+    private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     private static final HashFunction HASH_FUNCTION = Hashing.murmur3_128();
 
@@ -91,11 +94,16 @@ class EntityModelLoader {
      * @return a map of all loaded models
      */
     public static Future<Map<String, EntityModel>> load(Vertx vertx, Collection<EntityModelDefinition> definitions) {
+        LOGGER.trace("Start loading entity model definitions");
         return new EntityModelLoader(vertx).loadModelsFromModelDirectoryAndClassPath().compose(loader -> {
             return CompositeFuture
                     .all(definitions.stream().map(loader::loadModelsFromDefinition).collect(Collectors.toList()))
                     .map(loader);
-        }).map(EntityModelLoader::getModels);
+        }).map(EntityModelLoader::getModels).onComplete(result -> {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Loading entity model definitions {}", result.succeeded() ? "succeeded" : "failed");
+            }
+        });
     }
 
     /**
@@ -125,9 +133,18 @@ class EntityModelLoader {
      * @return a future to the {@link EntityModelLoader} instance
      */
     public Future<EntityModelLoader> loadModelsFromDefinition(EntityModelDefinition definition) {
-        return allComposite(definition.getCSNModelDefinitions().entrySet().stream().map(entry -> {
-            return parseModel(entry.getKey(), entry.getValue(), definition.getAssociatedModelDefinitions());
-        }).collect(Collectors.toList())).map(this);
+        Map<String, byte[]> csnModelDefinitions = definition.getCSNModelDefinitions();
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("Load models from definition {}", csnModelDefinitions.keySet());
+        }
+        return allComposite(csnModelDefinitions.entrySet().stream()
+                .map(entry -> parseModel(entry.getKey(), entry.getValue(), definition.getAssociatedModelDefinitions()))
+                .collect(Collectors.toList())).map(this).onComplete(result -> {
+                    if (LOGGER.isTraceEnabled()) {
+                        LOGGER.trace("Loading models from definition {} {}", csnModelDefinitions.keySet(),
+                                result.succeeded() ? "succeeded" : "failed");
+                    }
+                });
     }
 
     /**
@@ -138,6 +155,9 @@ class EntityModelLoader {
      */
     @VisibleForTesting
     Future<Void> scanDir(Path path) {
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("Scanning directory {}", path);
+        }
         return FileSystemHelper.readDir(vertx, path).recover(throwable -> {
             // ignore if the models directory does not exist, or a file / folder was deleted after readDir
             return ((throwable instanceof FileSystemException) && throwable.getMessage().contains("Does not exist"))
@@ -148,7 +168,7 @@ class EntityModelLoader {
                         .map(file -> FileSystemHelper.isDirectory(vertx, file)
                                 .compose(isDir -> isDir ? scanDir(file) : loadModel(file)))
                         .collect(Collectors.toList())))
-                .compose(future -> succeededFuture());
+                .mapEmpty();
     }
 
     /**
@@ -156,8 +176,7 @@ class EntityModelLoader {
      */
     @VisibleForTesting
     Future<Void> scanClassPath() {
-        LOGGER.info("Loading models from class path");
-
+        LOGGER.trace("Scanning class path");
         ClassPathScanner scanner = new ClassPathScanner();
         Future<List<String>> csnFiles = scanner.scanWithPredicate(vertx, name -> name.endsWith(CSN));
         Future<List<String>> modelFiles = scanner.scanManifestFiles(vertx, NEONBEE_MODELS);
@@ -178,6 +197,9 @@ class EntityModelLoader {
             return succeededFuture();
         }
 
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("Loading model {}", csnFile);
+        }
         return readCsnModel(csnFile).compose(cdsModel -> {
             return CompositeFuture.all(EntityModelDefinition.resolveEdmxPaths(csnFile, cdsModel).stream()
                     .map(this::loadEdmxModel).collect(Collectors.toList())).onSuccess(compositeFuture -> {
@@ -187,26 +209,50 @@ class EntityModelLoader {
     }
 
     Future<Void> parseModel(String csnFile, byte[] csnPayload, Map<String, byte[]> associatedModels) {
-        return parseCsnModel(csnPayload)
-                .compose(cdsModel -> CompositeFuture
-                        .all(EntityModelDefinition.resolveEdmxPaths(Path.of(csnFile), cdsModel).stream()
-                                .map(Path::toString).map(path -> {
-                                    // we do not know if the path uses windows / unix path separators, try both!
-                                    return FileSystemHelper.getPathFromMap(associatedModels, path);
-                                }).map(this::parseEdmxModel).collect(Collectors.toList()))
-                        .onSuccess(compositeFuture -> {
-                            buildModelMap(cdsModel, compositeFuture.<ServiceMetadata>list());
-                        }))
-                .mapEmpty();
+        LOGGER.trace("Parse CSN model file {}", csnFile);
+        return parseCsnModel(csnPayload).onComplete(result -> {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Parsing CSN model file {} {}", csnFile, result.succeeded() ? "succeeded" : "failed");
+            }
+        }).compose(cdsModel -> {
+            LOGGER.trace("Parse associated models of {}", csnFile);
+            return CompositeFuture.all(EntityModelDefinition.resolveEdmxPaths(Path.of(csnFile), cdsModel).stream()
+                    .map(Path::toString).map(path -> {
+                        // we do not know if the path uses windows / unix path separators, try both!
+                        return FileSystemHelper.getPathFromMap(associatedModels, path);
+                    }).map(this::parseEdmxModel).collect(Collectors.toList())).onComplete(result -> {
+                        if (LOGGER.isTraceEnabled()) {
+                            LOGGER.trace("Parsing associated models of {} {}", csnFile,
+                                    result.succeeded() ? "succeeded" : "failed");
+                        }
+                    }).onSuccess(compositeFuture -> {
+                        buildModelMap(cdsModel, compositeFuture.<ServiceMetadata>list());
+                    }).mapEmpty();
+        });
     }
 
     private void buildModelMap(CdsModel cdsModel, List<ServiceMetadata> edmxModels) {
-        Map<String, ServiceMetadata> edmxMap = edmxModels.stream().collect(Collectors.toMap(
-                serviceMetaData -> serviceMetaData.getEdm().getEntityContainer().getNamespace(), Function.identity()));
-        EntityModel entityModel = EntityModel.of(cdsModel, edmxMap);
         String namespace = EntityModelDefinition.getNamespace(cdsModel);
-        models.put(namespace, entityModel);
-        LOGGER.info("Entity model of model with schema namespace {} was added the entity model map.", namespace);
+
+        if (namespace == null) {
+            if (LOGGER.isWarnEnabled()) {
+                LOGGER.warn(
+                        "Could not determine namespace of CDS model. Model (with entities {}) will not added to the model map."
+                                + " Was any service defined in the CDS model?",
+                        cdsModel.entities().map(CdsEntity::getName).collect(Collectors.joining(", ")));
+            }
+            return;
+        } else {
+            LOGGER.trace("Building model map for namespace {}", namespace);
+        }
+
+        Map<String, ServiceMetadata> edmxMap = edmxModels.stream()
+                .collect(Collectors.toMap(EntityModelLoader::getSchemaNamespace, Function.identity()));
+        if (models.put(namespace, EntityModel.of(cdsModel, edmxMap)) != null) {
+            LOGGER.warn("Model with schema namespace {} replaced an existing model in the model map", namespace);
+        } else {
+            LOGGER.info("Model with schema namespace {} was added the model map", namespace);
+        }
     }
 
     /**
@@ -258,16 +304,14 @@ class EntityModelLoader {
     private Future<ServiceMetadata> createServiceMetadataWithSchema(Buffer csdl) {
         return AsyncHelper.executeBlocking(vertx, () -> {
             // Get the service metadata first w/o the schema namespace, because we have to read it
-            ServiceMetadata serviceMetadata = createServiceMetadata(csdl);
-            String schemaNamespace = serviceMetadata.getEdm().getSchemas().get(0).getNamespace();
-            return createServiceMetadataWithSchema(csdl, schemaNamespace);
+            return createServiceMetadataWithSchema(csdl, getSchemaNamespace(createServiceMetadata(csdl)));
         });
     }
 
     /**
      * Transform the EDMX file which contains the XML representation of the OData Common Schema Definition Language
      * (CSDL) to a ServiceMetadata instance.
-     * <p>
+     *
      * ATTENTION: This method contains BLOCKING code and thus should only be called in a Vert.x worker thread!
      *
      * @param csdl            the String representation of the EDMX file's content
@@ -303,10 +347,21 @@ class EntityModelLoader {
      *
      * ATTENTION: This method contains BLOCKING code and thus should only be called in a Vert.x worker thread!
      */
-    private static ServiceMetadata createServiceMetadata(Buffer csdl) throws XMLStreamException {
+    @VisibleForTesting
+    static ServiceMetadata createServiceMetadata(Buffer csdl) throws XMLStreamException {
         InputStreamReader reader = new InputStreamReader(new BufferInputStream(csdl), UTF_8);
         SchemaBasedEdmProvider edmProvider = new MetadataParser().referenceResolver(null).buildEdmProvider(reader);
         return getBufferedOData().createServiceMetadata(edmProvider, Collections.emptyList());
+    }
+
+    @VisibleForTesting
+    static String getSchemaNamespace(ServiceMetadata serviceMetadata) {
+        // a schema without an entity container is still an valid EDMX, an EDMX without any schema is not, thus try to
+        // determine the namespace of the schema containing the entity container first or fall back to use any schema
+        // associated with the EDMX
+        Edm edm = serviceMetadata.getEdm();
+        EdmEntityContainer entityCollection = edm.getEntityContainer();
+        return entityCollection != null ? entityCollection.getNamespace() : edm.getSchemas().get(0).getNamespace();
     }
 
     @VisibleForTesting

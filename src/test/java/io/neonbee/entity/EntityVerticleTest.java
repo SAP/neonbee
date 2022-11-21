@@ -158,6 +158,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     @Test
     @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Get URI info from query")
+    @SuppressWarnings("deprecation")
     void parseUriInfoTest(Vertx vertx, VertxTestContext testContext) {
         Checkpoint checkpoint = testContext.checkpoint(3);
 
@@ -241,6 +242,21 @@ class EntityVerticleTest extends EntityVerticleTestBase {
         deployVerticle(dummyEntityVerticle).onComplete(testContext.succeeding(nextHandler -> {
             testVertx.eventBus().publish(EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS, null);
         }));
+    }
+
+    @Test
+    @Timeout(value = 200, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("test query with special characters")
+    void testqueryWithSpecialCharacters(Vertx vertx, VertxTestContext testContext) {
+        DataQuery dataQuery = new DataQuery("/io.neonbee.test1.TestService1/AllPropertiesNullable");
+        dataQuery.setRawQuery("$count=true&$orderby=PropertyString&$filter=contains(PropertyString,%20%27%26%27)");
+        var parameters = dataQuery.getParameters();
+        assertThat(parameters).isNotNull();
+
+        EntityVerticle.parseUriInfo(vertx, dataQuery).onSuccess(uriInfo -> {
+            assertThat(uriInfo).isNotNull();
+            testContext.completeNow();
+        }).onFailure(t -> testContext.failNow(t));
     }
 }
 

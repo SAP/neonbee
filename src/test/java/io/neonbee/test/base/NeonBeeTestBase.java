@@ -64,6 +64,7 @@ import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
@@ -76,9 +77,12 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.micrometer.backends.BackendRegistries;
+import io.vertx.test.fakecluster.FakeClusterManager;
 
 @ExtendWith(VertxExtension.class)
 public class NeonBeeTestBase {
+    public static final String DOESNT_REQUIRE_NEONBEE = "NO_NEONBEE";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(NeonBeeTestBase.class);
 
     // create a dummy JsonObject indicating that the provideUserPrincipal method was not overridden. depending on the
@@ -102,6 +106,14 @@ public class NeonBeeTestBase {
         // associate the Vert.x instance to the current test (unfortunately the only "identifier" that is shared between
         // TestInfo and TestIdentifier is the display name)
         StaleVertxChecker.VERTX_TEST_MAP.put(vertx, testInfo.getDisplayName());
+
+        // for some tests, even in a NeonBeeTestBase you might not want to have a NeonBee instance created. use a @Tag
+        // to disable creation of a NeonBee instance for the specific test only
+        if (testInfo.getTags().contains(DOESNT_REQUIRE_NEONBEE)) {
+            neonBee = null; // NOPMD
+            testContext.completeNow();
+            return;
+        }
 
         // build working directory
         workingDirPath = FileSystemHelper.createTempDirectory();
@@ -194,7 +206,18 @@ public class NeonBeeTestBase {
 
     @AfterEach
     @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
-    void tearDown(Vertx vertx, VertxTestContext testContext) throws IOException {
+    void tearDown(Vertx vertx, VertxTestContext testContext, TestInfo testInfo) throws IOException {
+        if (testInfo.getTags().contains(DOESNT_REQUIRE_NEONBEE)) {
+            testContext.completeNow();
+            return;
+        }
+
+        // in case we had run in clustered mode and used a FakeClusterManager, we will have to reset it
+        if (neonBee.getOptions().isClustered() && vertx instanceof VertxInternal
+                && ((VertxInternal) vertx).getClusterManager() instanceof FakeClusterManager) {
+            FakeClusterManager.reset();
+        }
+
         // if the metrics registry is still the same random id generated in this test run and was not changed by the
         // adaptOptions method, stop the metrics registry that was (likely) started by NeonBee
         if (randomMetricsRegistryName.equals(neonBee.getOptions().getMetricsRegistryName())) {

@@ -256,13 +256,8 @@ public class NeonBee {
         vertxOptions.setMetricsOptions(new MicrometerMetricsOptions().setRegistryName(options.getMetricsRegistryName())
                 .setMicrometerRegistry(compositeMeterRegistry).setEnabled(true));
 
-        Future<VertxOptions> loadClusterManager = Future.future(p -> {
-            if (options.isClustered()) {
-                p.handle(clusterManagerFactory.create(options).map(vertxOptions::setClusterManager));
-            } else {
-                p.complete(vertxOptions);
-            }
-        });
+        Future<VertxOptions> loadClusterManager = !options.isClustered() ? succeededFuture(vertxOptions)
+                : clusterManagerFactory.create(options).map(vertxOptions::setClusterManager);
 
         // create a Vert.x instance (clustered or unclustered)
         return loadClusterManager.compose(vertxFactory).compose(vertx -> {
@@ -284,16 +279,17 @@ public class NeonBee {
             };
 
             try {
-                Future<NeonBeeConfig> neonBeeConfigFuture;
+                Future<NeonBeeConfig> configFuture;
                 if (config == null) {
-                    neonBeeConfigFuture = loadConfig(vertx, options.getConfigDirectory());
+                    configFuture = loadConfig(vertx, options.getConfigDirectory());
                 } else {
-                    neonBeeConfigFuture = succeededFuture(config);
+                    configFuture = succeededFuture(config);
                 }
 
-                Future<NeonBee> neonBeeFuture = neonBeeConfigFuture
-                        // create a NeonBee instance, hook registry and close handler
-                        .map(c -> new NeonBee(vertx, options, c, compositeMeterRegistry));
+                // create a NeonBee instance, hook registry and close handler
+                Future<NeonBee> neonBeeFuture = configFuture.map(loadedConfig -> {
+                    return new NeonBee(vertx, options, loadedConfig, compositeMeterRegistry);
+                });
                 // boot NeonBee, on failure close Vert.x
                 return neonBeeFuture.compose(NeonBee::boot).recover(closeVertx).compose(unused -> neonBeeFuture);
             } catch (Throwable t) {
@@ -620,19 +616,18 @@ public class NeonBee {
         try {
             // unfortunately the addCloseHook method is public, but hidden in VertxImpl. As we need to know when the
             // instance shuts down, register a close hook using reflections (might fail due to a SecurityManager)
-            vertx.getClass().getMethod("addCloseHook", Closeable.class).invoke(vertx, (Closeable) handler -> {
+            vertx.getClass().getMethod("addCloseHook", Closeable.class).invoke(vertx, (Closeable) completion -> {
                 /*
                  * Called when Vert.x instance is closed, perform shut-down operations here
                  */
-                handler.handle(
-                        hookRegistry.executeHooks(HookType.BEFORE_SHUTDOWN).compose(shutdownHooksExecutionOutcomes -> {
-                            if (shutdownHooksExecutionOutcomes.failed()) {
-                                shutdownHooksExecutionOutcomes.<Future>list().stream().filter(Future::failed).forEach(
-                                        future -> LOGGER.error("Shutdown hook execution failed", future.cause())); // NOPMD
-                            }
-                            NEONBEE_INSTANCES.remove(vertx);
-                            return succeededFuture();
-                        }).mapEmpty());
+                hookRegistry.executeHooks(HookType.BEFORE_SHUTDOWN).onSuccess(shutdownHooksExecutionOutcomes -> {
+                    if (shutdownHooksExecutionOutcomes.failed()) {
+                        shutdownHooksExecutionOutcomes.<Future>list().stream().filter(Future::failed)
+                                .forEach(future -> LOGGER.error("Shutdown hook execution failed", future.cause())); // NOPMD
+                    }
+
+                    NEONBEE_INSTANCES.remove(vertx);
+                }).<Void>mapEmpty().onComplete(completion);
             });
         } catch (Exception e) {
             LOGGER.warn("Failed to register NeonBee close hook to Vert.x", e);

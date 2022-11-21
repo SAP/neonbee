@@ -33,8 +33,8 @@ import io.vertx.core.Future;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
-@ExtendWith({ NeonBeeExtension.class, MockitoExtension.class })
-class TrackingInterceptorClusterTest {
+@ExtendWith({ MockitoExtension.class })
+class TrackingInterceptorClusterTest extends NeonBeeExtension.TestBase {
 
     @Mock
     private TrackingDataHandlingStrategy strategy;

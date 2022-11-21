@@ -178,7 +178,7 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
         return neonBee.getModelManager().getSharedModel(EntityModelDefinition.retrieveNamespace(serviceName))
                 .compose(entityModel -> AsyncHelper.executeBlocking(neonBee.getVertx(), () -> {
                     return new Parser(entityModel.getEdmxMetadata(serviceName).getEdm(), getBufferedOData())
-                            .parseUri(uriMatcher.group(ENTITY_PATH_GROUP), query.getQuery(), EMPTY, EMPTY);
+                            .parseUri(uriMatcher.group(ENTITY_PATH_GROUP), query.getRawQuery(), EMPTY, EMPTY);
                 }));
     }
 
