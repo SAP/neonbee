@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -57,7 +58,7 @@ public final class DataQuery { // NOPMD not a "god class"
 
     @VisibleForTesting
     @JsonProperty
-    Map<String, List<String>> headers;
+    Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     @VisibleForTesting
     @JsonSerialize(using = BufferSerializer.class)
@@ -213,7 +214,7 @@ public final class DataQuery { // NOPMD not a "god class"
     public DataQuery(DataAction action, String uriPath, String query, Map<String, List<String>> headers, Buffer body) {
         this.action = action;
         this.setUriPath(uriPath); // Calling the setter here, because there is an additional check implemented.
-        this.headers = CollectionHelper.mutableCopyOf(headers != null ? headers : Map.of());
+        this.headers = CollectionHelper.mapToCaseInsensitiveTreeMap(headers != null ? headers : Map.of());
         this.parameters = parseQueryString(query);
         this.body = CollectionHelper.copyOf(body);
     }
@@ -490,7 +491,7 @@ public final class DataQuery { // NOPMD not a "god class"
      * @return the DataQuery for chaining
      */
     public DataQuery setHeaders(Map<String, List<String>> headers) {
-        this.headers = CollectionHelper.mutableCopyOf(headers);
+        this.headers = CollectionHelper.mapToCaseInsensitiveTreeMap(headers);
         return this;
     }
 

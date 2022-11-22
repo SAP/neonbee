@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
@@ -139,6 +141,22 @@ public final class CollectionHelper {
     }
 
     /**
+     * Converts a given map {@link Map} to a case-insensitive treemap {@link TreeMap} by creating a copy of all mutable
+     * keys and values and adding them to a new case-insensitive treemap {@link TreeMap}.
+     *
+     * @param <K> the key type
+     * @param <V> the value type
+     * @param map the map to copy
+     * @return a new case-insensitive treemap as mutable deep copy of the given map
+     */
+    public static <K extends String, V> Map<K, V> mapToCaseInsensitiveTreeMap(Map<K, V> map) {
+        return Optional.ofNullable(map).map(Map::entrySet).map(Set::stream).orElseGet(Stream::empty)
+                .collect(Collectors.toMap(entry -> copyOf(entry.getKey()), entry -> copyOf(entry.getValue()),
+                        (valueA, valueB) -> valueB,
+                        () -> new NullLiberalMergingTreeMap<>(String.CASE_INSENSITIVE_ORDER)));
+    }
+
+    /**
      * Converts a given {@link MultiMap} to a {@link Map} of a {@link List} of {@link String}.
      *
      * @param multiMap the {@link MultiMap} to convert
@@ -194,6 +212,36 @@ public final class CollectionHelper {
     @SuppressWarnings("PMD.NullAssignment")
     public static class NullLiberalMergingHashMap<K, V> extends HashMap<K, V> {
         private static final long serialVersionUID = 1L;
+
+        @Override
+        public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+            if (value != null) {
+                return super.merge(key, value, remappingFunction);
+            } else {
+                put(key, containsKey(key) ? remappingFunction.apply(get(key), null) : null);
+                return null;
+            }
+        }
+    }
+
+    /**
+     * A merging {@link TreeMap} which may take null values into merging.
+     *
+     * @param <K> the key type
+     * @param <V> the value type
+     */
+    @SuppressWarnings("PMD.NullAssignment")
+    public static class NullLiberalMergingTreeMap<K, V> extends TreeMap<K, V> {
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Constructor for NullLiberalMergingTreeMap with comparator.
+         *
+         * @param comparator the comparator for sorting
+         */
+        public NullLiberalMergingTreeMap(Comparator<? super K> comparator) {
+            super(comparator);
+        }
 
         @Override
         public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {

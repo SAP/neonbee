@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -209,5 +210,59 @@ class DataQueryTest {
         DataQuery query1 = new DataQuery(DataAction.CREATE, "uri", "name=Hodor", Map.of("header1", List.of("value1")),
                 Buffer.buffer("payload1"));
         assertThat(query1.copy().setBody(Buffer.buffer("payload2"))).isNotEqualTo(query1);
+    }
+
+    @Test
+    @DisplayName("DataQuery should have case-insensitive headers")
+    @SuppressWarnings("deprecation")
+    void testCaseInsensitivityOfHeaders() {
+        DataQuery query = new DataQuery("uri", "name=Hodor", Map.of("header1", List.of("value1")));
+        assertThat(query.getHeaderValues("Header1")).isEqualTo(List.of("value1"));
+    }
+
+    @Test
+    @DisplayName("Get DataQuery header should return null when no match in case-insensitive headers")
+    @SuppressWarnings("deprecation")
+    void testNonMatchOfHeaders() {
+        DataQuery query = new DataQuery("uri", "name=Hodor", Map.of("header1", List.of("value1")));
+        assertThat(query.getHeader("Header2")).isNull();
+    }
+
+    @Test
+    @DisplayName("Set DataQuery headers should set new headers")
+    @SuppressWarnings("deprecation")
+    void testSetHeaders() {
+        DataQuery query = new DataQuery("uri", "name=Hodor", Map.of("header1", List.of("value1")));
+        query.setHeaders(Map.of("Header1", List.of("value2")));
+        assertThat(query.getHeaderValues("header1")).isEqualTo(List.of("value2"));
+    }
+
+    @Test
+    @DisplayName("Add DataQuery headers should add new value to existing headers")
+    @SuppressWarnings("deprecation")
+    void testAddToExistingHeaders() {
+        DataQuery query = new DataQuery("uri", "name=Hodor", Map.of("header1", List.of("value1")));
+        query.addHeader("Header1", "value2");
+        assertThat(query.getHeaderValues("header1")).isEqualTo(List.of("value1", "value2"));
+    }
+
+    @Test
+    @DisplayName("Add DataQuery header should create new header when it does not already exist")
+    @SuppressWarnings("deprecation")
+    void testAddNewHeaders() {
+        DataQuery query = new DataQuery("uri", "name=Hodor", Map.of("header1", List.of("value1")));
+        query.addHeader("header2", "value2");
+        assertThat(query.getHeaderValues("header2")).isEqualTo(List.of("value2"));
+    }
+
+    @Test
+    @DisplayName("Modifying headers in copied DataQuery should not modify headers in the original one")
+    @SuppressWarnings("deprecation")
+    void testHeadersChangeInCopiedQuery() {
+        DataQuery query1 = new DataQuery("uri", "name=Hodor", Map.of("header1", new ArrayList<>(List.of("value1"))));
+        assertThat(query1.getHeaderValues("header1")).hasSize(1);
+        DataQuery query2 = query1.copy();
+        query2.getHeaderValues("header1").add("value2");
+        assertThat(query1.getHeaderValues("header1")).hasSize(1);
     }
 }
