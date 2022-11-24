@@ -27,7 +27,6 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -79,7 +78,6 @@ import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.internal.verticle.DeployerVerticle;
 import io.neonbee.internal.verticle.HealthCheckVerticle;
 import io.neonbee.internal.verticle.LoggerManagerVerticle;
-import io.neonbee.internal.verticle.MetricsVerticle;
 import io.neonbee.internal.verticle.ModelRefreshVerticle;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.vertx.core.Closeable;
@@ -494,7 +492,6 @@ public class NeonBee {
     private Future<Void> deploySystemVerticles() {
         List<Future<? extends Deployable>> requiredVerticles = new ArrayList<>();
         requiredVerticles.add(fromClass(vertx, ConsolidationVerticle.class, new JsonObject().put("instances", 1)));
-        requiredVerticles.add(fromVerticle(vertx, new MetricsVerticle(1, TimeUnit.SECONDS)));
         requiredVerticles.add(fromClass(vertx, LoggerManagerVerticle.class));
 
         List<Future<Optional<? extends Deployable>>> optionalVerticles = new ArrayList<>();

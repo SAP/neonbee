@@ -69,7 +69,6 @@ import io.neonbee.internal.tracking.TrackingInterceptor;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.internal.verticle.HealthCheckVerticle;
 import io.neonbee.internal.verticle.LoggerManagerVerticle;
-import io.neonbee.internal.verticle.MetricsVerticle;
 import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.AbstractVerticle;
@@ -146,7 +145,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should deploy all none optional system verticles")
     void testDeployNoneOptionalSystemVerticles(Vertx vertx) {
-        assertThat(getDeployedVerticles(vertx)).containsExactly(MetricsVerticle.class, ConsolidationVerticle.class,
+        assertThat(getDeployedVerticles(vertx)).containsExactly(ConsolidationVerticle.class,
                 LoggerManagerVerticle.class);
     }
 
@@ -154,7 +153,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should deploy all none optional system verticles plus HealthCheckVerticle")
     void testDeployNoneOptionalSystemVerticlesPlusHealthCheckVerticle(Vertx vertx) {
-        assertThat(getDeployedVerticles(vertx)).containsExactly(MetricsVerticle.class, ConsolidationVerticle.class,
+        assertThat(getDeployedVerticles(vertx)).containsExactly(ConsolidationVerticle.class,
                 LoggerManagerVerticle.class, HealthCheckVerticle.class);
     }
 
