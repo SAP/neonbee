@@ -121,6 +121,10 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Override
     protected WorkingDirectoryBuilder provideWorkingDirectoryBuilder(TestInfo testInfo, VertxTestContext testContext) {
         switch (testInfo.getTestMethod().map(Method::getName).orElse(EMPTY)) {
+        case "testDeployNoneOptionalSystemVerticles":
+            NeonBeeConfig config = new NeonBeeConfig();
+            config.getHealthConfig().setEnabled(false);
+            return super.provideWorkingDirectoryBuilder(testInfo, testContext).setNeonBeeConfig(config);
         case "testStartWithNoWorkingDirectory":
             return WorkingDirectoryBuilder.none();
         case "testStartWithEmptyWorkingDirectory":
@@ -140,8 +144,16 @@ class NeonBeeTest extends NeonBeeTestBase {
 
     @Test
     @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
-    @DisplayName("NeonBee should deploy all system verticles")
-    void testDeploySystemVerticles(Vertx vertx) {
+    @DisplayName("NeonBee should deploy all none optional system verticles")
+    void testDeployNoneOptionalSystemVerticles(Vertx vertx) {
+        assertThat(getDeployedVerticles(vertx)).containsExactly(MetricsVerticle.class, ConsolidationVerticle.class,
+                LoggerManagerVerticle.class);
+    }
+
+    @Test
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("NeonBee should deploy all none optional system verticles plus HealthCheckVerticle")
+    void testDeployNoneOptionalSystemVerticlesPlusHealthCheckVerticle(Vertx vertx) {
         assertThat(getDeployedVerticles(vertx)).containsExactly(MetricsVerticle.class, ConsolidationVerticle.class,
                 LoggerManagerVerticle.class, HealthCheckVerticle.class);
     }
