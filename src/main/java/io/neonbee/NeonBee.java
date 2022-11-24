@@ -495,10 +495,12 @@ public class NeonBee {
         List<Future<? extends Deployable>> requiredVerticles = new ArrayList<>();
         requiredVerticles.add(fromClass(vertx, ConsolidationVerticle.class, new JsonObject().put("instances", 1)));
         requiredVerticles.add(fromVerticle(vertx, new MetricsVerticle(1, TimeUnit.SECONDS)));
-        requiredVerticles.add(fromVerticle(vertx, new HealthCheckVerticle()));
         requiredVerticles.add(fromClass(vertx, LoggerManagerVerticle.class));
 
         List<Future<Optional<? extends Deployable>>> optionalVerticles = new ArrayList<>();
+        if (Optional.ofNullable(config.getHealthConfig()).map(HealthConfig::isEnabled).orElse(true)) {
+            requiredVerticles.add(fromClass(vertx, HealthCheckVerticle.class));
+        }
         optionalVerticles.add(deployableWatchVerticle(options.getModelsDirectory(), ModelRefreshVerticle::new));
         optionalVerticles.add(deployableWatchVerticle(options.getVerticlesDirectory(), DeployerVerticle::new));
         optionalVerticles.add(deployableWatchVerticle(options.getModulesDirectory(), DeployerVerticle::new));
