@@ -1,6 +1,8 @@
 package io.neonbee.test.helper;
 
 import static io.vertx.core.Future.succeededFuture;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
@@ -222,7 +224,7 @@ public class DummyVerticleHelper {
          *         {@link DataAdapter}.
          */
         public EntityVerticle withDataAdapter(DataAdapter<EntityWrapper> dataAdapter) {
-            return new EntityVerticle() {
+            EntityVerticle ev = new EntityVerticle() {
 
                 @Override
                 public Future<EntityWrapper> retrieveData(DataQuery query, DataContext context) {
@@ -249,6 +251,11 @@ public class DummyVerticleHelper {
                     return succeededFuture(Set.of(fqn));
                 }
             };
+
+            String name = String.format("_%s-%d", fqn, ev.hashCode());
+            EntityVerticle spy = spy(ev);
+            when(spy.getName()).thenReturn(name);
+            return spy;
         }
     }
 }
