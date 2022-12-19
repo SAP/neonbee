@@ -3,10 +3,19 @@ package io.neonbee.entity;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.ConcurrentModificationException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.neonbee.internal.cluster.ClusterHelper;
 import org.apache.olingo.server.api.OData;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -20,7 +29,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.impl.VertxImpl;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.Lock;
 import io.vertx.core.spi.cluster.ClusterManager;
@@ -270,17 +278,17 @@ public class EntityModelManager {
             return succeededFuture();
         }
         return lockFuture.compose(lock -> getAsyncMap(vertx).compose(m -> {
-            externalModelDefinitions.forEach(e -> futures.add(m.putIfAbsent(e.toBuffer(), getNodeId(vertx))));
-            LOGGER.info("entity models written into shared memory by node id " + getNodeId(vertx) + " = "
+            externalModelDefinitions.forEach(e -> futures.add(m.putIfAbsent(e.toBuffer(), getClusterNodeId(vertx))));
+            LOGGER.info("entity models written into shared memory by node id " + getClusterNodeId(vertx) + " = "
                     + externalModelDefinitions);
             return CompositeFuture.all(futures).mapEmpty();
         }).onComplete(result -> lock.release())).mapEmpty();
     }
 
-    private static String getNodeId(Vertx vertx) {
-        VertxImpl vertxImpl = (VertxImpl) vertx;
-        ClusterManager cm = vertxImpl.getClusterManager();
-        return cm == null ? "1" : cm.getNodeId();
+    private static String getClusterNodeId(Vertx vertx) {
+        return ClusterHelper.getClusterManager(vertx)
+            .map(ClusterManager::getNodeId)
+            .orElse("1");
     }
 
     private Future<AsyncMap<Buffer, String>> getAsyncMap(Vertx vertx) {
@@ -303,7 +311,7 @@ public class EntityModelManager {
      * @return future
      */
     public Future<Map<String, EntityModel>> reloadRemoteModels(Vertx vertx) {
-        LOGGER.info("in reloadRemoteModels in node " + getNodeId(vertx));
+        LOGGER.info("in reloadRemoteModels in node " + getClusterNodeId(vertx));
         return obtainRemoteModelDefinitions()
                 .compose(changedModels -> EntityModelLoader.load(vertx, externalModelDefinitions).compose(models -> {
                     bufferedModels.set(models.left);

@@ -122,7 +122,13 @@ public final class EntityModelDefinition implements ClusterSerializable {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        return toString().equals(o.toString());
+
+        EntityModelDefinition that = (EntityModelDefinition) o;
+
+        if (!Objects.equals(csData, that.csData)) {
+            return false;
+        }
+        return Objects.equals(associatedData, that.associatedData);
     }
 
     @Override
