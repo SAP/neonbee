@@ -6,7 +6,6 @@ import static io.vertx.core.Future.succeededFuture;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,12 +19,10 @@ import io.neonbee.data.DataVerticle;
 import io.neonbee.test.base.DataVerticleTestBase;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class ResponseDataIntegrationTest extends DataVerticleTestBase {
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Check that response metadata is properly propagated")
     void testResponseDataPropagation(VertxTestContext testContext) {
         DataContext dataContext =
@@ -46,7 +43,6 @@ class ResponseDataIntegrationTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Check that response metadata should not be propagated")
     void testResponseDataNoPropagation(VertxTestContext testContext) {
         DataContext dataContext =

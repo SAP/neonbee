@@ -3,7 +3,6 @@ package io.neonbee.test.base;
 import static com.google.common.truth.Truth.assertThat;
 
 import java.lang.reflect.Method;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,7 +12,6 @@ import io.neonbee.NeonBeeOptions;
 import io.neonbee.data.DataVerticle;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class NeonBeeTestBaseTest extends NeonBeeTestBase {
@@ -32,7 +30,6 @@ class NeonBeeTestBaseTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("test that the dummy user principal is available in the DataContext")
     void testProvideUserPrincipal(VertxTestContext testContext) {
         DataVerticle<Void> dummy = createDummyDataVerticle("test/Dummy").withDynamicResponse((query, context) -> {

@@ -7,7 +7,6 @@ import static io.vertx.core.Future.succeededFuture;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -28,7 +27,6 @@ import io.neonbee.data.DataVerticle;
 import io.neonbee.data.internal.DataContextImpl;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class LocalPreferredClusterTest extends NeonBeeExtension.TestBase {
@@ -41,7 +39,6 @@ class LocalPreferredClusterTest extends NeonBeeExtension.TestBase {
     private NeonBee localNode;
 
     @BeforeEach
-    @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Setup the cluster nodes and deploy the consumers")
     void setUp(@NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee localNode,
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee remoteNode,
@@ -53,7 +50,6 @@ class LocalPreferredClusterTest extends NeonBeeExtension.TestBase {
     }
 
     @Test
-    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that localPreferred requests are always dispatched to local consumer")
     void testLocalPreferredRequest(VertxTestContext testContext) {
         // Create a localPreferred request
@@ -65,7 +61,6 @@ class LocalPreferredClusterTest extends NeonBeeExtension.TestBase {
     }
 
     @Test
-    @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that localPreferred requests are dispatched to remote consumers when no local consumer is available")
     void testLocalPreferredRequestWithoutLocalConsumer(VertxTestContext testContext) {
         // Create a localPreferred request
@@ -78,7 +73,6 @@ class LocalPreferredClusterTest extends NeonBeeExtension.TestBase {
     }
 
     @Test
-    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that non localPreferred requests are dispatched to local and remote consumers")
     void testNonLocalPreferredRequest(VertxTestContext testContext) {
         Range<Long> expectedRange = Range.closed(REPETITION / 2 - 1, REPETITION / 2 + 1);
@@ -98,7 +92,6 @@ class LocalPreferredClusterTest extends NeonBeeExtension.TestBase {
     }
 
     @Test
-    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that data verticle are registered and deregistered properly as local consumer")
     void testLocalConsumerRegistration(VertxTestContext testContext) {
         String verticleAddress = "DataVerticle[" + ConsumerVerticle.NAME + "]";

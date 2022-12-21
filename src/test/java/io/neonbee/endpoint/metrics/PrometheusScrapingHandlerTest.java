@@ -29,7 +29,7 @@ import io.vertx.micrometer.backends.BackendRegistries;
 class PrometheusScrapingHandlerTest {
     @Test
     void testWithoutPrometheusMeterRegistry() {
-        PrometheusScrapingHandler nph = new PrometheusScrapingHandler(null);
+        PrometheusScrapingHandler nph = new PrometheusScrapingHandler();
         try (MockedStatic<BackendRegistries> br = mockStatic(BackendRegistries.class)) {
             br.when(BackendRegistries::getDefaultNow).thenReturn(new CompositeMeterRegistry());
 

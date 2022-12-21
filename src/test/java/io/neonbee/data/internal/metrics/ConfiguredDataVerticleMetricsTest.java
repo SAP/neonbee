@@ -2,6 +2,7 @@ package io.neonbee.data.internal.metrics;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.NeonBeeMockHelper.registerNeonBeeMock;
+import static io.neonbee.test.base.NeonBeeTestBase.LONG_RUNNING_TEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -31,6 +32,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.micrometer.backends.BackendRegistries;
 
+@org.junit.jupiter.api.Tag(LONG_RUNNING_TEST)
 class ConfiguredDataVerticleMetricsTest {
     Vertx vertx;
 

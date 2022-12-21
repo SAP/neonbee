@@ -17,7 +17,6 @@ import static java.util.stream.Collectors.toList;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -33,7 +32,6 @@ import io.neonbee.test.endpoint.odata.verticle.NavPropsCategoriesEntityVerticle;
 import io.neonbee.test.endpoint.odata.verticle.NavPropsProductsEntityVerticle;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 /**
@@ -52,7 +50,6 @@ class ODataNavigationPropertiesTest extends ODataEndpointTestBase {
     }
 
     @BeforeEach
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         CompositeFuture
                 .all(deployVerticle(new NavPropsProductsEntityVerticle()),
@@ -68,7 +65,6 @@ class ODataNavigationPropertiesTest extends ODataEndpointTestBase {
 
     @ParameterizedTest(name = "{index}: For Product: {0}")
     @MethodSource("withProducts")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Navigate to property 'category' in Product")
     void testNavigateToCategoryInProduct(JsonObject product, JsonObject expected, VertxTestContext testContext) {
         ODataRequest oDataRequest = new ODataRequest(PRODUCTS_ENTITY_SET_FQN)
@@ -89,7 +85,6 @@ class ODataNavigationPropertiesTest extends ODataEndpointTestBase {
 
     @ParameterizedTest(name = "{index}: For Category: {0}")
     @MethodSource("withCategories")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Navigate to property 'products' in Category")
     void testNavigateToProductsInCategory(JsonObject category, List<JsonObject> expected,
             VertxTestContext testContext) {

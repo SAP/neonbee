@@ -40,7 +40,7 @@ repositories {
 
 dependencies {
     // Framework dependencies
-    def vertx_version = '4.3.4'
+    def vertx_version = '4.3.7'
     implementation group: 'io.vertx', name: 'vertx-core', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-web', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-web-client', version: vertx_version
@@ -198,17 +198,19 @@ clean {
     delete += sourceSets.generated.java.srcDirs
 }
 
-// ############ Test Phase
-
-test {
+//// ############ Test Phase
+tasks.withType(Test).configureEach {
     // Is required for ReflectionsHelper
     jvmArgs += ['--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED']
 
-    if (!org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX()) {
+    systemProperty 'junit.jupiter.execution.timeout.mode', 'enabled'
+    // run tests sequentially on the voter, as it is often slow and leads to failing tests
+    if (!org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX() ||
+        System.getenv('CI') == null) {
         systemProperties = [
-            'junit.jupiter.execution.parallel.enabled' : 'true',
-            'junit.jupiter.execution.parallel.mode.default' : 'concurrent',
-            'junit.jupiter.execution.parallel.mode.classes.default' : 'concurrent'
+            'junit.jupiter.execution.parallel.enabled'             : 'true',
+            'junit.jupiter.execution.parallel.mode.default'        : 'concurrent',
+            'junit.jupiter.execution.parallel.mode.classes.default': 'concurrent'
         ]
     }
 
@@ -219,10 +221,10 @@ test {
     // and let the build fail later. But currently we have to fail directly.
     ignoreFailures = false
     dependsOn('spotlessCheck', 'cleanTest')
-    useJUnitPlatform()
     testLogging {
-        events = ['passed', 'skipped', 'failed', 'standardOut', 'standardError']
-        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL // Full display of exceptions
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        // Full display of exceptions
         // Don't show complete standard out and standard error of the tests on the console.
         // Show only verbose output for failing tests.
         showStandardStreams = false
@@ -230,12 +232,42 @@ test {
     reports {
         junitXml {
             required = true
-            destination = file("${buildDir}/reports/junit/xml")
+            outputLocation = file("${buildDir}/reports/junit/xml")
         }
         html {
             required = true
-            destination = file("${buildDir}/reports/junit/html")
+            outputLocation = file("${buildDir}/reports/junit/html")
         }
+    }
+}
+
+task unitTest(type: Test) {
+    useJUnitPlatform { excludeTags 'longRunningTest' }
+
+    def unitTestTimeout = project.hasProperty('unitTestTimeout') ? project.getProperty('unitTestTimeout') : '5s'
+    systemProperty 'junit.jupiter.execution.timeout.lifecycle.method.default', unitTestTimeout
+    systemProperty 'junit.jupiter.execution.timeout.testable.method.default', unitTestTimeout
+}
+
+task longRunningTest(type: Test) {
+    useJUnitPlatform { includeTags 'longRunningTest' }
+
+    def longRunningTestTimeout = project.hasProperty('longRunningTestTimeout') ? project.getProperty('longRunningTestTimeout') : '30s'
+    systemProperty 'junit.jupiter.execution.timeout.test.method.default', longRunningTestTimeout
+    systemProperty 'junit.jupiter.execution.timeout.lifecycle.method.default', longRunningTestTimeout
+
+    mustRunAfter 'unitTest'
+}
+
+test {
+    def testPlan = project.hasProperty('testPlan') ? project.getProperty('testPlan') : 'default'
+    if(testPlan == 'withGlobalTimeout') {
+        dependsOn ('unitTest', 'longRunningTest')
+    } else if (testPlan == 'default') {
+        // when running tests with the default plan, the default timeout of 30s will be used
+        useJUnitPlatform {}
+    } else {
+        throw new GradleException('Test plan ' + testPlan + ' does not exist')
     }
     finalizedBy jacocoTestReport
 }
@@ -291,6 +323,8 @@ task violations(type: se.bjurr.violations.gradle.plugin.ViolationsTask) {
 }
 check.finalizedBy violations
 test.finalizedBy violations
+unitTest.finalizedBy violations
+longRunningTest.finalizedBy violations
 build.finalizedBy violations
 
 // ############ JavaDoc Build

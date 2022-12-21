@@ -9,7 +9,6 @@ import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -25,7 +24,6 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class EntityModelLoaderTest extends NeonBeeTestBase {
@@ -41,7 +39,6 @@ class EntityModelLoaderTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if loading a non-existent model fails")
     void loadNonExistingModelTest(Vertx vertx, VertxTestContext testContext) {
         new EntityModelLoader(vertx).loadModel(Path.of("not.existing.Service.csn"))
@@ -49,7 +46,6 @@ class EntityModelLoaderTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if multiple models can be loaded from files")
     void loadEDMXModelsTest(Vertx vertx, VertxTestContext testContext) {
         EntityModelLoader loader = new EntityModelLoader(vertx);
@@ -71,7 +67,6 @@ class EntityModelLoaderTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if models from file system can be loaded")
     void loadModelsFileSystemTest(Vertx vertx, VertxTestContext testContext) {
         EntityModelLoader loader = new EntityModelLoader(vertx);
@@ -91,7 +86,6 @@ class EntityModelLoaderTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if the models from class path can be loaded ")
     void loadFromClassPathTest(Vertx vertx, VertxTestContext testContext) {
         EntityModelLoader loader = new EntityModelLoader(vertx);
@@ -106,7 +100,6 @@ class EntityModelLoaderTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if the models from module can be loaded ")
     void loadFromModuleTest(Vertx vertx, VertxTestContext testContext) throws IOException {
         // Create models
@@ -127,7 +120,6 @@ class EntityModelLoaderTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if getting CSN Model works")
     void getCSNModelTest(Vertx vertx, VertxTestContext testContext) {
         EntityModelLoader loader = new EntityModelLoader(vertx);
@@ -142,7 +134,6 @@ class EntityModelLoaderTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("loading models doesn't fail for non-existing working directories")
     void dontFailModelLoadingOnNonExistingWorkingDir(Vertx vertx, VertxTestContext testContext) {
         new EntityModelLoader(vertx).scanDir(Path.of("non-existing")).onComplete(testContext.succeeding(models -> {

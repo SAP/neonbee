@@ -11,7 +11,6 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,7 +31,6 @@ import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class NeonBeeConfigTest extends NeonBeeTestBase {
@@ -108,7 +106,6 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
 
     @ParameterizedTest(name = "{index}: {0} expected exception message: {1}")
     @MethodSource("testNotImplementingMicrometerRegistryLoaderArguments")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test MicrometerRegistryLoader with incorrect configuration")
     void testNotImplementingMicrometerRegistryLoader(String className, String exceptionMessage,
             Class<? extends Throwable> expectedException, Vertx vertx, VertxTestContext context) {
@@ -125,7 +122,6 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
 
     @ParameterizedTest(name = "{index}: {0} expected exception message: {1}")
     @MethodSource("testNotImplementingMicrometerRegistryLoaderArguments")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test deprecated MicrometerRegistryLoader with incorrect configuration")
     @Deprecated(forRemoval = true)
     @SuppressWarnings({ "deprecation", "removal" })
@@ -138,7 +134,6 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should load NeonBeeConfig correctly from working dir")
     void testLoad(Vertx vertx, VertxTestContext testContext) {
 

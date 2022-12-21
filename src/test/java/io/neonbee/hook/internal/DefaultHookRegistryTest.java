@@ -5,7 +5,6 @@ import static com.google.common.truth.Truth.assertThat;
 import java.lang.reflect.Method;
 import java.net.URLClassLoader;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +19,6 @@ import io.neonbee.hook.HookType;
 import io.neonbee.internal.BasicJar;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
@@ -47,7 +45,6 @@ class DefaultHookRegistryTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Check that hook from passed object were loaded correct")
     void registerInstanceHooksSuccessTest(VertxTestContext testContext) throws Exception {
         Object instanceWithHook = classWithValidHook.getConstructor().newInstance();
@@ -67,7 +64,6 @@ class DefaultHookRegistryTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Check that hook from passed object were loaded correct")
     void registerInstanceHooksFailTest(VertxTestContext testContext) throws Exception {
         BasicJar jarWithHookAnnotation =
@@ -87,7 +83,6 @@ class DefaultHookRegistryTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Check that executeHooks works correct")
     void executeHooksTest(VertxTestContext testContext) {
         TestHook hook = new TestHook();
@@ -101,7 +96,6 @@ class DefaultHookRegistryTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Check that getHookRegistrations works correct")
     void getHookRegistrationsTest(VertxTestContext testContext) {
         hookRegistry.registerHooks(classWithValidHook, CORRELATION_ID).compose(hookRegistrations -> {

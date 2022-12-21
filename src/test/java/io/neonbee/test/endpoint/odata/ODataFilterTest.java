@@ -14,7 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +27,6 @@ import io.neonbee.test.base.ODataEndpointTestBase;
 import io.neonbee.test.base.ODataRequest;
 import io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class ODataFilterTest extends ODataEndpointTestBase {
@@ -123,7 +121,6 @@ class ODataFilterTest extends ODataEndpointTestBase {
     }
 
     @BeforeEach
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         deployVerticle(new TestService1EntityVerticle()).onComplete(testContext.succeedingThenComplete());
         oDataRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN);
@@ -132,7 +129,6 @@ class ODataFilterTest extends ODataEndpointTestBase {
     @ParameterizedTest(name = "{index}: with query {0}")
     @MethodSource("withFilterOptions")
     @DisplayName("Test $filter")
-    @Timeout(value = 3, timeUnit = TimeUnit.SECONDS)
     void testFilter(Map<String, String> query, List<JsonObject> expected, VertxTestContext testContext) {
         oDataRequest.setQuery(query);
         assertODataEntitySetContainsExactly(requestOData(oDataRequest), expected, testContext)
@@ -140,7 +136,6 @@ class ODataFilterTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test $filter with special char")
     void testFilterWithSpecialCharacters(VertxTestContext testContext) {
         String key =
@@ -155,7 +150,6 @@ class ODataFilterTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test /$count with $filter")
     void testCountWithFilter(VertxTestContext testContext) {
         oDataRequest.setQuery(Map.of("$filter", "KeyPropertyString eq 'id-1'")).setCount();

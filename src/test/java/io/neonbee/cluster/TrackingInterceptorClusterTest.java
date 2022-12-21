@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,7 +29,6 @@ import io.neonbee.internal.tracking.MessageDirection;
 import io.neonbee.internal.tracking.TrackingDataHandlingStrategy;
 import io.neonbee.internal.tracking.TrackingInterceptor;
 import io.vertx.core.Future;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith({ MockitoExtension.class })
@@ -48,7 +46,6 @@ class TrackingInterceptorClusterTest extends NeonBeeExtension.TestBase {
     }
 
     @Test
-    @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Body of messages over distributed eventbus should be non-empty.")
     void testNeonBeeWithClusters(@NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee core,
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee stable,

@@ -5,7 +5,6 @@ import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static io.vertx.core.Future.succeededFuture;
 
 import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.openapi.RouterBuilder;
 import io.vertx.ext.web.openapi.RouterBuilderException;
 import io.vertx.junit5.Checkpoint;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
@@ -28,7 +26,6 @@ class AbstractOpenAPIEndpointTest {
     private static final Path CONTRACT_PATH = TEST_RESOURCES.resolveRelated("petstore.json");
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("createEndpointRouter should succeed")
     void testCreateEndpointRouter(Vertx vertx, VertxTestContext testContext) {
         Checkpoint methodsCheckpoint = testContext.checkpoint(2);
@@ -52,7 +49,6 @@ class AbstractOpenAPIEndpointTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("createEndpointRouter should fail")
     void testCreateEndpointRouterFailed(Vertx vertx, VertxTestContext testContext) {
         Checkpoint methodCheckpoint = testContext.checkpoint();

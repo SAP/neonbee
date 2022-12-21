@@ -18,7 +18,6 @@ import static io.neonbee.test.endpoint.odata.verticle.NavPropsProductsEntityVert
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,7 +29,6 @@ import io.neonbee.test.endpoint.odata.verticle.NavPropsCategoriesEntityVerticle;
 import io.neonbee.test.endpoint.odata.verticle.NavPropsProductsEntityVerticle;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 /**
@@ -48,7 +46,6 @@ class ODataExpandEntityCollectionTest extends ODataEndpointTestBase {
     }
 
     @BeforeEach
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         CompositeFuture
                 .all(deployVerticle(new NavPropsProductsEntityVerticle()),
@@ -57,7 +54,6 @@ class ODataExpandEntityCollectionTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Expand property 'category' in Products")
     void testExpandCategoryInProducts(VertxTestContext testContext) {
         ODataRequest oDataRequest = new ODataRequest(PRODUCTS_ENTITY_SET_FQN).setExpandQuery(PROPERTY_NAME_CATEGORY);
@@ -71,7 +67,6 @@ class ODataExpandEntityCollectionTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Do not expand property 'category' in Products")
     void testDoNotExpandCategoryInProducts(VertxTestContext testContext) {
         ODataRequest oDataRequest = new ODataRequest(PRODUCTS_ENTITY_SET_FQN);
@@ -82,7 +77,6 @@ class ODataExpandEntityCollectionTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Expand property 'products' in Categories")
     void testExpandProductsInCategory(VertxTestContext testContext) {
         ODataRequest oDataRequest = new ODataRequest(CATEGORIES_ENTITY_SET_FQN).setExpandQuery(PROPERTY_NAME_PRODUCTS);
@@ -95,7 +89,6 @@ class ODataExpandEntityCollectionTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Do not expand property 'products' in Categories")
     void testDoNotExpandProductsInCategory(VertxTestContext testContext) {
         ODataRequest oDataRequest = new ODataRequest(CATEGORIES_ENTITY_SET_FQN);

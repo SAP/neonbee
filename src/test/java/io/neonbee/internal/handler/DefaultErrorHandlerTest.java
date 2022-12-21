@@ -4,8 +4,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -13,7 +11,6 @@ import io.neonbee.NeonBee;
 import io.neonbee.config.ServerConfig;
 import io.vertx.core.Vertx;
 import io.vertx.core.file.FileSystemException;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
@@ -21,7 +18,6 @@ import io.vertx.junit5.VertxTestContext;
 class DefaultErrorHandlerTest {
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testGetErrorHandlerDefault(Vertx vertx, VertxTestContext testContext) throws Exception {
         NeonBee neonBee = mock(NeonBee.class);
         ServerConfig config = mock(ServerConfig.class);

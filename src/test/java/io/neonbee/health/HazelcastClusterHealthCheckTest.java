@@ -2,15 +2,16 @@ package io.neonbee.health;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.health.HazelcastClusterHealthCheck.EXPECTED_CLUSTER_SIZE_KEY;
+import static io.neonbee.test.base.NeonBeeTestBase.LONG_RUNNING_TEST;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,11 +29,11 @@ import io.neonbee.NeonBee;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.healthchecks.HealthChecks;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
+@Tag(LONG_RUNNING_TEST)
 @ExtendWith(VertxExtension.class)
 class HazelcastClusterHealthCheckTest {
     private NeonBee neonBee;
@@ -83,7 +84,6 @@ class HazelcastClusterHealthCheckTest {
 
     @ParameterizedTest
     @MethodSource("provideStatus")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should set health status only to UP, when cluster state is healthy")
     void testCreateProcedure(boolean clusterUp, boolean serviceUp, VertxTestContext testContext) {
         when(mockedPartitionService.isClusterSafe()).thenReturn(clusterUp);
@@ -112,7 +112,6 @@ class HazelcastClusterHealthCheckTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should set health status to DOWN if cluster size does not match the expected from config")
     void testClusterSizeBelowExpected(VertxTestContext testContext) {
         clusterHealthCheck.config = new JsonObject().put(EXPECTED_CLUSTER_SIZE_KEY, 3);

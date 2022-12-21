@@ -3,12 +3,12 @@ package io.neonbee.cluster;
 import static io.neonbee.NeonBeeInstanceConfiguration.ClusterManager.HAZELCAST;
 import static io.neonbee.NeonBeeInstanceConfiguration.ClusterManager.INFINISPAN;
 import static io.neonbee.data.DataVerticle.requestData;
+import static io.neonbee.test.base.NeonBeeTestBase.LONG_RUNNING_TEST;
 import static io.neonbee.test.helper.DeploymentHelper.deployVerticle;
 import static io.neonbee.test.helper.DummyVerticleHelper.createDummyDataVerticle;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -19,14 +19,13 @@ import io.neonbee.data.DataRequest;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.test.helper.DataResponseVerifier;
 import io.vertx.core.Future;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
+@Tag(LONG_RUNNING_TEST)
 @ExtendWith(NeonBeeExtension.class)
 class NativeClusterManagerTest implements DataResponseVerifier {
 
     @Test
-    @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test native Infinispan cluster")
     void testInfinispan(
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {},
@@ -39,7 +38,6 @@ class NativeClusterManagerTest implements DataResponseVerifier {
     }
 
     @Test
-    @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test native Hazelcast cluster")
     void testHazelcast(
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}, clusterManager = HAZELCAST,

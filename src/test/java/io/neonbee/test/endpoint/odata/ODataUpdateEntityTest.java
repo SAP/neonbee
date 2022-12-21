@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -40,7 +39,6 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Checkpoint;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class ODataUpdateEntityTest extends ODataEndpointTestBase {
@@ -64,7 +62,6 @@ class ODataUpdateEntityTest extends ODataEndpointTestBase {
 
     @ParameterizedTest(name = "{index}: with Method {0}")
     @MethodSource("withHTTPMethods")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 405 METHOD NOT ALLOWED if the HTTP request was sent to the entity set url instead of a dedicated entity")
     void updateEntitySetTest(HttpMethod method, VertxTestContext testContext) {
         oDataRequest.setMethod(method).setBody(TestService1EntityVerticle.EXPECTED_ENTITY_DATA_1.toBuffer());
@@ -78,7 +75,6 @@ class ODataUpdateEntityTest extends ODataEndpointTestBase {
 
     @ParameterizedTest(name = "{index}: with Method {0}")
     @MethodSource("withHTTPMethods")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 400 BAD REQUEST if the request body is invalid JSON")
     void updateEntityInvalidBodyTest(HttpMethod method, VertxTestContext testContext) {
         oDataRequest.setMethod(method).setBody(Buffer.buffer("I am not a JSON String")).setKey("id-1");
@@ -100,7 +96,6 @@ class ODataUpdateEntityTest extends ODataEndpointTestBase {
 
     @ParameterizedTest(name = "{index}: with Method {0}")
     @MethodSource("withHTTPMethodsAndBody")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 204 NO CONTENT if an entity was successfully updated")
     void updateEntityTest(HttpMethod method, JsonObject body, VertxTestContext testContext) {
         oDataRequest.setMethod(method).setBody(body.toBuffer()).setKey("id-1");
@@ -124,7 +119,6 @@ class ODataUpdateEntityTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 204 NO CONTENT if an entity with a compound key was successfully updated")
     void updateEntityWithCompoundKeyViaPutTest(VertxTestContext testContext) {
         String updatedName = "Updated Car";

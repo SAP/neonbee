@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,7 +44,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
-import io.vertx.junit5.Timeout;
 
 class DataContextImplTest {
     DataContextImpl context;
@@ -327,7 +325,6 @@ class DataContextImplTest {
 
     @ParameterizedTest(name = "{index}: with session: {0}")
     @MethodSource("withSessions")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @SuppressWarnings("PMD.UnusedFormalParameter")
     // Required for display name
     @DisplayName("Constructor that accepts RoutingContext works correct")

@@ -5,7 +5,6 @@ import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
@@ -16,7 +15,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import io.neonbee.test.base.ODataEndpointTestBase;
 import io.neonbee.test.base.ODataRequest;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class ETagTest extends ODataEndpointTestBase {
@@ -31,7 +29,6 @@ class ETagTest extends ODataEndpointTestBase {
 
     @ParameterizedTest
     @MethodSource("withHttpMethods")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("An origin server MUST NOT perform the requested method if the condition evaluates to false."
             + "Instead, the origin server MUST respond with either a) the 304 (Not Modified) status code if"
             + "the request method is HEAD or GET.")

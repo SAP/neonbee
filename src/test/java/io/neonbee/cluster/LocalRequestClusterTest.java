@@ -3,8 +3,6 @@ package io.neonbee.cluster;
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.test.helper.DeploymentHelper.deployVerticle;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +19,6 @@ import io.neonbee.data.internal.DataContextImpl;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Checkpoint;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class LocalRequestClusterTest extends NeonBeeExtension.TestBase {
@@ -38,7 +35,6 @@ class LocalRequestClusterTest extends NeonBeeExtension.TestBase {
     };
 
     @Test
-    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that setLocalOnly works as expected")
     void testLocalRequest(@NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee source,
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee target,

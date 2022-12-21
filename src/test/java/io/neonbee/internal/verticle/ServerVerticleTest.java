@@ -5,7 +5,6 @@ import static com.google.common.truth.Truth.assertThat;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -22,13 +21,11 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.junit5.Checkpoint;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class ServerVerticleTest extends NeonBeeTestBase {
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testMaximumInitialLineAndCookieSizes(VertxTestContext testCtx) {
         Checkpoint checkpoint = testCtx.checkpoint(4);
 
@@ -64,7 +61,6 @@ class ServerVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testLargerMaximumInitialLineAndCookieSizesConfig(VertxTestContext testCtx) {
         Checkpoint checkpoint = testCtx.checkpoint(2);
 
@@ -83,7 +79,6 @@ class ServerVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testGetErrorHandlerDefault(Vertx vertx, VertxTestContext testCtx) throws Exception {
         Checkpoint cp = testCtx.checkpoint(2);
 
@@ -120,7 +115,6 @@ class ServerVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testInstantiateHandler(VertxTestContext testContext) {
         ServerVerticle.instantiateHandler(TestRoutingHandlerFactory.class.getName())
                 .onComplete(testContext.succeeding(clazz -> testContext.verify(() -> {
@@ -130,7 +124,6 @@ class ServerVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testFailingInstantiateHandler(VertxTestContext testContext) {
         ServerVerticle.instantiateHandler(TestFailingRoutingHandlerFactory.class.getName())
                 .onComplete(testContext.failing(throwable -> testContext.verify(() -> {
@@ -141,7 +134,6 @@ class ServerVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testExptionInstantiateHandler(VertxTestContext testContext) {
         ServerVerticle.instantiateHandler(TestThrowingRoutingHandlerFactory.class.getName())
                 .onComplete(testContext.failing(throwable -> testContext.verify(() -> {

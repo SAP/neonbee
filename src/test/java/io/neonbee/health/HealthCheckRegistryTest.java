@@ -14,7 +14,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -43,7 +42,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.ext.healthchecks.Status;
 import io.vertx.junit5.Checkpoint;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
@@ -54,7 +52,6 @@ class HealthCheckRegistryTest {
     private NeonBee neonBee;
 
     @BeforeEach
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(Vertx vertx) {
         try {
             vertx.eventBus().registerDefaultCodec(DataQuery.class, new DataQueryMessageCodec());
@@ -133,7 +130,6 @@ class HealthCheckRegistryTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should prefer enablement of health checks and timeout from health check config of config folder")
     void testCustomConfigDisabled(Vertx vertx) throws HealthCheckException {
         neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions(),
@@ -175,7 +171,6 @@ class HealthCheckRegistryTest {
     }
 
     @Test
-    @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
     @DisplayName("it can request data from all health check verticles registered in shared map and consolidates the result")
     void testConsolidateHealthCheckResultsClustered(Vertx vertx, VertxTestContext testContext) throws Exception {
         neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(true));
@@ -236,7 +231,6 @@ class HealthCheckRegistryTest {
     }
 
     @Test
-    @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
     @DisplayName("it requests data from local registry only if in non-clustered mode")
     void testConsolidateHealthCheckResultsNonClustered(Vertx vertx, VertxTestContext testContext) {
         Checkpoint cp = testContext.checkpoint(2);
@@ -261,7 +255,6 @@ class HealthCheckRegistryTest {
     }
 
     @Test
-    @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
     @DisplayName("it does not fail if some verticle addresses are not reachable")
     void test(Vertx vertx, VertxTestContext testContext) throws NoSuchFieldException, IllegalAccessException {
         neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(true));

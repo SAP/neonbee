@@ -11,6 +11,7 @@ import static io.neonbee.NeonBeeProfile.INCUBATOR;
 import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.NeonBeeProfile.STABLE;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.neonbee.test.base.NeonBeeTestBase.LONG_RUNNING_TEST;
 import static io.neonbee.test.helper.DeploymentHelper.getDeployedVerticles;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
@@ -33,7 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -79,10 +79,10 @@ import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.DeliveryContext;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 @Isolated("Some of the methods in this test class run clustered and use the FakeClusterManager for it. The FakeClusterManager uses a static state and can therefore not be run with other clustered tests.")
+@Tag(LONG_RUNNING_TEST)
 class NeonBeeTest extends NeonBeeTestBase {
     private Vertx vertx;
 
@@ -134,7 +134,6 @@ class NeonBeeTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with default options / default working directory")
     void testStart(Vertx vertx) {
         assertThat(getNeonBee()).isNotNull();
@@ -142,7 +141,6 @@ class NeonBeeTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should deploy all none optional system verticles")
     void testDeployNoneOptionalSystemVerticles(Vertx vertx) {
         assertThat(getDeployedVerticles(vertx)).containsExactly(ConsolidationVerticle.class,
@@ -150,7 +148,6 @@ class NeonBeeTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should deploy all none optional system verticles plus HealthCheckVerticle")
     void testDeployNoneOptionalSystemVerticlesPlusHealthCheckVerticle(Vertx vertx) {
         assertThat(getDeployedVerticles(vertx)).containsExactly(ConsolidationVerticle.class,
@@ -158,14 +155,12 @@ class NeonBeeTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 30, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should deploy class path verticles (from NeonBeeExtensionBasedTest)")
     void testDeployCoreVerticlesFromClassPath(Vertx vertx) {
         assertThat(getDeployedVerticles(vertx)).contains(NeonBeeExtensionBasedTest.CoreDataVerticle.class);
     }
 
     @Test
-    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should deploy module JAR")
     void testDeployModule(Vertx vertx) {
         assertThat(getDeployedVerticles(vertx).stream().map(Class::getName)).containsAtLeast("ClassA", "ClassB");
@@ -173,7 +168,6 @@ class NeonBeeTest extends NeonBeeTestBase {
 
     @Test
     @Disabled("If the working dir is deleted, it's not possible to override the HttpServerDefaultPort ...")
-    @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with no working directory and create the working directory")
     void testStartWithNoWorkingDirectory() {
         assertThat(Files.isDirectory(getNeonBee().getOptions().getWorkingDirectory())).isTrue();
@@ -181,14 +175,12 @@ class NeonBeeTest extends NeonBeeTestBase {
 
     @Test
     @Disabled("If the working dir is empty, it's not possible to override the HttpServerDefaultPort ...")
-    @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should start with an empty working directory and create the logs directory")
     void testStartWithEmptyWorkingDirectory() {
         assertThat(Files.isDirectory(getNeonBee().getOptions().getLogDirectory())).isTrue();
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Vert.x should start in non-clustered mode")
     @Tag(DOESNT_REQUIRE_NEONBEE)
     void testStandaloneInitialization(VertxTestContext testContext) {
@@ -202,7 +194,6 @@ class NeonBeeTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Vert.x should start in clustered mode")
     @Tag(DOESNT_REQUIRE_NEONBEE)
     void testClusterInitialization(VertxTestContext testContext) {
@@ -252,7 +243,6 @@ class NeonBeeTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 4, timeUnit = TimeUnit.SECONDS)
     @DisplayName("NeonBee should register all SPI-provided + default health checks")
     void testRegisterSpiAndDefaultHealthChecks(VertxTestContext testContext) {
         HealthCheckRegistry registry = getNeonBee().getHealthCheckRegistry();
@@ -354,7 +344,6 @@ class NeonBeeTest extends NeonBeeTestBase {
 
     @ParameterizedTest(name = "{index}: {0}")
     @MethodSource("arguments")
-    @Timeout(timeUnit = TimeUnit.SECONDS, value = 10)
     @DisplayName("NeonBee should close only self-owned Vert.x instances if boot fails")
     @SuppressWarnings("PMD.UnusedFormalParameter")
     @Tag(DOESNT_REQUIRE_NEONBEE)

@@ -37,7 +37,8 @@ class ImmutableBufferTest {
         assertThat(anyBuffer).isEqualTo(anyImmutableBuffer);
         assertThat(anyBuffer.getByteBuf().isReadOnly()).isFalse();
         assertThat(anyImmutableBuffer.getByteBuf().isReadOnly()).isTrue();
-        assertThrows(UnsupportedOperationException.class, () -> anyImmutableBuffer.getByteBuf().writeInt(1));
+        assertThat(anyImmutableBuffer.getByteBuf().isWritable()).isFalse();
+        assertThrows(IndexOutOfBoundsException.class, () -> anyImmutableBuffer.getByteBuf().writeInt(1));
     }
 
     @Test

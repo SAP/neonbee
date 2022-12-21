@@ -2,11 +2,8 @@ package io.neonbee.internal.cluster.entity;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.vertx.core.Vertx;
@@ -60,7 +57,6 @@ class ClusterEntityRegistryTest {
     }
 
     @Test
-    @Timeout(value = 1, unit = TimeUnit.SECONDS)
     @DisplayName("get the clustering information from the registry")
     void getClusteringInformation(Vertx vertx, VertxTestContext context) {
         ClusterEntityRegistry registry = new TestClusterEntityRegistry(vertx, REGISTRY_NAME);
@@ -105,7 +101,6 @@ class ClusterEntityRegistryTest {
     }
 
     @Test
-    @Timeout(value = 1, unit = TimeUnit.SECONDS)
     @DisplayName("unregister node with two nodes with same entities")
     void unregisterNode2(Vertx vertx, VertxTestContext context) {
         Checkpoint checkpoint = context.checkpoint(5);

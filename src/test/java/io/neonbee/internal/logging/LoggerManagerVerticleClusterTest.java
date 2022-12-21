@@ -5,7 +5,6 @@ import static io.neonbee.internal.verticle.LoggerManagerVerticle.QUERY_PARAMETER
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -30,7 +29,6 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class LoggerManagerVerticleClusterTest extends NeonBeeExtension.TestBase {
@@ -38,7 +36,6 @@ class LoggerManagerVerticleClusterTest extends NeonBeeExtension.TestBase {
     private final DataContext dataContext = new DataContextImpl();
 
     @Test
-    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     void testSetLoggerLevelInCluster(@NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee node1,
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee node2,
             VertxTestContext testContext) {
@@ -46,7 +43,6 @@ class LoggerManagerVerticleClusterTest extends NeonBeeExtension.TestBase {
     }
 
     @Test
-    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     // cannot be tested currently, as setting the log level for one logger always applies to the JVM (as loggers are
     // static entities, cluster test starts no separate JVM though, so log levels are shared)
     @Disabled

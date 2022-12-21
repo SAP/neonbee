@@ -2,6 +2,7 @@ package io.neonbee.config;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.config.AuthHandlerConfig.AuthHandlerType.HTDIGEST;
+import static io.neonbee.test.base.NeonBeeTestBase.LONG_RUNNING_TEST;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -10,6 +11,7 @@ import java.util.Base64;
 import java.util.function.BiConsumer;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -23,6 +25,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 
+@Tag(LONG_RUNNING_TEST)
 @ExtendWith(VertxExtension.class)
 class AuthHandlerConfigTest {
 
