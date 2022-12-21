@@ -5,8 +5,6 @@ import static io.neonbee.health.MemoryHealthCheck.CRITICAL_THRESHOLD_PERCENTAGE_
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +17,6 @@ import io.neonbee.health.internal.MemoryStats;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.healthchecks.HealthChecks;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
@@ -65,7 +62,6 @@ class MemoryHealthCheckTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should set health check to up if used memory is below configured threshold of health config")
     void testCreateProcedureHealthy(VertxTestContext testContext) {
         memoryHealthCheck.config = new JsonObject().put(CRITICAL_THRESHOLD_PERCENTAGE_KEY, 26);
@@ -83,7 +79,6 @@ class MemoryHealthCheckTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should set health check to down if used memory is above configured threshold of health config")
     void testCreateProcedureUnhealthy(VertxTestContext testContext) {
         memoryHealthCheck.config = new JsonObject().put(CRITICAL_THRESHOLD_PERCENTAGE_KEY, 24);

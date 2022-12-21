@@ -3,6 +3,7 @@ package io.neonbee.job;
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.job.JobVerticle.FINALIZE_DELAY;
+import static io.neonbee.test.base.NeonBeeTestBase.LONG_RUNNING_TEST;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,6 +21,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.mockito.ArgumentMatcher;
@@ -32,9 +34,9 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.Checkpoint;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
+@Tag(LONG_RUNNING_TEST)
 class JobVerticleTest extends NeonBeeTestBase {
     private static class TestJobVerticle extends JobVerticle {
         public final Vertx vertxMock;
@@ -211,7 +213,6 @@ class JobVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Do not start JobVerticles with invalid JobSchedule")
     void testStartFailing(VertxTestContext testConetxt) {
         class DummyJobVerticle extends JobVerticle {
@@ -235,7 +236,6 @@ class JobVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Do start JobVerticles with a valid JobSchedule")
     void testStartSucceeding(VertxTestContext testConetxt) {
         Checkpoint cp = testConetxt.checkpoint();

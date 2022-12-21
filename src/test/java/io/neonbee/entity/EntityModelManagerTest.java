@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.olingo.server.api.OData;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +31,6 @@ import io.neonbee.test.helper.FileSystemHelper;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Vertx;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public due to static methods)
@@ -42,7 +40,6 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should only be allowed to initialize once")
     void testInitialization() {
         assertThrows(NullPointerException.class, () -> new EntityModelManager(null));
@@ -57,7 +54,6 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should return the same odata instance for one thread")
     void validateODataBufferInSameThread() {
         OData odata1 = getBufferedOData();
@@ -66,7 +62,6 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should return different odata instances for multiple threads")
     void validateODataBufferInDifferentThreads() {
         CompletableFuture<OData> odataFuture1 = new CompletableFuture<>();
@@ -83,7 +78,6 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("lazy model loading: NeonBee should not load any model files after starting")
     void lazyModelLoadingTest(Vertx vertx, VertxTestContext testContext) throws Exception {
         Path workingDir = FileSystemHelper.createTempDirectory();
@@ -129,7 +123,6 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if getting single shared models will work for get shared edmx model")
     void getSingleSharedModelsTest(Vertx vertx, VertxTestContext testContext) throws Exception {
         Path workingDir = FileSystemHelper.createTempDirectory();
@@ -154,7 +147,6 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if getting single non-existing model will fail for get shared edmx model")
     void getSingleNonExistingSharedModelTest(Vertx vertx, VertxTestContext testContext) {
         NeonBee neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx);
@@ -167,7 +159,6 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("register / unregister module models")
     void registerModuleModels(Vertx vertx, VertxTestContext testContext) throws IOException {
         Path workingDirectory = getNeonBee().getOptions().getWorkingDirectory();
@@ -197,7 +188,6 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("register / unregister multiple modules to verify that changing the unmodifiable BUFFERED_MODELS is working correctly.")
     void registerMultipleModuleModels(Vertx vertx, VertxTestContext testContext) throws IOException {
         Path workingDirectory = getNeonBee().getOptions().getWorkingDirectory();

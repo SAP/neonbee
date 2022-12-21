@@ -17,7 +17,6 @@ import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.apache.olingo.commons.api.data.Entity;
@@ -49,7 +48,6 @@ import io.vertx.core.Verticle;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class ODataV4EndpointTest extends ODataEndpointTestBase {
@@ -84,7 +82,6 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if (lazy) loading OData models on first request to ODataEndpoint works")
     void testODataEndpointLazyLoading(VertxTestContext testContext) {
         assertOData(requestMetadata("io.neonbee.handler.TestService"),
@@ -125,7 +122,6 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if multiple service endpoints are created with strict URI mapping")
     void testStrictUriConversion(VertxTestContext testContext) {
         all(assertOData(requestMetadata("io.neonbee.handler.TestService"), ODataV4EndpointTest::assertTS1Handler,
@@ -137,7 +133,6 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if loose URI mapping works")
     void testLooseUriConversion(VertxTestContext testContext) {
         all(assertOData(requestMetadata("io-neonbee-handler-test"), ODataV4EndpointTest::assertTS1Handler, testContext),
@@ -148,7 +143,6 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("check if CDS URI mapping works")
     void testCDSUriConversion(VertxTestContext testContext) {
         all(assertOData(requestMetadata("test"), ODataV4EndpointTest::assertTS1Handler, testContext),
@@ -164,7 +158,6 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
 
     @ParameterizedTest(name = "{index}: with status code {0}")
     @MethodSource("customStatusCodes")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("ODataEndpointHandler must forward custom status codes from DataExceptions to the client")
     void testHTTPExceptions(int statusCode, VertxTestContext testContext) {
         Verticle dummyVerticle =
@@ -183,7 +176,6 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Query parameters should be decoded before being forwarded to an EntityVerticle")
     void testURLQueryDecoding(VertxTestContext testContext) {
         MultiMap query = MultiMap.caseInsensitiveMultiMap().add("$filter", "description eq ''");
@@ -199,7 +191,6 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Uri path on Entity request must start with a leading slash")
     void testURIPathExtraction(VertxTestContext testContext) {
         EntityVerticle dummy = createDummyEntityVerticle(TEST_USERS).withDynamicResponse((dataQuery, dataContext) -> {
@@ -213,7 +204,6 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 200, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test OData response hint")
     void testODataResponseHint(VertxTestContext testContext) {
         EntityVerticle dummy = createDummyEntityVerticle(TEST_USERS).withDynamicResponse((dataQuery, dataContext) -> {

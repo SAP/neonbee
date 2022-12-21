@@ -3,7 +3,6 @@ package io.neonbee.test.endpoint.openapi;
 import static com.google.common.truth.Truth.assertThat;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,7 +22,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.Checkpoint;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class PetStoreTest extends NeonBeeTestBase {
@@ -49,7 +47,6 @@ class PetStoreTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should create, get and list pets")
     void cycleTest(VertxTestContext testContext) {
         Checkpoint create = testContext.checkpoint();
@@ -71,7 +68,6 @@ class PetStoreTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should fail when passed parameters are invalid")
     void validationTest(VertxTestContext testContext) {
         String expectedErrorMsg =

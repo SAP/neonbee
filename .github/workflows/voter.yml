@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         java: ['11.0', '17.0']
-        platform: [ubuntu-18.04] # macOS-latest, windows-latest
+        platform: [ubuntu-22.04] # macOS-latest, windows-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -42,7 +42,7 @@ jobs:
     - name: Build and analyze
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: ./gradlew --no-daemon build test
+      run: ./gradlew --no-daemon build test -PtestPlan=withGlobalTimeout -PunitTestTimeout=30s
 
     - name: Run Sonarqube
       if: github.event_name != 'pull_request'

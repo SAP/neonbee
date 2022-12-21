@@ -8,7 +8,6 @@ import static io.vertx.core.Future.succeededFuture;
 
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
@@ -25,7 +24,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith({ NeonBeeExtension.class })
@@ -34,7 +32,6 @@ class UnregisterEntitiesTest {
     static final String SHARED_ENTITY_MAP_NAME = "entityVerticles[%s]";
 
     @Test
-    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("test unregistering entity models (Infinispan cluster)) ")
     void testInfinispanUnregisteringEntities(@NeonBeeInstanceConfiguration(activeProfiles = WEB, clustered = true,
             clusterManager = INFINISPAN) NeonBee web, VertxTestContext testContext) {
@@ -42,7 +39,6 @@ class UnregisterEntitiesTest {
     }
 
     @Test
-    @Timeout(value = 2000, timeUnit = TimeUnit.SECONDS)
     @DisplayName("test unregistering entity models (Hazelcast cluster)")
     void testHazelcastUnregisteringEntities(@NeonBeeInstanceConfiguration(activeProfiles = WEB, clustered = true,
             clusterManager = HAZELCAST) NeonBee web, VertxTestContext testContext) {

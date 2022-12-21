@@ -6,8 +6,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
@@ -21,7 +19,6 @@ import io.vertx.core.shareddata.SharedData;
 import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.sstore.ClusteredSessionStore;
 import io.vertx.ext.web.sstore.LocalSessionStore;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
@@ -83,7 +80,6 @@ class SessionHandlerFactoryTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testCreateSessionStore() {
         Vertx mockedVertx = mock(VertxInternal.class);
         when(mockedVertx.isClustered()).thenReturn(false);
@@ -96,7 +92,6 @@ class SessionHandlerFactoryTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testCreateSessionStoreClustered() {
         Vertx mockedVertx = mock(VertxInternal.class);
         when(mockedVertx.isClustered()).thenReturn(true);

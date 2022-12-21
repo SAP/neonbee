@@ -101,6 +101,9 @@ jacocoTestReport {
         }
     }
 
+    sourceSets sourceSets.main
+    executionData.setFrom(fileTree(buildDir).include("/jacoco/*.exec"))
+
     // Display the code coverage every time after the jacocoTestReport run
     finalizedBy project.tasks.reportCoverage
 }

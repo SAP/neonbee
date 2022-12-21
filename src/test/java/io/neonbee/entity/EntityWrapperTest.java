@@ -4,8 +4,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 
-import java.util.concurrent.TimeUnit;
-
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.Property;
 import org.apache.olingo.commons.api.data.ValueType;
@@ -18,7 +16,6 @@ import io.neonbee.NeonBeeOptions;
 import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class EntityWrapperTest extends NeonBeeTestBase {
@@ -71,7 +68,6 @@ class EntityWrapperTest extends NeonBeeTestBase {
 
     @Test
     @DisplayName("Check if toBuffer works as expected")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testToBuffer(VertxTestContext testContext) {
         getNeonBee().getModelManager().reloadModels().onComplete(testContext.succeeding(map -> {
             testContext.verify(() -> {
@@ -84,7 +80,6 @@ class EntityWrapperTest extends NeonBeeTestBase {
 
     @Test
     @DisplayName("Check if fromBuffer works as expected")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testFromBuffer(VertxTestContext testContext) {
         getNeonBee().getModelManager().reloadModels().onComplete(testContext.succeeding(map -> {
             testContext.verify(() -> {

@@ -2,6 +2,7 @@ package io.neonbee.health;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.health.AbstractHealthCheck.DEFAULT_RETENTION_TIME;
+import static io.neonbee.test.base.NeonBeeTestBase.LONG_RUNNING_TEST;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
@@ -13,12 +14,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -37,10 +38,10 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.healthchecks.Status;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
+@Tag(LONG_RUNNING_TEST)
 @ExtendWith(VertxExtension.class)
 class AbstractHealthCheckTest {
     private static final String DUMMY_ID = "dummy/check-0";
@@ -63,7 +64,6 @@ class AbstractHealthCheckTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("cannot get a health check result if health check was not registered to registry")
     void testResultFails(VertxTestContext testContext) {
         hc.result().onComplete(testContext.failing(t -> testContext.verify(() -> {
@@ -73,7 +73,6 @@ class AbstractHealthCheckTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("can register global checks")
     void testRegisterGlobalCheck(VertxTestContext testContext) throws HealthCheckException {
         HealthCheckRegistry registry = mock(HealthCheckRegistry.class);
@@ -87,7 +86,6 @@ class AbstractHealthCheckTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("can register node-specific checks")
     void testRegisterNodeCheck(VertxTestContext testContext) throws HealthCheckException {
         HealthCheckRegistry registry = mock(HealthCheckRegistry.class);
@@ -102,7 +100,6 @@ class AbstractHealthCheckTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("can merge a config from file in config directory with the default config")
     void testMergeConfigs(VertxTestContext testContext) {
         when(fsMock.readFile(anyString())).thenReturn(
@@ -127,7 +124,6 @@ class AbstractHealthCheckTest {
 
     @ParameterizedTest(name = "{index} => {1}")
     @MethodSource("provideConfigArguments")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should return default config, if")
     @SuppressWarnings("unused")
     void testConfigNotExisting(Future<Buffer> expected, String testCase, VertxTestContext testContext) {
@@ -144,7 +140,6 @@ class AbstractHealthCheckTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("can merge a config with the default config")
     void testConfigRetrievalFails(VertxTestContext testContext) {
         when(fsMock.readFile(anyString())).thenReturn(failedFuture("oops"));

@@ -12,7 +12,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +33,6 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class RawEndpointTest extends DataVerticleTestBase {
@@ -79,7 +77,6 @@ class RawEndpointTest extends DataVerticleTestBase {
 
     @ParameterizedTest(name = "{index}: with status code {0}")
     @MethodSource("customStatusCodes")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("RawDataEndpointHandler must forward custom status codes from DataExceptions to the client")
     void testHTTPExceptions(int statusCode, VertxTestContext testContext) {
         String verticleName = "TestVerticle" + UUID.randomUUID().toString();
@@ -100,7 +97,6 @@ class RawEndpointTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("RawDataEndpoint must prohibit requests to DataVerticles starting with underscore by default")
     void testProhibitRequestsToUnderScoreDVsByDefault(VertxTestContext testContext) {
         String verticleName = "_TestVerticle" + UUID.randomUUID().toString();
@@ -115,7 +111,6 @@ class RawEndpointTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("RawDataEndpointHandler must set uriPath and query correct")
     void testPassQueryToDataQuery(VertxTestContext testContext) {
         String verticleName = "TestVerticle" + UUID.randomUUID().toString();

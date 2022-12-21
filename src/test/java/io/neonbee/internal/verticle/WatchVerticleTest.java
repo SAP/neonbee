@@ -45,7 +45,6 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.junit5.VertxTestContext.ExecutionBlock;
 
@@ -64,7 +63,6 @@ class WatchVerticleTest extends NeonBeeTestBase {
     }
 
     @AfterEach
-    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     void afterEach(Vertx vertx, VertxTestContext testContext) throws IOException {
         deleteRecursive(vertx, watchDir).recover(throwable -> {
             if (throwable.getCause() instanceof DirectoryNotEmptyException) {
@@ -78,7 +76,6 @@ class WatchVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Constructor should set / calculate interval correct")
     void testConstructor() {
         WatchVerticle watchVerticle = new WatchVerticle(watchDir);
@@ -88,7 +85,6 @@ class WatchVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test to do not watch files")
     @SuppressWarnings("unchecked")
     void testDontWatchFiles() {
@@ -119,7 +115,6 @@ class WatchVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Upcoming check intervals should be ignored, if processing of a predecessor interval is still in progress")
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
@@ -145,7 +140,6 @@ class WatchVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Upcoming check intervals should not be ignored, if processing of a predecessor interval is still in progress")
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
@@ -163,7 +157,6 @@ class WatchVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("CycleTest: WatchVerticle should detect that a file was created, modified and deleted")
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
@@ -184,7 +177,6 @@ class WatchVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("WatchVerticle should detect files which already existed in the watchDir before it was started.")
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
@@ -200,7 +192,6 @@ class WatchVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("CycleTest: WatchVerticle should detect recursively that a file was created, modified and deleted")
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
@@ -256,7 +247,6 @@ class WatchVerticleTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("CycleTest: WatchVerticle should detect existiting files recursively that a file was created and modified")
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")

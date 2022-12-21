@@ -4,7 +4,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import java.lang.reflect.Method;
 import java.net.URLClassLoader;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +18,6 @@ import io.neonbee.internal.BasicJar;
 import io.neonbee.internal.helper.StringHelper;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
@@ -54,7 +52,6 @@ class DefaultHookRegistrationTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Check that unregister works correct")
     void testUnregister(VertxTestContext testContext) {
         hookRegistry.registerInstanceHooks(instanceWithHook, "correlId").compose(registrations -> {

@@ -1,6 +1,7 @@
 package io.neonbee.endpoint.odatav4.internal.olingo.expression;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.test.base.NeonBeeTestBase.LONG_RUNNING_TEST;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
@@ -37,10 +38,12 @@ import org.apache.olingo.server.core.uri.queryoption.OrderByItemImpl;
 import org.apache.olingo.server.core.uri.queryoption.OrderByOptionImpl;
 import org.apache.olingo.server.core.uri.queryoption.expression.MemberImpl;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.vertx.ext.web.RoutingContext;
 
+@Tag(LONG_RUNNING_TEST)
 class OrderExpressionExecutorTest {
     private final RoutingContext routingContext = mock(RoutingContext.class);
 

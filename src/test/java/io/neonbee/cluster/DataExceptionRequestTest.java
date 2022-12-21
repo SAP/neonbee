@@ -5,7 +5,6 @@ import static io.neonbee.test.helper.DeploymentHelper.deployVerticle;
 import static io.vertx.core.Future.failedFuture;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,7 +23,6 @@ import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class DataExceptionRequestTest extends NeonBeeExtension.TestBase {
@@ -70,7 +68,6 @@ class DataExceptionRequestTest extends NeonBeeExtension.TestBase {
     };
 
     @Test
-    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that DataException can be returned via the event bus")
     void testDataExceptionRequest(@NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee source,
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee target,
@@ -90,7 +87,6 @@ class DataExceptionRequestTest extends NeonBeeExtension.TestBase {
     }
 
     @Test
-    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that DataException with failure code and message be returned via the event bus")
     void testDataExceptionRequestFailureCodeAndMessage(
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee source,
@@ -110,7 +106,6 @@ class DataExceptionRequestTest extends NeonBeeExtension.TestBase {
     }
 
     @Test
-    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test that DataException with failure code be returned via the event bus")
     void testDataExceptionRequestFailureCodeOnly(
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee source,

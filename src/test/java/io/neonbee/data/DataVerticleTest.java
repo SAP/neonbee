@@ -6,7 +6,6 @@ import static io.vertx.core.Future.succeededFuture;
 import static java.lang.Boolean.parseBoolean;
 
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +24,6 @@ import io.neonbee.test.base.DataVerticleTestBase;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Checkpoint;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class DataVerticleTest extends DataVerticleTestBase {
@@ -45,7 +43,6 @@ class DataVerticleTest extends DataVerticleTestBase {
     }
 
     @BeforeEach
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void deployEntityVerticles(VertxTestContext testContext) {
         Checkpoint checkpoint = testContext.checkpoint(3);
         deployVerticle(this.dataVerticleImpl0 = new DataVerticleImpl0())
@@ -57,7 +54,6 @@ class DataVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Ensure that start() from AbstractVerticle is called")
     void ensureStartMethodIsCalled(VertxTestContext testContext) {
         DataVerticle<Void> verticle = new DataVerticle<Void>() {
@@ -76,7 +72,6 @@ class DataVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Get the correct namespace for verticle with and without the @NeonBeeDeployable annotation")
     void testGetNamespace() {
         // No annotation available, therefore the namespace has to be null
@@ -91,7 +86,6 @@ class DataVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Check if DataVerticle is registered with the correct qualifiedName (address)")
     void registerEventbusTest(VertxTestContext testContext) {
         String addressDVImpl2 = "DataVerticleTestNamespace2".toLowerCase(Locale.ENGLISH) + "/" + DataVerticleImpl2.NAME;
@@ -116,7 +110,6 @@ class DataVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Check if DataVerticle unregisters itself as local consumer on undeployment")
     void unregisterLocalConsumerTest(VertxTestContext testContext) {
         assertThat(getNeonBee().isLocalConsumerAvailable(dataVerticleImpl0.getAddress())).isTrue();
@@ -190,7 +183,6 @@ class DataVerticleTest extends DataVerticleTestBase {
     @ParameterizedTest(
             name = "{index}: MetricsConfig enabled:{0}, verticle metric configuration enabled:{1}, expected:{2}")
     @MethodSource("metricsConfigurationArguments")
-    @Timeout(timeUnit = TimeUnit.SECONDS, value = 1)
     @DisplayName("Tests the creation of the actual metric configuration.")
     @SuppressWarnings("PMD.UnusedFormalParameter")
     void testMetricsConfiguration(Boolean globalEnabled, VerticleMetricsConfigTestValues verticleMetricsConfigValue,

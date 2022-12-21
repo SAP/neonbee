@@ -16,7 +16,6 @@ import static io.vertx.core.Future.succeededFuture;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
@@ -46,7 +45,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.junit5.Checkpoint;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class EntityVerticleTest extends EntityVerticleTestBase {
@@ -65,7 +63,6 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     }
 
     @BeforeEach
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void deployEntityVerticles(VertxTestContext testContext) {
         entityVerticleImpl1 = new EntityVerticleImpl1();
         entityVerticleImpl2 = new EntityVerticleImpl2();
@@ -74,7 +71,6 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Check if entity types are registered in shared entity map")
     void registerEntityTypes(VertxTestContext testContext) {
         WriteSafeRegistry<String> registry =
@@ -99,7 +95,6 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Check if registered entity types are returned via verticlesForEntityType")
     void queryVerticlesForEntityType(Vertx vertx, VertxTestContext testContext) {
         CompositeFuture
@@ -157,7 +152,6 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Get URI info from query")
     @SuppressWarnings("deprecation")
     void parseUriInfoTest(Vertx vertx, VertxTestContext testContext) {
@@ -198,7 +192,6 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("requestEntity must call ConsolidationVerticle if more then one EntityVerticle is registered for Entity")
     void requestEntityWithConsolidationVerticleTest(VertxTestContext testContext) {
         DataVerticle<EntityWrapper> dummy =
@@ -216,7 +209,6 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("requestEntity must call ConsolidationVerticle if more then one EntityVerticle is registered for Entity")
     void requestEntityTest(VertxTestContext testContext) {
         requestEntity(EntityVerticleImpl3.FQN_TEST_PRODUCTS)
@@ -227,7 +219,6 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("EntityVerticles should announce their entities, as soon as they are deployed and if the models reload")
     void announceEntityVerticle(Vertx testVertx, VertxTestContext testContext) {
         Checkpoint checkpoint = testContext.checkpoint(2);
@@ -246,7 +237,6 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 200, timeUnit = TimeUnit.SECONDS)
     @DisplayName("test query with special characters")
     void testqueryWithSpecialCharacters(Vertx vertx, VertxTestContext testContext) {
         DataQuery dataQuery = new DataQuery("/io.neonbee.test1.TestService1/AllPropertiesNullable");

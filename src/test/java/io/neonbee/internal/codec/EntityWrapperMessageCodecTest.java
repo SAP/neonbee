@@ -4,8 +4,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 
-import java.util.concurrent.TimeUnit;
-
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.Property;
 import org.apache.olingo.commons.api.data.ValueType;
@@ -20,7 +18,6 @@ import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class EntityWrapperMessageCodecTest extends NeonBeeTestBase {
@@ -49,7 +46,6 @@ class EntityWrapperMessageCodecTest extends NeonBeeTestBase {
 
     @Test
     @DisplayName("Should serialize and deserialize an EntityWrapper correctly.")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void encodeDecode(VertxTestContext testContext) {
         getNeonBee().getModelManager().reloadModels().<Void>compose(map -> {
             Buffer buffer = Buffer.buffer();

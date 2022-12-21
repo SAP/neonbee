@@ -20,7 +20,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -73,7 +72,6 @@ import io.vertx.ext.web.Session;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.micrometer.backends.BackendRegistries;
@@ -81,6 +79,8 @@ import io.vertx.test.fakecluster.FakeClusterManager;
 
 @ExtendWith(VertxExtension.class)
 public class NeonBeeTestBase {
+    public static final String LONG_RUNNING_TEST = "longRunningTest";
+
     public static final String DOESNT_REQUIRE_NEONBEE = "NO_NEONBEE";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NeonBeeTestBase.class);
@@ -100,7 +100,6 @@ public class NeonBeeTestBase {
     private String randomMetricsRegistryName;
 
     @BeforeEach
-    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @SuppressWarnings("ReferenceEquality")
     public void setUp(Vertx vertx, VertxTestContext testContext, TestInfo testInfo) throws Exception {
         // associate the Vert.x instance to the current test (unfortunately the only "identifier" that is shared between
@@ -205,7 +204,6 @@ public class NeonBeeTestBase {
     }
 
     @AfterEach
-    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     void tearDown(Vertx vertx, VertxTestContext testContext, TestInfo testInfo) throws IOException {
         if (testInfo.getTags().contains(DOESNT_REQUIRE_NEONBEE)) {
             testContext.completeNow();

@@ -3,16 +3,17 @@ package io.neonbee.cluster;
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.cluster.ClusterManagerFactory.HAZELCAST_FACTORY;
 import static io.neonbee.cluster.ClusterManagerFactory.INFINISPAN_FACTORY;
+import static io.neonbee.test.base.NeonBeeTestBase.LONG_RUNNING_TEST;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.infinispan.manager.DefaultCacheManager;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,11 +31,11 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
+@Tag(LONG_RUNNING_TEST)
 @ExtendWith(VertxExtension.class)
 class ClusterManagerFactoryTest {
 
@@ -74,7 +75,6 @@ class ClusterManagerFactoryTest {
     @ParameterizedTest(name = "{index}: for {2}")
     @MethodSource("withClusterManagers")
     @DisplayName("Test ClusterManagerFactory")
-    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     void testDefaultFactories(ClusterManagerFactory cmf, String defaultConfig, Class clusterManagerImpl, Vertx vertx,
             VertxTestContext testContext) {
         assertThat(cmf.getDefaultConfig()).isEqualTo(defaultConfig);
@@ -109,7 +109,6 @@ class ClusterManagerFactoryTest {
     @ParameterizedTest(name = "{index}: Test loading Hazelcast config from {0}")
     @MethodSource("withHazelcastConfig")
     @DisplayName("Hazelcast config test")
-    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     void testHazelcastFileConfig(String file, Class<Config> config, Mutable options, VertxTestContext testContext) {
         HAZELCAST_FACTORY.create(options).onComplete(testContext.succeeding(cm -> {
             testContext.verify(() -> {

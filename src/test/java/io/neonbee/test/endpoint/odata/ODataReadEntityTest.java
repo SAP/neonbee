@@ -10,7 +10,6 @@ import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -18,6 +17,7 @@ import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -34,7 +34,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class ODataReadEntityTest extends ODataEndpointTestBase {
@@ -47,7 +46,6 @@ class ODataReadEntityTest extends ODataEndpointTestBase {
     }
 
     @BeforeEach
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         CompositeFuture
                 .all(deployVerticle(new TestService1EntityVerticle()), deployVerticle(new TestService3EntityVerticle()))
@@ -61,7 +59,6 @@ class ODataReadEntityTest extends ODataEndpointTestBase {
 
     @ParameterizedTest(name = "{index}: with key {0} ({1})")
     @MethodSource("withInvalidKeys")
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 400 if an entity of an existing service is requested")
     @SuppressWarnings("PMD.UnusedFormalParameter") // Required for display name
     void testInvalidKeys(String id, String reason, VertxTestContext testContext) {
@@ -81,14 +78,12 @@ class ODataReadEntityTest extends ODataEndpointTestBase {
     @ParameterizedTest(name = "{index}: with key {0}")
     @MethodSource("withValidKeys")
     @DisplayName("Respond with 200 if the service exists and has entity")
-    @Timeout(value = 3, timeUnit = TimeUnit.SECONDS)
     void testFilter(String id, JsonObject expected, VertxTestContext testContext) {
         assertODataEntity(requestOData(oDataRequest.setKey(id)), expected, testContext)
                 .onComplete(testContext.succeedingThenComplete());
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with the value of the requests attribute of the entity")
     void readEntityPropertyTest(VertxTestContext testContext) {
         assertODataEntity(requestOData(oDataRequest.setKey("id-4").setProperty("PropertyInt32")),
@@ -96,7 +91,6 @@ class ODataReadEntityTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 if the service is existing and has entity with id")
     void existingEntity5WithUrlEncodedSingleQuotesTest(VertxTestContext testContext) {
         oDataRequest.setKeyPredicate("(%27id-4%27)");
@@ -105,7 +99,6 @@ class ODataReadEntityTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 if the service is existing and has entity with id")
     void existingEntity5WithUrlEncodedParenthesisAndSingleQuotesTest(VertxTestContext testContext) {
         oDataRequest.setKeyPredicate("%28%27id-4%27%29");
@@ -114,7 +107,6 @@ class ODataReadEntityTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 if the service is existing and has entity with (Edm.Int32) id")
     void existingEntity205Test(VertxTestContext testContext) {
         oDataRequest = new ODataRequestMod(TestService3EntityVerticle.TEST_ENTITY_SET_FQN);

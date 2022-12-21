@@ -23,6 +23,14 @@ public class PrometheusScrapingHandler extends PrometheusScrapingHandlerImpl {
 
     /**
      * Constructs a new instance of NeonBeePrometheusHandler.
+     */
+    public PrometheusScrapingHandler() {
+        super();
+        registryName = null;
+    }
+
+    /**
+     * Constructs a new instance of NeonBeePrometheusHandler.
      *
      * @param registryName The name of the micrometer registry
      */

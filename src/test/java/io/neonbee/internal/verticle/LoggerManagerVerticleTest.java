@@ -6,7 +6,6 @@ import static io.neonbee.NeonBeeProfile.NO_WEB;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +20,6 @@ import io.neonbee.test.base.DataVerticleTestBase;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class LoggerManagerVerticleTest extends DataVerticleTestBase {
@@ -31,13 +29,11 @@ class LoggerManagerVerticleTest extends DataVerticleTestBase {
     }
 
     @BeforeEach
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         deployVerticle(new LoggerManagerVerticle()).onComplete(testContext.succeedingThenComplete());
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testRetrieveData(VertxTestContext testContext) {
         DataRequest req = new DataRequest(LoggerManagerVerticle.QUALIFIED_NAME, new DataQuery());
         Future<JsonArray> response = requestData(req);
@@ -47,7 +43,6 @@ class LoggerManagerVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testRetrieveDataWithQuery(VertxTestContext testContext) {
         DataRequest req = new DataRequest(LoggerManagerVerticle.QUALIFIED_NAME,
                 new DataQuery().setParameter("loggers", "io.neonbee.internal"));
@@ -62,7 +57,6 @@ class LoggerManagerVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testRetrieveDataWithMultipleQueryValues(VertxTestContext testContext) {
         DataRequest req = new DataRequest(LoggerManagerVerticle.QUALIFIED_NAME,
                 new DataQuery().setParameter("loggers", "io.neonbee.internal,io.vertx.core.file"));
@@ -73,7 +67,6 @@ class LoggerManagerVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testUpdateData(VertxTestContext testContext) {
         List<LoggerConfiguration> configList = List.of(new LoggerConfiguration("io.neonbee.internal", ERROR),
                 new LoggerConfiguration("io.vertx.core.file", ERROR));

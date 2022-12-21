@@ -3,11 +3,10 @@ package io.neonbee.data.internal.metrics;
 import static com.google.common.truth.Truth.assertThat;
 import static io.vertx.core.http.HttpMethod.GET;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.data.DataVerticle;
@@ -16,9 +15,9 @@ import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
+@Isolated
 class DataVerticleMetricsImplTest extends DataVerticleTestBase {
 
     @Override
@@ -29,7 +28,6 @@ class DataVerticleMetricsImplTest extends DataVerticleTestBase {
     }
 
     @BeforeEach
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         DeploymentOptions deploymentOptions = new DeploymentOptions();
         deploymentOptions.setConfig(new JsonObject().put(DataVerticle.CONFIG_METRICS_KEY,
@@ -42,7 +40,6 @@ class DataVerticleMetricsImplTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void testMetricsOnPrometheusEndpoint(VertxTestContext testContext) throws Exception {
         String expected = "TestRequireDataVerticle[TestSourceDataVerticle content]";
         assertDataEquals(requestData(TestRequireDataVerticle.QUALIFIED_NAME), expected, testContext)

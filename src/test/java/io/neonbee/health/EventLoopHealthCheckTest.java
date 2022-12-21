@@ -22,7 +22,6 @@ import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.healthchecks.HealthChecks;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
@@ -43,7 +42,6 @@ class EventLoopHealthCheckTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should set health check to up if number of pending tasks is below the configured threshold")
     void testCreateProcedureHealthy(Vertx vertx, VertxTestContext testContext) {
         checks.register(EventLoopHealthCheck.NAME, healthCheck.createProcedure().apply(NeonBee.get(vertx)));
@@ -57,7 +55,6 @@ class EventLoopHealthCheckTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should recognize if something blocks the event loop")
     void testDetectionOfBlockedEventLoop(Vertx vertx, VertxTestContext testContext) {
         checks.register(EventLoopHealthCheck.NAME, healthCheck.createProcedure().apply(NeonBee.get(vertx)));

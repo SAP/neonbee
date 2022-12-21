@@ -19,7 +19,6 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +41,6 @@ import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class ODataReadEntitiesTest extends ODataEndpointTestBase {
@@ -76,13 +74,11 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
     }
 
     @BeforeEach
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void setUp(VertxTestContext testContext) {
         deployVerticle(new TestService1EntityVerticle()).onComplete(testContext.succeedingThenComplete());
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 404 if an non existing entity set is requested")
     void nonExistingEntityTest(VertxTestContext testContext) {
         FullQualifiedName notExistingEntities =
@@ -99,7 +95,6 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 if the service is existing and has test entities")
     void existingEntitiesTest(VertxTestContext testContext) {
         assertODataEntitySetContainsExactly(requestOData(new ODataRequest(TEST_ENTITY_SET_FQN)), ALL_ENTITIES,
@@ -107,7 +102,6 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 if the service is existing and has test entities including correct inline count")
     void existingEntitiesWithInlineCountTest(VertxTestContext testContext) {
         Map<String, String> countQuery = Map.of("$count", "true");
@@ -119,7 +113,6 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 if the service is existing and has test entities including correct inline count with applied filters")
     void existingEntitiesWithInlineCountAndFilterTest(VertxTestContext testContext) {
         List<JsonObject> expectedEntities = List.of(EXPECTED_ENTITY_DATA_2, EXPECTED_ENTITY_DATA_4);
@@ -132,7 +125,6 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 and the correct count of entities")
     void existingEntitiesCountTest(VertxTestContext testContext) {
         assertOData(requestOData(new ODataRequest(TEST_ENTITY_SET_FQN).setCount()), "6", testContext)
@@ -140,7 +132,6 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test /$count returns 0 if no entities are found")
     void countNoEntitiesFoundTest(VertxTestContext testContext) {
         EntityVerticle dummy = createDummyEntityVerticle(TEST_ENTITY_SET_FQN).withStaticResponse(List.of());
@@ -150,7 +141,6 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 3, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 and the correct count of entities with filter query")
     void existingEntitiesCountWithFilterTest(VertxTestContext testContext) {
         Map<String, String> filterQuery = Map.of("$filter", "KeyPropertyString in ('id.3', 'id-1')");
@@ -159,7 +149,6 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 and the correct count of entities with filter query when loose URL mapping work is used")
     // Please note that the test method name contains "LooseUri" and therefore the behaviour is different.
     void existingEntitiesCountWithFilterCDSUriConversionTest(VertxTestContext testContext) {
@@ -170,7 +159,6 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Respond with 200 and the correct count of entities without filter query when loose URL mapping work is used")
     // Please note that the test method name contains "LooseUri" and therefore the behavior is different.
     void existingEntitiesCountWithoutFilterLooseUriConversionTest(VertxTestContext testContext) {
@@ -180,7 +168,6 @@ class ODataReadEntitiesTest extends ODataEndpointTestBase {
     }
 
     @Test
-    @Timeout(value = 3, timeUnit = TimeUnit.SECONDS)
     @DisplayName("test query encoding with special characters")
     void testCountWithFilter(VertxTestContext testContext) {
         ODataRequest oDataRequest = new ODataRequest(TEST_ENTITY_SET_FQN);

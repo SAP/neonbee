@@ -21,7 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +32,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.OpenOptions;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
@@ -47,7 +45,6 @@ class FileSystemHelperTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test should read the content from the passed directory path")
     void testReadDir(Vertx vertx, VertxTestContext testContext) {
         Path subDir = tempDir.resolve("subDir");
@@ -64,7 +61,6 @@ class FileSystemHelperTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test should read the content from the passed directory path based on the passed filter query")
     void testReadDirWithFilter(Vertx vertx, VertxTestContext testContext) {
         Path subDir = tempDir.resolve("subDir");
@@ -79,7 +75,6 @@ class FileSystemHelperTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test should check if the paths are directories")
     void testIfFileIsDir(Vertx vertx, VertxTestContext testContext) {
         Path subFile = tempDir.resolve("subFile");
@@ -94,7 +89,6 @@ class FileSystemHelperTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test should open a file")
     void testOpenFile(Vertx vertx, VertxTestContext testContext) throws IOException {
         Path subFile = tempDir.resolve("subFile");
@@ -111,7 +105,6 @@ class FileSystemHelperTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test should read a file")
     void testReadFile(Vertx vertx, VertxTestContext testContext) throws IOException {
         Path subFile = tempDir.resolve("subFile");
@@ -125,7 +118,6 @@ class FileSystemHelperTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test should write a file")
     void testWriteFile(Vertx vertx, VertxTestContext testContext) {
         Path subFile = tempDir.resolve("subFile");
@@ -139,7 +131,6 @@ class FileSystemHelperTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test should delete recursively the content from the passed directory path")
     void testDeleteRecursive(Vertx vertx, VertxTestContext testContext) {
         Path subDir = tempDir.resolve("subDir");
@@ -152,7 +143,6 @@ class FileSystemHelperTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test should check if a file exists")
     void testExistsFile(Vertx vertx, VertxTestContext testContext) {
         Path subFile = tempDir.resolve("subFile");
@@ -167,7 +157,6 @@ class FileSystemHelperTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test should create directories")
     void testCreateDirs(Vertx vertx, VertxTestContext testContext) {
         Path subDir = tempDir.resolve("subDir");
@@ -181,7 +170,6 @@ class FileSystemHelperTest {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Test should identify the property of the file")
     void testProps(Vertx vertx, VertxTestContext testContext) {
         getProperties(vertx, tempDir).onComplete(testContext.succeeding(property -> {

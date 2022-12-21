@@ -3,7 +3,6 @@ package io.neonbee.endpoint.metrics;
 import static com.google.common.truth.Truth.assertThat;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -28,7 +27,6 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.micrometer.backends.BackendRegistries;
 
@@ -56,7 +54,6 @@ public class NeonBeeMetricsTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
     void testCustomMetric(Vertx vertx, VertxTestContext testContext) {
         createRequest(HttpMethod.GET, TEST_ENDPOINT_URI).send()
                 .onComplete(testContext.succeeding(httpResponse -> testContext

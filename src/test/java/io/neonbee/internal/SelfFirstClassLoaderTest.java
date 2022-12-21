@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +30,6 @@ import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.junit5.Checkpoint;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
@@ -146,7 +144,6 @@ class SelfFirstClassLoaderTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Deployments must be able to load a different versions of a class, even if platform already uses this class")
     void loadClassesIsolatedTest(Vertx vertx, VertxTestContext testContext) throws ClassNotFoundException, IOException {
         Checkpoint cp = testContext.checkpoint(2);

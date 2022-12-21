@@ -4,11 +4,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.config.AuthProviderConfig.AuthProviderType.HTDIGEST;
 import static io.neonbee.config.AuthProviderConfig.AuthProviderType.JDBC;
 import static io.neonbee.config.AuthProviderConfig.AuthProviderType.MONGO;
+import static io.neonbee.test.base.NeonBeeTestBase.LONG_RUNNING_TEST;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.function.BiConsumer;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.neonbee.NeonBeeMockHelper;
@@ -16,10 +18,11 @@ import io.neonbee.config.AuthProviderConfig.AuthProviderType;
 import io.neonbee.internal.helper.StringHelper;
 import io.vertx.core.json.JsonObject;
 
+@Tag(LONG_RUNNING_TEST)
 class AuthProviderConfigTest {
 
     @Test
-    @DisplayName("Throw error if AuthProvderType is undupported")
+    @DisplayName("Throw error if AuthProviderType is unsupported")
     void testUnsupportedAuthProviderTypes() {
         BiConsumer<AuthProviderType, String> checkUnsupported = (type, msg) -> {
             UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {
