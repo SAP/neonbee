@@ -39,6 +39,7 @@ repositories {
 }
 
 dependencies {
+
     // Framework dependencies
     def vertx_version = '4.3.4'
     implementation group: 'io.vertx', name: 'vertx-core', version: vertx_version
