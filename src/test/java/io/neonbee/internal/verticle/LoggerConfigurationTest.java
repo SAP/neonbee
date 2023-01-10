@@ -11,35 +11,17 @@ import static io.neonbee.internal.verticle.LoggerConfiguration.NAME_KEY;
 
 import java.util.Arrays;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.json.JsonObject;
 
 class LoggerConfigurationTest {
-    public static final LoggerConfiguration ROOT = new LoggerConfiguration(Logger.ROOT_LOGGER_NAME, INFO);
+    private static final LoggerConfiguration ROOT = new LoggerConfiguration(Logger.ROOT_LOGGER_NAME, INFO);
 
-    private static int logInstanceCount;
-
-    private final LoggerConfiguration logger1 = new LoggerConfiguration(null, WARN);
-
-    private final LoggerConfiguration logger2 = new LoggerConfiguration(null, DEBUG);
-
-    @BeforeEach
-    void setUpLoggers() {
-        // there is no way to "delete" log instances, thus create new log instances for each run
-
-        String name1 = LoggerConfigurationTest.class.getSimpleName() + ++logInstanceCount;
-        LoggingFacade.create(name1);
-        logger1.setName(name1);
-
-        String name2 = LoggerConfigurationTest.class.getSimpleName() + ++logInstanceCount;
-        LoggingFacade.create(name2);
-        logger2.setName(name2);
-    }
+    private final LoggerConfiguration logger1 =
+            new LoggerConfiguration(LoggerConfigurationTest.class.getSimpleName() + "1", WARN);
 
     @Test
     void testBasics() {
@@ -64,6 +46,9 @@ class LoggerConfigurationTest {
 
     @Test
     void testCompare() {
+        LoggerConfiguration logger2 =
+                new LoggerConfiguration(LoggerConfigurationTest.class.getSimpleName() + "2", DEBUG);
+
         assertThat(ROOT.compareTo(logger1)).isEqualTo(-1);
         assertThat(logger2.compareTo(logger1)).isEqualTo(1);
     }
