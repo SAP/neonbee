@@ -14,11 +14,11 @@ import java.io.Reader;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -35,6 +35,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.sap.cds.impl.util.Pair;
 import com.sap.cds.reflect.CdsEntity;
 import com.sap.cds.reflect.CdsModel;
 
@@ -62,13 +63,15 @@ class EntityModelLoader {
     private static final PathMatcher MODELS_PATH_MATCHER = FileSystems.getDefault().getPathMatcher("glob:**.csn");
 
     @VisibleForTesting
-    Map<String, EntityModel> models = new HashMap<>();
+    ConcurrentHashMap<String, EntityModel> models = new ConcurrentHashMap<>();
 
     @VisibleForTesting
-    Map<String, SchemaBasedEdmProvider> edmProviders = new HashMap<>();
+    ConcurrentHashMap<String, SchemaBasedEdmProvider> edmProviders = new ConcurrentHashMap<>();
 
     @VisibleForTesting
-    Map<String, MetadataParser> metadataParsers = new HashMap<>();
+    ConcurrentHashMap<String, MetadataParser> metadataParsers = new ConcurrentHashMap<>();
+
+    ConcurrentHashMap<String, Buffer> modelFiles = new ConcurrentHashMap<>();
 
     private final Vertx vertx;
 
@@ -93,17 +96,20 @@ class EntityModelLoader {
      *
      * @return a map of all loaded models
      */
-    public static Future<Map<String, EntityModel>> load(Vertx vertx, Collection<EntityModelDefinition> definitions) {
+    public static Future<Pair<Map<String, EntityModel>, Map<String, Buffer>>> load(Vertx vertx,
+            Set<EntityModelDefinition> definitions) {
         LOGGER.trace("Start loading entity model definitions");
-        return new EntityModelLoader(vertx).loadModelsFromModelDirectoryAndClassPath().compose(loader -> {
-            return CompositeFuture
-                    .all(definitions.stream().map(loader::loadModelsFromDefinition).collect(Collectors.toList()))
-                    .map(loader);
-        }).map(EntityModelLoader::getModels).onComplete(result -> {
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("Loading entity model definitions {}", result.succeeded() ? "succeeded" : "failed");
-            }
-        });
+        return new EntityModelLoader(vertx).loadModelsFromModelDirectoryAndClassPath()
+                .compose(loader -> CompositeFuture
+                        .all(definitions.stream().map(loader::loadModelsFromDefinition).collect(Collectors.toList()))
+                        .map(loader))
+                .map(loader -> Pair.of(loader.getModels(), loader.getModelFiles())).onComplete(result -> {
+                    if (LOGGER.isTraceEnabled()) {
+                        LOGGER.trace("Loading entity model definitions {}",
+                                result.succeeded() ? "succeeded" : "failed");
+                    }
+                });
+
     }
 
     /**
@@ -113,6 +119,15 @@ class EntityModelLoader {
      */
     public Map<String, EntityModel> getModels() {
         return models;
+    }
+
+    /**
+     * returns a map of all loaded files.
+     *
+     * @return a map of all loaded files
+     */
+    public Map<String, Buffer> getModelFiles() {
+        return modelFiles;
     }
 
     /**
@@ -137,14 +152,15 @@ class EntityModelLoader {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("Load models from definition {}", csnModelDefinitions.keySet());
         }
-        return allComposite(csnModelDefinitions.entrySet().stream()
-                .map(entry -> parseModel(entry.getKey(), entry.getValue(), definition.getAssociatedModelDefinitions()))
-                .collect(Collectors.toList())).map(this).onComplete(result -> {
-                    if (LOGGER.isTraceEnabled()) {
-                        LOGGER.trace("Loading models from definition {} {}", csnModelDefinitions.keySet(),
-                                result.succeeded() ? "succeeded" : "failed");
-                    }
-                });
+        return allComposite(csnModelDefinitions.entrySet().stream().map(entry -> {
+            return parseModel(entry.getKey(), entry.getValue(), definition.getAssociatedData());
+        }).collect(Collectors.toList())).map(this).onComplete(result -> {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Loading models from definition {} {}", csnModelDefinitions.keySet(),
+                        result.succeeded() ? "succeeded" : "failed");
+            }
+        });
+
     }
 
     /**
@@ -179,11 +195,11 @@ class EntityModelLoader {
         LOGGER.trace("Scanning class path");
         ClassPathScanner scanner = new ClassPathScanner();
         Future<List<String>> csnFiles = scanner.scanWithPredicate(vertx, name -> name.endsWith(CSN));
-        Future<List<String>> modelFiles = scanner.scanManifestFiles(vertx, NEONBEE_MODELS);
+        Future<List<String>> files = scanner.scanManifestFiles(vertx, NEONBEE_MODELS);
 
-        return CompositeFuture.all(csnFiles, modelFiles).compose(scanResult -> CompositeFuture
+        return CompositeFuture.all(csnFiles, files).compose(scanResult -> CompositeFuture
                 // use distinct because models mentioned in the manifest could also exists as file.
-                .all(Streams.concat(csnFiles.result().stream(), modelFiles.result().stream()).distinct()
+                .all(Streams.concat(csnFiles.result().stream(), files.result().stream()).distinct()
                         .map(name -> loadModel(Path.of(name)).otherwise(throwable -> {
                             // models loaded from the class path are non-vital for NeonBee so continue anyways
                             LOGGER.warn("Loading model {} from class path failed", throwable, name);
@@ -200,12 +216,15 @@ class EntityModelLoader {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("Loading model {}", csnFile);
         }
-        return readCsnModel(csnFile).compose(cdsModel -> {
-            return CompositeFuture.all(EntityModelDefinition.resolveEdmxPaths(csnFile, cdsModel).stream()
-                    .map(this::loadEdmxModel).collect(Collectors.toList())).onSuccess(compositeFuture -> {
-                        buildModelMap(cdsModel, compositeFuture.<ServiceMetadata>list());
-                    });
-        }).mapEmpty();
+        return readCsnModel(csnFile)
+                .compose(
+                        cdsModel -> CompositeFuture
+                                .all(EntityModelDefinition.resolveEdmxPaths(csnFile, cdsModel).stream()
+                                        .map(this::loadEdmxModel).collect(Collectors.toList()))
+                                .onSuccess(compositeFuture -> {
+                                    buildModelMap(cdsModel, compositeFuture.<ServiceMetadata>list());
+                                }))
+                .mapEmpty();
     }
 
     Future<Void> parseModel(String csnFile, byte[] csnPayload, Map<String, byte[]> associatedModels) {
@@ -263,7 +282,10 @@ class EntityModelLoader {
      */
     @VisibleForTesting
     Future<CdsModel> readCsnModel(Path file) {
-        return FileSystemHelper.readFile(vertx, file).map(Buffer::getBytes).compose(this::parseCsnModel);
+        return FileSystemHelper.readFile(vertx, file).map(buffer -> {
+            modelFiles.put(file.toFile().getAbsolutePath(), buffer);
+            return buffer;
+        }).map(Buffer::getBytes).compose(this::parseCsnModel);
     }
 
     /**
@@ -288,7 +310,10 @@ class EntityModelLoader {
      * @return a future with loaded model inside
      */
     Future<ServiceMetadata> loadEdmxModel(Path file) {
-        return FileSystemHelper.readFile(vertx, file).compose(this::createServiceMetadataWithSchema);
+        return FileSystemHelper.readFile(vertx, file).map(buffer -> {
+            modelFiles.putIfAbsent(file.toFile().getAbsolutePath(), buffer);
+            return buffer;
+        }).compose(this::createServiceMetadataWithSchema);
     }
 
     /**
@@ -370,7 +395,8 @@ class EntityModelLoader {
 
         private final String serviceDocumentETag;
 
-        @SuppressWarnings("checkstyle:MissingJavadocMethod") // don't know exactly what this is for
+        @SuppressWarnings("checkstyle:MissingJavadocMethod")
+        // don't know exactly what this is for
         MetadataETagSupport(Buffer csdl) {
             /*
              * Please note: ETag for the service document and the metadata document. The same field for service-document

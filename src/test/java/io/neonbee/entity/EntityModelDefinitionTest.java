@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import com.sap.cds.reflect.CdsModel;
 import com.sap.cds.reflect.impl.CdsModelBuilder;
 import com.sap.cds.reflect.impl.CdsServiceBuilder;
+import io.vertx.core.buffer.Buffer;
 
 class EntityModelDefinitionTest {
     @Test
@@ -30,9 +31,8 @@ class EntityModelDefinitionTest {
         assertThat(definition.getCSNModelDefinitions().keySet()).containsExactly("foo");
         assertThat(definition.getCSNModelDefinitions().get("foo")).asList().containsExactly((byte) 1, (byte) 2,
                 (byte) 3);
-        assertThat(definition.getAssociatedModelDefinitions().keySet()).containsExactly("bar");
-        assertThat(definition.getAssociatedModelDefinitions().get("bar")).asList().containsExactly((byte) 4, (byte) 5,
-                (byte) 6);
+        assertThat(definition.getAssociatedData().keySet()).containsExactly("bar");
+        assertThat(definition.getAssociatedData().get("bar")).asList().containsExactly((byte) 4, (byte) 5, (byte) 6);
         assertThat(definition.toString()).isEqualTo("foo$bar");
     }
 
@@ -83,5 +83,28 @@ class EntityModelDefinitionTest {
         Stream<Path> edmxFileNames = edmxPaths.stream().map(Path::getFileName);
 
         com.google.common.truth.Truth8.assertThat(edmxFileNames).containsExactlyElementsIn(expectedEdmxFileNames);
+    }
+
+    @Test
+    @DisplayName("serializes and deserializes the instance of EntityModelDefinition class to proof the implementation of ClusterSerializable")
+    void writeAndRead() {
+        Map<String, byte[]> csns = Map.of("foo", new byte[] { 1, 2, 3 });
+        Map<String, byte[]> associates = Map.of("bar", new byte[] { 4, 5, 6 });
+
+        EntityModelDefinition definition = new EntityModelDefinition(csns, associates);
+
+        Buffer buffer = Buffer.buffer();
+        definition.writeToBuffer(buffer);
+
+        EntityModelDefinition copy = new EntityModelDefinition();
+        copy.readFromBuffer(0, buffer);
+
+        assertThat(copy).isEqualTo(definition);
+
+        Map<String, byte[]> copyCsns = copy.getCSNModelDefinitions();
+        assertThat(copyCsns.get("foo")).isEqualTo(csns.get("foo"));
+
+        Map<String, byte[]> copyAssociates = copy.getAssociatedData();
+        assertThat(copyAssociates.get("bar")).isEqualTo(associates.get("bar"));
     }
 }

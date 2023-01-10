@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.impl.VertxImpl;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.PlatformHandler;
@@ -47,7 +48,10 @@ public class LoggerHandler implements PlatformHandler {
         }
 
         int statusCode = request.response().getStatusCode();
-        String message = String.format("%s - %s %s %s %d %d - %d ms",
+        StringBuilder nodeId = new StringBuilder();
+        Optional.ofNullable(routingContext.vertx())
+                .ifPresent(v -> nodeId.append(((VertxImpl) v).getClusterManager().getNodeId()));
+        String message = String.format("%s - %s - %s %s %s %d %d - %d ms", nodeId,
                 Optional.ofNullable(request.remoteAddress()).map(SocketAddress::host).orElse(null), request.method(),
                 request.uri(), version, statusCode, request.response().bytesWritten(),
                 System.currentTimeMillis() - timestamp);
