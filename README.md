@@ -6,6 +6,17 @@
 
 NeonBee is an open source reactive dataflow engine, a data stream processing framework using [Vert.x](https://github.com/eclipse/vert.x).
 
+* [Description](#description)
+  * [NeonBee vs. Vert.x](#neonbee-vs-vertx)
+  * [Core Components](#core-components)
+  * [Dataflow Processing](#dataflow-processing)
+    * [Data Verticles / Sources](#data-verticles--sources)
+    * [Entity Verticles & Data Model](#entity-verticles--data-model)
+    * [Data Endpoints](#data-endpoints)
+* [Getting Started](#getting-started)
+* [Our Road Ahead](#our-road-ahead)
+* [Contributing](#contributing)
+
 ## Description
 
 NeonBee abstracts most of Vert.x's low-level functionality by adding an application layer for modeling a dataflow, [data stream processing](https://en.wikipedia.org/wiki/Stream_processing) and for doing data consolidation, exposing everything via standardized RESTfull APIs in form of interfaces called endpoints.
@@ -76,147 +87,10 @@ Endpoints are standardized interfaces provided by NeonBee. Endpoints call entry 
 
 ## Getting Started
 
-NeonBee itself doesn't provide any examples yet, but some examples can be found in this [repository](https://github.com/gedack/neonbee-examples).
+This [Kickstart Guide](https://github.com/SAP/neonbee-examples/blob/main/neonbee-kickstart-guide/README.md) is
+recommended for a first start with NeonBee.
 
-The NeonBee data processing framework can be started like any other ordinary application server by using the start-up scripts provided in the root folder of NeonBee. By default, the boot sequence will check for verticles in the `/verticles` directory as well as from any remote source configured and deploy all these verticles automatically. This can be customized via command line and via a central configuration file in the `/config` directory. Also, the data model definition can be updated / loaded during runtime. To do so, valid CDS files must be put into the `/models` directory.
-
-### Writing Your First Data Verticles
-
-Writing a `DataVerticle` is a piece of cake. Imagine one of your verticles reads customer data from a database, while another verticle should do the processing of it. Let's start with the database verticle:
-
-```java
-public class DatabaseVerticle extends DataVerticle<JsonArray> {
-    @Override
-    public String getName() {
-        return "Database";
-    }
-
-    @Override
-    public Future<JsonArray> retrieveData(DataQuery query, DataContext context) {
-        // return a future to a JsonArray here, e.g. by connecting to the database
-        return Future.succeededFuture(new JsonArray()
-            .add(new JsonObject().put("Id", 1).put("Name", "Customer A"))
-            .add(new JsonObject().put("Id", 2).put("Name", "Customer B")));
-    }
-}
-```
-
-Note how the first verticle returns the name `Database`. By default, the name is set to the full qualified name of the class. We just return a name here to make the implementation of our processing verticle easier. We create a second data verticle called `ProcessingVerticle`. In order for the processing verticle to get data from the database verticle, a `DataRequest` can be returned from the processing verticles `requireData` method. NeonBee will try resolve all the dependencies of a data verticle, before invoking the verticles `retrieveData` method. This way it becomes very easy to request some data from another data verticle.
-
-```java
-public class ProcessingVerticle extends DataVerticle<JsonArray> {
-    @Override
-    public String getName() {
-        return "CustomerData";
-    }
-
-    @Override
-    public Future<Collection<DataRequest>> requireData(DataQuery query, DataContext context) {
-        return Future.succeededFuture(List.of(new DataRequest("Database", query)));
-    }
-
-    @Override @SuppressWarnings("unchecked")
-    public Future<JsonArray> retrieveData(DataQuery query, DataMap require, DataContext context) {
-        AsyncResult<JsonArray> databaseResult = require.<JsonArray>findFirst("Database").orElse(null);
-        if (databaseResult.failed()) {
-            // retrieving data from the database failed
-            return Future.failedFuture(databaseResult.cause());
-        }
-
-        // reverse the database result or do any other more reasonable processing ;-)
-        List<Object> reversedDatabaseResult = new ArrayList<>();
-        new ArrayDeque<Object>(databaseResult.result().getList())
-            .descendingIterator()
-            .forEachRemaining(reversedDatabaseResult::add);
-
-        return Future.succeededFuture(new JsonArray(reversedDatabaseResult));
-    }
-}
-```
-
-And that's it. Deploy your verticles by simply putting a JAR file of them into NeonBees `/verticles` directory. We will soon release a sample repository on how to build a compliant JAR file. Compliant JAR files refer to so called "modules". A module JAR is a fat / ueber JAR, which comes with any dependencies of the verticle, excluding NeonBee / Vert.x dependencies which are provided by the framework.
-
-Start-up the server, on its default port you can fetch the data of your verticle via the raw endpoint at http://localhost:8080/raw/CustomerData/. NeonBee can easily run this verticle in a highly scalable cluster setup out of the box.
-
-### Advancing to Entity Verticles
-
-Dealing with plain data verticles is great if you control who consumes the data and own all interfaces. The downside of data verticles is that they do not provide a structured and obliging interface, but if e.g. announcing to expose `JsonObject` the given JSON object could have any structure. In case you want to provide a public interface or simply need more control over the data returned, dealing with raw JSON, strings or even binary, gets a bit more troublesome.
-
-NeonBee covers that with the concept of `EntityVerticle` an extension to the `DataVerticle` concept. Let's define a very simple data model using the CDS Definition Language first:
-
-```
-namespace MyModel;
-
-entity Customers {
-    key Id : Integer;
-    Name : String;
-}
-```
-
-Compile the CDS definition to EDMX.
-
-Put the `.cds` and the resulting `.edmx` file in the `/models` directory of NeonBee. The OData endpoint now already knows about the Customers entity. The last thing to do is to actually define an `EntityVerticle` which returns the entity data on request:
-
-```java
-public class CustomerEntityVerticle extends EntityVerticle {
-    @Override
-    public Future<Set<FullQualifiedName>> entityTypeNames() {
-        return Set.of(new FullQualifiedName("MyModel", "Customers"));
-    }
-
-    @Override
-    public Future<Collection<DataRequest>> requireData(DataQuery query, DataContext context) {
-        return Future.succeededFuture(List.of(new DataRequest("CustomerData", query)));
-    }
-
-    @Override
-    public Future<EntityWrapper> retrieveData(DataQuery query, DataMap require, DataContext context) {
-        List<Entity> entities = new ArrayList<>();
-
-        for (Object object : require.<JsonArray>resultFor("CustomerData")) {
-            JsonObject jsonObject = (JsonObject) object;
-
-            Entity entity = new Entity();
-            entity.addProperty(new Property(null, "Id", ValueType.PRIMITIVE, jsonObject.getValue("Id")));
-            entity.addProperty(new Property(null, "Name", ValueType.PRIMITIVE, jsonObject.getValue("Name")));
-            entities.add(entity);
-        }
-
-        return Future.succeededFuture(new EntityWrapper(new FullQualifiedName("MyModel", "Customers"), entities));
-    }
-}
-```
-
-And that's it. You have created your first valid OData 4.0 endpoint in NeonBee. With the default configuration access the entity at http://localhost:8080/odata/Customers/. Similarly to data verticles the OData endpoint and your entity is now available and is highly scalable by NeonBee.
-
-### For Your Convenience
-
-NeonBee provides further simplifications when dealing with verticle development.
-
-Especially in large-scale distributed systems, correlating log messages become crucial to reproduce what is actually going on. Conveniently, NeonBee offers a simple `LoggingFacade` which masks the logging interface with:
-
-```java
-// alternatively you can use the masqueradeLogger method,
-// to use the facade on an existing SF4J logger
-LoggingFacade logger = LoggingFacade.create();
-
-logger.correlateWith(context).info("Hello NeonBee");
-```
-
-The logger gets correlated with a correlated ID passed through the routing context. In the default implementation of NeonBees logging facade, the correlation ID will be logged alongside the actual message as a so-called [marker](https://www.slf4j.org/faq.html#marker_interface) and can easily be used to trace a certain log message, even in distributed clusters. Note that the `correlateWith` method does not actually correlate the whole logging facade, but only the next message logged. This means you have to invoke the `correlateWith` method once again when the next message is logged.
-
-Similar to Vert.x's shared instance, NeonBee provides its own shared instance holding some additional properties, such as the NeonBee options and configuration objects, as well as general purpose local and cluster-wide shared map for you to use. Each NeonBee instance has a one to one relation to a given Vert.x instance. To retrieve the NeonBee instance from anywhere, just use the static `NeonBee.neonbee` method of the NeonBee main class:
-
-```java
-NeonBee neonbee = NeonBee.neonbee(vertx);
-
-// get access to the NeonBee CLI options
-NeonBeeOptions options = neonbee.getOptions();
-
-// general purpose shared local / async (cluster-wide) maps
-LocalMap<String, Object> sharedLocalMap = neonbee.getLocalMap();
-AsyncMap<String, Object> sharedAsyncMap = neonbee.getAsyncMap();
-```
+Further NeonBee examples can be found in this [repository](https://github.com/SAP/neonbee-examples).
 
 ## Our Road Ahead
 
