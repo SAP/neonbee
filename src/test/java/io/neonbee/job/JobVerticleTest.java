@@ -9,14 +9,17 @@ import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.longThat;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
@@ -24,7 +27,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
-import org.mockito.ArgumentMatcher;
+import org.mockito.MockedStatic;
 
 import io.neonbee.NeonBeeMockHelper;
 import io.neonbee.NeonBeeOptions;
@@ -114,64 +117,78 @@ class JobVerticleTest extends NeonBeeTestBase {
 
     @Test
     @DisplayName("Verify that jobs are scheduled at the expected times")
+    @SuppressWarnings("ReturnValueIgnored")
     void verifyJobSchedule() {
-        TestJobVerticle testJobVerticle = new TestJobVerticle(new JobSchedule());
-        // when a job is scheduled (once) the next time it is executed should be in approximately 100 ms (or less)
-        verify(testJobVerticle.vertxMock).setTimer(longThat(isApproximately(100)), any());
 
-        testJobVerticle = new TestJobVerticle(new JobSchedule(Instant.now().minus(30, ChronoUnit.SECONDS)));
-        // when a job is scheduled 30 seconds to the past, the job should not be scheduled
-        verify(testJobVerticle.vertxMock, never()).setTimer(not(eq(FINALIZE_DELAY)), any());
+        Instant expectedInstant = Instant.parse("2023-01-01T00:00:00Z");
+        ZonedDateTime zonedDateTime1 = ZonedDateTime.ofInstant(expectedInstant, ZoneOffset.UTC);
 
-        testJobVerticle = new TestJobVerticle(new JobSchedule(Instant.now().plus(30, ChronoUnit.SECONDS)));
-        // when a job is scheduled 30 seconds to the future, the next job run should be scheduled at approximately
-        // that time
-        verify(testJobVerticle.vertxMock).setTimer(longThat(isApproximately(30000)), any());
+        try (
+                MockedStatic<Instant> instantMock = mockStatic(Instant.class, CALLS_REAL_METHODS);
+                MockedStatic<ZonedDateTime> zonedDateTimeMock = mockStatic(ZonedDateTime.class)) {
 
-        /** PERIODIC JOBS **/
+            instantMock.when(Instant::now).thenReturn(expectedInstant);
+            zonedDateTimeMock.when(() -> ZonedDateTime.now(ZoneOffset.UTC)).thenReturn(zonedDateTime1);
+            zonedDateTimeMock.when(() -> ZonedDateTime.ofInstant(any(), any(), any())).thenReturn(zonedDateTime1);
 
-        testJobVerticle = new TestJobVerticle(
-                new JobSchedule(Instant.now().minus(30, ChronoUnit.SECONDS), Duration.ofMinutes(1)));
-        // when a job is scheduled 30 seconds to the past, and the interval is one minute, the next execution should
-        // be in 30 seconds
-        verify(testJobVerticle.vertxMock).setTimer(longThat(isApproximately(30000)), any());
+            TestJobVerticle testJobVerticle = new TestJobVerticle(new JobSchedule());
+            // when a job is scheduled (once) the next time it is executed should be in approximately 100 ms (or less)
+            verify(testJobVerticle.vertxMock).setTimer(eq(100L), any());
 
-        testJobVerticle = new TestJobVerticle(
-                new JobSchedule(Instant.now().minus(90, ChronoUnit.SECONDS), Duration.ofMinutes(1)));
-        // when a job is scheduled 90 seconds to the past, and the interval is one minute, the next execution should
-        // be in 30 seconds
-        verify(testJobVerticle.vertxMock).setTimer(longThat(isApproximately(30000)), any());
+            testJobVerticle = new TestJobVerticle(new JobSchedule(Instant.now().minus(30, ChronoUnit.SECONDS)));
+            // when a job is scheduled 30 seconds to the past, the job should not be scheduled
+            verify(testJobVerticle.vertxMock, never()).setTimer(not(eq(FINALIZE_DELAY)), any());
 
-        testJobVerticle = new TestJobVerticle(
-                new JobSchedule(Instant.now().plus(30, ChronoUnit.SECONDS), Duration.ofMinutes(100)));
-        // when a job is scheduled 30 seconds to the future, the next job run should be scheduled at approximately
-        // that time (independent from the interval defined)
-        verify(testJobVerticle.vertxMock).setTimer(longThat(isApproximately(30000)), any());
+            testJobVerticle = new TestJobVerticle(new JobSchedule(Instant.now().plus(30, ChronoUnit.SECONDS)));
+            // when a job is scheduled 30 seconds to the future, the next job run should be scheduled at approximately
+            // that time
+            verify(testJobVerticle.vertxMock).setTimer(eq(30000L), any());
 
-        testJobVerticle = new TestJobVerticle(
-                new JobSchedule(Duration.ofMinutes(100), Instant.now().plus(30, ChronoUnit.SECONDS)));
-        // when a job is scheduled and the end date is in the future, verify that a timer is set
-        verify(testJobVerticle.vertxMock).setTimer(not(eq(FINALIZE_DELAY)), any());
+            /** PERIODIC JOBS **/
 
-        testJobVerticle = new TestJobVerticle(
-                new JobSchedule(Duration.ofMinutes(100), Instant.now().minus(30, ChronoUnit.SECONDS)), false, 1);
-        // when a job is scheduled and the end date is in the past, verify that a timer is NOT set and the verticle
-        // was undeployed
-        verify(testJobVerticle.vertxMock, times(1)).setTimer(eq(FINALIZE_DELAY), any());
-        verify(testJobVerticle.vertxMock).undeploy("expected_deployment_id");
+            testJobVerticle = new TestJobVerticle(
+                    new JobSchedule(Instant.now().minus(30, ChronoUnit.SECONDS), Duration.ofMinutes(1)));
+            // when a job is scheduled 30 seconds to the past, and the interval is one minute, the next execution should
+            // be in 30 seconds
+            verify(testJobVerticle.vertxMock).setTimer(eq(30000L), any());
 
-        testJobVerticle = new TestJobVerticle(
-                new JobSchedule(Duration.ofMinutes(100), Instant.now().minus(30, ChronoUnit.SECONDS)), false);
-        // when a job is scheduled and the end date is in the past, verify that a timer is NOT set and the verticle
-        // was undeployed
-        verify(testJobVerticle.vertxMock, never()).setTimer(not(eq(FINALIZE_DELAY)), any());
-        verify(testJobVerticle.vertxMock, never()).undeploy(any());
+            testJobVerticle = new TestJobVerticle(
+                    new JobSchedule(Instant.now().minus(90, ChronoUnit.SECONDS), Duration.ofMinutes(1)));
+            // when a job is scheduled 90 seconds to the past, and the interval is one minute, the next execution should
+            // be in 30 seconds
+            verify(testJobVerticle.vertxMock).setTimer(eq(30000L), any());
 
-        testJobVerticle = new TestJobVerticle(new JobSchedule(Instant.now().minus(30, ChronoUnit.SECONDS),
-                Duration.ofMinutes(1), Instant.now().plus(10, ChronoUnit.SECONDS)));
-        // when a job is scheduled 30 seconds to the past, and the interval is one minute, but the job execution
-        // should end 20 seconds to the future already, verify that a timer is NOT set
-        verify(testJobVerticle.vertxMock, never()).setTimer(not(eq(FINALIZE_DELAY)), any());
+            testJobVerticle = new TestJobVerticle(
+                    new JobSchedule(Instant.now().plus(30, ChronoUnit.SECONDS), Duration.ofMinutes(100)));
+            // when a job is scheduled 30 seconds to the future, the next job run should be scheduled at approximately
+            // that time (independent from the interval defined)
+            verify(testJobVerticle.vertxMock).setTimer(eq(30000L), any());
+
+            testJobVerticle = new TestJobVerticle(
+                    new JobSchedule(Duration.ofMinutes(100), Instant.now().plus(30, ChronoUnit.SECONDS)));
+            // when a job is scheduled and the end date is in the future, verify that a timer is set
+            verify(testJobVerticle.vertxMock).setTimer(not(eq(FINALIZE_DELAY)), any());
+
+            testJobVerticle = new TestJobVerticle(
+                    new JobSchedule(Duration.ofMinutes(100), Instant.now().minus(30, ChronoUnit.SECONDS)), false, 1);
+            // when a job is scheduled and the end date is in the past, verify that a timer is NOT set and the verticle
+            // was undeployed
+            verify(testJobVerticle.vertxMock, times(1)).setTimer(eq(FINALIZE_DELAY), any());
+            verify(testJobVerticle.vertxMock).undeploy("expected_deployment_id");
+
+            testJobVerticle = new TestJobVerticle(
+                    new JobSchedule(Duration.ofMinutes(100), Instant.now().minus(30, ChronoUnit.SECONDS)), false);
+            // when a job is scheduled and the end date is in the past, verify that a timer is NOT set and the verticle
+            // was undeployed
+            verify(testJobVerticle.vertxMock, never()).setTimer(not(eq(FINALIZE_DELAY)), any());
+            verify(testJobVerticle.vertxMock, never()).undeploy(any());
+
+            testJobVerticle = new TestJobVerticle(new JobSchedule(Instant.now().minus(30, ChronoUnit.SECONDS),
+                    Duration.ofMinutes(1), Instant.now().plus(10, ChronoUnit.SECONDS)));
+            // when a job is scheduled 30 seconds to the past, and the interval is one minute, but the job execution
+            // should end 20 seconds to the future already, verify that a timer is NOT set
+            verify(testJobVerticle.vertxMock, never()).setTimer(not(eq(FINALIZE_DELAY)), any());
+        }
     }
 
     @Test
@@ -254,12 +271,5 @@ class JobVerticleTest extends NeonBeeTestBase {
 
         DummyJobVerticle dummyJobVerticle = new DummyJobVerticle(new JobSchedule(Duration.ofMinutes(1)));
         deployVerticle(dummyJobVerticle).onComplete(testConetxt.succeeding(v -> {}));
-    }
-
-    // the delay must always not be longer than 20 milliseconds from the expected delay
-    // (the 75ms some leeway granted that the test execution might take until the verify statement)
-    @SuppressWarnings("PMD")
-    private static ArgumentMatcher<Long> isApproximately(long expectedDelay) {
-        return delay -> (delay <= expectedDelay) && (delay >= (expectedDelay - 100));
     }
 }
