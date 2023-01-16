@@ -13,6 +13,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import com.google.common.truth.Truth8;
 
@@ -25,6 +28,8 @@ import io.vertx.ext.healthchecks.HealthChecks;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
+@Isolated
+@Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(VertxExtension.class)
 class EventLoopHealthCheckTest {
     private EventLoopHealthCheck healthCheck;
