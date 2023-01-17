@@ -11,6 +11,11 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 
+/**
+ * This endpoint is targeted for manual use with cURL or similar command line tools, and can be used to quickly obtain
+ * information on the overall health of the system and the individual checks. To protect the information about the
+ * system, which are not meant for public usage, only authenticated requests are allowed in the default configuration.
+ */
 public class HealthEndpoint implements Endpoint {
     /**
      * The default path that is used by NeonBee to expose the health endpoint.
@@ -25,6 +30,6 @@ public class HealthEndpoint implements Endpoint {
     @Override
     public Future<Router> createEndpointRouter(Vertx vertx, String basePath, JsonObject config) {
         HealthCheckRegistry registry = NeonBee.get(vertx).getHealthCheckRegistry();
-        return Future.succeededFuture(createRouter(vertx, new HealthCheckHandler(registry)));
+        return Future.succeededFuture(createRouter(vertx, new HealthCheckHandler(registry, vertx)));
     }
 }

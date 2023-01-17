@@ -28,6 +28,7 @@ import io.neonbee.config.HealthConfig;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
+import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.health.internal.HealthCheck;
 import io.neonbee.internal.SharedDataAccessor;
 import io.neonbee.internal.WriteSafeRegistry;
@@ -36,6 +37,8 @@ import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.verticle.HealthCheckVerticle;
 import io.neonbee.test.helper.DeploymentHelper;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -255,8 +258,48 @@ class HealthCheckRegistryTest {
     }
 
     @Test
+    @DisplayName("it requests data for a specific check")
+    void testConsolidateResultsForSpecificCheck(Vertx vertx, VertxTestContext testContext) {
+        String checkName = "dummy-a";
+        HealthCheckRegistry registry = new HealthCheckRegistry(vertx);
+        registry.register(new DummyHealthCheck(neonBee))
+                .compose(hc -> registry.register(new DummyHealthCheck(neonBee) {
+                    @Override
+                    public String getId() {
+                        return checkName;
+                    }
+                }))
+                .compose(hc -> registry.register(new DummyHealthCheck(neonBee) {
+                    @Override
+                    public String getId() {
+                        return "dummy-b";
+                    }
+
+                    @Override
+                    public Function<NeonBee, Handler<Promise<Status>>> createProcedure() {
+                        return nb -> promise -> promise.complete(new Status().setKO());
+                    }
+
+                    @Override
+                    public boolean isGlobal() {
+                        return false;
+                    }
+                }))
+                .compose(hc -> registry.collectHealthCheckResults(new DataContextImpl(), checkName))
+                .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
+                    Function<String, Long> matchingNameCount = id -> result.getJsonArray("checks").stream()
+                            .filter(c -> ((JsonObject) c).getString("id").equals(id)).count();
+
+                    assertThat(matchingNameCount.apply(checkName)).isEqualTo(1);
+                    assertThat(result.getString("outcome")).isEqualTo("UP");
+                    assertThat(result.getString("status")).isEqualTo("UP");
+                    testContext.completeNow();
+                })));
+    }
+
+    @Test
     @DisplayName("it does not fail if some verticle addresses are not reachable")
-    void test(Vertx vertx, VertxTestContext testContext) throws NoSuchFieldException, IllegalAccessException {
+    void test(Vertx vertx, VertxTestContext testContext) {
         neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(true));
         String verticleName = "not-existing-verticle-name";
         WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, HealthCheckRegistry.REGISTRY_NAME);
