@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 
 import io.neonbee.NeonBee;
 import io.neonbee.data.DataContext;
@@ -159,8 +160,23 @@ public class HealthCheckRegistry {
      *
      * @param dataContext the current data context
      * @return the consolidated health check data
+     * @see #collectHealthCheckResults()
      */
     public Future<JsonObject> collectHealthCheckResults(DataContext dataContext) {
+        return collectHealthCheckResults(dataContext, null);
+    }
+
+    /**
+     * Requests health information from all NeonBee nodes registered in the cluster. If NeonBee is not clustered,
+     * {@link #getHealthChecks()} is used internally to fetch the data, which gets consolidated and returned. Allows
+     * filtering for a passed health check by name.
+     *
+     * @param dataContext the current data context
+     * @param check       the name of the health check to filter
+     * @return the consolidated health check data
+     * @see #collectHealthCheckResults(DataContext)
+     */
+    public Future<JsonObject> collectHealthCheckResults(DataContext dataContext, String check) {
         Future<List<JsonObject>> asyncResults;
         if (NeonBee.get(vertx).getOptions().isClustered()) {
             asyncResults = getClusteredHealthCheckResults(dataContext);
@@ -168,7 +184,7 @@ public class HealthCheckRegistry {
             asyncResults = getLocalHealthCheckResults();
         }
 
-        return asyncResults.map(results -> consolidateResults(results, dataContext)).onFailure(
+        return asyncResults.map(results -> consolidateResults(results, check, dataContext)).onFailure(
                 t -> LOGGER.correlateWith(dataContext).error("Could not consolidate health check information"));
     }
 
@@ -217,34 +233,47 @@ public class HealthCheckRegistry {
                 })).collect(toList());
     }
 
-    private JsonObject consolidateResults(List<JsonObject> healthCheckResults, DataContext dataContext) {
+    private JsonObject consolidateResults(List<JsonObject> healthCheckResults, String check, DataContext dataContext) {
         AtomicReference<String> aggregatedStatus = new AtomicReference<>(UP);
         Map<String, JsonObject> consolidatedChecks = new HashMap<>();
 
-        healthCheckResults.stream().forEach(checkResult -> {
-            String checkId = checkResult.getString(ID_KEY);
-            String status = checkResult.getString(STATUS_KEY);
+        healthCheckResults.stream()
+                .filter(checkResult -> Strings.isNullOrEmpty(check) || isIncluded(check, checkResult))
+                .filter(checkResult -> checkResult.getString(ID_KEY) != null
+                        && checkResult.getString(STATUS_KEY) != null)
+                .forEach(checkResult -> {
+                    String checkId = checkResult.getString(ID_KEY);
+                    String status = checkResult.getString(STATUS_KEY);
 
-            if (checkId == null || status == null) {
-                LOGGER.correlateWith(dataContext).warn("Detected inconsistent health check");
-                return;
-            }
+                    if (consolidatedChecks.containsKey(checkId)) {
+                        if (!status.equals(consolidatedChecks.get(checkId).getString(STATUS_KEY))) {
+                            LOGGER.correlateWith(dataContext).warn("Detected inconsistent status of health check {}",
+                                    checkId);
+                            // some nodes report a different status of the check than other nodes. This might be due to
+                            // some inconsistent uptime of the service, but more likely that some requirements to
+                            // perform a successful health check are not met by some nodes. Example: the health check
+                            // requests an external service which requires credentials, but the credentials are not
+                            // available on the node due to misconfiguration. In this scenario, keep the existing entry.
+                        }
+                    } else {
+                        consolidatedChecks.put(checkId, checkResult);
+                        if (DOWN.equals(status)) {
+                            aggregatedStatus.set(DOWN);
+                        }
+                    }
+                });
 
-            if (consolidatedChecks.containsKey(checkId)) {
-                if (!status.equals(consolidatedChecks.get(checkId).getString(STATUS_KEY))) {
-                    LOGGER.correlateWith(dataContext).warn("Detected inconsistent status of health check {}", checkId);
-                    // we keep the already existing entry
-                }
-            } else {
-                consolidatedChecks.put(checkId, checkResult);
-                if (DOWN.equals(status)) {
-                    aggregatedStatus.set(DOWN);
-                }
-            }
-        });
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.correlateWith(dataContext).trace("Consolidated health checks: " + consolidatedChecks);
+        }
 
         return new JsonObject().put(CHECKS_KEY, new JsonArray(new ArrayList<>(consolidatedChecks.values())))
                 .put(STATUS_KEY, aggregatedStatus.get()).put(OUTCOME_KEY, aggregatedStatus.get());
+    }
+
+    private boolean isIncluded(String check, JsonObject checkResult) {
+        String c = checkResult.getString(ID_KEY);
+        return c.equals(check) || (c.startsWith("node") && c.endsWith(check));
     }
 
     @SuppressWarnings({ "PMD.AvoidSynchronizedAtMethodLevel", "checkstyle:OverloadMethodsDeclarationOrder" })

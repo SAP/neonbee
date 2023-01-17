@@ -17,6 +17,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableBiMap;
 
 import io.neonbee.endpoint.health.HealthEndpoint;
+import io.neonbee.endpoint.health.StatusEndpoint;
 import io.neonbee.endpoint.metrics.MetricsEndpoint;
 import io.neonbee.endpoint.odatav4.ODataV4Endpoint;
 import io.neonbee.endpoint.raw.RawEndpoint;
@@ -94,9 +95,15 @@ import io.vertx.ext.web.handler.ErrorHandler;
  *       authenticationChain: array, // a specific authentication chain for this endpoint, defaults to an empty array / no auth.
  *     }
  *     health: {
- *       type: "io.neonbee.endpoint.health.HealthEndpoint", // provides an endpoint with health information
- *       enabled: boolean, // enable the metrics endpoint, defaults to true
+ *       type: "io.neonbee.endpoint.health.HealthEndpoint", // provides an endpoint with verbose health information
+ *       enabled: boolean, // enable the health endpoint, defaults to true
  *       basePath: string // the base path to map this endpoint to, defaults to /health/
+ *       authenticationChain: array, // a specific authentication chain for this endpoint, defaults to an empty array / no auth.
+ *     }
+ *     status: {
+ *       type: "io.neonbee.endpoint.health.StatusEndpoint", // provides an endpoint with non-verbose health information
+ *       enabled: boolean, // enable the status endpoint, defaults to true
+ *       basePath: string // the base path to map this endpoint to, defaults to /status/
  *       authenticationChain: array, // a specific authentication chain for this endpoint, defaults to an empty array / no auth.
  *     }
  *   ],
@@ -219,7 +226,8 @@ public class ServerConfig extends HttpServerOptions {
     private static final String PROPERTY_PORT = "port";
 
     private static final List<EndpointConfig> DEFAULT_ENDPOINT_CONFIGS = Collections.unmodifiableList(Stream
-            .of(RawEndpoint.class, ODataV4Endpoint.class, MetricsEndpoint.class, HealthEndpoint.class)
+            .of(RawEndpoint.class, ODataV4Endpoint.class, MetricsEndpoint.class, HealthEndpoint.class,
+                    StatusEndpoint.class)
             .map(endpointClass -> new EndpointConfig().setType(endpointClass.getName())).collect(Collectors.toList()));
 
     private static final ImmutableBiMap<String, String> REPHRASE_MAP = ImmutableBiMap.of("endpointConfigs", "endpoints",
