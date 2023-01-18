@@ -29,7 +29,8 @@ public final class SystemHelper {
      * @return A free port on the system
      * @throws IOException Socket could not be created
      */
-    public static int getFreePort() throws IOException {
+    @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
+    public static synchronized int getFreePort() throws IOException {
         try {
             while (true) {
                 try (ServerSocket socket = new ServerSocket(PORTS.next())) {
