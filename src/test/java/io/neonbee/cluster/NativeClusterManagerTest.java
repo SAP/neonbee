@@ -11,6 +11,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeExtension;
@@ -22,6 +24,7 @@ import io.vertx.core.Future;
 import io.vertx.junit5.VertxTestContext;
 
 @Tag(LONG_RUNNING_TEST)
+@Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(NeonBeeExtension.class)
 class NativeClusterManagerTest implements DataResponseVerifier {
 
