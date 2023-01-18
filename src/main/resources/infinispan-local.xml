@@ -66,9 +66,15 @@
     <cache-container statistics="false" default-cache="distributed-cache">
         <transport stack="local-stack"/>
         <distributed-cache statistics="false" name="distributed-cache"/>
-        <replicated-cache statistics="false" name="__vertx.subs"/>
-        <replicated-cache statistics="false" name="__vertx.haInfo"/>
-        <replicated-cache statistics="false" name="__vertx.nodeInfo"/>
+        <replicated-cache statistics="false" name="__vertx.subs">
+            <state-transfer enabled="true" timeout="60000" await-initial-transfer="false"/>
+        </replicated-cache>
+        <replicated-cache statistics="false" name="__vertx.haInfo">
+            <state-transfer enabled="true" timeout="60000" await-initial-transfer="false"/>
+        </replicated-cache>
+        <replicated-cache statistics="false" name="__vertx.nodeInfo">
+            <state-transfer enabled="true" timeout="60000" await-initial-transfer="false"/>
+        </replicated-cache>
         <distributed-cache-configuration name="__vertx.distributed.cache.configuration"/>
     </cache-container>
 </infinispan>
