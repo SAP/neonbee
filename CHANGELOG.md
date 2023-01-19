@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.19.0 (2023-01-19)
+
+### Bug Fixes
+
+- case-insensitive headers ([a1a1e9c8](https://github.com/SAP/neonbee/commit/a1a1e9c805d70218148beda97f0cec43d420f509))
+- getName for dummy EntityVerticle ([10537b00](https://github.com/SAP/neonbee/commit/10537b00878e636bd5e09ed9cc8bd90b5ccde742))
+- test execution order leads to failed test ([d86ccd5a](https://github.com/SAP/neonbee/commit/d86ccd5ae95d790818342c5a7ef2bca87ebd4eec))
+- address already in use BindException ([79af576a](https://github.com/SAP/neonbee/commit/79af576a7c0bf980fd09744b99f1c39b80101190))
+- test fails when tests run slowly ([73f09810](https://github.com/SAP/neonbee/commit/73f09810784e0a520f465b9ff6314687554afeef))
+- set await-initial-transfer to false ([21aadd4e](https://github.com/SAP/neonbee/commit/21aadd4e146da5bbc94961bac52b7be7933d5011))
+- isolate and run tests in EventLoopHealthCheckTest sequentially ([1e942226](https://github.com/SAP/neonbee/commit/1e94222679f96b2b40d5007673e4001e2d027295))
+- neonBee is null NPE ([1488c06d](https://github.com/SAP/neonbee/commit/1488c06db44831f4c78419cd232c32fa7dc26f8c))
+- make verifyJobExecuted test more resilient ([42f50320](https://github.com/SAP/neonbee/commit/42f50320e9943c912118873c2333c75279b686af))
+
+
+### Features
+
+- **health**: add status endpoint & support filtering ([f1154084](https://github.com/SAP/neonbee/commit/f1154084cfa0015568a5e3aaafdbe6d835376400))
+- deploy HealthCheckVerticle only if HealthChecks are enabled ([6b80cb20](https://github.com/SAP/neonbee/commit/6b80cb20d42ae6070a5e4aa927a0b02aaf9774bb))
+- remove MetricsVerticle ([08ee561a](https://github.com/SAP/neonbee/commit/08ee561a07b1ea48d0a4801f68482bb237571246))
+- unregister entities from shared map ([62e437bb](https://github.com/SAP/neonbee/commit/62e437bba03f5cd37943eb232bb2bd123c75e23d))
+- add NODE_ADDED, NODE_LEFT hooks ([520256fe](https://github.com/SAP/neonbee/commit/520256fe5bd78f743a47813b4bad09229d95de78))
+
+
+### Code Refactoring
+
+- extract registry logic ([288d3995](https://github.com/SAP/neonbee/commit/288d399517e33415f3dfcac85a4c9c6955d79fa4))
+
+
+### Chores
+
+- change spotless code formatter ([f4aa0292](https://github.com/SAP/neonbee/commit/f4aa0292c9847f54d97939ae2cb38e8322a5c2d6))
+
+
+### Documentation
+
+- add user documentation ([5b7186b3](https://github.com/SAP/neonbee/commit/5b7186b3735fb7e831a8c1fe8614afc9d1b77a2e))
+- replace getting started section with link to neonbee-examples and add TOC ([05d2bfba](https://github.com/SAP/neonbee/commit/05d2bfbafeea873a1b5b88c7bdb84788967f3424))
+
+
+### Build System
+
+- **deps**: upgrade vert.x to 4.3.7 ([02d22528](https://github.com/SAP/neonbee/commit/02d225284f58f3f96d5fca745f8e89e4787f467a))
+
+
 ## 0.18.0 (2022-11-15)
 
 ### Bug Fixes
