@@ -164,7 +164,7 @@ public abstract class JobVerticle extends AbstractVerticle {
                     ISO_LOCAL_DATE_TIME.format(ZonedDateTime.now(UTC).plus(nextDelay, MILLIS)));
         }
         currentTimerId = getVertx().setTimer(nextDelay, timerID -> {
-            // initialize the a data context for the job execution
+            // initialize the data context for the job execution
             DataContext context = new DataContextImpl(UUID.randomUUID().toString(),
                     "internal-" + UUID.randomUUID().toString(), getUser());
 
