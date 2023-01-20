@@ -1,0 +1,19 @@
+---
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    ignore:
+        # For errorprone and checkstyle, ignore all major and minor updates
+      - dependency-name: "com.google.errorprone:error_prone_core"
+        update-types: ["version-update:semver-major","version-update:semver-minor"]
+      - dependency-name: "com.puppycrawl.tools:checkstyle"
+        update-types: ["version-update:semver-major","version-update:semver-minor"]
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
