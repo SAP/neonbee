@@ -241,7 +241,7 @@ tasks.withType(Test).configureEach {
     }
 }
 
-task unitTest(type: Test) {
+task unitTest(type: Test, group: 'verification') {
     useJUnitPlatform { excludeTags 'longRunningTest' }
 
     def unitTestTimeout = project.hasProperty('unitTestTimeout') ? project.getProperty('unitTestTimeout') : '5s'
@@ -249,7 +249,7 @@ task unitTest(type: Test) {
     systemProperty 'junit.jupiter.execution.timeout.testable.method.default', unitTestTimeout
 }
 
-task longRunningTest(type: Test) {
+task longRunningTest(type: Test, group: 'verification') {
     useJUnitPlatform { includeTags 'longRunningTest' }
 
     def longRunningTestTimeout = project.hasProperty('longRunningTestTimeout') ? project.getProperty('longRunningTestTimeout') : '30s'
