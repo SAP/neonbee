@@ -1,4 +1,4 @@
-FROM gradle:7.2-jdk11 AS builder
+FROM gradle:7.6-jdk11 AS builder
 
 RUN mkdir app
 WORKDIR /app
