@@ -100,8 +100,8 @@ public class CustomHealthChecks implements HealthCheckProvider {
 where `DatabaseHealthCheck` refers to a user-provided class that extends `AbstractHealthCheck` (see example above).
 
 NeonBee tries to load all classes implementing the `HealthCheckProvider` interface.
-Adding a file `resources/META-INF/services/io.neonbee.HealthCheckRegistry` with
-the fully qualified class name of `DatabaseHealthCheck` will add the custom health
+Adding a file `resources/META-INF/services/io.neonbee.HealthCheckProvider` with
+the fully qualified class name of `CustomHealthChecks` will add the custom health
 check to NeonBee's health check registry.
 
 ## Health Endpoint
