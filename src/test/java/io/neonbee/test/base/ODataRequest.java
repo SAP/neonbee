@@ -9,7 +9,6 @@ import static io.vertx.core.http.HttpMethod.POST;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -19,7 +18,6 @@ import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.escape.Escaper;
 import com.google.common.net.UrlEscapers;
 
 import io.neonbee.NeonBee;
@@ -146,13 +144,18 @@ public class ODataRequest {
      * @return An {@link ODataRequest} which considers the {@code $batch} suffix when building the request
      */
     public ODataRequest setBatch(ODataRequest... batchRequests) {
+        String boundary = "batch_" + UUID.randomUUID();
+        return setBatch(boundary, batchRequests);
+    }
+
+    public ODataRequest setBatch(String boundary, ODataRequest... batchRequests) {
+        Objects.requireNonNull(boundary, "boundary must not be null!");
         Objects.requireNonNull(batchRequests, "batchRequests must not be null!");
         if (batchRequests.length < 1) {
             throw new IllegalArgumentException("batchRequests must not be empty!");
         }
 
         this.batch = true;
-        String boundary = "batch_" + UUID.randomUUID();
         return setBatch(boundary, asBatchBody(boundary, batchRequests));
     }
 
@@ -473,47 +476,31 @@ public class ODataRequest {
         }
 
         // close boundary
-        return buffer.appendString("\n--" + boundary + "--");
+        return buffer.appendString("--" + boundary + "--");
     }
 
     @VisibleForTesting
     Buffer asBatchPart() {
         // create URI
-        String uri = this.getUri();
-        String namespace = this.getEntity().getNamespace();
-        if (uri.startsWith(namespace)) {
-            // providing namespace prefix with the URL results in bad request from olingo
-            // failing example: GET io.neonbee.test.TestService1/AllPropertiesNullable('id-1') HTTP/1.1
-            // working example: GET AllPropertiesNullable('id-1') HTTP/1.1
-            uri = uri.substring(namespace.length() + 1);
+        // providing namespace prefix with the URL results in bad request from olingo
+        // failing example: GET io.neonbee.test.TestService1/AllPropertiesNullable('id-1') HTTP/1.1
+        // working example: GET AllPropertiesNullable('id-1') HTTP/1.1
+        String uri = this.getUri().replaceFirst("^" + this.getEntity().getNamespace() + "/", "");
+        // add query to URI if present
+        if (!query.isEmpty()) {
+            uri += '?' + UrlEscapers.urlPathSegmentEscaper()
+                    .escape(Joiner.on('&').withKeyValueSeparator('=').join(query));
         }
 
-        // add query to URI if defined
-        if (!this.query.isEmpty()) {
-            Escaper escaper = UrlEscapers.urlPathSegmentEscaper();
-            String queryString = this.query.entries().stream()
-                    .map(entry -> entry.getKey() + "=" + entry.getValue())
-                    .map(escaper::escape)
-                    .collect(Collectors.joining("&"));
-            uri += "?" + queryString;
+        Joiner.MapJoiner headerJoiner = Joiner.on("\n").withKeyValueSeparator(':');
+        Buffer buffer = Buffer.buffer(headerJoiner.join(Map.of(CONTENT_TYPE, "application/http")))
+                .appendString("\n\n")
+                .appendString(Joiner.on(' ').join(method.name(), uri, HttpVersion.HTTP_1_1.alpnName().toUpperCase()));
+        if (!headers.isEmpty()) {
+            buffer = buffer.appendString("\n")
+                    .appendString(headerJoiner.join(headers));
         }
-
-        // append boundary headers
-        Buffer buffer = Buffer.buffer(CONTENT_TYPE + ":application/http\n")
-                // blank line delimiter
-                .appendString("\n")
-                // append HTTP request line
-                // http version needs to be provided in upper case to be valid for processing in Olingo
-                .appendString(this.getMethod().name() + " " + uri + " "
-                        + HttpVersion.HTTP_1_1.alpnName().toUpperCase() + "\n");
-
-        // append request headers
-        AtomicReference<Buffer> bufferRef = new AtomicReference<>(buffer);
-        this.headers.forEach(
-                (name, value) -> bufferRef.getAndUpdate(ref -> ref.appendString(name + ":" + value + "\n")));
-
-        // finally append body or empty line
-        return bufferRef.get().appendString("\n")
+        return buffer.appendString("\n\n")
                 .appendBuffer(Optional.ofNullable(this.getBody()).orElse(Buffer.buffer("\n")));
     }
 }

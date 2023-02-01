@@ -1,7 +1,7 @@
 package io.neonbee.test.base;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.vertx.core.http.HttpMethod.*;
+import static io.vertx.core.http.HttpMethod.GET;
 import static io.vertx.core.http.HttpMethod.POST;
 
 import java.time.LocalDate;
@@ -143,6 +143,7 @@ class ODataRequestTest {
     }
 
     @Test
+    @DisplayName("as batch part without payload")
     void testAsBatchPartWithoutPayload() {
         String expected = "content-type:application/http\n" +
                 "\n" +
@@ -155,6 +156,7 @@ class ODataRequestTest {
     }
 
     @Test
+    @DisplayName("as batch part with payload")
     void testAsBatchPartWithPayload() {
         String expected = "content-type:application/http\n" +
                 "\n" +
@@ -167,6 +169,21 @@ class ODataRequestTest {
                 .addHeader("content-type", "text/plain")
                 .setBody(Buffer.buffer("This is my entity"))
                 .asBatchPart();
+        assertThat(buffer.toString()).isEqualTo(expected);
+    }
+
+    @Test
+    @DisplayName("as batch part with query parameter")
+    void testAsBatchPartWithQuery() {
+        String expected = "content-type:application/http\n" +
+                "\n" +
+                "GET my-entity?count=true HTTP/1.1\n" +
+                "accept:application/json\n" +
+                "\n" +
+                "\n";
+
+        Buffer buffer = odataRequest.setMethod(GET).addQueryParam("count", "true")
+                .addHeader("accept", "application/json").asBatchPart();
         assertThat(buffer.toString()).isEqualTo(expected);
     }
 }

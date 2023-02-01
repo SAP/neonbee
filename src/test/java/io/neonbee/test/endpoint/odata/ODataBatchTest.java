@@ -3,15 +3,12 @@ package io.neonbee.test.endpoint.odata;
 import static com.google.common.truth.Truth.assertThat;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import org.apache.olingo.server.api.deserializer.batch.BatchDeserializerException;
 import org.apache.olingo.server.api.deserializer.batch.BatchOptions;
 import org.apache.olingo.server.api.deserializer.batch.BatchRequestPart;
 import org.apache.olingo.server.core.deserializer.batch.BatchParser;
@@ -22,23 +19,15 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import com.google.common.collect.Range;
-
-import io.neonbee.test.base.ODataBatchResponseParser;
-import io.neonbee.test.base.ODataBatchResponsePart;
 import io.neonbee.test.base.ODataEndpointTestBase;
 import io.neonbee.test.base.ODataRequest;
 import io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.buffer.Buffer;
+import io.neonbee.test.helper.MultipartResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.VertxTestContext;
 
 class ODataBatchTest extends ODataEndpointTestBase {
-
-    private String boundary;
 
     static Stream<Arguments> withValidKeys() {
         return Stream.of(Arguments.arguments("id-1"));
@@ -55,7 +44,6 @@ class ODataBatchTest extends ODataEndpointTestBase {
 
     @BeforeEach
     void setUp(VertxTestContext testContext) {
-        boundary = "batch_" + UUID.randomUUID();
         deployVerticle(new TestService1EntityVerticle())
                 .onComplete(testContext.succeedingThenComplete());
     }
@@ -63,21 +51,21 @@ class ODataBatchTest extends ODataEndpointTestBase {
     @Test
     @DisplayName("Test serialization of ODataRequest to multipart batch body request")
     void testBatchRequestSerialization(VertxTestContext testContext) {
-        ODataRequest singleRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN);
-        ODataRequest batchRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN)
-                .setBatch(singleRequest, singleRequest);
+        testContext.verify(() -> {
+            String boundary = UUID.randomUUID().toString();
+            ODataRequest singleRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN);
+            ODataRequest batchRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN)
+                    .setBatch(boundary, singleRequest, singleRequest);
 
-        try {
             BatchParser batchParser = new BatchParser();
             BatchOptions batchOptions = BatchOptions.with().isStrict(true).build();
             ByteArrayInputStream inputStream = new ByteArrayInputStream(batchRequest.getBody().getBytes());
             List<BatchRequestPart> partList =
                     batchParser.parseBatchRequest(inputStream, boundary, batchOptions);
             assertThat(partList).hasSize(2);
+
             testContext.completeNow();
-        } catch (BatchDeserializerException ex) {
-            testContext.failNow(ex);
-        }
+        });
     }
 
     @ParameterizedTest(name = "{index}: with key {0}")
@@ -87,20 +75,17 @@ class ODataBatchTest extends ODataEndpointTestBase {
         ODataRequest readRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN).setKey(id);
         ODataRequest batchRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN)
                 .setBatch(readRequest);
-        requestOData(batchRequest).onComplete(testContext.succeeding(response -> { // verify response status
-            assertThat(response.statusCode()).isIn(Range.closed(200, 299));
-            parseBatchResponse(response).onSuccess(parts -> { // verify correct amount of response parts
-                assertThat(parts).hasSize(1);
-                // verify expected status code of response parts
-                ODataBatchResponsePart part = parts.stream().findFirst().get();
-                assertThat(part.getStatusCode()).isEqualTo(200);
-                // verify expected result value
-                JsonObject actualData = part.getPayload().toJsonObject();
-                assertThat(actualData.getString("KeyPropertyString")).isEqualTo(id);
-                testContext.completeNow();
-            })
-                    .onFailure(testContext::failNow);
-        }));
+
+        assertODataBatch(requestOData(batchRequest), multipartResponse -> {
+            List<MultipartResponse.Part> parts = multipartResponse.getParts();
+            assertThat(parts).hasSize(1);
+
+            MultipartResponse.Part part = parts.get(0);
+            JsonObject acutal = part.getPayload().toJsonObject();
+            assertThat(acutal.getString("KeyPropertyString")).isEqualTo(id);
+
+            testContext.completeNow();
+        }, testContext);
     }
 
     @ParameterizedTest(name = "{index}: with key {0}")
@@ -110,19 +95,18 @@ class ODataBatchTest extends ODataEndpointTestBase {
         ODataRequest readRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN).setKey(id);
         ODataRequest batchRequest =
                 new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN).setBatch(readRequest);
-        requestOData(batchRequest).onComplete(testContext.succeeding(response -> {
-            // verify response status
-            assertThat(response.statusCode()).isEqualTo(202);
-            parseBatchResponse(response).onSuccess(parts -> {
-                // verify correct amount of response parts
-                assertThat(parts).hasSize(1);
 
-                // verify expected status code of response parts
-                ODataBatchResponsePart part = parts.stream().findFirst().get();
-                assertThat(part.getStatusCode()).isEqualTo(404);
-                testContext.completeNow();
-            }).onFailure(testContext::failNow);
-        }));
+        assertODataBatch(requestOData(batchRequest), multipartResponse -> {
+            // verify correct amount of response parts
+            List<MultipartResponse.Part> parts = multipartResponse.getParts();
+            assertThat(parts).hasSize(1);
+
+            // verify expected status code of response parts
+            MultipartResponse.Part part = parts.get(0);
+            assertThat(part.getStatusCode()).isEqualTo(404);
+
+            testContext.completeNow();
+        }, testContext);
     }
 
     @Test
@@ -132,25 +116,19 @@ class ODataBatchTest extends ODataEndpointTestBase {
                 .setQuery(Map.of("$filter", "KeyPropertyString in ('id-1', 'id-6')"));
         ODataRequest batchRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN)
                 .setBatch(filterRequest);
-        requestOData(batchRequest)
-                .onComplete(testContext.succeeding(response -> {
-                    // verify response status
-                    assertThat(response.statusCode()).isIn(Range.closed(200, 299));
 
-                    parseBatchResponse(response).onSuccess(parts -> {
-                        // verify correct amount of response parts
-                        assertThat(parts).hasSize(1);
-                        ODataBatchResponsePart part = parts.stream().findFirst().get();
+        assertODataBatch(requestOData(batchRequest), multipartResponse -> {
+            // verify correct amount of response parts
+            List<MultipartResponse.Part> parts = multipartResponse.getParts();
+            assertThat(parts).hasSize(1);
+            MultipartResponse.Part part = parts.get(0);
 
-                        // verify correct amount of results
-                        JsonArray values = part.getPayload().toJsonObject().getJsonArray("value");
-                        assertThat(values.size()).isEqualTo(2);
+            // verify correct amount of results
+            JsonArray values = part.getPayload().toJsonObject().getJsonArray("value");
+            assertThat(values.size()).isEqualTo(2);
 
-                        testContext.completeNow();
-                    })
-                            .onFailure(testContext::failNow);
-                    testContext.completeNow();
-                }));
+            testContext.completeNow();
+        }, testContext);
     }
 
     @ParameterizedTest(name = "{index}: with key {0}")
@@ -163,45 +141,28 @@ class ODataBatchTest extends ODataEndpointTestBase {
         ODataRequest batchRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN)
                 .setBatch(filterRequest, readRequest);
 
-        requestOData(batchRequest)
-                .onComplete(testContext.succeeding(response -> {
-                    // verify response status
-                    assertThat(response.statusCode()).isIn(Range.closed(200, 299));
+        assertODataBatch(requestOData(batchRequest), multipartResponse -> {
+            // verify correct amount of response parts
+            List<MultipartResponse.Part> parts = multipartResponse.getParts();
+            assertThat(parts).hasSize(2);
+            MultipartResponse.Part[] partsArray = parts.toArray(MultipartResponse.Part[]::new);
+            MultipartResponse.Part filterResponse = partsArray[0];
+            MultipartResponse.Part readResponse = partsArray[1];
 
-                    parseBatchResponse(response).onComplete(testContext.succeeding(parts -> {
-                        // verify correct amount of response parts
-                        assertThat(parts).hasSize(2);
-                        ODataBatchResponsePart[] partsArray = parts.toArray(ODataBatchResponsePart[]::new);
-                        ODataBatchResponsePart filterResponse = partsArray[0];
-                        ODataBatchResponsePart readResponse = partsArray[1];
+            // verify status code of response parts
+            assertThat(filterResponse.getStatusCode()).isEqualTo(200);
+            assertThat(readResponse.getStatusCode()).isEqualTo(filterResponse.getStatusCode());
 
-                        // verify status code of response parts
-                        assertThat(filterResponse.getStatusCode()).isEqualTo(200);
-                        assertThat(readResponse.getStatusCode()).isEqualTo(filterResponse.getStatusCode());
+            // verify correct result values get returned
+            JsonArray filteredValues = filterResponse.getPayload().toJsonObject().getJsonArray("value");
+            assertThat(filteredValues.size()).isEqualTo(1);
+            JsonObject valueFromFilter = filteredValues.getJsonObject(0);
+            JsonObject valueFromRead = readResponse.getPayload().toJsonObject();
+            String idFromFilter = valueFromFilter.getString("KeyPropertyString");
+            String idFromRead = valueFromRead.getString("KeyPropertyString");
+            assertThat(idFromFilter).isEqualTo(idFromRead);
 
-                        // verify correct result values get returned
-                        JsonArray filteredValues = filterResponse.getPayload().toJsonObject().getJsonArray("value");
-                        assertThat(filteredValues.size()).isEqualTo(1);
-                        JsonObject valueFromFilter = filteredValues.getJsonObject(0);
-                        JsonObject valueFromRead = readResponse.getPayload().toJsonObject();
-                        String idFromFilter = valueFromFilter.getString("KeyPropertyString");
-                        String idFromRead = valueFromRead.getString("KeyPropertyString");
-                        assertThat(idFromFilter).isEqualTo(idFromRead);
-
-                        testContext.completeNow();
-                    }));
-                }));
-    }
-
-    private Future<Collection<ODataBatchResponsePart>> parseBatchResponse(HttpResponse<Buffer> response) {
-        return Future.future(promise -> {
-            ODataBatchResponseParser parser = new ODataBatchResponseParser(response.body());
-            try {
-                Collection<ODataBatchResponsePart> parts = parser.parse();
-                promise.complete(parts);
-            } catch (IOException e) {
-                promise.fail(e);
-            }
-        });
+            testContext.completeNow();
+        }, testContext);
     }
 }
