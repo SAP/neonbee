@@ -115,13 +115,11 @@ class ODataReadEntityTest extends ODataEndpointTestBase {
     }
 
     static class ODataRequestMod extends ODataRequest {
-        private final FullQualifiedName entity;
 
         private String keyPredicate;
 
         ODataRequestMod(FullQualifiedName entity) {
             super(entity);
-            this.entity = entity;
         }
 
         @Override

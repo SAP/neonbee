@@ -29,13 +29,12 @@ public abstract class ODataEndpointTestBase extends NeonBeeTestBase implements O
     }
 
     /**
-     * This method can be used to request data from an HTTP endpoint serving OData based on a passed
-     * {@link ODataRequest}.
+     * This method can be used to request data from an HTTP endpoint serving OData based on a passed OData request.
      *
-     * @param request The {@link ODataRequest} which will be sent
+     * @param request The OData request which will be sent
      * @return A future which contains the response
      */
-    public Future<HttpResponse<Buffer>> requestOData(ODataRequest request) {
+    public Future<HttpResponse<Buffer>> requestOData(AbstractODataRequest<?> request) {
         return request.send(getNeonBee());
     }
 }

@@ -1,8 +1,6 @@
 package io.neonbee.test.base;
 
-import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.DEFAULT_BASE_PATH;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
-import static io.neonbee.test.base.NeonBeeTestBase.readServerConfig;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -10,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -19,27 +16,16 @@ import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 
-import io.neonbee.NeonBee;
-import io.neonbee.endpoint.odatav4.ODataV4Endpoint;
-import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
-import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.web.client.HttpRequest;
-import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.client.WebClientOptions;
 
 /**
  * This class can be used to construct an ODataRequest based on the provided full qualified name and the
  * {@link HttpMethod}. Additionally, the request can be extended by specifying OData key predicates, entity properties,
  * headers, and query parameters,
  */
-public class ODataRequest {
-    private final FullQualifiedName entity;
-
-    private HttpMethod method = HttpMethod.GET;
+public class ODataRequest extends AbstractODataRequest<ODataRequest> {
 
     private boolean metadata;
 
@@ -47,17 +33,9 @@ public class ODataRequest {
 
     private Map<String, String> keys = new HashMap<>();
 
-    private MultiMap query = MultiMap.caseInsensitiveMultiMap();
-
-    private MultiMap headers = MultiMap.caseInsensitiveMultiMap();
-
-    private Consumer<HttpRequest<Buffer>> interceptor;
-
     private String property;
 
     private String systemQueryExpand;
-
-    private Buffer body;
 
     /**
      * Constructs an {@link ODataRequest}.
@@ -65,7 +43,12 @@ public class ODataRequest {
      * @param entity The full qualified name which corresponds to the entity which will be requested
      */
     public ODataRequest(FullQualifiedName entity) {
-        this.entity = entity;
+        super(entity);
+    }
+
+    @Override
+    protected ODataRequest self() {
+        return this;
     }
 
     /**
@@ -74,9 +57,9 @@ public class ODataRequest {
      * @param method {@link HttpMethod} to set
      * @return An {@link ODataRequest} which considers the new HTTP method when sending the request
      */
+    @Override
     public ODataRequest setMethod(HttpMethod method) {
-        this.method = Optional.ofNullable(method).orElse(HttpMethod.GET);
-        return this;
+        return super.setMethod(method);
     }
 
     /**
@@ -88,34 +71,6 @@ public class ODataRequest {
     public ODataRequest setBody(Buffer body) {
         this.body = body;
         return this;
-    }
-
-    /**
-     * Constructs an {@link HttpRequest} based on the underlying {@link ODataRequest} and sends it.
-     *
-     * @param neonBee The current {@link NeonBee} instance of this test that is used to create an HTTP request with the
-     *                {@link WebClient}
-     * @return A {@link Future} with the {@link HttpResponse} which is received from sending the {@link ODataRequest}.
-     */
-    public Future<HttpResponse<Buffer>> send(NeonBee neonBee) {
-        Vertx vertx = neonBee.getVertx();
-        return readServerConfig(neonBee).compose(config -> {
-            int port = config.getPort();
-
-            String basePath = config.getEndpointConfigs().stream()
-                    .filter(eConfig -> ODataV4Endpoint.class.getSimpleName().equals(eConfig.getType())).findFirst()
-                    .map(eConfig -> eConfig.getBasePath()).orElse(DEFAULT_BASE_PATH);
-
-            WebClientOptions clientOpts = new WebClientOptions().setDefaultHost("localhost").setDefaultPort(port);
-            HttpRequest<Buffer> httpRequest = WebClient.create(vertx, clientOpts).request(method, basePath + getUri());
-
-            httpRequest.queryParams().addAll(query);
-            httpRequest.putHeaders(headers);
-            Optional.ofNullable(interceptor).ifPresent(i -> i.accept(httpRequest));
-            httpRequest.queryParams(); // ensures that query params are encoded
-
-            return Optional.ofNullable(body).map(httpRequest::sendBuffer).orElse(httpRequest.send());
-        });
     }
 
     /**
@@ -314,54 +269,6 @@ public class ODataRequest {
     }
 
     /**
-     * Configure the {@link ODataRequest} to add the passed HTTP header and its corresponding value.
-     *
-     * @param key   The name of the header
-     * @param value The value of the header
-     * @return An {@link ODataRequest} which contains the passed header
-     */
-    public ODataRequest addHeader(String key, String value) {
-        this.headers.add(key, value);
-        return this;
-    }
-
-    /**
-     * Sets the passed HTTP headers and their corresponding values to the {@link ODataRequest}. If this method is called
-     * multiple times, the passed headers of the last call will be used.
-     *
-     * @param headers A {@link Map} which maps HTTP header names to their corresponding value
-     * @return An {@link ODataRequest} which contains the passed header
-     */
-    public ODataRequest setHeaders(Map<String, String> headers) {
-        setHeaders(Objects.isNull(headers) ? null : MultiMap.caseInsensitiveMultiMap().addAll(headers)); // NOPMD
-        return this;
-    }
-
-    /**
-     * Sets the passed HTTP headers and their corresponding values to the {@link ODataRequest}. If this method is called
-     * multiple times, the passed headers of the last call will be used.
-     *
-     * @param headers A {@link MultiMap} which maps HTTP header names to their corresponding value
-     * @return An {@link ODataRequest} which contains the passed header
-     */
-    public ODataRequest setHeaders(MultiMap headers) {
-        this.headers = Optional.ofNullable(headers).orElse(MultiMap.caseInsensitiveMultiMap());
-        return this;
-    }
-
-    /**
-     * Allows to modify the HTTP request. This can only be done once and is typically done at the end of building the
-     * request. If this method is called multiple times, the passed interceptor of the last call will be used.
-     *
-     * @param interceptor The passed interceptor
-     * @return An {@link ODataRequest} with the raw request
-     */
-    public ODataRequest interceptRequest(Consumer<HttpRequest<Buffer>> interceptor) {
-        this.interceptor = interceptor;
-        return this;
-    }
-
-    /**
      * Configure the system query expand with the passed value. The expandValue "Products" would result into
      * "expand=Products".
      *
@@ -379,8 +286,10 @@ public class ODataRequest {
      *
      * @return The full URL path of the {@link ODataRequest}
      */
+    @Override
     protected String getUri() {
-        String namespace = Strings.isNullOrEmpty(entity.getNamespace()) ? EMPTY : entity.getNamespace() + '/';
+        String namespace = getUriNamespacePath();
+
         if (metadata) {
             return namespace + "$metadata";
         }

@@ -63,6 +63,14 @@ public interface ODataResponseVerifier {
         })).mapEmpty();
     }
 
+    default Future<Void> assertODataBatch(Future<HttpResponse<Buffer>> response,
+            Consumer<MultipartResponse> assertHandler, VertxTestContext testContext) {
+        return response
+                .onComplete(testContext.succeeding(
+                        r -> assertOData(response, body -> assertHandler.accept(MultipartResponse.of(r)), testContext)))
+                .mapEmpty();
+    }
+
     /**
      * Matches if the response has a status code 2xx or 3xx and the logic of the passed assertion handler is valid for a
      * requested entity property of the OData response.
