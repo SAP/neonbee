@@ -137,4 +137,10 @@ class ODataRequestTest {
         assertThat(odataRequest.getUri())
                 .isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/my-entity('0123')?$expand=ExpandItem");
     }
+
+    @Test
+    @DisplayName("Verify self() returns correct instance")
+    void testGetSelf() {
+        assertThat(odataRequest.self()).isEqualTo(odataRequest);
+    }
 }

@@ -1,4 +1,5 @@
 * text eol=lf
 *.jar -text
 *.bat -text
+src/test/resources/io/neonbee/test/helper/multipart-*-CRLF.txt text eol=crlf
 *.png binary

@@ -1,0 +1,22 @@
+--b_243234_25424_ef_892u748
+Content-Type: application/http
+
+HTTP/1.1 200 Ok
+Content-Type: application/json
+Content-Length: 19
+
+{"state":"success"}
+
+--b_243234_25424_ef_892u748
+Content-Type: application/http
+
+HTTP/1.1 404 Not Found
+Content-Type: application/xml
+Content-Length: 68
+
+<error><code>500</code><message>
+
+Some error happened
+
+</message></error>
+--b_243234_25424_ef_892u748--
