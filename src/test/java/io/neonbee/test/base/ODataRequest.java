@@ -1,8 +1,20 @@
 package io.neonbee.test.base;
 
-import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.DEFAULT_BASE_PATH;
-import static io.neonbee.internal.helper.StringHelper.EMPTY;
-import static io.neonbee.test.base.NeonBeeTestBase.readServerConfig;
+import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
+import io.neonbee.NeonBee;
+import io.neonbee.endpoint.odatav4.ODataV4Endpoint;
+import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
+import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.client.HttpRequest;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
+import org.apache.olingo.commons.api.edm.FullQualifiedName;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -14,22 +26,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.olingo.commons.api.edm.FullQualifiedName;
-
-import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
-
-import io.neonbee.NeonBee;
-import io.neonbee.endpoint.odatav4.ODataV4Endpoint;
-import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
-import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.web.client.HttpRequest;
-import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.client.WebClientOptions;
+import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.DEFAULT_BASE_PATH;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.neonbee.test.base.NeonBeeTestBase.readServerConfig;
 
 /**
  * This class can be used to construct an ODataRequest based on the provided full qualified name and the
@@ -44,6 +43,8 @@ public class ODataRequest {
     private boolean metadata;
 
     private boolean count;
+
+    private boolean batch;
 
     private Map<String, String> keys = new HashMap<>();
 
@@ -69,6 +70,28 @@ public class ODataRequest {
     }
 
     /**
+     * Prepares an OData request as <a href="http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_BatchRequests">Batch request</a>.
+     *
+     * @param serviceNamespace namespace of the service
+     * @param context          contextual information of batch request.
+     * @return OData request pre-configured for OData batch processing.
+     */
+    public static ODataRequest batch(String serviceNamespace, BatchContext context) {
+        return new ODataRequest(new FullQualifiedName(serviceNamespace, ""))
+            .setBatch()
+            .setMethod(HttpMethod.POST)
+            .addHeader(HttpHeaders.CONTENT_TYPE.toString(), String.format("multipart/mixed; boundary=%s", context.getBoundary()));
+    }
+
+    public FullQualifiedName getEntity() {
+        return entity;
+    }
+
+    public HttpMethod getMethod() {
+        return this.method;
+    }
+
+    /**
      * Sets the method for the OData request. By default the HTTP method will be GET.
      *
      * @param method {@link HttpMethod} to set
@@ -88,6 +111,10 @@ public class ODataRequest {
     public ODataRequest setBody(Buffer body) {
         this.body = body;
         return this;
+    }
+
+    public Buffer getBody() {
+        return this.body;
     }
 
     /**
@@ -116,6 +143,18 @@ public class ODataRequest {
 
             return Optional.ofNullable(body).map(httpRequest::sendBuffer).orElse(httpRequest.send());
         });
+    }
+
+    /**
+     * Appends {@code $batch} to the Service Root URL of the OData request. This method can be used to address the
+     * metadata of OData services that expose their entity model according to [OData-CSDLJSON] or [OData-CSDLXML] at the
+     * metadata URL.
+     *
+     * @return An {@link ODataRequest} which considers the {@code $batch} suffix when building the request
+     */
+    public ODataRequest setBatch() {
+        this.batch = true;
+        return this;
     }
 
     /**
@@ -277,6 +316,10 @@ public class ODataRequest {
         return this;
     }
 
+    public MultiMap getQuery() {
+        return this.query;
+    }
+
     /**
      * Adds the passed query parameter name and value as decoded query parameter on the {@link ODataRequest}.
      *
@@ -311,6 +354,10 @@ public class ODataRequest {
     public ODataRequest setQuery(MultiMap query) {
         this.query = Optional.ofNullable(query).orElse(MultiMap.caseInsensitiveMultiMap());
         return this;
+    }
+
+    public MultiMap getHeaders() {
+        return this.headers;
     }
 
     /**
@@ -381,6 +428,11 @@ public class ODataRequest {
      */
     protected String getUri() {
         String namespace = Strings.isNullOrEmpty(entity.getNamespace()) ? EMPTY : entity.getNamespace() + '/';
+
+        if (batch) {
+            return namespace + "$batch";
+        }
+
         if (metadata) {
             return namespace + "$metadata";
         }
