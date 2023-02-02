@@ -1,15 +1,17 @@
 package io.neonbee.test.base;
 
-import io.vertx.core.buffer.Buffer;
-
 import java.util.Map;
+
+import io.vertx.core.buffer.Buffer;
 
 /**
  * Represents parts of a response following an OData batch request.
  */
 public class ODataBatchResponsePart {
     private int statusCode;
+
     private Map<String, String> headers;
+
     private Buffer payload;
 
     public int getStatusCode() {

@@ -1,37 +1,43 @@
 package io.neonbee.test.base;
 
-import io.vertx.core.buffer.Buffer;
+import static java.lang.String.format;
+import static java.lang.String.join;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
 
-import static java.lang.String.format;
-import static java.lang.String.join;
+import io.vertx.core.buffer.Buffer;
 
 /**
- * Simple parser implementation for <a href="http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_MultipartBatchResponse">OData multipart batch response</a>
- * payloads. Parts are split and extracted from the response payload following a batch request.
+ * Simple parser implementation for <a href=
+ * "http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_MultipartBatchResponse">OData
+ * multipart batch response</a> payloads. Parts are split and extracted from the response payload following a batch
+ * request.
  */
 public class ODataBatchResponseParser {
 
-    private enum Step {Boundary, BoundaryHeaders, Status, RequestHeaders, Payload}
+    private enum Step {
+        Boundary, BoundaryHeaders, Status, RequestHeaders, Payload
+    }
 
     private final static String BOUNDARY_IDENTIFIER = "--";
+
     private final static char HEADER_DELIMITER = ':';
 
     private final Buffer content;
+
     private ArrayDeque<ODataBatchResponsePart> responseParts;
+
     private ArrayDeque<String> openBoundaries;
+
     private Map<String, String> headers;
+
     private Buffer payload = null;
+
     private Step step;
+
     private int lineIndex;
 
     public ODataBatchResponseParser(Buffer content) {
@@ -139,7 +145,9 @@ public class ODataBatchResponseParser {
     private void consumeStatusLine(String line) {
         String[] segments = line.split(" ", 3);
         if (segments.length != 3) {
-            throw new IllegalStateException(format("Invalid status line! \"%s\" provides %s segments where exactly 3 are required!", line, segments.length));
+            throw new IllegalStateException(
+                    format("Invalid status line! \"%s\" provides %s segments where exactly 3 are required!", line,
+                            segments.length));
         }
 
         try {
@@ -147,7 +155,8 @@ public class ODataBatchResponseParser {
             ODataBatchResponsePart part = responseParts.getLast();
             part.setStatusCode(statusCode);
         } catch (NumberFormatException ex) {
-            throw new RuntimeException(format("Found invalid format for response status code: %s (Line %s)", segments[1], lineIndex));
+            throw new RuntimeException(
+                    format("Found invalid format for response status code: %s (Line %s)", segments[1], lineIndex));
         }
     }
 
@@ -160,7 +169,8 @@ public class ODataBatchResponseParser {
 
     private void verifyAfterParse() {
         if (!openBoundaries.isEmpty()) {
-            throw new IllegalStateException(format("Found boundaries %s not closed properly!", join(", ", openBoundaries)));
+            throw new IllegalStateException(
+                    format("Found boundaries %s not closed properly!", join(", ", openBoundaries)));
         }
     }
 }
