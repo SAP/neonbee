@@ -1,7 +1,25 @@
 package io.neonbee.test.base;
 
+import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.DEFAULT_BASE_PATH;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.neonbee.test.base.NeonBeeTestBase.readServerConfig;
+import static java.lang.String.format;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.apache.olingo.commons.api.edm.FullQualifiedName;
+
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.common.escape.Escaper;
+import com.google.common.net.UrlEscapers;
+
 import io.neonbee.NeonBee;
 import io.neonbee.endpoint.odatav4.ODataV4Endpoint;
 import io.vertx.core.Future;
@@ -10,25 +28,11 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpVersion;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
-import org.apache.olingo.commons.api.edm.FullQualifiedName;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.DEFAULT_BASE_PATH;
-import static io.neonbee.internal.helper.StringHelper.EMPTY;
-import static io.neonbee.test.base.NeonBeeTestBase.readServerConfig;
 
 /**
  * This class can be used to construct an ODataRequest based on the provided full qualified name and the
@@ -67,20 +71,6 @@ public class ODataRequest {
      */
     public ODataRequest(FullQualifiedName entity) {
         this.entity = entity;
-    }
-
-    /**
-     * Prepares an OData request as <a href="http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_BatchRequests">Batch request</a>.
-     *
-     * @param serviceNamespace namespace of the service
-     * @param context          contextual information of batch request.
-     * @return OData request pre-configured for OData batch processing.
-     */
-    public static ODataRequest batch(String serviceNamespace, BatchContext context) {
-        return new ODataRequest(new FullQualifiedName(serviceNamespace, ""))
-            .setBatch()
-            .setMethod(HttpMethod.POST)
-            .addHeader(HttpHeaders.CONTENT_TYPE.toString(), String.format("multipart/mixed; boundary=%s", context.getBoundary()));
     }
 
     public FullQualifiedName getEntity() {
@@ -150,11 +140,22 @@ public class ODataRequest {
      * metadata of OData services that expose their entity model according to [OData-CSDLJSON] or [OData-CSDLXML] at the
      * metadata URL.
      *
+     * @param boundary      OData batch request boundary identifier
+     * @param batchRequests list of requests for batch processing
+     *
      * @return An {@link ODataRequest} which considers the {@code $batch} suffix when building the request
      */
-    public ODataRequest setBatch() {
+    public ODataRequest setBatch(String boundary, ODataRequest... batchRequests) {
         this.batch = true;
-        return this;
+        Buffer multipartBody = null;
+        if (batchRequests != null && batchRequests.length > 0) {
+            multipartBody = this.asMultipartBatchBody(boundary, batchRequests);
+        }
+
+        return this.setMethod(HttpMethod.POST)
+                .addHeader(HttpHeaders.CONTENT_TYPE.toString(),
+                        String.format("multipart/mixed; boundary=%s", boundary))
+                .setBody(Optional.ofNullable(multipartBody).orElse(body));
     }
 
     /**
@@ -461,5 +462,54 @@ public class ODataRequest {
         }
 
         return decorateParentheses.apply(Joiner.on(',').withKeyValueSeparator('=').join(keys.entrySet()));
+    }
+
+    private Buffer asMultipartBatchBody(String boundary, ODataRequest... batchRequests) {
+        Buffer buffer = Buffer.buffer();
+        for (ODataRequest request : batchRequests) {
+            // create URI
+            String uri = request.getUri();
+            String namespace = request.getEntity().getNamespace();
+            if (uri.startsWith(namespace)) {
+                // providing namespace prefix with the URL results in bad request from olingo
+                // failing example: GET io.neonbee.test.TestService1/AllPropertiesNullable('id-1') HTTP/1.1
+                // working example: GET AllPropertiesNullable('id-1') HTTP/1.1
+                uri = uri.substring(namespace.length() + 1);
+            }
+
+            // add query to URI if defined
+            MultiMap query = request.getQuery();
+            if (query != null && !query.isEmpty()) {
+                Escaper escaper = UrlEscapers.urlPathSegmentEscaper();
+                String queryString = query.entries().stream()
+                        .map(entry -> format("%s=%s", entry.getKey(), entry.getValue()))
+                        .map(escaper::escape)
+                        .collect(Collectors.joining("&"));
+                uri += "?" + queryString;
+            }
+
+            // append boundary delimiter line
+            buffer.appendString("--" + boundary + "\n")
+                    // append boundary headers
+                    .appendString("" + HttpHeaders.CONTENT_TYPE + ":application/http\n")
+                    // blank line delimiter
+                    .appendString("\n")
+                    // append HTTP request line
+                    // http version needs to be provided in upper case to be valid for processing in Olingo
+                    .appendString(request.getMethod().name() + " " + uri + " "
+                            + HttpVersion.HTTP_1_1.alpnName().toUpperCase() + "\n");
+
+            // append request headers
+            AtomicReference<Buffer> bufferRef = new AtomicReference<>(buffer);
+            request.getHeaders().forEach(
+                    (name, value) -> bufferRef.getAndUpdate(ref -> ref.appendString(name + ":" + value + "\n")));
+
+            // finally append body or empty line
+            buffer = bufferRef.get().appendString("\n")
+                    .appendBuffer(Optional.ofNullable(request.getBody()).orElse(Buffer.buffer("\n")));
+        }
+
+        // close boundary
+        return buffer.appendString("--" + boundary + "--");
     }
 }
