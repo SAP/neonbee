@@ -1,6 +1,8 @@
 package io.neonbee.test.base;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.vertx.core.http.HttpMethod.*;
+import static io.vertx.core.http.HttpMethod.POST;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -10,6 +12,8 @@ import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import io.vertx.core.buffer.Buffer;
 
 class ODataRequestTest {
     private final Map<String, Object> compositeMap = new HashMap<>();
@@ -136,5 +140,33 @@ class ODataRequestTest {
         odataRequest.setKey("0123").setExpandQuery("ExpandItem");
         assertThat(odataRequest.getUri())
                 .isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/my-entity('0123')?$expand=ExpandItem");
+    }
+
+    @Test
+    void testAsBatchPartWithoutPayload() {
+        String expected = "content-type:application/http\n" +
+                "\n" +
+                "GET my-entity HTTP/1.1\n" +
+                "\n" +
+                "\n";
+
+        Buffer buffer = odataRequest.setMethod(GET).asBatchPart();
+        assertThat(buffer.toString()).isEqualTo(expected);
+    }
+
+    @Test
+    void testAsBatchPartWithPayload() {
+        String expected = "content-type:application/http\n" +
+                "\n" +
+                "POST my-entity HTTP/1.1\n" +
+                "content-type:text/plain\n" +
+                "\n" +
+                "This is my entity";
+
+        Buffer buffer = odataRequest.setMethod(POST)
+                .addHeader("content-type", "text/plain")
+                .setBody(Buffer.buffer("This is my entity"))
+                .asBatchPart();
+        assertThat(buffer.toString()).isEqualTo(expected);
     }
 }
