@@ -65,7 +65,7 @@ class ODataBatchTest extends ODataEndpointTestBase {
     void testBatchRequestSerialization(VertxTestContext testContext) {
         ODataRequest singleRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN);
         ODataRequest batchRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN)
-                .setBatch(boundary, singleRequest, singleRequest);
+                .setBatch(singleRequest, singleRequest);
 
         try {
             BatchParser batchParser = new BatchParser();
@@ -86,27 +86,21 @@ class ODataBatchTest extends ODataEndpointTestBase {
     void testReadExistingEntity(String id, VertxTestContext testContext) {
         ODataRequest readRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN).setKey(id);
         ODataRequest batchRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN)
-                .setBatch(boundary, readRequest);
-        requestOData(batchRequest)
-                .onComplete(testContext.succeeding(response -> {
-                    // verify response status
-                    assertThat(response.statusCode()).isIn(Range.closed(200, 299));
-
-                    parseBatchResponse(response).onSuccess(parts -> {
-                        // verify correct amount of response parts
-                        assertThat(parts).hasSize(1);
-
-                        // verify expected status code of response parts
-                        ODataBatchResponsePart part = parts.stream().findFirst().get();
-                        assertThat(part.getStatusCode()).isEqualTo(200);
-
-                        // verify expected result value
-                        JsonObject actualData = part.getPayload().toJsonObject();
-                        assertThat(actualData.getString("KeyPropertyString")).isEqualTo(id);
-                        testContext.completeNow();
-                    })
-                            .onFailure(testContext::failNow);
-                }));
+                .setBatch(readRequest);
+        requestOData(batchRequest).onComplete(testContext.succeeding(response -> { // verify response status
+            assertThat(response.statusCode()).isIn(Range.closed(200, 299));
+            parseBatchResponse(response).onSuccess(parts -> { // verify correct amount of response parts
+                assertThat(parts).hasSize(1);
+                // verify expected status code of response parts
+                ODataBatchResponsePart part = parts.stream().findFirst().get();
+                assertThat(part.getStatusCode()).isEqualTo(200);
+                // verify expected result value
+                JsonObject actualData = part.getPayload().toJsonObject();
+                assertThat(actualData.getString("KeyPropertyString")).isEqualTo(id);
+                testContext.completeNow();
+            })
+                    .onFailure(testContext::failNow);
+        }));
     }
 
     @ParameterizedTest(name = "{index}: with key {0}")
@@ -114,24 +108,21 @@ class ODataBatchTest extends ODataEndpointTestBase {
     @DisplayName("Read single unkown entity via batch request")
     void testReadUnknownEntity(String id, VertxTestContext testContext) {
         ODataRequest readRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN).setKey(id);
-        ODataRequest batchRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN)
-                .setBatch(boundary, readRequest);
-        requestOData(batchRequest)
-                .onComplete(testContext.succeeding(response -> {
-                    // verify response status
-                    assertThat(response.statusCode()).isEqualTo(202);
+        ODataRequest batchRequest =
+                new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN).setBatch(readRequest);
+        requestOData(batchRequest).onComplete(testContext.succeeding(response -> {
+            // verify response status
+            assertThat(response.statusCode()).isEqualTo(202);
+            parseBatchResponse(response).onSuccess(parts -> {
+                // verify correct amount of response parts
+                assertThat(parts).hasSize(1);
 
-                    parseBatchResponse(response).onSuccess(parts -> {
-                        // verify correct amount of response parts
-                        assertThat(parts).hasSize(1);
-
-                        // verify expected status code of response parts
-                        ODataBatchResponsePart part = parts.stream().findFirst().get();
-                        assertThat(part.getStatusCode()).isEqualTo(404);
-                        testContext.completeNow();
-                    })
-                            .onFailure(testContext::failNow);
-                }));
+                // verify expected status code of response parts
+                ODataBatchResponsePart part = parts.stream().findFirst().get();
+                assertThat(part.getStatusCode()).isEqualTo(404);
+                testContext.completeNow();
+            }).onFailure(testContext::failNow);
+        }));
     }
 
     @Test
@@ -140,8 +131,7 @@ class ODataBatchTest extends ODataEndpointTestBase {
         ODataRequest filterRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN)
                 .setQuery(Map.of("$filter", "KeyPropertyString in ('id-1', 'id-6')"));
         ODataRequest batchRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN)
-                .setBatch(boundary, filterRequest);
-        // testContext.verify()
+                .setBatch(filterRequest);
         requestOData(batchRequest)
                 .onComplete(testContext.succeeding(response -> {
                     // verify response status
@@ -171,7 +161,7 @@ class ODataBatchTest extends ODataEndpointTestBase {
                 .setQuery(Map.of("$filter", "KeyPropertyString in ('" + id + "')"));
         ODataRequest readRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN).setKey(id);
         ODataRequest batchRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN)
-                .setBatch(boundary, filterRequest, readRequest);
+                .setBatch(filterRequest, readRequest);
 
         requestOData(batchRequest)
                 .onComplete(testContext.succeeding(response -> {

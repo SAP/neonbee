@@ -3,7 +3,8 @@ package io.neonbee.test.base;
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.DEFAULT_BASE_PATH;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.test.base.NeonBeeTestBase.readServerConfig;
-import static java.lang.String.format;
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static io.vertx.core.http.HttpMethod.POST;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.escape.Escaper;
@@ -26,7 +28,6 @@ import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.ext.web.client.HttpRequest;
@@ -140,22 +141,30 @@ public class ODataRequest {
      * metadata of OData services that expose their entity model according to [OData-CSDLJSON] or [OData-CSDLXML] at the
      * metadata URL.
      *
-     * @param boundary      OData batch request boundary identifier
      * @param batchRequests list of requests for batch processing
      *
      * @return An {@link ODataRequest} which considers the {@code $batch} suffix when building the request
      */
-    public ODataRequest setBatch(String boundary, ODataRequest... batchRequests) {
-        this.batch = true;
-        Buffer multipartBody = null;
-        if (batchRequests != null && batchRequests.length > 0) {
-            multipartBody = this.asMultipartBatchBody(boundary, batchRequests);
+    public ODataRequest setBatch(ODataRequest... batchRequests) {
+        Objects.requireNonNull(batchRequests, "batchRequests must not be null!");
+        if (batchRequests.length < 1) {
+            throw new IllegalArgumentException("batchRequests must not be empty!");
         }
 
-        return this.setMethod(HttpMethod.POST)
-                .addHeader(HttpHeaders.CONTENT_TYPE.toString(),
-                        String.format("multipart/mixed; boundary=%s", boundary))
-                .setBody(Optional.ofNullable(multipartBody).orElse(body));
+        this.batch = true;
+        String boundary = "batch_" + UUID.randomUUID();
+        return setBatch(boundary, asBatchBody(boundary, batchRequests));
+    }
+
+    /**
+     * TODO:
+     */
+    public ODataRequest setBatch(String boundary, Buffer body) {
+        Objects.requireNonNull(boundary, "boundary must not be null!");
+        Objects.requireNonNull(body, "body must not be null!");
+
+        return this.setMethod(POST).addHeader(CONTENT_TYPE.toString(), "multipart/mixed; boundary=" + boundary)
+                .setBody(body);
     }
 
     /**
@@ -317,10 +326,6 @@ public class ODataRequest {
         return this;
     }
 
-    public MultiMap getQuery() {
-        return this.query;
-    }
-
     /**
      * Adds the passed query parameter name and value as decoded query parameter on the {@link ODataRequest}.
      *
@@ -355,10 +360,6 @@ public class ODataRequest {
     public ODataRequest setQuery(MultiMap query) {
         this.query = Optional.ofNullable(query).orElse(MultiMap.caseInsensitiveMultiMap());
         return this;
-    }
-
-    public MultiMap getHeaders() {
-        return this.headers;
     }
 
     /**
@@ -464,52 +465,55 @@ public class ODataRequest {
         return decorateParentheses.apply(Joiner.on(',').withKeyValueSeparator('=').join(keys.entrySet()));
     }
 
-    private Buffer asMultipartBatchBody(String boundary, ODataRequest... batchRequests) {
+    @VisibleForTesting
+    static Buffer asBatchBody(String boundary, ODataRequest... batchRequests) {
         Buffer buffer = Buffer.buffer();
         for (ODataRequest request : batchRequests) {
-            // create URI
-            String uri = request.getUri();
-            String namespace = request.getEntity().getNamespace();
-            if (uri.startsWith(namespace)) {
-                // providing namespace prefix with the URL results in bad request from olingo
-                // failing example: GET io.neonbee.test.TestService1/AllPropertiesNullable('id-1') HTTP/1.1
-                // working example: GET AllPropertiesNullable('id-1') HTTP/1.1
-                uri = uri.substring(namespace.length() + 1);
-            }
-
-            // add query to URI if defined
-            MultiMap query = request.getQuery();
-            if (query != null && !query.isEmpty()) {
-                Escaper escaper = UrlEscapers.urlPathSegmentEscaper();
-                String queryString = query.entries().stream()
-                        .map(entry -> format("%s=%s", entry.getKey(), entry.getValue()))
-                        .map(escaper::escape)
-                        .collect(Collectors.joining("&"));
-                uri += "?" + queryString;
-            }
-
-            // append boundary delimiter line
-            buffer.appendString("--" + boundary + "\n")
-                    // append boundary headers
-                    .appendString("" + HttpHeaders.CONTENT_TYPE + ":application/http\n")
-                    // blank line delimiter
-                    .appendString("\n")
-                    // append HTTP request line
-                    // http version needs to be provided in upper case to be valid for processing in Olingo
-                    .appendString(request.getMethod().name() + " " + uri + " "
-                            + HttpVersion.HTTP_1_1.alpnName().toUpperCase() + "\n");
-
-            // append request headers
-            AtomicReference<Buffer> bufferRef = new AtomicReference<>(buffer);
-            request.getHeaders().forEach(
-                    (name, value) -> bufferRef.getAndUpdate(ref -> ref.appendString(name + ":" + value + "\n")));
-
-            // finally append body or empty line
-            buffer = bufferRef.get().appendString("\n")
-                    .appendBuffer(Optional.ofNullable(request.getBody()).orElse(Buffer.buffer("\n")));
+            buffer.appendString("--" + boundary + "\n").appendBuffer(request.asBatchPart());
         }
 
         // close boundary
-        return buffer.appendString("--" + boundary + "--");
+        return buffer.appendString("\n--" + boundary + "--");
+    }
+
+    @VisibleForTesting
+    Buffer asBatchPart() {
+        // create URI
+        String uri = this.getUri();
+        String namespace = this.getEntity().getNamespace();
+        if (uri.startsWith(namespace)) {
+            // providing namespace prefix with the URL results in bad request from olingo
+            // failing example: GET io.neonbee.test.TestService1/AllPropertiesNullable('id-1') HTTP/1.1
+            // working example: GET AllPropertiesNullable('id-1') HTTP/1.1
+            uri = uri.substring(namespace.length() + 1);
+        }
+
+        // add query to URI if defined
+        if (!this.query.isEmpty()) {
+            Escaper escaper = UrlEscapers.urlPathSegmentEscaper();
+            String queryString = this.query.entries().stream()
+                    .map(entry -> entry.getKey() + "=" + entry.getValue())
+                    .map(escaper::escape)
+                    .collect(Collectors.joining("&"));
+            uri += "?" + queryString;
+        }
+
+        // append boundary headers
+        Buffer buffer = Buffer.buffer(CONTENT_TYPE + ":application/http\n")
+                // blank line delimiter
+                .appendString("\n")
+                // append HTTP request line
+                // http version needs to be provided in upper case to be valid for processing in Olingo
+                .appendString(this.getMethod().name() + " " + uri + " "
+                        + HttpVersion.HTTP_1_1.alpnName().toUpperCase() + "\n");
+
+        // append request headers
+        AtomicReference<Buffer> bufferRef = new AtomicReference<>(buffer);
+        this.headers.forEach(
+                (name, value) -> bufferRef.getAndUpdate(ref -> ref.appendString(name + ":" + value + "\n")));
+
+        // finally append body or empty line
+        return bufferRef.get().appendString("\n")
+                .appendBuffer(Optional.ofNullable(this.getBody()).orElse(Buffer.buffer("\n")));
     }
 }
