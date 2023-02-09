@@ -56,10 +56,10 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-health-check', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-infinispan', version: vertx_version
 
-    def jackson_version = '2.13.4'
+    def jackson_version = '2.14.2'
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jackson_version
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.14.2'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jackson_version
 
     def olingo_version = '4.9.0'
     implementation(group: 'org.apache.olingo', name: 'odata-server-core', version: olingo_version) {
@@ -93,11 +93,11 @@ dependencies {
     testImplementation group: 'com.google.truth', name: 'truth', version: truth_version
     testImplementation group: 'com.google.truth.extensions', name: 'truth-java8-extension', version: truth_version
 
-    def mockito_version = '4.6.1'
+    def mockito_version = '5.1.1'
     testImplementation group: 'org.mockito', name: 'mockito-inline', version: mockito_version
     testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: mockito_version
 
-    def jupiter_version = '5.8.2'
+    def jupiter_version = '5.9.2'
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: jupiter_version
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: jupiter_version
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: jupiter_version
@@ -105,7 +105,7 @@ dependencies {
     testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: '1.5.1'
 
     // Required for Eclipse to run Unit tests.
-    def junit_platform_version = '1.8.2'
+    def junit_platform_version = '1.9.2'
     testImplementation group: 'org.junit.platform', name: 'junit-platform-commons', version: junit_platform_version
     testImplementation group: 'org.junit.platform', name: 'junit-platform-launcher', version: junit_platform_version
 
