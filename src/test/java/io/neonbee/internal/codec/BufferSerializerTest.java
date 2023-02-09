@@ -9,6 +9,7 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.vertx.core.buffer.Buffer;
 
 class BufferSerializerTest {

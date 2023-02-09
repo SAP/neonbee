@@ -5,6 +5,7 @@ import java.time.ZoneId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.neonbee.data.DataContext.DataVerticleCoordinate;
 
 public class DataVerticleCoordinateImpl implements DataVerticleCoordinate {

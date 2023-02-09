@@ -2,6 +2,7 @@ package io.neonbee.internal.codec;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import io.vertx.core.buffer.Buffer;
 
 /**

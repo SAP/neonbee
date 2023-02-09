@@ -6,6 +6,7 @@ import org.slf4j.MarkerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+
 import io.neonbee.logging.LoggingFacade;
 
 @SuppressWarnings({ "PMD.ExcessivePublicCount", "PMD.CyclomaticComplexity", "PMD.TooManyMethods" })
