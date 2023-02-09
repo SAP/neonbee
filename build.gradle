@@ -72,7 +72,7 @@ dependencies {
 
     implementation group: 'com.sap.cds', name: 'cds4j-core', version: '1.30.0'
     implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.10.3'
-    implementation group: 'org.ow2.asm', name: 'asm', version: '9.3'
+    implementation group: 'org.ow2.asm', name: 'asm', version: '9.4'
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.11'
