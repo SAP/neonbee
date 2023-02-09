@@ -77,7 +77,7 @@ dependencies {
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.11'
     implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre'
-    implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.7.1'
+    implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.7.3'
 
     // Compile only
     compileOnly group: 'io.vertx', name: 'vertx-codegen', version: vertx_version
