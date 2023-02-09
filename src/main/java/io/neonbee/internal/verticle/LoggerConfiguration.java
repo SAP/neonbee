@@ -7,12 +7,11 @@ import java.util.stream.Collectors;
 
 import org.slf4j.impl.StaticLoggerBinder;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
-
-import com.google.common.annotations.VisibleForTesting;
-
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.json.JsonObject;
 
