@@ -111,7 +111,7 @@ dependencies {
 
     // Gradle plugin dependencies
     errorprone group: 'com.google.errorprone', name: 'error_prone_core', version: '2.10.0'
-    checkstyle group: 'com.puppycrawl.tools', name: 'checkstyle', version: '9.2'
+    checkstyle group: 'com.puppycrawl.tools', name: 'checkstyle', version: '10.7.0'
 
     // Without this the IDE can't find the test source files which are needed for debugging
     testCompileOnly group: 'io.vertx', name: 'vertx-core', classifier: 'test-sources', version: vertx_version
