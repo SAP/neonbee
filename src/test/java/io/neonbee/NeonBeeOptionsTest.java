@@ -26,16 +26,10 @@ import io.vertx.core.eventbus.EventBusOptions;
 
 class NeonBeeOptionsTest {
     @Test
-    @DisplayName("should generate an instance name if no instance name is passed")
-    void generateNameIfNoIsPassed() {
-        assertThat(new NeonBeeOptions.Mutable().getInstanceName()).containsMatch("^NeonBee-.{36}$");
-    }
-
-    @Test
-    @DisplayName("should generate an instance name if null is passed as an instance name")
-    void generateNameIfNullIsPassed() {
-        assertThat(new NeonBeeOptions.Mutable().setInstanceName(null).getInstanceName())
-                .containsMatch("^NeonBee-.{36}$");
+    @DisplayName("should generate an instance name if no instance name or null is passed")
+    void generateNameIfNothingIsPassed() {
+        assertThat(new NeonBeeOptions.Mutable().getInstanceName()).hasLength(36);
+        assertThat(new NeonBeeOptions.Mutable().setInstanceName(null).getInstanceName()).hasLength(36);
     }
 
     @Test

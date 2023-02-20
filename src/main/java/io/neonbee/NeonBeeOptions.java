@@ -610,7 +610,7 @@ public interface NeonBeeOptions {
         }
 
         private String generateName() {
-            return String.format("%s-%s", NeonBee.class.getSimpleName(), UUID.randomUUID().toString());
+            return UUID.randomUUID().toString();
         }
     }
 
