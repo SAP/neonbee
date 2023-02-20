@@ -101,7 +101,7 @@ public class ODataV4Endpoint implements Endpoint {
      * example my.very.CatalogService and my.very.catalog.Service do share the same URI representation, which would
      * cause one of the services to be inaccessible!
      */
-    @SuppressWarnings("checkstyle:JavadocVariable")
+    @SuppressWarnings({ "checkstyle:JavadocVariable", "checkstyle:ParameterAssignmentCheck" })
     public enum UriConversion implements UnaryOperator<String> {
         STRICT(uriPart -> uriPart), CDS(uriPart -> {
             uriPart = uriPart.substring(uriPart.lastIndexOf('.') + 1); // my.very.CatalogService -> CatalogService
