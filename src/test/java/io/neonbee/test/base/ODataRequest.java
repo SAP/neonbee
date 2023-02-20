@@ -87,7 +87,10 @@ public class ODataRequest extends AbstractODataRequest<ODataRequest> {
      * </pre>
      *
      * @return An {@link ODataRequest} which considers the {@code $metadata} suffix when building the request
+     * @deprecated use {@link ODataMetadataRequest} focussing on dispatching OData metadata requests and separating away
+     *             from data-centric requests.
      */
+    @Deprecated(forRemoval = true)
     public ODataRequest setMetadata() {
         this.metadata = true;
         return this;

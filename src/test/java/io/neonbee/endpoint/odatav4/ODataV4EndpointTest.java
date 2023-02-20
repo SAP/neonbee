@@ -39,6 +39,7 @@ import io.neonbee.entity.EntityVerticle;
 import io.neonbee.entity.EntityWrapper;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.neonbee.test.base.ODataEndpointTestBase;
+import io.neonbee.test.base.ODataMetadataRequest;
 import io.neonbee.test.base.ODataRequest;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.DeploymentOptions;
@@ -118,7 +119,7 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
 
     private Future<HttpResponse<Buffer>> requestMetadata(String namespace) {
         FullQualifiedName fqn = new FullQualifiedName(namespace, "WillBeIgnored");
-        return requestOData(new ODataRequest(fqn).setMetadata());
+        return requestOData(new ODataMetadataRequest(fqn));
     }
 
     @Test

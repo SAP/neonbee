@@ -9,8 +9,6 @@ import static io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
@@ -28,11 +26,7 @@ import io.neonbee.test.base.ODataRequest;
 import io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle;
 import io.neonbee.test.endpoint.odata.verticle.TestService3EntityVerticle;
 import io.vertx.core.CompositeFuture;
-import io.vertx.core.MultiMap;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.junit5.VertxTestContext;
 
 class ODataReadEntityTest extends ODataEndpointTestBase {
@@ -120,84 +114,6 @@ class ODataReadEntityTest extends ODataEndpointTestBase {
 
         ODataRequestMod(FullQualifiedName entity) {
             super(entity);
-        }
-
-        @Override
-        public ODataRequest setMethod(HttpMethod method) {
-            super.setMethod(method);
-            return this;
-        }
-
-        @Override
-        public ODataRequest setBody(Buffer body) {
-            super.setBody(body);
-            return this;
-        }
-
-        @Override
-        public ODataRequest setMetadata() {
-            super.setMetadata();
-            return this;
-        }
-
-        @Override
-        public ODataRequest setCount() {
-            super.setCount();
-            return this;
-        }
-
-        @Override
-        public ODataRequestMod setKey(String id) {
-            super.setKey(id);
-            return this;
-        }
-
-        @Override
-        public ODataRequest setKey(long id) {
-            super.setKey(id);
-            return this;
-        }
-
-        @Override
-        public ODataRequest setKey(Map<String, Object> compositeKey) {
-            super.setKey(compositeKey);
-            return this;
-        }
-
-        @Override
-        public ODataRequest setProperty(String propertyName) {
-            super.setProperty(propertyName);
-            return this;
-        }
-
-        @Override
-        public ODataRequest addQueryParam(String key, String value) {
-            super.addQueryParam(key, value);
-            return this;
-        }
-
-        @Override
-        public ODataRequest setQuery(Map<String, String> parameters) {
-            super.setQuery(parameters);
-            return this;
-        }
-
-        @Override
-        public ODataRequest addHeader(String key, String value) {
-            super.addHeader(key, value);
-            return this;
-        }
-
-        @Override
-        public ODataRequest setHeaders(MultiMap headers) {
-            super.setHeaders(headers);
-            return this;
-        }
-
-        @Override
-        public ODataRequest interceptRequest(Consumer<HttpRequest<Buffer>> rawRequest) {
-            super.interceptRequest(rawRequest);
-            return this;
         }
 
         @Override

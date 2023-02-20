@@ -7,12 +7,13 @@ knowledge of the [OData protocol 4.0](http://docs.oasis-open.org/odata/odata/v4.
 
 > Hint: Current implementations follow OData protocol version 4.0
 
-| Class                                                                                                                    | Description                                                                                                                                                        |
-|--------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [io.neonbee.test.base.ODataRequest](../../../src/test/java/io/neonbee/test/base/ODataRequest.java)                       | Allows to create and dispatch an individual OData request for performing metadata and data requests on OData services.                                             |
-| [io.neonbee.test.base.ODataBatchRequest](../../../src/test/java/io/neonbee/test/base/ODataBatchRequest.java)             | Allows to create and dispatch an OData batch request constituting from one or more individual OData requests.                                                      |
-| [io.neonbee.test.helper.MultipartResponse](../../../src/test/java/io/neonbee/test/helper/MultipartResponse.java)         | Provides parsing and access to details of an HTTP multipart response as it is retrieved as a result OData batch requests.                                          |
-| [io.neonbee.test.helper.ODataResponseVerifier](../../../src/test/java/io/neonbee/test/helper/ODataResponseVerifier.java) | Provides common assertions for OData related test cases like response status code verification.                                                                    |
+| Class                                                                                                                    | Description                                                                                                               |
+|--------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| [io.neonbee.test.base.ODataMetadataRequest](../../../src/test/java/io/neonbee/test/base/ODataMetadataRequest.java)       | Allows to create and dispatch an individual OData request for performing metadata requests on OData services.             |
+| [io.neonbee.test.base.ODataRequest](../../../src/test/java/io/neonbee/test/base/ODataRequest.java)                       | Allows to create and dispatch an individual OData request for performing data requests on OData services.                 |
+| [io.neonbee.test.base.ODataBatchRequest](../../../src/test/java/io/neonbee/test/base/ODataBatchRequest.java)             | Allows to create and dispatch an OData batch request constituting from one or more individual OData requests.             |
+| [io.neonbee.test.helper.MultipartResponse](../../../src/test/java/io/neonbee/test/helper/MultipartResponse.java)         | Provides parsing and access to details of an HTTP multipart response as it is retrieved as a result OData batch requests. |
+| [io.neonbee.test.helper.ODataResponseVerifier](../../../src/test/java/io/neonbee/test/helper/ODataResponseVerifier.java) | Provides common assertions for OData related test cases like response status code verification.                           |
 
 ## OData batch request example
 
