@@ -15,15 +15,18 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.openapi.RouterBuilder;
-import io.vertx.ext.web.openapi.RouterBuilderException;
+import io.vertx.ext.web.openapi.router.RouterBuilder;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import io.vertx.openapi.contract.OpenAPIContract;
+import io.vertx.openapi.contract.OpenAPIContractException;
 
 @ExtendWith(VertxExtension.class)
 class AbstractOpenAPIEndpointTest {
     private static final Path CONTRACT_PATH = TEST_RESOURCES.resolveRelated("petstore.json");
+
+    private static final Path INVALID_CONTRACT_PATH = TEST_RESOURCES.resolveRelated("petstore_invalid.json");
 
     @Test
     @DisplayName("createEndpointRouter should succeed")
@@ -32,9 +35,9 @@ class AbstractOpenAPIEndpointTest {
         Checkpoint succeedingCheckpoint = testContext.checkpoint();
         DummyOpenAPIEndpoint dummyEndpoint = new DummyOpenAPIEndpoint() {
             @Override
-            protected Future<String> getOpenAPIContractURL(Vertx vertx, JsonObject config) {
+            protected Future<OpenAPIContract> getOpenAPIContract(Vertx vertx, JsonObject config) {
                 methodsCheckpoint.flag();
-                return succeededFuture(CONTRACT_PATH.toString());
+                return OpenAPIContract.from(vertx, CONTRACT_PATH.toString());
             }
 
             @Override
@@ -55,16 +58,16 @@ class AbstractOpenAPIEndpointTest {
         Checkpoint failingCheckpoint = testContext.checkpoint();
         DummyOpenAPIEndpoint dummyEndpoint = new DummyOpenAPIEndpoint() {
             @Override
-            protected Future<String> getOpenAPIContractURL(Vertx vertx, JsonObject config) {
+            protected Future<OpenAPIContract> getOpenAPIContract(Vertx vertx, JsonObject config) {
                 methodCheckpoint.flag();
-                return succeededFuture("Invalid");
+                return OpenAPIContract.from(vertx, INVALID_CONTRACT_PATH.toString());
             }
         };
 
         dummyEndpoint.createEndpointRouter(vertx, null, null)
                 .onComplete(testContext.failing(t -> testContext.verify(() -> {
-                    assertThat(t).isInstanceOf(RouterBuilderException.class);
-                    assertThat(t).hasMessageThat().isEqualTo("Cannot load the spec in path Invalid");
+                    assertThat(t).isInstanceOf(OpenAPIContractException.class);
+                    assertThat(t).hasMessageThat().isEqualTo("The passed OpenAPI contract is invalid.");
                     failingCheckpoint.flag();
                 })));
     }
@@ -81,4 +84,5 @@ class AbstractOpenAPIEndpointTest {
             return succeededFuture(routerBuilder.createRouter());
         }
     }
+
 }
