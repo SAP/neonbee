@@ -1,6 +1,7 @@
 package io.neonbee.internal.handler;
 
 import static io.neonbee.internal.handler.CorrelationIdHandler.getCorrelationId;
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
@@ -19,7 +20,7 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.MIMEHeader;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.validation.BadRequestException;
+import io.vertx.openapi.validation.ValidatorException;
 
 /**
  * Similar to the io.vertx.ext.web.handler.impl.ErrorHandlerImpl, w/ minor adoptions for error text and template.
@@ -50,8 +51,8 @@ public class DefaultErrorHandler implements ErrorHandler {
      */
     @Override
     public Future<ErrorHandler> initialize(NeonBee neonBee) {
-        return readErrorTemplate(neonBee).map(errorTemplate -> {
-            this.errorTemplate = errorTemplate;
+        return readErrorTemplate(neonBee).map(template -> {
+            this.errorTemplate = template;
             return this;
         });
     }
@@ -84,7 +85,8 @@ public class DefaultErrorHandler implements ErrorHandler {
             errorMessage = routingContext.response().getStatusMessage();
         }
         // Use meaningful error messages in case that error comes from Vert.x Web Validation
-        if (failure instanceof BadRequestException) {
+        if (failure instanceof ValidatorException) {
+            errorCode = BAD_REQUEST.code();
             errorMessage = failure.getMessage();
         }
         answerWithError(routingContext, errorCode, errorMessage);

@@ -216,8 +216,8 @@ class JobVerticleTest extends NeonBeeTestBase {
         // continuous job for 2 seconds, repeating every 500 milliseconds => the job should run 4 times and then
         // the verticle should get undeployed
         testJobVerticle = new TestJobVerticle(new JobSchedule(Duration.ofMillis(500),
-                Instant.now().plus(2, SECONDS).minus(50, MILLIS)), true, 100);
-        // 50 milliseconds are subtracted from the 2 seconds, because otherwise on very fast machines there is a
+                Instant.now().plus(2, SECONDS).minus(250, MILLIS)), true, 100);
+        // 250 milliseconds are subtracted from the 2 seconds, because otherwise on very slow machines there is a
         // potential that a fifth run will be executed.
         assertThat(testJobVerticle.jobExecuted).isEqualTo(4);
         verify(testJobVerticle.vertxMock).undeploy(any());

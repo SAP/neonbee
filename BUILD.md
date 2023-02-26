@@ -10,7 +10,7 @@ gradlew shadowJar
 
 **Create the neonbee-core.jar Core JAR**
 
-Use the following command to create a `neonbee-core.jar` in the **build** directory which contains only the Vulp.s classes:
+Use the following command to create a `neonbee-core.jar` in the **build** directory which contains only the NeonBee classes:
 
 ```console
 gradlew coreJar

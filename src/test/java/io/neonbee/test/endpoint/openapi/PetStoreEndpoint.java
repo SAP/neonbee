@@ -1,6 +1,7 @@
 package io.neonbee.test.endpoint.openapi;
 
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
+import static io.netty.handler.codec.http.HttpHeaderValues.APPLICATION_JSON;
 import static io.vertx.core.Future.succeededFuture;
 
 import java.nio.file.Path;
@@ -14,9 +15,9 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.openapi.RouterBuilder;
-import io.vertx.ext.web.validation.RequestParameters;
-import io.vertx.ext.web.validation.ValidationHandler;
+import io.vertx.ext.web.openapi.router.RouterBuilder;
+import io.vertx.openapi.contract.OpenAPIContract;
+import io.vertx.openapi.validation.ValidatableResponse;
 
 public class PetStoreEndpoint extends AbstractOpenAPIEndpoint {
 
@@ -27,7 +28,7 @@ public class PetStoreEndpoint extends AbstractOpenAPIEndpoint {
 
     private static final Path CONTRACT_PATH = TEST_RESOURCES.resolveRelated("petstore.json");
 
-    private final Map<String, JsonObject> pets = new HashMap<>();
+    private final Map<Integer, JsonObject> pets = new HashMap<>();
 
     @Override
     public EndpointConfig getDefaultConfig() {
@@ -35,41 +36,38 @@ public class PetStoreEndpoint extends AbstractOpenAPIEndpoint {
     }
 
     @Override
-    protected Future<String> getOpenAPIContractURL(Vertx vertx, JsonObject config) {
-        return succeededFuture(CONTRACT_PATH.toString());
+    protected Future<OpenAPIContract> getOpenAPIContract(Vertx vertx, JsonObject config) {
+        return OpenAPIContract.from(vertx, CONTRACT_PATH.toString());
     }
 
     @Override
     protected Future<Router> createRouter(Vertx vertx, RouterBuilder routerBuilder) {
-        routerBuilder.operation("createPets").handler(ctx -> {
-            RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-            String name = params.body().getJsonObject().getString("name");
-
+        routerBuilder.getRoute("createPets").addHandler(createResponseValidationHandler((req, rtx) -> {
+            String name = req.getBody().getJsonObject().getString("name");
             int id = pets.size() + 1;
             JsonObject pet = new JsonObject().put("id", id).put("name", name);
-            pets.put(pet.getInteger("id").toString(), pet);
+            pets.put(pet.getInteger("id"), pet);
 
-            ctx.response().setStatusCode(201).end();
-        });
+            return succeededFuture(ValidatableResponse.create(201));
+        }));
 
-        routerBuilder.operation("listPets").handler(ctx -> {
+        routerBuilder.getRoute("listPets").addHandler(createResponseValidationHandler((req, rtx) -> {
             JsonArray response = new JsonArray();
             pets.values().forEach(response::add);
-            ctx.response().putHeader("Content-Type", "application/json").end(response.toBuffer());
-        });
 
-        routerBuilder.operation("showPetById").handler(ctx -> {
-            RequestParameters params = ctx.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-            String petId = params.pathParameter("petId").getString();
+            ValidatableResponse resp =
+                    ValidatableResponse.create(200, response.toBuffer(), APPLICATION_JSON.toString());
+            return succeededFuture(resp);
+        }));
 
-            JsonObject pet = pets.get(petId);
+        routerBuilder.getRoute("showPetById").addHandler(createResponseValidationHandler((req, rtx) -> {
+            JsonObject pet = pets.get(req.getPathParameters().get("petId").getInteger());
             if (pet == null) {
-                ctx.response().setStatusCode(404).setStatusMessage("No pet found with id: " + petId).end();
+                return succeededFuture(ValidatableResponse.create(404));
             } else {
-                ctx.response().putHeader("Content-Type", "application/json");
-                ctx.response().end(pet.toBuffer());
+                return succeededFuture(ValidatableResponse.create(200, pet.toBuffer(), APPLICATION_JSON.toString()));
             }
-        });
+        }));
 
         return succeededFuture(routerBuilder.createRouter());
     }
