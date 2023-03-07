@@ -1,5 +1,63 @@
 # Changelog
 
+## 0.20.0 (2023-03-07)
+
+### Bug Fixes
+
+- assertion for test verifyJobExecuted in JobVerticleTest ([3e41a91a](https://github.com/SAP/neonbee/commit/3e41a91a4143b80279b8900b39b0b536350ecb47))
+
+
+### Chores
+
+- remove unused docker plugin ([f8e7369a](https://github.com/SAP/neonbee/commit/f8e7369a3dc2a85da58fc05926c6623d2e21d711))
+- remove webserver name from X-Instance-Info header ([14f29a18](https://github.com/SAP/neonbee/commit/14f29a189a12bebb65803f6821e885077981bcfb)), closes [#268](https://github.com/SAP/neonbee/issues/268)
+
+
+### Tests
+
+- **odata**: unit tests for OData Batch Request handling ([99d20852](https://github.com/SAP/neonbee/commit/99d208520e736fe50fb46d0305b0b95ba5be7b06))
+- **odata**: implement ODataMetadataRequest and deprecate ODataRequest#setMetadata ([c1cdaef5](https://github.com/SAP/neonbee/commit/c1cdaef593d81a9cd7ea921165a349808ab328bd))
+
+
+### Documentation
+
+- **health**: fix register checks via SPI ([d2f220e3](https://github.com/SAP/neonbee/commit/d2f220e307f12367409e83e23e6ab9fd4c57fe28))
+
+
+### Build System
+
+- **deps**: bump jackson-databind from 2.13.4.2 to 2.14.2 ([c34dbd34](https://github.com/SAP/neonbee/commit/c34dbd34bcafdd9a9994deaf79e27c8bdc20b0f4))
+- **deps**: bump net.ltgt.errorprone from 2.0.2 to 3.0.1 ([dda0c554](https://github.com/SAP/neonbee/commit/dda0c5548b059ce71ec551c1aebdaa2e1937846b))
+- **deps**: bump org.sonarqube from 3.3 to 3.5.0.2730 ([d8081a8f](https://github.com/SAP/neonbee/commit/d8081a8f9cf9bd55953e02f266c702d4ea522cac))
+- **deps**: bump micrometer-registry-prometheus from 1.9.2 to 1.10.3 ([573e91e6](https://github.com/SAP/neonbee/commit/573e91e634ebb6be6b7f368febd44a5c2be762b9))
+- **deps**: bump org.ajoberstar.grgit from 4.1.1 to 5.0.0 ([11f097cb](https://github.com/SAP/neonbee/commit/11f097cb25f3b4cb1441a51320bea190e07a0aa5))
+- **deps**: bump com.diffplug.spotless from 6.0.5 to 6.14.1 ([5213a54b](https://github.com/SAP/neonbee/commit/5213a54bf7f4497844ca2aba998fb614b30c1f0f))
+- **deps**: bump org.ow2.asm:asm from 9.3 to 9.4 ([48800a6b](https://github.com/SAP/neonbee/commit/48800a6bfd7c8cb700f697f7dff72b18ea47402f))
+- **deps**: bump com.github.spotbugs:spotbugs-annotations ([8a000604](https://github.com/SAP/neonbee/commit/8a000604b8e8c078e524e9fcb3065b4f60bbf693))
+- **deps**: bump com.github.johnrengelman.shadow from 7.1.0 to 7.1.2 ([73a3fd78](https://github.com/SAP/neonbee/commit/73a3fd782deb78ba677b5e045848d41841283794))
+- **deps**: bump com.sap.cds:cds4j-core from 1.30.0 to 1.35.1 ([a5404865](https://github.com/SAP/neonbee/commit/a5404865703fb3af99d4baefc71c0d6683a69a85))
+- **deps**: bump org.infinispan:infinispan-component-annotations ([80443bee](https://github.com/SAP/neonbee/commit/80443bee2fb00fc5799a966e2db7e51aa570ecea))
+- **deps**: bump sapmachine from 11.0.15.0.1 to 11.0.18 ([8fbacd88](https://github.com/SAP/neonbee/commit/8fbacd885191e0a9bc452bd4691a1cc53e46a6a9))
+- **deps**: bump com.github.spotbugs from 5.0.3 to 5.0.13 ([4e4e5ed2](https://github.com/SAP/neonbee/commit/4e4e5ed2d973f0778855f564e08c886400bb5dba))
+- **deps**: bump se.bjurr.violations.violations-gradle-plugin ([b7eadcb8](https://github.com/SAP/neonbee/commit/b7eadcb8b58625c397ba0f8850031bdf637958f9))
+- **deps**: bump Vert.x to 4.3.8 ([d781e505](https://github.com/SAP/neonbee/commit/d781e5056532d4fda85e60e3808d91eb7f6023f6))
+- **deps**: bump a few dependencies ([52cb1bcb](https://github.com/SAP/neonbee/commit/52cb1bcb82c99ce1963058d54d6ec42b9d8aef3d))
+- **deps**: bump com.diffplug.spotless from 6.14.1 to 6.15.0 ([083f5d54](https://github.com/SAP/neonbee/commit/083f5d54940a824fdc103b38ec00fcc55f152228))
+- **deps**: bump checkstyle from 9.2 to 10.7.0 ([ad9d7974](https://github.com/SAP/neonbee/commit/ad9d7974e26bbfb166a2fa0348257906fadecb1f))
+- **deps**: bump org.sonarqube from 3.5.0.2730 to 4.0.0.2929 ([5bc945da](https://github.com/SAP/neonbee/commit/5bc945da6ed46da78fb177a2e086b5ca856d9f25))
+- **deps**: bump io.micrometer:micrometer-registry-prometheus ([ccc95583](https://github.com/SAP/neonbee/commit/ccc9558363809dbc98bf297d91371d1471933e0d))
+- **deps**: bump com.sap.cds:cds4j-core from 1.35.1 to 1.36.0 ([53d679e7](https://github.com/SAP/neonbee/commit/53d679e77f46521e47819fb2a445b6c7d4e5f85c))
+- **deps**: bump se.bjurr.violations.violations-gradle-plugin ([afae401a](https://github.com/SAP/neonbee/commit/afae401a4cb4352e458d4ca06715b7d3f13e5b8d))
+- **deps**: bump com.diffplug.spotless from 6.15.0 to 6.16.0 ([a27696c2](https://github.com/SAP/neonbee/commit/a27696c2f884ad2dd07b0b9d30e315ea7d64be93))
+- **deps**: bump Vert.x to 4.4.0 and switch to vertx-openapi ([05c8bdf4](https://github.com/SAP/neonbee/commit/05c8bdf4f17886fe9cb12725ea7de5196e3ae97e))
+
+
+### Continuous Integration
+
+- **dependabot**: configure dependencies to ignore ([4e49086d](https://github.com/SAP/neonbee/commit/4e49086dffe93444256f5551ba3158c6ac60d12d))
+- add dependabot configuration ([050454e9](https://github.com/SAP/neonbee/commit/050454e9910ba77e49d0175d1365f875b9535b80))
+
+
 ## 0.19.0 (2023-01-19)
 
 ### Bug Fixes
