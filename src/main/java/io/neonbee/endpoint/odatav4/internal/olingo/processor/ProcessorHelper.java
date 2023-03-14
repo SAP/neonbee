@@ -49,6 +49,9 @@ public final class ProcessorHelper {
     /** OData key predicate key. */
     public static final String ODATA_KEY_PREDICATE_KEY = "OData.key";
 
+    /** OData count size key. */
+    public static final String ODATA_COUNT_SIZE_KEY = "OData.count.size";
+
     private ProcessorHelper() {}
 
     private static DataQuery odataRequestToQuery(ODataRequest request, DataAction action, Buffer body) {

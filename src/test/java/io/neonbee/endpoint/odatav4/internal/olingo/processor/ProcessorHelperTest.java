@@ -1,6 +1,7 @@
 package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_COUNT_SIZE_KEY;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_EXPAND_KEY;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_FILTER_KEY;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_SKIP_KEY;
@@ -34,10 +35,12 @@ class ProcessorHelperTest {
         DataContext dataContext = new DataContextImpl();
         dataContext.responseData().put(ODATA_FILTER_KEY, Boolean.TRUE);
         dataContext.responseData().put(ODATA_EXPAND_KEY, Boolean.FALSE);
+        dataContext.responseData().put(ODATA_COUNT_SIZE_KEY, 42);
         ProcessorHelper.transferResponseHint(dataContext, routingContext);
         assertThat(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_FILTER_KEY)).isTrue();
         assertThat(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_EXPAND_KEY)).isFalse();
         assertThat(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_SKIP_KEY)).isNull();
         assertThat(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_TOP_KEY)).isNull();
+        assertThat(routingContext.<Integer>get(RESPONSE_HEADER_PREFIX + ODATA_COUNT_SIZE_KEY)).isEqualTo(42);
     }
 }

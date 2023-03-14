@@ -4,6 +4,7 @@ import static io.neonbee.data.DataAction.READ;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.EntityProcessor.findEntityByKeyPredicates;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.chooseEntitySet;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.fetchNavigationTargetEntities;
+import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_COUNT_SIZE_KEY;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_EXPAND_KEY;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_FILTER_KEY;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_ORDER_BY_KEY;
@@ -120,7 +121,7 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
                                     .orElse(Boolean.FALSE);
                     List<Entity> resultEntityList = filterExecuted ? ew.getEntities()
                             : applyFilterQueryOption(uriInfo.getFilterOption(), ew.getEntities());
-                    applyCountOption(uriInfo.getCountOption(), resultEntityList, entityCollection);
+                    applyCountOption(uriInfo.getCountOption(), resultEntityList, entityCollection, routingContext);
                     if (!resultEntityList.isEmpty()) {
                         boolean orderByExecuted =
                                 ofNullable(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_ORDER_BY_KEY))
@@ -144,7 +145,7 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
                     } else {
                         responsePromise.complete(resultEntityList);
                     }
-                } catch (ODataException e) {
+                } catch (ODataException | ClassCastException e) {
                     processPromise.fail(e);
                 }
             } else {
@@ -183,14 +184,16 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
     }
 
     private void applyCountOption(CountOption countOption, List<Entity> filteredEntities,
-            EntityCollection entityCollection) {
+            EntityCollection entityCollection, RoutingContext routingContext) {
         // Apply $count system query option. The $count system query option with a value of true
         // specifies that the total count of items within a collection matching the request be returned
         // along with the result. The $count system query option ignores any $top, $skip, or $expand query
         // options, and returns the total count of results across all pages including only those results
         // matching any specified $filter and $search.
         if ((countOption != null) && countOption.getValue()) {
-            entityCollection.setCount(filteredEntities.size());
+            int countSize = ofNullable(routingContext.<Integer>get(RESPONSE_HEADER_PREFIX + ODATA_COUNT_SIZE_KEY))
+                    .orElse(filteredEntities.size());
+            entityCollection.setCount(countSize);
         }
     }
 
@@ -321,15 +324,19 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
                  * Content negotiation using the Accept request header or the $format system query option is not allowed
                  * with the path segment /$count.
                  */
-                List<Entity> resultEntityList = applyFilterQueryOption(uriInfo.getFilterOption(), ew.getEntities());
+                Integer countSize =
+                        routingContext.<Integer>get(RESPONSE_HEADER_PREFIX + ODATA_COUNT_SIZE_KEY);
+                if (countSize == null) {
+                    countSize = applyFilterQueryOption(uriInfo.getFilterOption(), ew.getEntities()).size();
+                }
 
                 ByteArrayInputStream serializerContent = new ByteArrayInputStream(
-                        String.valueOf(resultEntityList.size()).getBytes(StandardCharsets.UTF_8));
+                        String.valueOf(countSize).getBytes(StandardCharsets.UTF_8));
                 response.setContent(serializerContent);
                 response.setHeader(HttpHeader.CONTENT_TYPE, ContentType.TEXT_PLAIN.toContentTypeString());
                 response.setStatusCode(HttpStatusCode.OK.getStatusCode());
                 processPromise.complete();
-            } catch (ODataException e) {
+            } catch (ODataException | ClassCastException e) {
                 processPromise.fail(e);
             }
         });
