@@ -72,7 +72,7 @@ dependencies {
     implementation group: 'org.infinispan', name: 'infinispan-component-annotations', version: '13.0.15.Final'
 
     implementation group: 'com.sap.cds', name: 'cds4j-core', version: '1.36.0'
-    implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.10.4'
+    implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.10.5'
     implementation group: 'org.ow2.asm', name: 'asm', version: '9.4'
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
