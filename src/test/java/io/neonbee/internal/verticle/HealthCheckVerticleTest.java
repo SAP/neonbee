@@ -2,10 +2,6 @@ package io.neonbee.internal.verticle;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.verticle.HealthCheckVerticle.SHARED_MAP_KEY;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,9 +11,10 @@ import org.junit.jupiter.api.parallel.Isolated;
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
-import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.deploy.DeployableVerticle;
+import io.neonbee.internal.registry.Registry;
 import io.neonbee.test.base.DataVerticleTestBase;
+import io.neonbee.test.helper.ReflectionHelper;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
@@ -49,28 +46,29 @@ class HealthCheckVerticleTest extends DataVerticleTestBase {
 
     @Test
     @DisplayName("should register itself in shared map")
-    void testSharedMap(VertxTestContext testContext) {
-        WriteSafeRegistry<String> registry =
-                new WriteSafeRegistry<>(getNeonBee().getVertx(), HealthCheckVerticle.REGISTRY_NAME);
+    void testSharedMap(VertxTestContext testContext) throws NoSuchFieldException, IllegalAccessException {
+        Registry<String> registry = ReflectionHelper.getValueOfPrivateField(getNeonBee().getHealthCheckRegistry(),
+                "healthVerticleRegistry");
 
         registry.get(SHARED_MAP_KEY)
                 .onComplete(testContext.succeeding(qualifiedNamesOrNull -> testContext.verify(() -> {
                     String expectedName = HealthCheckVerticle.QUALIFIED_NAME;
-                    assertThat((JsonArray) qualifiedNamesOrNull).containsExactly(expectedName);
+                    assertThat(qualifiedNamesOrNull).containsExactly(expectedName);
                     testContext.completeNow();
                 })));
     }
 
     @Test
     @DisplayName("should not register in shared map when non-clustered mode")
-    void testStartNonClustered(Vertx vertx, VertxTestContext testContext) {
-        WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, HealthCheckVerticle.REGISTRY_NAME);
-        WriteSafeRegistry<String> registrySpy = spy(registry);
+    void testStartNonClustered(Vertx vertx, VertxTestContext testContext) throws NoSuchFieldException,
+            IllegalAccessException {
+        Registry<String> registry = ReflectionHelper.getValueOfPrivateField(getNeonBee().getHealthCheckRegistry(),
+                "healthVerticleRegistry");
 
         DeployableVerticle.fromVerticle(vertx, new HealthCheckVerticle(), new JsonObject())
                 .compose(deployable -> deployable.deploy(getNeonBee()))
-                .onComplete(testContext.succeeding(r -> testContext.verify(() -> {
-                    verify(registrySpy, times(0)).register(any(), any());
-                }))).onComplete(testContext.succeedingThenComplete());
+                .compose(v -> registry.getKeys())
+                .onComplete(testContext.succeeding(keys -> testContext.verify(() -> assertThat(keys).isEmpty())))
+                .onComplete(testContext.succeedingThenComplete());
     }
 }

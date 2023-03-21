@@ -354,7 +354,7 @@ class NeonBeeTest extends NeonBeeTestBase {
                     .thenReturn(failedFuture(new RuntimeException("Failing Vert.x!")));
             mocked.when(() -> NeonBee.create(any(), any(), any(), any())).thenCallRealMethod();
 
-            Vertx failingVertxMock = mock(Vertx.class);
+            Vertx failingVertxMock = defaultVertxMock();
             when(failingVertxMock.close()).thenReturn(result);
 
             Function<VertxOptions, Future<Vertx>> vertxFunction;
