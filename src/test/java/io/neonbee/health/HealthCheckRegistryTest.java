@@ -2,6 +2,7 @@ package io.neonbee.health;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.health.DummyHealthCheck.DUMMY_ID;
+import static io.neonbee.health.HealthCheckRegistry.REGISTRY_NAME;
 import static io.neonbee.internal.verticle.HealthCheckVerticle.SHARED_MAP_KEY;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static io.neonbee.test.helper.ReflectionHelper.setValueOfPrivateField;
@@ -31,9 +32,10 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.health.internal.HealthCheck;
 import io.neonbee.internal.SharedDataAccessor;
-import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.codec.DataQueryMessageCodec;
 import io.neonbee.internal.helper.AsyncHelper;
+import io.neonbee.internal.registry.Registry;
+import io.neonbee.internal.registry.WriteSafeRegistry;
 import io.neonbee.internal.verticle.HealthCheckVerticle;
 import io.neonbee.test.helper.DeploymentHelper;
 import io.vertx.core.Future;
@@ -61,7 +63,6 @@ class HealthCheckRegistryTest {
         } catch (IllegalStateException ignored) {
             // fall through
         }
-
         neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(false),
                 new NeonBeeConfig().setHealthConfig(new HealthConfig().setEnabled(true).setTimeout(2)));
     }
@@ -69,7 +70,7 @@ class HealthCheckRegistryTest {
     @Test
     @DisplayName("it can list all health checks")
     void getHealthChecks(Vertx vertx) {
-        HealthCheckRegistry registry = new HealthCheckRegistry(vertx);
+        HealthCheckRegistry registry = neonBee.getHealthCheckRegistry();
 
         assertThat(registry.getHealthChecks()).isEmpty();
         registry.checks.put("check-1", mock(HealthCheck.class));
@@ -237,10 +238,6 @@ class HealthCheckRegistryTest {
     @DisplayName("Don't collect HealthCheck results from other nodes, when clustered but cluster collection is disabled")
     void testConsolidateHealthCheckResultsClusteredDisabled(Vertx vertx, VertxTestContext testContext)
             throws Exception {
-        NeonBeeConfig neonBeeConfig =
-                new NeonBeeConfig().setHealthConfig(new HealthConfig().setCollectClusteredResults(false));
-        neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(true), neonBeeConfig);
-
         Checkpoint receivedResultsValidated = testContext.checkpoint();
 
         HealthCheckVerticle healthCheckVerticle = new HealthCheckVerticle() {
@@ -255,6 +252,10 @@ class HealthCheckRegistryTest {
                 return super.retrieveData(query, context);
             }
         };
+
+        NeonBeeConfig neonBeeConfig =
+                new NeonBeeConfig().setHealthConfig(new HealthConfig().setCollectClusteredResults(false));
+        neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(true), neonBeeConfig);
 
         AsyncMap<String, Object> sharedMap = new SharedDataAccessor(vertx, HealthCheckVerticle.class)
                 .<String, Object>getAsyncMap("#sharedMap").result();
@@ -280,7 +281,7 @@ class HealthCheckRegistryTest {
     void testConsolidateHealthCheckResultsNonClustered(Vertx vertx, VertxTestContext testContext) {
         Checkpoint cp = testContext.checkpoint(2);
 
-        HealthCheckRegistry mock = new HealthCheckRegistry(vertx) {
+        HealthCheckRegistry mock = new HealthCheckRegistry(vertx, new WriteSafeRegistry<>(vertx, REGISTRY_NAME)) {
             @Override
             Future<List<JsonObject>> getLocalHealthCheckResults() {
                 cp.flag();
@@ -303,7 +304,7 @@ class HealthCheckRegistryTest {
     @DisplayName("it requests data for a specific check")
     void testConsolidateResultsForSpecificCheck(Vertx vertx, VertxTestContext testContext) {
         String checkName = "dummy-a";
-        HealthCheckRegistry registry = new HealthCheckRegistry(vertx);
+        HealthCheckRegistry registry = neonBee.getHealthCheckRegistry();
         registry.register(new DummyHealthCheck(neonBee))
                 .compose(hc -> registry.register(new DummyHealthCheck(neonBee) {
                     @Override
@@ -342,19 +343,19 @@ class HealthCheckRegistryTest {
     @Test
     @DisplayName("it does not fail if some verticle addresses are not reachable")
     void test(Vertx vertx, VertxTestContext testContext) {
-        neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(true));
+        neonBee =
+                NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(true), new NeonBeeConfig());
         String verticleName = "not-existing-verticle-name";
-        WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, HealthCheckRegistry.REGISTRY_NAME);
+
+        Registry<String> registry = neonBee.getHealthCheckRegistry().healthVerticleRegistry;
         Future<Void> setupFuture = registry.register(SHARED_MAP_KEY, verticleName);
 
         setupFuture
-                .compose(unused -> DeploymentHelper.undeployAllVerticlesOfClass(neonBee.getVertx(),
-                        HealthCheckVerticle.class))
-                .compose(v -> AsyncHelper.allComposite(List.of(vertx.deployVerticle(new HealthCheckVerticle()),
-                        neonBee.getHealthCheckRegistry().register(new DummyHealthCheck(neonBee)))))
+                .compose(v -> vertx.deployVerticle(new HealthCheckVerticle()))
+                .compose(v -> neonBee.getHealthCheckRegistry().register(new DummyHealthCheck(neonBee)))
                 .compose(v -> neonBee.getHealthCheckRegistry().collectHealthCheckResults())
                 .onSuccess(result -> testContext.verify(() -> assertThat(result.getString("status")).isEqualTo("UP")))
-                .compose(result -> registry.get(SHARED_MAP_KEY)).map(JsonArray.class::cast)
+                .compose(result -> registry.get(SHARED_MAP_KEY))
                 .onSuccess(registeredVerticles -> testContext.verify(() -> {
                     assertThat(registeredVerticles).hasSize(2);
                     assertThat(registeredVerticles).contains(verticleName);

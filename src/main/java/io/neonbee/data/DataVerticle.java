@@ -453,12 +453,18 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop(Promise<Void> stopPromise) throws Exception {
         NeonBee neonBee = NeonBee.get(vertx);
         if (neonBee != null) { // NeonBee can be null, when the close hook has removed NeonBee - Vert.x mapping before
             neonBee.unregisterLocalConsumer(getAddress());
         }
-        super.stop();
+        Future.<Void>future(stopPromiseFromSuper -> {
+            try {
+                super.stop(stopPromiseFromSuper);
+            } catch (Exception e) {
+                stopPromiseFromSuper.fail(e);
+            }
+        }).onComplete(stopPromise);
     }
 
     /**

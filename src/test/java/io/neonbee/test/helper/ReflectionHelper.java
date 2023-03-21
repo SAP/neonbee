@@ -5,7 +5,9 @@ import static java.lang.invoke.MethodHandles.privateLookupIn;
 
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.VarHandle;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 
 import io.vertx.junit5.VertxTestContext.ExecutionBlock;
@@ -132,6 +134,23 @@ public final class ReflectionHelper {
 
         setValueOfPrivateField(clazz, null, fieldName, valueToSet);
         return () -> setValueOfPrivateField(clazz, null, fieldName, oldValue);
+    }
+
+    /**
+     * Creates an object by using its private constructor.
+     *
+     * @param constructor The constructor to be used
+     * @param params      The parameters to pass into the constructor
+     * @return An instance of the created object
+     * @param <T> the type of the object
+     * @throws InvocationTargetException If an exception is thrown in the constructor itself.
+     * @throws InstantiationException    If e.g. the class is an abstract class
+     * @throws IllegalAccessException    If JVM doesn't grant access to the field
+     */
+    public static <T> T createObjectWithPrivateConstructor(Constructor<T> constructor, Object... params)
+            throws InvocationTargetException, InstantiationException, IllegalAccessException {
+        constructor.setAccessible(true);
+        return constructor.newInstance(params);
     }
 
     private static Class<?> resolveClass(Object object) {

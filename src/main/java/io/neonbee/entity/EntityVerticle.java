@@ -7,13 +7,13 @@ import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.internal.verticle.ConsolidationVerticle.ENTITY_TYPE_NAME_HEADER;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
+import static java.util.stream.Collectors.toList;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.server.api.uri.UriInfo;
@@ -26,20 +26,18 @@ import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
-import io.neonbee.internal.Registry;
-import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.helper.AsyncHelper;
+import io.neonbee.internal.registry.Registry;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 
 public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
 
     /**
-     * Name for the {@link WriteSafeRegistry}.
+     * Name for the {@link NeonBee#getEntityRegistry()}.
      */
     public static final String REGISTRY_NAME = "EntityVerticleRegistry";
 
@@ -199,12 +197,7 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
      * @return A list of all (entity) verticle names as qualified names
      */
     public static Future<List<String>> getVerticlesForEntityType(Vertx vertx, FullQualifiedName entityTypeName) {
-        return Future
-                .future(asyncGet -> getRegistry(vertx).get(sharedEntityMapName(entityTypeName))
-                        .onSuccess(asyncGet::complete).onFailure(asyncGet::fail))
-                .map(qualifiedNames -> ((List<?>) Optional.ofNullable((JsonArray) qualifiedNames)
-                        .orElseGet(JsonArray::new).getList()).stream().map(Object::toString).distinct()
-                                .collect(Collectors.toList()));
+        return getRegistry(vertx).get(sharedEntityMapName(entityTypeName));
     }
 
     /**
@@ -254,15 +247,35 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
      * adding the EntityTypes to a shared map in a secure and cluster-wide thread safe manner.
      */
     private Future<Void> announceEntityVerticle(Vertx vertx) {
-        // in case this entity verticle does not listen to any entityTypeNames, do not add it to the shared map
+        return announceOrConcealEntities(entityType -> getRegistry(vertx).register(entityType, getQualifiedName()));
+    }
+
+    /**
+     * Conceals that this EntityVerticle is handling certain {@link #entityTypeNames()} to the rest of the cluster by
+     * removing the EntityTypes from a shared map in a secure and cluster-wide thread safe manner.
+     */
+    private Future<Void> concealEntityVerticle() {
+        return announceOrConcealEntities(entityType -> getRegistry(vertx).unregister(entityType, getQualifiedName()));
+    }
+
+    @Override
+    public void stop(Promise<Void> stopPromise) throws Exception {
+        concealEntityVerticle().compose(v -> Future.<Void>future(stopPromiseFromSuper -> {
+            try {
+                super.stop(stopPromiseFromSuper);
+            } catch (Exception e) {
+                stopPromiseFromSuper.fail(e);
+            }
+        })).onComplete(stopPromise);
+    }
+
+    private Future<Void> announceOrConcealEntities(Function<String, Future<Void>> announceOrConceal) {
         return entityTypeNames()
                 .map(entityTypeNames -> entityTypeNames != null ? entityTypeNames : Set.<FullQualifiedName>of())
                 .compose(entityTypeNames -> {
                     List<Future<Void>> announceFutures =
-                            entityTypeNames.stream().map(EntityVerticle::sharedEntityMapName).map(name -> {
-                                String qualifiedName = getQualifiedName();
-                                return getRegistry(vertx).register(name, qualifiedName);
-                            }).collect(Collectors.toList());
+                            entityTypeNames.stream().map(EntityVerticle::sharedEntityMapName)
+                                    .map(name -> announceOrConceal.apply(name)).collect(toList());
                     return allComposite(announceFutures).mapEmpty();
                 });
     }

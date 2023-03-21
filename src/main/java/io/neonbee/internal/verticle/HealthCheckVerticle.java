@@ -6,19 +6,14 @@ import static java.util.stream.Collectors.toList;
 import java.util.List;
 import java.util.UUID;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeDeployable;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataVerticle;
-import io.neonbee.health.HealthCheckRegistry;
-import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.helper.AsyncHelper;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.healthchecks.CheckResult;
@@ -31,9 +26,6 @@ public class HealthCheckVerticle extends DataVerticle<JsonArray> {
      */
     public static final String SHARED_MAP_KEY = "healthCheckVerticles";
 
-    @VisibleForTesting
-    static final String REGISTRY_NAME = HealthCheckRegistry.class.getSimpleName();
-
     private static final String NAME = "_healthCheckVerticle-" + UUID.randomUUID();
 
     /**
@@ -45,7 +37,7 @@ public class HealthCheckVerticle extends DataVerticle<JsonArray> {
     public void start(Promise<Void> promise) {
         Future.<Void>future(super::start).compose(v -> {
             if (NeonBee.get(vertx).getOptions().isClustered()) {
-                return register(vertx);
+                return NeonBee.get(vertx).getHealthCheckRegistry().registerVerticle(this);
             }
             return Future.succeededFuture();
         }).onComplete(promise);
@@ -62,10 +54,5 @@ public class HealthCheckVerticle extends DataVerticle<JsonArray> {
     @Override
     public String getName() {
         return NAME;
-    }
-
-    private Future<Void> register(Vertx vertx) {
-        WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, REGISTRY_NAME);
-        return registry.register(SHARED_MAP_KEY, getQualifiedName());
     }
 }
