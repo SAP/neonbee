@@ -104,7 +104,7 @@ class HealthCheckRegistryTest {
         AbstractHealthCheck check = spy(new MemoryHealthCheck(neonBee));
         neonBee.getHealthCheckRegistry().register(check);
 
-        verify(check).register(eq(neonBee.getHealthCheckRegistry()));
+        verify(check).register(neonBee.getHealthCheckRegistry());
     }
 
     @Test
@@ -167,7 +167,7 @@ class HealthCheckRegistryTest {
                 assertThat(registry.checks.size()).isEqualTo(0);
 
                 verify(registry.healthChecks, times(2)).register(eq(check.getId()), eq(2000L), any());
-                verify(registry.healthChecks, times(2)).unregister(eq(check.getId()));
+                verify(registry.healthChecks, times(2)).unregister(check.getId());
             });
             testContext.completeNow();
         }));
@@ -231,6 +231,48 @@ class HealthCheckRegistryTest {
                                 receivedResultsValidated.flag();
                             })));
                 }).onFailure(testContext::failNow);
+    }
+
+    @Test
+    @DisplayName("Don't collect HealthCheck results from other nodes, when clustered but cluster collection is disabled")
+    void testConsolidateHealthCheckResultsClusteredDisabled(Vertx vertx, VertxTestContext testContext)
+            throws Exception {
+        NeonBeeConfig neonBeeConfig =
+                new NeonBeeConfig().setHealthConfig(new HealthConfig().setCollectClusteredResults(false));
+        neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(true), neonBeeConfig);
+
+        Checkpoint receivedResultsValidated = testContext.checkpoint();
+
+        HealthCheckVerticle healthCheckVerticle = new HealthCheckVerticle() {
+            @Override
+            public String getName() {
+                return super.getName() + "-test1";
+            }
+
+            @Override
+            public Future<JsonArray> retrieveData(DataQuery query, DataContext context) {
+                testContext.failNow("HealthCheckRegistry shouldn't send requests to HealthCheckVerticles");
+                return super.retrieveData(query, context);
+            }
+        };
+
+        AsyncMap<String, Object> sharedMap = new SharedDataAccessor(vertx, HealthCheckVerticle.class)
+                .<String, Object>getAsyncMap("#sharedMap").result();
+        setValueOfPrivateField(neonBee, "sharedAsyncMap", sharedMap);
+
+        // undeploy the system deployed health check verticles of neonbee
+        DeploymentHelper.undeployAllVerticlesOfClass(neonBee.getVertx(), HealthCheckVerticle.class)
+                .compose(v -> vertx.deployVerticle(healthCheckVerticle))
+                .compose(v -> neonBee.getHealthCheckRegistry().register(new DummyHealthCheck(neonBee)))
+                .compose(v -> neonBee.getHealthCheckRegistry().collectHealthCheckResults())
+                .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
+
+                    assertThat(result.getJsonArray("checks")).hasSize(1);
+                    assertThat(result.getString("outcome")).isNotNull();
+                    assertThat(result.getString("status")).isEqualTo(result.getString("outcome"));
+                    receivedResultsValidated.flag();
+                })))
+                .onFailure(testContext::failNow);
     }
 
     @Test

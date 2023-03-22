@@ -103,12 +103,13 @@ json and the name of the file is the fully qualified name of NeonBee (`io.neonbe
 
 Global settings for health checking.
 
-| Property  |  Type   | Required | Description                                                          |
-| :-------- | :-----: | :------: | :------------------------------------------------------------------- |
-| `enabled` | boolean |    No    | Enables / disables the health checking. Default is `true` (enabled). |
-| `timeout` | integer |    No    | Sets the global timeout for all health checks. Default is 1 second.  |
+| Property                  |  Type   | Required | Description                                                              |
+|:--------------------------|:-------:| :------: |:-------------------------------------------------------------------------|
+| `enabled`                 | boolean |    No    | Enables / disables the health checking. Default is `true` (enabled).     |
+| `timeout`                 | integer |    No    | Sets the global timeout for all health checks. Default is 1 second.      |
+| `collectClusteredResults` | boolean |    No    | Collect HealthCheck results from other cluster nodes. Default is `true`. |
 
-Note: the `enabled` property can be overriden by any node-specific health check configuration. See [health](./health.md)
+Note: the `enabled` property can be overridden by any node-specific health check configuration. See [health](./health.md)
 for details.
 
 ### `metrics`
