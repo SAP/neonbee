@@ -15,6 +15,8 @@ public class HealthConfig {
 
     private boolean enabled = true;
 
+    private boolean collectClusteredResults = true;
+
     /**
      * Constructs an instance of {@linkplain HealthConfig}.
      */
@@ -68,6 +70,29 @@ public class HealthConfig {
     @Fluent
     public HealthConfig setTimeout(int healthTimeout) {
         this.timeout = healthTimeout;
+        return this;
+    }
+
+    /**
+     * Should collect HealthCheck results from other cluster nodes?
+     * <p>
+     * <b>Will be ignored If NeonBee isn't running in clustered mode.</b>
+     *
+     * @return true if the health checks are enabled, otherwise false.
+     */
+    public boolean doCollectClusteredResults() {
+        return collectClusteredResults;
+    }
+
+    /**
+     * Sets the value to collect, or not collect HealthCheck results from other cluster nodes.
+     *
+     * @param collectClusteredResults true if HealthCheck results should be collected, false otherwise.
+     * @return the {@linkplain HealthConfig} for fluent use
+     */
+    @Fluent
+    public HealthConfig setCollectClusteredResults(boolean collectClusteredResults) {
+        this.collectClusteredResults = collectClusteredResults;
         return this;
     }
 

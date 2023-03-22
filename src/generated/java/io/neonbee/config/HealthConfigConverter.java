@@ -18,6 +18,11 @@ public class HealthConfigConverter {
     static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, HealthConfig obj) {
         for (java.util.Map.Entry<String, Object> member : json) {
             switch (member.getKey()) {
+            case "collectClusteredResults":
+                if (member.getValue() instanceof Boolean) {
+                    obj.setCollectClusteredResults((Boolean) member.getValue());
+                }
+                break;
             case "enabled":
                 if (member.getValue() instanceof Boolean) {
                     obj.setEnabled((Boolean) member.getValue());

@@ -178,7 +178,8 @@ public class HealthCheckRegistry {
      */
     public Future<JsonObject> collectHealthCheckResults(DataContext dataContext, String check) {
         Future<List<JsonObject>> asyncResults;
-        if (NeonBee.get(vertx).getOptions().isClustered()) {
+        NeonBee neonBee = NeonBee.get(vertx);
+        if (neonBee.getOptions().isClustered() && neonBee.getConfig().getHealthConfig().doCollectClusteredResults()) {
             asyncResults = getClusteredHealthCheckResults(dataContext);
         } else {
             asyncResults = getLocalHealthCheckResults();
@@ -195,7 +196,7 @@ public class HealthCheckRegistry {
 
         return AsyncHelper.joinComposite(asyncCheckResults).transform(v -> {
             List<JsonObject> allSucceeded = asyncCheckResults.stream().filter(Future::succeeded).map(Future::result)
-                    .peek(result -> result.remove("outcome")).collect(toList());
+                    .peek(result -> result.remove(OUTCOME_KEY)).collect(toList());
 
             return Future.succeededFuture(allSucceeded);
         });

@@ -190,7 +190,7 @@ compileJava {
 compileGeneratedJava {
     // This task will be automatically executed when calling "gradlew build", but the generated sources were already
     // build in the customized "compileJava" task. Therefore there is no need to compile the classes again.
-    // This compiliation would also produce compiling issues, because this classpath doesn't contian all dependencies.
+    // This compilation would also produce compiling issues, because this classpath doesn't contain all dependencies.
     source = []
 }
 
