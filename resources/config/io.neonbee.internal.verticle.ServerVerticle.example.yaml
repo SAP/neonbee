@@ -100,4 +100,23 @@ config:
     - io.neonbee.internal.handler.factories.TimeoutHandlerFactory
     - io.neonbee.internal.handler.factories.SessionHandlerFactory
     - io.neonbee.internal.handler.factories.CacheControlHandlerFactory
+    - io.neonbee.internal.handler.factories.CorsHandlerFactory
     - io.neonbee.internal.handler.factories.DisallowingFileUploadBodyHandlerFactory
+
+    # configures the CORS handler (Disabled by default)
+    cors:
+        enabled: false # Enables the CORS handler.
+        origins: # Set the list of allowed static origins.
+            - http://foo.bar
+        relativeOrigins: # Set the list of allowed relative origins.
+            - "^http\\://.*.foo.bar$"
+        allowedMethods: # Set a set of allowed methods. Uppercase required!
+            - GET
+            - PUT
+        allowedHeaders: # The allowed HTTP headers.
+            - foo
+            - bar
+        exposedHeaders: # The exposed headers.
+            - foobar
+        maxAgeSeconds: 1337 # Set how long the browser should cache the information.
+        allowCredentials: false # Set whether credentials are allowed or not.

@@ -24,6 +24,7 @@ import io.neonbee.endpoint.raw.RawEndpoint;
 import io.neonbee.internal.handler.DefaultErrorHandler;
 import io.neonbee.internal.handler.factories.CacheControlHandlerFactory;
 import io.neonbee.internal.handler.factories.CorrelationIdHandlerFactory;
+import io.neonbee.internal.handler.factories.CorsHandlerFactory;
 import io.neonbee.internal.handler.factories.DisallowingFileUploadBodyHandlerFactory;
 import io.neonbee.internal.handler.factories.InstanceInfoHandlerFactory;
 import io.neonbee.internal.handler.factories.LoggerHandlerFactory;
@@ -221,7 +222,7 @@ public class ServerConfig extends HttpServerOptions {
             List.of(LoggerHandlerFactory.class.getName(), InstanceInfoHandlerFactory.class.getName(),
                     CorrelationIdHandlerFactory.class.getName(), TimeoutHandlerFactory.class.getName(),
                     SessionHandlerFactory.class.getName(), CacheControlHandlerFactory.class.getName(),
-                    DisallowingFileUploadBodyHandlerFactory.class.getName());
+                    CorsHandlerFactory.class.getName(), DisallowingFileUploadBodyHandlerFactory.class.getName());
 
     private static final String PROPERTY_PORT = "port";
 
@@ -232,7 +233,7 @@ public class ServerConfig extends HttpServerOptions {
 
     private static final ImmutableBiMap<String, String> REPHRASE_MAP = ImmutableBiMap.of("endpointConfigs", "endpoints",
             "authChainConfig", "authenticationChain", "errorHandlerClassName", "errorHandler", "errorHandlerTemplate",
-            "errorTemplate", "handlerFactoriesClassNames", "handlerFactories");
+            "errorTemplate", "handlerFactoriesClassNames", "handlerFactories", "corsConfig", "cors");
 
     private int timeout = DEFAULT_TIMEOUT;
 
@@ -253,6 +254,8 @@ public class ServerConfig extends HttpServerOptions {
     private String errorHandlerClassName;
 
     private String errorHandlerTemplate;
+
+    private CorsConfig corsConfig = new CorsConfig();
 
     /**
      * Create a default server configuration.
@@ -289,6 +292,27 @@ public class ServerConfig extends HttpServerOptions {
         ServerConfigConverter.toJson(this, json);
         rephraseConfigNames(json, REPHRASE_MAP, false);
         return json;
+    }
+
+    /**
+     * Get the CORS configuration of the server verticle.
+     *
+     * @return the CORS configuration
+     */
+    public CorsConfig getCorsConfig() {
+        return corsConfig;
+    }
+
+    /**
+     * Set the CORS configuration of the server verticle.
+     *
+     * @param corsConfig the CORS configuration
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
+    public ServerConfig setCorsConfig(CorsConfig corsConfig) {
+        this.corsConfig = corsConfig;
+        return this;
     }
 
     /**
