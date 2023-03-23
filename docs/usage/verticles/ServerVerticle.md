@@ -14,7 +14,7 @@ The `ServerVerticle` extends the `HttpServerOptions` of Vert.x, which can be con
 property. Some defaults are overridden, and additional config options are provided (see below).
 
 | Property                                      |  Type   | Required |                      Default                      | Description                                                                                |
-| :-------------------------------------------- | :-----: | :------: | :-----------------------------------------------: | :----------------------------------------------------------------------------------------- |
+|:----------------------------------------------|:-------:| :------: | :-----------------------------------------------: |:-------------------------------------------------------------------------------------------|
 | `port`                                        | integer |    No    |                      `8080`                       | Sets the port on which the application server listens.                                     |
 | `useAlpn`                                     | boolean |    No    |                      `true`                       | Whether to use application-layer protocol negotiation or not.                              |
 | [`sessionHandling`](#sessionhandling)         | string  |    No    |                      `NONE`                       | Sets the type of session handling. Must be one of one of: `NONE`, `LOCAL`, or `CLUSTERED`. |
@@ -31,6 +31,7 @@ property. Some defaults are overridden, and additional config options are provid
 | [`endpoints`](#endpoints)                     |  array  |    No    |                     See below                     | Configures the endpoints.                                                                  |
 | [`authenticationChain`](#authenticationchain) |  array  |    No    |                       `[]`                        | Configures the authentication chain.                                                       |
 | [`handlerFactories`](#handlerfactories)       | object  |    No    |                     See below                     | Registers routing handlers on the root router.                                             |
+| [`cors`](#cors)                               | object  |    No    |                     See below                     | Configures the CORS handler.                                                               |
 
 ---
 
@@ -62,6 +63,21 @@ The following properties can be set on the endpoint config.
 | `uriConversion`                         | string  |    No    | `STRICT` | Sets namespace and service name URI mapping. Must be one of `STRICT`, or `LOOSE` based on CDS. Only supported by `ODataV4Endpoint`. |
 | `exposeHiddenVerticles`                 | boolean |    No    | `false`  | Whether hidden verticles should be exposed or not.                                                                                  |
 | [`exposedVerticles`](#exposedverticles) | object  |    No    |   `~`    | Block and Allow list of verticles to expose. Only supported by `ODataV4Endpoint` and `RawEndpoint`.                                 |
+
+### `cors`
+
+The following properties can be set on the cors config. If no `origins` **and** no `relativeOrigins` is set, the CORS handler won't be added.
+
+| Property           |  Type   | Required |  Default   | Description                                            |
+|:-------------------|:-------:|:--------:|:----------:|:-------------------------------------------------------|
+| `enabled`          | boolean |    No    |  `false`   | Enables the CORS handler.                              |
+| `origins`          |  array  |    No    |    `~`     | Set the list of allowed static origins.                |
+| `relativeOrigins`  |  array  |    No    |    `~`     | Set the list of allowed relative origins.              |
+| `allowedMethods`   |  array  |    No    |    `~`     | Set a set of allowed methods.                          |
+| `allowedHeaders`   |  array  |    No    |    `~`     | Set a set of allowed headers.                          |
+| `exposedHeaders`   |  array  |    No    |    `~`     | Set a set of exposed headers.                          |
+| `maxAgeSeconds`    | integer |    No    |    `~`     | Set how long the browser should cache the information. |
+| `allowCredentials` | boolean |    No    |  `false`   | Set whether credentials are allowed or not.            |
 
 #### `exposedVerticles`
 
@@ -174,5 +190,6 @@ config:
     - io.neonbee.internal.handler.factories.TimeoutHandlerFactory
     - io.neonbee.internal.handler.factories.SessionHandlerFactory
     - io.neonbee.internal.handler.factories.CacheControlHandlerFactory
+    - io.neonbee.internal.handler.factories.CorsHandlerFactory
     - io.neonbee.internal.handler.factories.DisallowingFileUploadBodyHandlerFactory
 ```

@@ -90,6 +90,7 @@ class ServerConfigTest {
         int timeoutStatusCode = 2;
         EndpointConfig epc = new EndpointConfig().setType("hodor");
         AuthHandlerConfig ahc = new AuthHandlerConfig().setType(AuthHandlerType.BASIC);
+        CorsConfig corsConfig = new CorsConfig().setOrigins(List.of("http://foo.bar")).setEnabled(true);
 
         JsonObject json = new JsonObject().put("timeout", timeout).put("sessionHandling", sessionHandling.name());
         json.put("sessionCookieName", sessionCookieName).put("correlationStrategy", correlationStrategy.name());
@@ -97,6 +98,7 @@ class ServerConfigTest {
         json.put("authenticationChain", new JsonArray().add(ahc.toJson()));
         json.put("errorHandler", ERROR_HANDLER);
         json.put("errorTemplate", ERROR_TEMPLATE);
+        json.put("cors", corsConfig.toJson());
 
         JsonArray handlerFactories = new JsonArray();
         FACTORY_CLASS_NAME_LIST.forEach(handlerFactories::add);
@@ -112,6 +114,7 @@ class ServerConfigTest {
         assertThat(sc.getAuthChainConfig()).contains(ahc);
         assertThat(sc.getErrorHandlerClassName()).isEqualTo(ERROR_HANDLER);
         assertThat(sc.getErrorHandlerTemplate()).isEqualTo(ERROR_TEMPLATE);
+        assertThat(sc.getCorsConfig()).isEqualTo(corsConfig);
     }
 
     @Test

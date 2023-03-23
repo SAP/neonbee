@@ -35,6 +35,12 @@ public class ServerConfigConverter {
                             io.neonbee.config.ServerConfig.CorrelationStrategy.valueOf((String) member.getValue()));
                 }
                 break;
+            case "corsConfig":
+                if (member.getValue() instanceof JsonObject) {
+                    obj.setCorsConfig(
+                            new io.neonbee.config.CorsConfig((io.vertx.core.json.JsonObject) member.getValue()));
+                }
+                break;
             case "endpointConfigs":
                 if (member.getValue() instanceof JsonArray) {
                     java.util.ArrayList<io.neonbee.config.EndpointConfig> list = new java.util.ArrayList<>();
@@ -102,6 +108,9 @@ public class ServerConfigConverter {
         }
         if (obj.getCorrelationStrategy() != null) {
             json.put("correlationStrategy", obj.getCorrelationStrategy().name());
+        }
+        if (obj.getCorsConfig() != null) {
+            json.put("corsConfig", obj.getCorsConfig().toJson());
         }
         if (obj.getEndpointConfigs() != null) {
             JsonArray array = new JsonArray();

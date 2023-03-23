@@ -186,7 +186,7 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
 
     @Test
     @DisplayName("should read the health config correctly")
-    void testReadMetricsConfig() {
+    void testReadHealthConfig() {
         JsonObject settings = new JsonObject();
         Function<Boolean, JsonObject> buildConfig =
                 enabled -> settings.put("health", new JsonObject().put("enabled", enabled));

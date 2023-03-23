@@ -126,7 +126,7 @@ public class EndpointConfig {
     }
 
     /**
-     * Gets a list of authentication handler configurations to use in a authentication chain.
+     * Gets a list of authentication handler configurations to use in an authentication chain.
      *
      * @return the list of authentication handler configurations
      */
