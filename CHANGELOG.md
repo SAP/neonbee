@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.21.0 (2023-03-27)
+
+### Features
+
+- allow to pass count value via response hints ([68a52c55](https://github.com/SAP/neonbee/commit/68a52c553ed01ac5de3687ce713ef53954d0f161))
+- make HealthCheck collection configurable ([22eb10ee](https://github.com/SAP/neonbee/commit/22eb10ee2d332be41be37c039583f6981befcb12))
+- add CorsHandlerFactory ([80700925](https://github.com/SAP/neonbee/commit/8070092549404f1d80116243e294802908f9cf5c))
+
+
+### Chores
+
+- improve error message when no verticle is registered for an entity type ([2443e4e7](https://github.com/SAP/neonbee/commit/2443e4e72283f43f9310ec62aa5b5a0565189af0))
+
+
+### Documentation
+
+- add documentation for gradle tasks ([61a974d8](https://github.com/SAP/neonbee/commit/61a974d8121eafa783c7724d24ab6eeaa6f62aae))
+
+
+### Build System
+
+- **deps**: bump com.diffplug.spotless from 6.16.0 to 6.17.0 ([dc3c5787](https://github.com/SAP/neonbee/commit/dc3c578773a66da570096c6deb6da565a7e931bc))
+- **deps**: bump se.bjurr.violations.violations-gradle-plugin ([12f73b8a](https://github.com/SAP/neonbee/commit/12f73b8a1a89d0dedc423d5b54aa6e3e0cd78b9e))
+- **deps**: bump io.micrometer:micrometer-registry-prometheus ([e8525823](https://github.com/SAP/neonbee/commit/e85258230f1ccd592c4a275d747290d17d1d85d2))
+
+
 ## 0.20.0 (2023-03-07)
 
 ### Bug Fixes
