@@ -129,7 +129,8 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
          */
         return getVerticlesForEntityType(vertx, entityTypeName).compose(qualifiedNames -> {
             if (qualifiedNames.isEmpty()) {
-                return failedFuture("No verticle registered listening to this entity type name");
+                return failedFuture("No verticle registered listening to entity type name "
+                        + entityTypeName.getFullQualifiedNameAsString());
             } else if (qualifiedNames.size() == 1) {
                 return requestData(vertx, new DataRequest(qualifiedNames.get(0), request.getQuery()), context);
             } else {
