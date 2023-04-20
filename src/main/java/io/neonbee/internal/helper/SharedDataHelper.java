@@ -22,6 +22,8 @@ public final class SharedDataHelper {
      * @param futureSupplier supplier for the future to be secured by the lock
      * @return the futureSupplier
      */
+    // FIXME: this lock method could lead to unwanted lock wait because every one that use the same key would have to
+    // wait to acquire the lock even when the keys are unrelated
     public static Future<Void> lock(Vertx vertx, String key, Supplier<Future<Void>> futureSupplier) {
         LOGGER.debug("Get lock for key \"{}\"", key);
         return getSharedDataAccessor(vertx)
