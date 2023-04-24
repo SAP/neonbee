@@ -10,7 +10,7 @@ plugins {
 
     // community plugins
     id 'com.diffplug.spotless' version '6.18.0'
-    id 'net.ltgt.errorprone' version '3.0.1'
+    id 'net.ltgt.errorprone' version '3.1.0'
     id 'com.github.spotbugs' version '5.0.14'
     id 'org.ajoberstar.grgit' version '5.2.0'
     id 'com.github.ksoichiro.console.reporter' version '0.6.3'
