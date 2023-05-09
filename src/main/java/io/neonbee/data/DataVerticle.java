@@ -494,7 +494,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
 
     private <U> void reportRequestDataMetrics(DataRequest request, Future<U> future) {
         List<Tag> tags;
-        if (request.getQuery() == null) {
+        if (request.getQuery() == null || request.getQuery().getRawQuery().isEmpty()) {
             tags = List.of();
         } else {
             tags = List.of(new ImmutableTag("query", request.getQuery().getRawQuery()));

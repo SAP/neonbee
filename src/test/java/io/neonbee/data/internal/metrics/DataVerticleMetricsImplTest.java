@@ -47,18 +47,18 @@ class DataVerticleMetricsImplTest extends DataVerticleTestBase {
                 .onSuccess(resp -> testContext.verify(() -> {
                     assertThat(resp.statusCode()).isEqualTo(200);
                     assertThat(resp.bodyAsString())
-                            .contains("request_data_timer_test_TestSourceDataVerticle_seconds_count{query=\"\",} ");
+                            .contains("request_data_timer_test_TestSourceDataVerticle_seconds_count ");
                     assertThat(resp.bodyAsString())
-                            .contains("request_data_timer_test_TestSourceDataVerticle_seconds_sum{query=\"\",} ");
+                            .contains("request_data_timer_test_TestSourceDataVerticle_seconds_sum ");
                     assertThat(resp.bodyAsString())
-                            .contains("request_data_timer_test_TestSourceDataVerticle_seconds_max{query=\"\",} ");
+                            .contains("request_data_timer_test_TestSourceDataVerticle_seconds_max ");
 
                     assertThat(resp.bodyAsString()).contains(
-                            "request_data_counter_test_TestSourceDataVerticle_total{query=\"\",succeeded=\"true\",} 1.0");
+                            "request_data_counter_test_TestSourceDataVerticle_total{succeeded=\"true\",} 1.0");
                     assertThat(resp.bodyAsString())
                             .contains("request_data_active_requests_test_TestSourceDataVerticle 0.0");
                     assertThat(resp.bodyAsString())
-                            .contains("request_counter_test_TestSourceDataVerticle_total{query=\"\",} 1.0");
+                            .contains("request_counter_test_TestSourceDataVerticle_total 1.0");
 
                     assertThat(resp.bodyAsString()).contains(
                             "retrieve_data_timer_DataVerticle_test_TestSourceDataVerticle__seconds_max{name=\"TestSourceDataVerticle\",namespace=\"test\",} ");
