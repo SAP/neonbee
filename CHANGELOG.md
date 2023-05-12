@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.22.0 (2023-05-12)
+
+### Bug Fixes
+
+- dynatrace null or empty dimension warning ([90b0e0de](https://github.com/SAP/neonbee/commit/90b0e0defb9cacddcbe3a013d033836180f3405e))
+
+
+### Features
+
+- update to Vert.x 4.4.2 ([40268a71](https://github.com/SAP/neonbee/commit/40268a71e649039278bb68731d091b44f709566e))
+
+
+### Build System
+
+- **deps**: bump com.github.spotbugs from 5.0.13 to 5.0.14 ([c6e37bcd](https://github.com/SAP/neonbee/commit/c6e37bcdb80ed7c2c0245e8420f686e2fd0beebe))
+- **deps**: bump org.ow2.asm:asm from 9.4 to 9.5 ([f63cf50d](https://github.com/SAP/neonbee/commit/f63cf50d7388836834a15766d0c2abd36d5a7072))
+- **deps**: bump com.sap.cds:cds4j-core from 1.36.0 to 1.37.0 ([abf616a2](https://github.com/SAP/neonbee/commit/abf616a248427b141a4530975dbe6c3baa882fe9))
+- **deps**: upgrade `vertx` to 4.4.1 ([e3995df0](https://github.com/SAP/neonbee/commit/e3995df040701f8f0d04438a13f8adb4a1214c02))
+- **deps**: bump com.diffplug.spotless from 6.17.0 to 6.18.0 ([e91141fc](https://github.com/SAP/neonbee/commit/e91141fcf854f147cfa0908570b1e3bb86724a51))
+- **deps**: bump org.ajoberstar.grgit from 5.0.0 to 5.2.0 ([4ca7dbf2](https://github.com/SAP/neonbee/commit/4ca7dbf26a633ae87a81901d9b79889df2dccbea))
+- **deps**: bump com.sap.cds:cds4j-core from 1.37.0 to 1.37.1 ([861409e0](https://github.com/SAP/neonbee/commit/861409e02cbe064020c08c740d7fa770a9d2d190))
+- **deps**: bump net.ltgt.errorprone from 3.0.1 to 3.1.0 ([2a8c7e1b](https://github.com/SAP/neonbee/commit/2a8c7e1b813379c7af938eafd44aeab4e7dc4a2e))
+- **deps**: bump io.micrometer:micrometer-registry-prometheus ([03af4791](https://github.com/SAP/neonbee/commit/03af4791c28e65887eccc59da91af27c0b7e5b42))
+- **deps**: bump sapmachine from 11.0.18 to 11.0.19 ([5a35d2eb](https://github.com/SAP/neonbee/commit/5a35d2eb9f17af7ec420a815fbd8d70985261c7b))
+- **deps**: bump com.sap.cds:cds4j-core from 1.37.1 to 1.38.1 ([d8b237ac](https://github.com/SAP/neonbee/commit/d8b237ac22b0af9f93d705d3a44af880b782d6ec))
+
+
 ## 0.21.0 (2023-03-27)
 
 ### Features
