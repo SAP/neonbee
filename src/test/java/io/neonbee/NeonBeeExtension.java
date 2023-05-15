@@ -1,6 +1,6 @@
 package io.neonbee;
 
-import static ch.qos.logback.classic.util.ContextInitializer.CONFIG_FILE_PROPERTY;
+import static ch.qos.logback.classic.ClassicConstants.CONFIG_FILE_PROPERTY;
 import static io.neonbee.test.helper.OptionsHelper.options;
 import static java.lang.System.setProperty;
 

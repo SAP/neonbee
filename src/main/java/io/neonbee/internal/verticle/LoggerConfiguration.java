@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.slf4j.impl.StaticLoggerBinder;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -30,8 +30,7 @@ public class LoggerConfiguration implements Comparable<LoggerConfiguration> {
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
-    private static final LoggerContext LOGGER_CONTEXT =
-            (LoggerContext) StaticLoggerBinder.getSingleton().getLoggerFactory();
+    private static final LoggerContext LOGGER_CONTEXT = (LoggerContext) LoggerFactory.getILoggerFactory();
 
     private String name;
 
