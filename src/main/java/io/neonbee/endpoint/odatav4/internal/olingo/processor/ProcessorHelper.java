@@ -101,10 +101,8 @@ public final class ProcessorHelper {
         DataQuery query = odataRequestToQuery(request, action, body);
         DataContext dataContext = new DataContextImpl(routingContext);
         return requestEntity(vertx, new DataRequest(entityType.getFullQualifiedName(), query), dataContext)
-                .map(result -> {
-                    transferResponseHint(dataContext, routingContext);
-                    return result;
-                }).onFailure(processPromise::fail);
+                .map(result -> transferResponseHint(dataContext, routingContext, result))
+                .onFailure(processPromise::fail);
     }
 
     /**
@@ -112,10 +110,13 @@ public final class ProcessorHelper {
      *
      * @param dataContext    data context
      * @param routingContext routing context
+     * @param result         entity wrapper result
+     * @return the entity wrapper result
      */
     @VisibleForTesting
-    static void transferResponseHint(DataContext dataContext, RoutingContext routingContext) {
-        dataContext.responseData().entrySet()
-                .forEach(entry -> routingContext.put(RESPONSE_HEADER_PREFIX + entry.getKey(), entry.getValue()));
+    static EntityWrapper transferResponseHint(DataContext dataContext, RoutingContext routingContext,
+            EntityWrapper result) {
+        dataContext.responseData().forEach((key, value) -> routingContext.put(RESPONSE_HEADER_PREFIX + key, value));
+        return result;
     }
 }

@@ -7,6 +7,7 @@ import static io.neonbee.data.DataAction.UPDATE;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.chooseEntitySet;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.fetchNavigationTargetEntity;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.forwardRequest;
+import static org.apache.olingo.commons.api.http.HttpStatusCode.CREATED;
 import static org.apache.olingo.commons.api.http.HttpStatusCode.INTERNAL_SERVER_ERROR;
 import static org.apache.olingo.commons.api.http.HttpStatusCode.NOT_FOUND;
 import static org.apache.olingo.commons.api.http.HttpStatusCode.NO_CONTENT;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -68,6 +70,8 @@ public class EntityProcessor extends AsynchronousProcessor
 
     private static final EntityComparison ENTITY_COMPARISON = new EntityComparison() {};
 
+    private static final String LOCATION_HEADER = "Location";
+
     private OData odata;
 
     private ServiceMetadata serviceMetadata;
@@ -106,20 +110,26 @@ public class EntityProcessor extends AsynchronousProcessor
         Promise<Void> processPromise = getProcessPromise();
         UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0);
         Entity entity = parseBody(request, uriResourceEntitySet, requestFormat);
-
-        forwardRequest(request, CREATE, entity, uriInfo, vertx, routingContext, processPromise).onSuccess(ew -> {
-            /*
-             * TODO: Upon successful completion, the response MUST contain a Location header that contains the edit URL
-             * or read URL of the created entity.
-             *
-             * TODO: Upon successful, completion the service MUST respond with either 201 Created (in this case, the
-             * response body MUST contain the resource created), or 204 No Content (in this case the response body is
-             * empty) if the request included a return Prefer header with a value of return=minimal. See
-             * https://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#_Toc31358871
-             */
-            response.setStatusCode(NO_CONTENT.getStatusCode());
-            processPromise.complete();
-        });
+        forwardRequest(request, CREATE, entity, uriInfo, vertx, routingContext, processPromise)
+                .onSuccess(createdEntity -> {
+                    try {
+                        ContextURL contextUrl =
+                                ContextURL.with().entitySet(uriResourceEntitySet.getEntitySet()).build();
+                        EntitySerializerOptions opts = EntitySerializerOptions.with().contextURL(contextUrl).build();
+                        response.setContent(odata.createSerializer(responseFormat)
+                                .entity(serviceMetadata, uriResourceEntitySet.getEntitySet().getEntityType(),
+                                        createdEntity.getEntity(), opts)
+                                .getContent());
+                        response.setStatusCode(CREATED.getStatusCode());
+                        response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+                        Optional.ofNullable(
+                                routingContext.<String>get(ProcessorHelper.RESPONSE_HEADER_PREFIX + LOCATION_HEADER))
+                                .ifPresent(location -> response.setHeader(LOCATION_HEADER, location));
+                        processPromise.complete();
+                    } catch (SerializerException e) {
+                        processPromise.fail(e);
+                    }
+                });
     }
 
     @Override

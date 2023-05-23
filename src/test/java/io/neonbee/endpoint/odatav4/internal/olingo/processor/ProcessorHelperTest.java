@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 
 import io.neonbee.data.DataContext;
 import io.neonbee.data.internal.DataContextImpl;
+import io.neonbee.entity.EntityWrapper;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.impl.HttpServerRequestInternal;
 import io.vertx.ext.web.RoutingContext;
@@ -36,11 +37,13 @@ class ProcessorHelperTest {
         dataContext.responseData().put(ODATA_FILTER_KEY, Boolean.TRUE);
         dataContext.responseData().put(ODATA_EXPAND_KEY, Boolean.FALSE);
         dataContext.responseData().put(ODATA_COUNT_SIZE_KEY, 42);
-        ProcessorHelper.transferResponseHint(dataContext, routingContext);
+        EntityWrapper entityWrapper = Mockito.mock(EntityWrapper.class);
+        EntityWrapper result = ProcessorHelper.transferResponseHint(dataContext, routingContext, entityWrapper);
         assertThat(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_FILTER_KEY)).isTrue();
         assertThat(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_EXPAND_KEY)).isFalse();
         assertThat(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_SKIP_KEY)).isNull();
         assertThat(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_TOP_KEY)).isNull();
         assertThat(routingContext.<Integer>get(RESPONSE_HEADER_PREFIX + ODATA_COUNT_SIZE_KEY)).isEqualTo(42);
+        assertThat(result).isSameInstanceAs(entityWrapper);
     }
 }
