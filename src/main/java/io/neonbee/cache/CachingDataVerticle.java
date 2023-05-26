@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -42,7 +43,7 @@ public abstract class CachingDataVerticle<T> extends DataVerticle<T> {
      * requests / queries. Thus use a cache map, correlating all caches by the implementation class of the verticle.
      */
     @VisibleForTesting
-    static final Map<Class<?>, Cache<Object, ?>> CACHES = new HashMap<>();
+    static final Map<Class<?>, Cache<Object, ?>> CACHES = new ConcurrentHashMap<>();
 
     private static final long DEFAULT_COALESCING_TIMEOUT = 10L * 1000;
 
@@ -262,7 +263,7 @@ public abstract class CachingDataVerticle<T> extends DataVerticle<T> {
 
                             // in case we do not coalesce requests, or we are the one who got the lock and thus
                             // "rightfully" retrieved the data, notify the retrievedDataToCache that we got new data,
-                            // however, neglect the the outcome and always return the data
+                            // however, neglect the outcome and always return the data
                             if (optionalCacheKey.isPresent() && (coalescingTimeout <= 0 || lock != null)) {
                                 return retrievedDataToCache(optionalCacheKey.get(), data, context)
                                         .map(data).otherwise(data);
