@@ -30,7 +30,7 @@ public interface HookRegistration {
     /**
      * Unregister the hook.
      *
-     * @return A future that is succeed if the the hook was successfully undeployed, otherwise a failed future.
+     * @return A future that is succeed if the hook was successfully undeployed, otherwise a failed future.
      */
     Future<Void> unregister();
 }

@@ -92,14 +92,6 @@ class CachingDataVerticleTest extends DataVerticleTestBase {
     }
 
     static class MyCachingVerticle extends CachingDataVerticle<String> {
-        MyCachingVerticle() {
-            super();
-        }
-
-        MyCachingVerticle(long refreshInterval, TimeUnit timeUnit) {
-            super(refreshInterval, timeUnit);
-        }
-
         @Override
         public Future<String> retrieveDataToCache(DataQuery query, DataMap require, DataContext context) {
             return Future.succeededFuture("SUCCESS");
