@@ -56,6 +56,7 @@ import io.neonbee.health.internal.HealthCheck;
 import io.neonbee.hook.HookRegistry;
 import io.neonbee.hook.HookType;
 import io.neonbee.hook.internal.DefaultHookRegistry;
+import io.neonbee.internal.ReplyInboundInterceptor;
 import io.neonbee.internal.SharedDataAccessor;
 import io.neonbee.internal.buffer.ImmutableBuffer;
 import io.neonbee.internal.cluster.ClusterHelper;
@@ -69,6 +70,7 @@ import io.neonbee.internal.deploy.Deployable;
 import io.neonbee.internal.deploy.Deployables;
 import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.helper.FileSystemHelper;
+import io.neonbee.internal.json.ConfigurableJsonFactory;
 import io.neonbee.internal.json.ImmutableJsonArray;
 import io.neonbee.internal.json.ImmutableJsonObject;
 import io.neonbee.internal.registry.Registry;
@@ -330,6 +332,12 @@ public class NeonBee {
                     // set the default timezone and overwrite any configured user.timezone property
                     TimeZone.setDefault(TimeZone.getTimeZone(config.getTimeZone()));
 
+                    // set the maximum JSON string size for Jackson parsing (or stay with the default if not set)
+                    int jsonMaxStringSize = config.getJsonMaxStringSize();
+                    if (jsonMaxStringSize > 0) {
+                        ConfigurableJsonFactory.CODEC.setMaxStringLength(jsonMaxStringSize);
+                    }
+
                     // further synchronous initializations which should happen before verticles are getting deployed
                 }).compose(nothing -> all(initializeSharedMaps(), decorateEventBus(), createMicrometerRegistries()))
                 .compose(nothing -> all(deployVerticles(), deployModules())) // deployment of verticles & modules
@@ -418,7 +426,9 @@ public class NeonBee {
                 strategy = new TrackingDataLoggingStrategy();
             }
 
-            vertx.eventBus().addInboundInterceptor(new TrackingInterceptor(MessageDirection.INBOUND, strategy))
+            vertx.eventBus()
+                    .addInboundInterceptor(new ReplyInboundInterceptor())
+                    .addInboundInterceptor(new TrackingInterceptor(MessageDirection.INBOUND, strategy))
                     .addOutboundInterceptor(new TrackingInterceptor(MessageDirection.OUTBOUND, strategy));
 
             // add any default system codecs (bundled w/ NeonBee) here

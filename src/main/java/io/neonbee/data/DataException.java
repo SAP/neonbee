@@ -23,6 +23,8 @@ public class DataException extends RuntimeException {
 
     public static final int FAILURE_CODE_PROCESSING_FAILED = 1030;
 
+    public static final int FAILURE_CODE_DECODE_EXCEPTION = 1040;
+
     private static final long serialVersionUID = 1L;
 
     private final int failureCode;

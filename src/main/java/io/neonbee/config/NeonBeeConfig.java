@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.google.common.collect.ImmutableBiMap;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -71,6 +72,8 @@ public class NeonBeeConfig {
     private HealthConfig healthConfig = new HealthConfig();
 
     private MetricsConfig metricsConfig = new MetricsConfig();
+
+    private int jsonMaxStringSize;
 
     /**
      * Are the metrics enabled?
@@ -381,5 +384,28 @@ public class NeonBeeConfig {
      */
     public List<MicrometerRegistryConfig> getMicrometerRegistries() {
         return this.micrometerRegistries;
+    }
+
+    /**
+     * Set the maximum string length (in chars or bytes, depending on input context) to parse JSON input strings or
+     * buffers.
+     *
+     * @see StreamReadConstraints.Builder#maxStringLength(int)
+     * @param jsonMaxStringSize the maximum string length (in chars or bytes, depending on input context)
+     * @return a reference to this, so the API can be used fluently
+     */
+    @Fluent
+    public NeonBeeConfig setJsonMaxStringSize(int jsonMaxStringSize) {
+        this.jsonMaxStringSize = jsonMaxStringSize;
+        return this;
+    }
+
+    /**
+     * Get the maximum string length to parse JSON input strings or buffers.
+     *
+     * @return the maximum string length (in chars or bytes, depending on input context)
+     */
+    public int getJsonMaxStringSize() {
+        return jsonMaxStringSize;
     }
 }
