@@ -40,6 +40,11 @@ public class NeonBeeConfigConverter {
                             new io.neonbee.config.HealthConfig((io.vertx.core.json.JsonObject) member.getValue()));
                 }
                 break;
+            case "jsonMaxStringSize":
+                if (member.getValue() instanceof Number) {
+                    obj.setJsonMaxStringSize(((Number) member.getValue()).intValue());
+                }
+                break;
             case "metricsConfig":
                 if (member.getValue() instanceof JsonObject) {
                     obj.setMetricsConfig(
@@ -95,6 +100,7 @@ public class NeonBeeConfigConverter {
         if (obj.getHealthConfig() != null) {
             json.put("healthConfig", obj.getHealthConfig().toJson());
         }
+        json.put("jsonMaxStringSize", obj.getJsonMaxStringSize());
         if (obj.getMetricsConfig() != null) {
             json.put("metricsConfig", obj.getMetricsConfig().toJson());
         }

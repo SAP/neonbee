@@ -1,6 +1,7 @@
 package io.neonbee.data;
 
 import static io.neonbee.data.DataAction.READ;
+import static io.neonbee.data.DataException.FAILURE_CODE_DECODE_EXCEPTION;
 import static io.neonbee.data.DataException.FAILURE_CODE_MISSING_MESSAGE_CODEC;
 import static io.neonbee.data.DataException.FAILURE_CODE_NO_HANDLERS;
 import static io.neonbee.data.DataException.FAILURE_CODE_PROCESSING_FAILED;
@@ -385,12 +386,17 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
             ResolutionRoutine routine;
             MultiMap headers = message.headers();
             try {
+                // important: this is the first time message.body() is called and thus, in case it is a clustered
+                // message, Vert.x will try to decode the message from wire. we need to catch exceptions here!
                 routine = message.body().getAction() == READ
                         ? resolutionRoutineForStrategy(Optional.ofNullable(headers.get(RESOLUTION_STRATEGY_HEADER))
                                 .map(ResolutionStrategy::valueOf).orElse(RECURSIVE))
                         : new ManipulationRoutine();
             } catch (IllegalArgumentException e) {
                 message.fail(FAILURE_CODE_UNKNOWN_STRATEGY, "Unknown data resolution strategy");
+                return;
+            } catch (Exception e) {
+                message.fail(FAILURE_CODE_DECODE_EXCEPTION, "Decoding of message body failed. " + e.getMessage());
                 return;
             }
 
