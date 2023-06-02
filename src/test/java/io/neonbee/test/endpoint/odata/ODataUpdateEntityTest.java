@@ -1,6 +1,8 @@
 package io.neonbee.test.endpoint.odata;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.test.endpoint.odata.verticle.TestService3EntityVerticle.ENTITY_DATA_1_UPDATED;
+import static io.neonbee.test.endpoint.odata.verticle.TestService3EntityVerticle.TEST_ENTITY_SET_FQN;
 
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -30,6 +32,7 @@ import io.neonbee.internal.codec.EntityWrapperMessageCodec;
 import io.neonbee.test.base.ODataEndpointTestBase;
 import io.neonbee.test.base.ODataRequest;
 import io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle;
+import io.neonbee.test.endpoint.odata.verticle.TestService3EntityVerticle;
 import io.neonbee.test.endpoint.odata.verticle.TestServiceCompoundKeyEntityVerticle;
 import io.neonbee.test.helper.EntityHelper;
 import io.vertx.core.Future;
@@ -44,20 +47,29 @@ import io.vertx.junit5.VertxTestContext;
 class ODataUpdateEntityTest extends ODataEndpointTestBase {
     private ODataRequest oDataRequest;
 
+    static Stream<Arguments> withHTTPMethods() {
+        return Stream.of(Arguments.of(HttpMethod.PUT), Arguments.of(HttpMethod.PATCH));
+    }
+
+    static Stream<Arguments> withHTTPMethodsAndBody() {
+        JsonObject putBody = TestService1EntityVerticle.EXPECTED_ENTITY_DATA_1.copy();
+        putBody.remove("KeyPropertyString");
+        JsonObject patchBody = new JsonObject().put("PropertyString", "New String");
+
+        return Stream.of(Arguments.of(HttpMethod.PUT, putBody), Arguments.of(HttpMethod.PATCH, patchBody));
+    }
+
     @Override
     protected List<Path> provideEntityModels() {
         return List.of(TestService1EntityVerticle.getDeclaredEntityModel(),
-                TestServiceCompoundKeyEntityVerticle.getDeclaredEntityModel());
+                TestServiceCompoundKeyEntityVerticle.getDeclaredEntityModel(),
+                TestService3EntityVerticle.getDeclaredEntityModel());
     }
 
     @BeforeEach
     void setUp() {
         oDataRequest = new ODataRequest(TestService1EntityVerticle.TEST_ENTITY_SET_FQN)
                 .addHeader(HttpHeaders.CONTENT_TYPE.toString(), MediaType.JSON_UTF_8.toString());
-    }
-
-    static Stream<Arguments> withHTTPMethods() {
-        return Stream.of(Arguments.of(HttpMethod.PUT), Arguments.of(HttpMethod.PATCH));
     }
 
     @ParameterizedTest(name = "{index}: with Method {0}")
@@ -86,14 +98,6 @@ class ODataUpdateEntityTest extends ODataEndpointTestBase {
                 }));
     }
 
-    static Stream<Arguments> withHTTPMethodsAndBody() {
-        JsonObject putBody = TestService1EntityVerticle.EXPECTED_ENTITY_DATA_1.copy();
-        putBody.remove("KeyPropertyString");
-        JsonObject patchBody = new JsonObject().put("PropertyString", "New String");
-
-        return Stream.of(Arguments.of(HttpMethod.PUT, putBody), Arguments.of(HttpMethod.PATCH, patchBody));
-    }
-
     @ParameterizedTest(name = "{index}: with Method {0}")
     @MethodSource("withHTTPMethodsAndBody")
     @DisplayName("Respond with 204 NO CONTENT if an entity was successfully updated")
@@ -116,6 +120,47 @@ class ODataUpdateEntityTest extends ODataEndpointTestBase {
             testContext.verify(() -> assertThat(response.statusCode()).isEqualTo(204));
             cp.flag();
         }));
+    }
+
+    @Test
+    @DisplayName("Respond with 200 OK and entity in body")
+    void updateEntityTest(VertxTestContext testContext) {
+        ODataRequest oDataRequest = new ODataRequest(TEST_ENTITY_SET_FQN)
+                .setMethod(HttpMethod.PUT).setBody(ENTITY_DATA_1_UPDATED.toBuffer())
+                .setKey(Map.of("ID", 0L))
+                .addHeader("expectResponseBody", "true")
+                .addHeader(HttpHeaders.CONTENT_TYPE.toString(), ContentType.APPLICATION_JSON.toContentTypeString());
+
+        deployVerticle(new TestService3EntityVerticle())
+                .compose(v -> requestOData(oDataRequest).onComplete(testContext.succeeding(response -> {
+                    testContext.verify(() -> {
+                        assertThat(response.statusCode()).isEqualTo(200);
+                        JsonObject body = response.body().toJsonObject();
+                        assertThat(body.getString("ID")).isEqualTo(ENTITY_DATA_1_UPDATED.getString("ID"));
+                        assertThat(body.getString("name")).isEqualTo(ENTITY_DATA_1_UPDATED.getString("name"));
+                        assertThat(body.getString("description"))
+                                .isEqualTo(ENTITY_DATA_1_UPDATED.getString("description"));
+                    });
+                    testContext.completeNow();
+                })));
+    }
+
+    @Test
+    @DisplayName("Respond with 204 empty body")
+    void updateEntityTestWithoutResponse(VertxTestContext testContext) {
+        ODataRequest oDataRequest = new ODataRequest(TEST_ENTITY_SET_FQN)
+                .setMethod(HttpMethod.PUT).setBody(ENTITY_DATA_1_UPDATED.toBuffer())
+                .setKey(Map.of("ID", 0L))
+                .addHeader(HttpHeaders.CONTENT_TYPE.toString(), ContentType.APPLICATION_JSON.toContentTypeString());
+
+        deployVerticle(new TestService3EntityVerticle())
+                .compose(v -> requestOData(oDataRequest).onComplete(testContext.succeeding(response -> {
+                    testContext.verify(() -> {
+                        assertThat(response.statusCode()).isEqualTo(204);
+                        assertThat(response.body()).isNull();
+                    });
+                    testContext.completeNow();
+                })));
     }
 
     @Test

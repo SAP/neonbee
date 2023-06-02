@@ -40,6 +40,7 @@ class ODataCreateEntityTest extends ODataEndpointTestBase {
     void createEntityTest(VertxTestContext testContext) {
         ODataRequest oDataRequest = new ODataRequest(TEST_ENTITY_SET_FQN).setMethod(HttpMethod.POST)
                 .setBody(ENTITY_DATA_1.toBuffer())
+                .addHeader("expectResponseBody", "true")
                 .addHeader(HttpHeaders.CONTENT_TYPE.toString(), MediaType.JSON_UTF_8.toString());
 
         requestOData(oDataRequest).onComplete(testContext.succeeding(response -> {
@@ -50,6 +51,23 @@ class ODataCreateEntityTest extends ODataEndpointTestBase {
                 assertThat(body.getString("ID")).isEqualTo(ENTITY_DATA_1.getString("ID"));
                 assertThat(body.getString("name")).isEqualTo(ENTITY_DATA_1.getString("name"));
                 assertThat(body.getString("description")).isEqualTo(ENTITY_DATA_1.getString("description"));
+            });
+            testContext.completeNow();
+        }));
+    }
+
+    @Test
+    @DisplayName("Respond with 204 No Content for backward compatibility")
+    void createEntityTestWithNoResponse(VertxTestContext testContext) {
+        ODataRequest oDataRequest = new ODataRequest(TEST_ENTITY_SET_FQN).setMethod(HttpMethod.POST)
+                .setBody(ENTITY_DATA_1.toBuffer())
+                .addHeader(HttpHeaders.CONTENT_TYPE.toString(), MediaType.JSON_UTF_8.toString());
+
+        requestOData(oDataRequest).onComplete(testContext.succeeding(response -> {
+            testContext.verify(() -> {
+                assertThat(response.statusCode()).isEqualTo(204);
+                assertThat(response.getHeader("Location")).isNull();
+                assertThat(response.body()).isNull();
             });
             testContext.completeNow();
         }));
