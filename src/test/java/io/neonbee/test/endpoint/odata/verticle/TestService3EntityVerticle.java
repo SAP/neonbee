@@ -25,6 +25,9 @@ public class TestService3EntityVerticle extends EntityVerticle {
     public static final JsonObject ENTITY_DATA_1 =
             new JsonObject().put("ID", 0).put("name", "Car 0").put("description", "This is Car 0");
 
+    public static final JsonObject ENTITY_DATA_1_UPDATED =
+            new JsonObject().put("ID", 0).put("name", "Car 0").put("description", "This is Car 0 updated");
+
     public static final JsonObject ENTITY_DATA_2 =
             new JsonObject().put("ID", 1).put("name", "Car 1").put("description", "This is Car 1");
 
@@ -45,7 +48,14 @@ public class TestService3EntityVerticle extends EntityVerticle {
     @Override
     public Future<EntityWrapper> createData(DataQuery query, DataContext context) {
         context.responseData().put("Location", ENTITY_URL);
-        return Future.succeededFuture(new EntityWrapper(TEST_ENTITY_SET_FQN, createEntity(ENTITY_DATA_1)));
+        return Future.succeededFuture(new EntityWrapper(TEST_ENTITY_SET_FQN,
+                query.getHeaders().get("expectResponseBody") != null ? createEntity(ENTITY_DATA_1) : null));
+    }
+
+    @Override
+    public Future<EntityWrapper> updateData(DataQuery query, DataContext context) {
+        return Future.succeededFuture(new EntityWrapper(TEST_ENTITY_SET_FQN,
+                query.getHeaders().get("expectResponseBody") != null ? createEntity(ENTITY_DATA_1_UPDATED) : null));
     }
 
     public static Path getDeclaredEntityModel() {
