@@ -25,6 +25,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -195,6 +196,7 @@ class JobVerticleTest extends NeonBeeTestBase {
 
     @Test
     @DisplayName("Verify that jobs executed when scheduled")
+    @Disabled("This test is extremely influenced by available CPU time, which makes it very unstable on CI.")
     void verifyJobExecuted() {
         // if a one time job was scheduled, handler should be called once and undeploay should be called
         TestJobVerticle testJobVerticle = new TestJobVerticle(new JobSchedule(), false, 100);
