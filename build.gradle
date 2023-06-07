@@ -68,7 +68,7 @@ dependencies {
     implementation group: 'org.apache.olingo', name: 'odata-server-core-ext', version: olingo_version
 
     // required for annotationProcessing and needs to match vertx-infinispan version
-    implementation group: 'org.infinispan', name: 'infinispan-component-annotations', version: '13.0.16.Final'
+    implementation group: 'org.infinispan', name: 'infinispan-component-annotations', version: '13.0.18.Final'
 
     implementation group: 'com.sap.cds', name: 'cds4j-core', version: '1.38.1'
     implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.11.0'
