@@ -54,7 +54,9 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-auth-oauth2', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-hazelcast', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-health-check', version: vertx_version
-    implementation group: 'io.vertx', name: 'vertx-infinispan', version: vertx_version
+    implementation(group: 'io.vertx', name: 'vertx-infinispan', version: vertx_version) {
+        exclude group: 'com.github.ben-manes.caffeine'
+    }
 
     def jackson_version = '2.15.0'
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
