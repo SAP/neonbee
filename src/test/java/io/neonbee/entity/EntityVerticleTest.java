@@ -150,7 +150,6 @@ class EntityVerticleTest extends EntityVerticleTestBase {
 
     @Test
     @DisplayName("Get URI info from query")
-    @SuppressWarnings("deprecation")
     void parseUriInfoTest(Vertx vertx, VertxTestContext testContext) {
         Checkpoint checkpoint = testContext.checkpoint(3);
 
@@ -177,10 +176,10 @@ class EntityVerticleTest extends EntityVerticleTestBase {
                     checkpoint.flag();
                 })));
 
-        EntityVerticle
-                .parseUriInfo(vertx,
-                        new DataQuery(DataAction.READ, "/io.neonbee.test1.TestService1/AllPropertiesNullable",
-                                "$orderby=KeyPropertyString&$filter=KeyPropertyString eq 'Test123'"))
+        DataQuery query = new DataQuery(DataAction.READ, "/io.neonbee.test1.TestService1/AllPropertiesNullable");
+        query.addParameter("$orderby", "KeyPropertyString").addParameter("$filter", "KeyPropertyString eq 'Test123'");
+
+        EntityVerticle.parseUriInfo(vertx, query)
                 .onComplete(testContext.succeeding(uriInfo -> testContext.verify(() -> {
                     assertThat(uriInfo.getUriResourceParts().stream().map(UriResource::getSegmentValue)
                             .collect(Collectors.toList())).contains("AllPropertiesNullable");

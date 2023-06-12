@@ -8,8 +8,6 @@ import static io.vertx.core.Future.succeededFuture;
 
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -173,39 +171,6 @@ public class NeonBeeConfig {
                 .map(micrometerRegistryConfig -> instantiateLoader(micrometerRegistryConfig.getClassName()).compose(
                         micrometerRegistryLoader -> Future.<MeterRegistry>future(promise -> micrometerRegistryLoader
                                 .load(vertx, micrometerRegistryConfig.getConfig(), promise))));
-    }
-
-    /**
-     * Try to load all {@link MicrometerRegistryLoader}s which are configured in the {@link NeonBeeConfig}.
-     *
-     * @return MicrometerMetricsOptions which contains the loaded registries
-     * @throws ClassNotFoundException    if the class cannot be located
-     * @throws NoSuchMethodException     if a matching method is not found.
-     * @throws InvocationTargetException if the underlying constructor throws an exception.
-     * @throws InstantiationException    if the class that declares the underlying constructor represents an abstract
-     *                                   class.
-     * @throws IllegalAccessException    if this Constructor object is enforcing Java language access control and the
-     *                                   underlying constructor is inaccessible.
-     */
-    @Deprecated(forRemoval = true)
-    public Collection<MeterRegistry> createMicrometerRegistries() throws ClassNotFoundException, NoSuchMethodException,
-            InvocationTargetException, InstantiationException, IllegalAccessException {
-
-        List<MeterRegistry> registries = new ArrayList<>(this.micrometerRegistries.size());
-        for (MicrometerRegistryConfig micrometerRegistryConfig : this.micrometerRegistries) {
-            String className = micrometerRegistryConfig.getClassName();
-            if (className == null || className.isBlank()) {
-                continue;
-            }
-            Class<?> classObject = Class.forName(className);
-            if (!MicrometerRegistryLoader.class.isAssignableFrom(classObject)) {
-                throw new IllegalArgumentException(
-                        classObject.getName() + " must implement " + MicrometerRegistryLoader.class.getName());
-            }
-            MicrometerRegistryLoader loader = (MicrometerRegistryLoader) classObject.getConstructor().newInstance();
-            registries.add(loader.load(micrometerRegistryConfig.getConfig()));
-        }
-        return registries;
     }
 
     /**

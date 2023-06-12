@@ -30,14 +30,6 @@ public final class WorkingDirectoryBuilder {
     public static final Path CONFIG_DIR = Path.of("config");
 
     /**
-     * Relative path to the verticle directory
-     *
-     * @deprecated use {@link MODULES_DIR}
-     */
-    @Deprecated
-    public static final Path VERTICLES_DIR = Path.of("verticles");
-
-    /**
      * Relative path to the modules directory
      */
     public static final Path MODULES_DIR = Path.of("modules");
@@ -200,7 +192,7 @@ public final class WorkingDirectoryBuilder {
 
     @SuppressWarnings("Deprecation")
     private void createHollowDirectory(Path workingDirRoot) throws IOException {
-        for (Path dir : List.of(CONFIG_DIR, VERTICLES_DIR, MODULES_DIR, MODELS_DIR, LOGS_DIR)) {
+        for (Path dir : List.of(CONFIG_DIR, MODULES_DIR, MODELS_DIR, LOGS_DIR)) {
             Files.createDirectories(workingDirRoot.resolve(dir));
         }
     }

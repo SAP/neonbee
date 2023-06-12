@@ -23,14 +23,6 @@ public class ConfiguredDataVerticleMetrics implements DataVerticleMetrics {
     public static final String ENABLED = "enabled";
 
     /**
-     * Key for the name of the registry to use.
-     *
-     * @deprecated use {@link #METRICS_REGISTRY_NAME} instead
-     */
-    @Deprecated(forRemoval = true)
-    public static final String METER_REGISTRY_NAME = "meterRegistryName";
-
-    /**
      * Key for the name of the registry to use for metrics reporting of this verticle.
      */
     public static final String METRICS_REGISTRY_NAME = "metricsRegistryName";

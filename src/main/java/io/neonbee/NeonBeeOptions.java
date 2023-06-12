@@ -79,18 +79,6 @@ public interface NeonBeeOptions {
     }
 
     /**
-     * Returns the verticle directory path resolved against the {@link #getWorkingDirectory working directory}.
-     *
-     * @deprecated use {@link #getModulesDirectory} instead and place "verticle JARs" in the {@code /modules} directory
-     *             instead of in the {@code /verticles} directory
-     * @return the verticle directory path
-     */
-    @Deprecated
-    default Path getVerticlesDirectory() {
-        return getWorkingDirectory().resolve("verticles");
-    }
-
-    /**
      * Returns the modules directory path resolved against the {@link #getWorkingDirectory working directory}.
      *
      * @return the modules directory path

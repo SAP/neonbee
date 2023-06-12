@@ -509,7 +509,6 @@ public class NeonBee {
      *
      * @return a future indicating the deployment of all system verticles
      */
-    @SuppressWarnings("deprecation")
     private Future<Void> deploySystemVerticles() {
         List<Future<? extends Deployable>> requiredVerticles = new ArrayList<>();
         requiredVerticles.add(fromClass(vertx, ConsolidationVerticle.class, new JsonObject().put("instances", 1)));
@@ -520,7 +519,6 @@ public class NeonBee {
             requiredVerticles.add(fromClass(vertx, HealthCheckVerticle.class));
         }
         optionalVerticles.add(deployableWatchVerticle(options.getModelsDirectory(), ModelRefreshVerticle::new));
-        optionalVerticles.add(deployableWatchVerticle(options.getVerticlesDirectory(), DeployerVerticle::new));
         optionalVerticles.add(deployableWatchVerticle(options.getModulesDirectory(), DeployerVerticle::new));
 
         LOGGER.info("Deploying system verticles ...");

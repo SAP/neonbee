@@ -15,8 +15,7 @@ import io.vertx.core.buffer.Buffer;
 class DataQueryMessageCodecTest {
     private final DataQueryMessageCodec codec = new DataQueryMessageCodec();
 
-    @SuppressWarnings("deprecation")
-    private final DataQuery query = new DataQuery(DataAction.UPDATE, "uri", "query1=value",
+    private final DataQuery query = new DataQuery(DataAction.UPDATE, "uri", Map.of("query1", List.of("value")),
             Map.of("header1", List.of("value1")), Buffer.buffer("body"));
 
     @Test

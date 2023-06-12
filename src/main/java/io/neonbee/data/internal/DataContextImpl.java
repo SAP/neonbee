@@ -35,7 +35,7 @@ import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
 
-@SuppressWarnings("PMD.GodClass") // Can be removed after deprecated constructors are removed
+@SuppressWarnings("PMD.GodClass")
 public class DataContextImpl implements DataContext {
     @VisibleForTesting
     static final String NO_SESSION_ID_AVAILABLE_KEY = "noSessionIdAvailable";
@@ -90,30 +90,13 @@ public class DataContextImpl implements DataContext {
                 Optional.ofNullable(routingContext.user()).map(User::principal).orElse(null), null, null);
     }
 
-    @Deprecated
-    public DataContextImpl(String correlationId, JsonObject userPrincipal) {
-        this(correlationId, null, null, userPrincipal, null, null);
-    }
-
     public DataContextImpl(String correlationId, String sessionId, JsonObject userPrincipal) {
         this(correlationId, sessionId, null, userPrincipal, null, null);
-    }
-
-    @Deprecated
-    public DataContextImpl(String correlationId, String bearerToken, JsonObject userPrincipal,
-            Map<String, Object> data) {
-        this(correlationId, null, bearerToken, userPrincipal, data, null);
     }
 
     public DataContextImpl(String correlationId, String sessionId, String bearerToken, JsonObject userPrincipal,
             Map<String, Object> data) {
         this(correlationId, sessionId, bearerToken, userPrincipal, data, null);
-    }
-
-    @Deprecated
-    public DataContextImpl(String correlationId, String bearerToken, JsonObject userPrincipal, Map<String, Object> data,
-            Deque<DataVerticleCoordinate> paths) {
-        this(correlationId, null, bearerToken, userPrincipal, data, paths);
     }
 
     @SuppressWarnings({ "PMD.ConstructorCallsOverridableMethod", "ChainingConstructorIgnoresParameter",
