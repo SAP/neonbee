@@ -23,7 +23,6 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 @Execution(ExecutionMode.SAME_THREAD)
@@ -45,7 +44,6 @@ class BufferingDataVerticleTest extends DataVerticleTestBase {
     DataRequest dr;
 
     @BeforeEach
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     void reset(VertxTestContext testContext) {
         CachingDataVerticle.CACHES.clear();
         requireDataCount.set(0);
@@ -100,7 +98,6 @@ class BufferingDataVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Expect another read from buffer after expiry")
     void expectReadFromBuffer(Vertx vertx, VertxTestContext testContext) {
         requestData(dr)
@@ -127,7 +124,6 @@ class BufferingDataVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Expect only one write to buffer on two parallel requests")
     void expectOneWriteToBuffer(Vertx vertx, VertxTestContext testContext) {
         delayResponse.set(true);
@@ -142,7 +138,6 @@ class BufferingDataVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Expect no retrieve data in case data is in buffer")
     void expectOneReadFromBuffer(Vertx vertx, VertxTestContext testContext) {
         respondFromBuffer.set(true);

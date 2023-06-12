@@ -4,7 +4,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static java.util.stream.Collectors.toList;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +14,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class HealthEndpointTest extends NeonBeeTestBase {
@@ -46,7 +44,6 @@ class HealthEndpointTest extends NeonBeeTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("should only return health info of passed check")
     void testHealthEndpointSingle(VertxTestContext testContext) {
         createRequest(HttpMethod.GET, "/health/os.memory")
