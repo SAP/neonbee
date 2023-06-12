@@ -8,7 +8,6 @@ import java.util.ConcurrentModificationException;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.olingo.server.api.OData;
@@ -20,7 +19,6 @@ import io.neonbee.NeonBee;
 import io.neonbee.internal.SharedDataAccessor;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
-import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 
 /**
@@ -41,13 +39,6 @@ public class EntityModelManager {
     private static final DeliveryOptions LOCAL_DELIVERY = new DeliveryOptions().setLocalOnly(true);
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
-
-    /**
-     * @deprecated remove with {@link #unregisterModels(Vertx, String)}
-     */
-    @Deprecated(forRemoval = true)
-    private static final Map<NeonBee, Map<String, EntityModelDefinition>> EXTERNAL_MODEL_IDENTIFIERS =
-            new WeakHashMap<>();
 
     /**
      * A map of all buffered NeonBee models.
@@ -101,42 +92,6 @@ public class EntityModelManager {
     }
 
     /**
-     * Synchronously returns the buffered models, which could be null, in case {@link #getSharedModels(Vertx)} or
-     * {@link #reloadModels(Vertx)} was never called or returned no valid metadata so far.
-     * <p>
-     * This is a convenience function, as for some instances (e.g. in EventBus Message Codec) the current metadata
-     * definition needs to be received synchronously and without the involvement of futures. Whenever possible, use
-     * {@link #getSharedModels(Vertx)} instead.
-     *
-     * @see #getBufferedModels(NeonBee)
-     * @deprecated use {@link #getBufferedModels(NeonBee)} instead
-     * @param vertx the {@link Vertx} instance
-     * @return The buffered models for all schema namespaces or null in case no models have been loaded so far
-     */
-    @Deprecated(forRemoval = true)
-    public static Map<String, EntityModel> getBufferedModels(Vertx vertx) {
-        return getBufferedModels(NeonBee.get(vertx));
-    }
-
-    /**
-     * Synchronously returns the buffered models, which could be null, in case {@link #getSharedModels(NeonBee)} or
-     * {@link #reloadModels(NeonBee)} was never called or returned no valid metadata so far.
-     * <p>
-     * This is a convenience function, as for some instances (e.g. in EventBus Message Codec) the current metadata
-     * definition needs to be received synchronously and without the involvement of futures. Whenever possible, use
-     * {@link #getSharedModels(NeonBee)} instead.
-     *
-     * @see #getBufferedModels()
-     * @deprecated use {@code neonBee.getModelManager().getBufferedModels()} instead
-     * @param neonBee the {@link NeonBee} instance
-     * @return The buffered models for all schema namespaces or null in case no models have been loaded so far
-     */
-    @Deprecated(forRemoval = true)
-    public static Map<String, EntityModel> getBufferedModels(NeonBee neonBee) {
-        return neonBee.getModelManager().getBufferedModels();
-    }
-
-    /**
      * Synchronously returns the buffered models, which could be null, in case {@link #getSharedModels()} or
      * {@link #reloadModels()} was never called or returned no valid metadata so far.
      * <p>
@@ -148,50 +103,6 @@ public class EntityModelManager {
      */
     public Map<String, EntityModel> getBufferedModels() {
         return bufferedModels;
-    }
-
-    /**
-     * Synchronously returns the buffered model for a specific schema namespace, which could be null, in case
-     * {@link #getSharedModels(Vertx)} or {@link #reloadModels(Vertx)} was never called or returned no valid metadata so
-     * far.
-     * <p>
-     * This is a convenience function, as for some instances (e.g. in EventBus Message Codec) the current metadata
-     * definition needs to be received synchronously and without the involvement of futures. Whenever possible, use
-     * {@link #getSharedModel(Vertx, String)} instead.
-     *
-     * @see #getBufferedModel(NeonBee, String)
-     * @deprecated use {@link #getBufferedModel(NeonBee, String)} instead
-     * @param vertx           the {@link Vertx} instance
-     * @param schemaNamespace the namespace of the service
-     * @return the buffered model for a specific schema namespace or null in case no models have been loaded so far, or
-     *         no model with the given schemaNamespace is found
-     * @see #getBufferedModels(Vertx)
-     */
-    @Deprecated(forRemoval = true)
-    public static EntityModel getBufferedModel(Vertx vertx, String schemaNamespace) {
-        return getBufferedModel(NeonBee.get(vertx), schemaNamespace);
-    }
-
-    /**
-     * Synchronously returns the buffered model for a specific schema namespace, which could be null, in case
-     * {@link #getSharedModels(NeonBee)} or {@link #reloadModels(NeonBee)} was never called or returned no valid
-     * metadata so far.
-     * <p>
-     * This is a convenience function, as for some instances (e.g. in EventBus Message Codec) the current metadata
-     * definition needs to be received synchronously and without the involvement of futures. Whenever possible, use
-     * {@link #getSharedModel(NeonBee, String)} instead.
-     *
-     * @see #getBufferedModel(String)
-     * @deprecated use {@code neonBee.getModelManager().getBufferedModel(schemaNamespace)} instead
-     * @param neonBee         the {@link NeonBee} instance
-     * @param schemaNamespace the namespace of the service
-     * @return the buffered model for a specific schema namespace or null in case no models have been loaded so far, or
-     *         no model with the given schemaNamespace is found
-     * @see #getBufferedModels(NeonBee)
-     */
-    @Deprecated(forRemoval = true)
-    public static EntityModel getBufferedModel(NeonBee neonBee, String schemaNamespace) {
-        return neonBee.getModelManager().getBufferedModel(schemaNamespace);
     }
 
     /**
@@ -209,34 +120,6 @@ public class EntityModelManager {
      */
     public EntityModel getBufferedModel(String schemaNamespace) {
         return bufferedModels != null ? bufferedModels.get(schemaNamespace) : null;
-    }
-
-    /**
-     * Either returns a future to the buffered models, or tries to load / build the model definition files (from file
-     * system and / or from the class path).
-     *
-     * @see #getSharedModels(NeonBee)
-     * @deprecated use {@link #getSharedModels(NeonBee)} instead
-     * @param vertx the {@link Vertx} instance
-     * @return a {@link Future} to a map from schema namespace to EntityModel
-     */
-    @Deprecated(forRemoval = true)
-    public static Future<Map<String, EntityModel>> getSharedModels(Vertx vertx) {
-        return getSharedModels(NeonBee.get(vertx));
-    }
-
-    /**
-     * Either returns a future to the buffered models, or tries to load / build the model definition files (from file
-     * system and / or from the class path).
-     *
-     * @see #getSharedModels()
-     * @deprecated use {@code neonBee.getModelManager().getSharedModels()} instead
-     * @param neonBee the {@link NeonBee} instance
-     * @return a {@link Future} to a map from schema namespace to EntityModel
-     */
-    @Deprecated(forRemoval = true)
-    public static Future<Map<String, EntityModel>> getSharedModels(NeonBee neonBee) {
-        return neonBee.getModelManager().getSharedModels();
     }
 
     /**
@@ -277,38 +160,6 @@ public class EntityModelManager {
      * Either returns a future to the buffered model instance for one schema namespace, or tries to load / build the
      * model definition files (from file system and / or from the class path) first, before returning the metadata.
      *
-     * @see #getSharedModel(NeonBee, String)
-     * @deprecated use {@link #getSharedModel(NeonBee, String)} instead
-     * @param vertx           the {@link Vertx} instance
-     * @param schemaNamespace The name of the schema namespace
-     * @return a succeeded {@link Future} to a specific EntityModel with a given schema namespace, or a failed future in
-     *         case no models could be loaded or no model matching the schema namespace could be found
-     */
-    @Deprecated(forRemoval = true)
-    public static Future<EntityModel> getSharedModel(Vertx vertx, String schemaNamespace) {
-        return getSharedModel(NeonBee.get(vertx), schemaNamespace);
-    }
-
-    /**
-     * Either returns a future to the buffered model instance for one schema namespace, or tries to load / build the
-     * model definition files (from file system and / or from the class path) first, before returning the metadata.
-     *
-     * @see #getSharedModel(String)
-     * @deprecated use {@code neonBee.getModelManager().getSharedModel(schemaNamespace)} instead
-     * @param neonBee         the {@link NeonBee} instance
-     * @param schemaNamespace The name of the schema namespace
-     * @return a succeeded {@link Future} to a specific EntityModel with a given schema namespace, or a failed future in
-     *         case no models could be loaded or no model matching the schema namespace could be found
-     */
-    @Deprecated(forRemoval = true)
-    public static Future<EntityModel> getSharedModel(NeonBee neonBee, String schemaNamespace) {
-        return neonBee.getModelManager().getSharedModel(schemaNamespace);
-    }
-
-    /**
-     * Either returns a future to the buffered model instance for one schema namespace, or tries to load / build the
-     * model definition files (from file system and / or from the class path) first, before returning the metadata.
-     *
      * @param schemaNamespace The name of the schema namespace
      * @return a succeeded {@link Future} to a specific EntityModel with a given schema namespace, or a failed future in
      *         case no models could be loaded or no model matching the schema namespace could be found
@@ -320,36 +171,6 @@ public class EntityModelManager {
                     : failedFuture(new NoSuchElementException(
                             "Cannot find data model for schema namespace " + schemaNamespace));
         });
-    }
-
-    /**
-     * Returns a future to a freshly loaded EntityModel instance and updates the globally shared instance. Please note
-     * that all models files will be reloaded (from file system and / or class path). This method will also update the
-     * buffered models.
-     *
-     * @see #reloadModels(NeonBee)
-     * @deprecated use {@link #reloadModels(NeonBee)} instead
-     * @param vertx the {@link Vertx} instance
-     * @return a {@link Future} to a map from schema namespace to EntityModel
-     */
-    @Deprecated(forRemoval = true)
-    public static Future<Map<String, EntityModel>> reloadModels(Vertx vertx) {
-        return reloadModels(NeonBee.get(vertx));
-    }
-
-    /**
-     * Returns a future to a freshly loaded EntityModel instance and updates the globally shared instance. Please note
-     * that all models files will be reloaded (from file system and / or class path). This method will also update the
-     * buffered models.
-     *
-     * @see #reloadModels()
-     * @deprecated use {@code neonBee.getModelManager().reloadModels()} instead
-     * @param neonBee the {@link NeonBee} instance
-     * @return a {@link Future} to a map from schema namespace to EntityModel
-     */
-    @Deprecated(forRemoval = true)
-    public static Future<Map<String, EntityModel>> reloadModels(NeonBee neonBee) {
-        return neonBee.getModelManager().reloadModels();
     }
 
     /**
@@ -379,82 +200,12 @@ public class EntityModelManager {
      * Register an external model. External models will be loaded alongside any models that are in the class path or in
      * the models directory.
      *
-     * @see #registerModels(NeonBee, EntityModelDefinition)
-     * @deprecated use {@link EntityModelDefinition#EntityModelDefinition(Map, Map)} to initialize a
-     *             {@link EntityModelDefinition} and use {@link #registerModels(NeonBee, EntityModelDefinition)} instead
-     * @param vertx                      the {@link Vertx} instance
-     * @param modelIdentifier            the definition identifier of this model
-     * @param csnModelDefinitions        the CSN model definitions
-     * @param associatedModelDefinitions the associated model definitions, such as EDMX files
-     * @return a {@link Future} to a map from schema namespace to EntityModel
-     */
-    @Deprecated(forRemoval = true)
-    public static Future<Map<String, EntityModel>> registerModels(Vertx vertx, String modelIdentifier,
-            Map<String, byte[]> csnModelDefinitions, Map<String, byte[]> associatedModelDefinitions) {
-        return registerModels(NeonBee.get(vertx), EXTERNAL_MODEL_IDENTIFIERS
-                .computeIfAbsent(NeonBee.get(vertx), Functions.forSupplier(ConcurrentHashMap::new))
-                .computeIfAbsent(modelIdentifier,
-                        newIdentifier -> new EntityModelDefinition(csnModelDefinitions, associatedModelDefinitions)));
-    }
-
-    /**
-     * Register an external model. External models will be loaded alongside any models that are in the class path or in
-     * the models directory.
-     *
-     * @see #registerModels(EntityModelDefinition)
-     * @deprecated use {@code neonBee.getModelManager().registerModels(modelDefinition)} instead
-     * @param neonBee         the {@link NeonBee} instance
-     * @param modelDefinition the entity model definition
-     * @return a {@link Future} to a map from schema namespace to EntityModel
-     */
-    @Deprecated(forRemoval = true)
-    public static Future<Map<String, EntityModel>> registerModels(NeonBee neonBee,
-            EntityModelDefinition modelDefinition) {
-        return neonBee.getModelManager().registerModels(modelDefinition);
-    }
-
-    /**
-     * Register an external model. External models will be loaded alongside any models that are in the class path or in
-     * the models directory.
-     *
      * @param modelDefinition the entity model definition
      * @return a {@link Future} to a map from schema namespace to EntityModel
      */
     public Future<Map<String, EntityModel>> registerModels(EntityModelDefinition modelDefinition) {
         return modelDefinition != null && !modelDefinition.getCSNModelDefinitions().isEmpty()
                 && externalModelDefinitions.add(modelDefinition) ? reloadModels() : getSharedModels();
-    }
-
-    /**
-     * Unregisters a given external model and reload the models.
-     *
-     * @see #unregisterModels(NeonBee, EntityModelDefinition)
-     * @deprecated use {@link #unregisterModels(NeonBee, EntityModelDefinition)} instead
-     * @param vertx           the {@link Vertx} instance
-     * @param modelIdentifier the model definition identifier to remove
-     * @return a {@link Future} to a map from schema namespace to EntityModel
-     */
-    @Deprecated(forRemoval = true)
-    public static Future<Map<String, EntityModel>> unregisterModels(Vertx vertx, String modelIdentifier) {
-        NeonBee neonBee = NeonBee.get(vertx);
-        Map<String, EntityModelDefinition> identifiers = EXTERNAL_MODEL_IDENTIFIERS.get(neonBee);
-        return identifiers != null ? unregisterModels(neonBee, identifiers.get(modelIdentifier))
-                : getSharedModels(neonBee);
-    }
-
-    /**
-     * Unregisters a given external model and reload the models.
-     *
-     * @see #unregisterModels(EntityModelDefinition)
-     * @deprecated use {@code neonBee.getModelManager().unregisterModels(modelDefinition)}
-     * @param neonBee         the {@link NeonBee} instance
-     * @param modelDefinition the model definition to remove
-     * @return a {@link Future} to a map from schema namespace to EntityModel
-     */
-    @Deprecated(forRemoval = true)
-    public static Future<Map<String, EntityModel>> unregisterModels(NeonBee neonBee,
-            EntityModelDefinition modelDefinition) {
-        return neonBee.getModelManager().unregisterModels(modelDefinition);
     }
 
     /**

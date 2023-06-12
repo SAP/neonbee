@@ -3,7 +3,6 @@ package io.neonbee.test.helper;
 import static io.neonbee.internal.helper.ThreadHelper.getCallingClass;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -98,111 +97,5 @@ public final class ResourceHelper {
      */
     public Buffer get(Path relativePath) throws IOException {
         return Buffer.buffer(Files.readAllBytes(resourcePath.resolve(relativePath)));
-    }
-
-    /**
-     * A path to the test resources folder
-     */
-    @Deprecated(forRemoval = true)
-    public static final Path TEST_RESOURCES_PATH = Paths.get("src", "test", "resources");
-
-    /**
-     * This method behaves like {@link #resolveTestResource(Path)}, but accepts a String as file.
-     *
-     * @param file The file to resolve
-     * @return The passed file resolved against the test resources folder
-     */
-    @Deprecated(forRemoval = true)
-    public static Path resolveTestResource(String file) {
-        return resolveTestResource(Path.of(file));
-    }
-
-    /**
-     * This method accepts a relative {@link Path} of a file inside the resources folder and resolves this path against
-     * the test resources folder.
-     *
-     * @param file The file to resolve
-     * @return The passed file resolved against the test resources folder
-     */
-    @Deprecated(forRemoval = true)
-    public static Path resolveTestResource(Path file) {
-        return TEST_RESOURCES_PATH.resolve(file);
-    }
-
-    /**
-     * This method transforms a package name into a path.
-     * <p>
-     * Example: com.example.foo.bar results into com/example/foo/bar
-     *
-     * @param p The name providing package to transform into a path
-     * @return A {@link Path} that represent the package name
-     */
-    @Deprecated(forRemoval = true)
-    public static Path getPackageAsPath(Package p) {
-        return Path.of(p.getName().replace(".", "/"));
-    }
-
-    /**
-     * This method behaves like {@link #getPackageAsPath(Package)} and uses the package of the passed class.
-     *
-     * @param clazz The package providing class
-     * @return A {@link Path} that represent the package name of the passed class
-     */
-    @Deprecated(forRemoval = true)
-    public static Path getPackageAsPath(Class<?> clazz) {
-        return getPackageAsPath(clazz.getPackage());
-    }
-
-    /**
-     * This method behaves like {@link #getRelatedTestResource(Path)}, but accepts a String as file.
-     *
-     * @param filename The file to resolve
-     * @return The passed file resolved against the related test resources folder
-     */
-    @Deprecated(forRemoval = true)
-    public static Path getRelatedTestResource(String filename) {
-        return getRelatedTestResource(Path.of(filename));
-    }
-
-    /**
-     * This method detect the class from which the method is called and retrieves the package name of the calling class.
-     * This package name is then transformed into a path and resolved against the test resource folder. This path
-     * construct is the so called related test resource path. Because the path is related to the test class which is
-     * calling this method.
-     * <p>
-     * Related Test Resources Path: &gt;test resources folder&lt;/&gt;package as path&lt;
-     *
-     * The passed file path gets resolved against the related test resources path.
-     *
-     * @param file The file to resolve
-     * @return The passed file resolved against the related test resources folder
-     */
-    @Deprecated(forRemoval = true)
-    public static Path getRelatedTestResource(Path file) {
-        return TEST_RESOURCES_PATH.resolve(getPackageAsPath(getCallingClass())).resolve(file);
-    }
-
-    /**
-     * This method reads the passed resource and returns it as a Buffer.
-     *
-     * @param path The path to the resource to read in
-     * @return A Buffer with the content of the passed resource.
-     * @throws IOException Resource cannot be read
-     */
-    @Deprecated(forRemoval = true)
-    public static Buffer getResourceAsBuffer(Path path) throws IOException {
-        return Buffer.buffer(Files.readAllBytes(path));
-    }
-
-    /**
-     * This method reads the passed resource and returns it as an UTF-8 encoded String.
-     *
-     * @param path The path to the resource to read in
-     * @return A String with the UTF-8 encoded content of the passed resource.
-     * @throws IOException Resource cannot be read
-     */
-    @Deprecated(forRemoval = true)
-    public static String getResourceAsString(Path path) throws IOException {
-        return getResourceAsBuffer(path).toString(StandardCharsets.UTF_8);
     }
 }

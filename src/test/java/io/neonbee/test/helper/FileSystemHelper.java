@@ -16,22 +16,6 @@ import io.vertx.core.file.FileSystemException;
 import io.vertx.core.file.impl.FileSystemImpl;
 
 public final class FileSystemHelper {
-    /**
-     * This method behaves like {@link #deleteRecursive(Vertx, Path)}, but instantiate it's own Vert.x instance.
-     *
-     * @deprecated use {@link #deleteRecursive(Vertx, Path)} instead, assuming that if you need a {@link Future} you
-     *             have a Vert.x at hand anyways
-     * @param path The path to delete
-     * @return A future to resolve when the delete operation finishes
-     */
-    @Deprecated(forRemoval = true)
-    public static Future<Void> deleteRecursive(Path path) {
-        Vertx vertx = Vertx.vertx();
-        return deleteRecursive(vertx, path).eventually(throwable -> {
-            // we wait for Vert.x to close, before we propagate the reason why deleting failed
-            return vertx.close();
-        });
-    }
 
     /**
      * This method deletes the file represented by the specified path, synchronously. If the path represents a directory

@@ -32,51 +32,6 @@ public final class EntityModel {
     /**
      * Returns the CSN model.
      *
-     * @deprecated use {@link #getCsnModel() instead}
-     * @return CdsModel as CSNModel
-     */
-    @Deprecated(forRemoval = true)
-    public CdsModel getCsn() {
-        return getCsnModel();
-    }
-
-    /**
-     * Returns the first EDMX {@link ServiceMetadata} model of the {@link #getEdmxes}.
-     *
-     * @deprecated use {@link #getEdmxMetadata()} instead
-     * @return the first EDMX model or null
-     */
-    @Deprecated(forRemoval = true)
-    public ServiceMetadata getEdmx() {
-        return getEdmxMetadata();
-    }
-
-    /**
-     * Returns one EDMX model.
-     *
-     * @deprecated use {@link #getEdmxMetadata(String)} instead
-     * @param namespace full-qualified name of the service
-     * @return one EDMX {@link ServiceMetadata} model which is mapped to a namespace or null
-     */
-    @Deprecated(forRemoval = true)
-    public ServiceMetadata getEdmx(String namespace) {
-        return getEdmxMetadata(namespace);
-    }
-
-    /**
-     * Gets a map of all EDMX models which belongs to one service.
-     *
-     * @deprecated use {@link #getAllEdmxMetadata()} instead
-     * @return a map of all EDMX {@link ServiceMetadata} models which belongs to one service
-     */
-    @Deprecated
-    public Map<String, ServiceMetadata> getEdmxes() {
-        return getAllEdmxMetadata();
-    }
-
-    /**
-     * Returns the CSN model.
-     *
      * @return CdsModel as CSNModel
      */
     public CdsModel getCsnModel() {

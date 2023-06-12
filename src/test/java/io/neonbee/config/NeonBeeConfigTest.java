@@ -5,7 +5,6 @@ import static io.neonbee.config.NeonBeeConfig.DEFAULT_EVENT_BUS_TIMEOUT;
 import static io.neonbee.config.NeonBeeConfig.DEFAULT_TIME_ZONE;
 import static io.neonbee.config.NeonBeeConfig.DEFAULT_TRACKING_DATA_HANDLING_STRATEGY;
 import static io.vertx.core.CompositeFuture.all;
-import static org.junit.Assert.assertThrows;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -62,21 +61,6 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
     }
 
     @Test
-    @DisplayName("Test loading the MeterRegistry with the deprecated method")
-    @Deprecated(forRemoval = true)
-    @SuppressWarnings({ "deprecation", "removal" })
-    void testDeprecatedLoadingMeterRegistry() throws Exception {
-        NeonBeeConfig config = new NeonBeeConfig();
-        CompositeMeterRegistry registry = new CompositeMeterRegistry();
-        config.setMicrometerRegistries(List.of(new MicrometerRegistryConfig()
-                .setClassName(TestMicrometerRegistryLoaderImpl.class.getName()).setConfig(new JsonObject())));
-        config.createMicrometerRegistries().forEach(registry::add);
-        Set<MeterRegistry> registries = registry.getRegistries();
-        assertThat(registries).hasSize(1);
-        assertThat(registries.stream().anyMatch(PrometheusMeterRegistry.class::isInstance)).isTrue();
-    }
-
-    @Test
     @DisplayName("Test loading the MeterRegistry")
     void testLoadingMeterRegistry(Vertx vertx, VertxTestContext context) throws Exception {
         NeonBeeConfig config = new NeonBeeConfig();
@@ -118,19 +102,6 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
                     assertThat(throwable).hasMessageThat().isEqualTo(exceptionMessage);
                     context.completeNow();
                 }));
-    }
-
-    @ParameterizedTest(name = "{index}: {0} expected exception message: {1}")
-    @MethodSource("testNotImplementingMicrometerRegistryLoaderArguments")
-    @DisplayName("Test deprecated MicrometerRegistryLoader with incorrect configuration")
-    @Deprecated(forRemoval = true)
-    @SuppressWarnings({ "deprecation", "removal" })
-    void testDeprecatedNotImplementingMicrometerRegistryLoader(String className, String exceptionMessage,
-            Class<? extends Throwable> expectedException) {
-        NeonBeeConfig config = new NeonBeeConfig();
-        config.setMicrometerRegistries(List.of(new MicrometerRegistryConfig().setClassName(className)));
-        Throwable throwable = assertThrows(expectedException, config::createMicrometerRegistries);
-        assertThat(throwable).hasMessageThat().isEqualTo(exceptionMessage);
     }
 
     @Test

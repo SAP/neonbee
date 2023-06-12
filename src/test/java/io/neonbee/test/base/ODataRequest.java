@@ -74,29 +74,6 @@ public class ODataRequest extends AbstractODataRequest<ODataRequest> {
     }
 
     /**
-     * Appends {@code $metadata} to the Service Root URL of the OData request. This method can be used to address the
-     * metadata of OData services that expose their entity model according to [OData-CSDLJSON] or [OData-CSDLXML] at the
-     * metadata URL. Note that if this method has been applied to an {@link ODataRequest}, it is not possible to address
-     * entities thereafter.<br>
-     * <br>
-     * <strong>Example:</strong> Given a {@link FullQualifiedName fqn} {@code FullQualifiedName("my-namespace")}:
-     *
-     * <pre>
-     * oDataRequest.setMetadata() -&gt; "my-namespace/$metadata"
-     * oDataRequest.setMetadata().setKey(1).setProperty("nope") -&gt; "my-namespace/$metadata"
-     * </pre>
-     *
-     * @return An {@link ODataRequest} which considers the {@code $metadata} suffix when building the request
-     * @deprecated use {@link ODataMetadataRequest} focussing on dispatching OData metadata requests and separating away
-     *             from data-centric requests.
-     */
-    @Deprecated(forRemoval = true)
-    public ODataRequest setMetadata() {
-        this.metadata = true;
-        return this;
-    }
-
-    /**
      * Appends {@code /$count} to the resource path of the URL, identifying an entity set or collection. As per OData
      * specification, the {@code /$count} suffix can be used to address the raw value of the number of items in a
      * collection and should not be combined with system query options ($top, $skip, $orderby, $expand, and $format).

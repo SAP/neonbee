@@ -27,17 +27,6 @@ class ODataRequestTest {
     }
 
     @Test
-    @DisplayName("with $metadata set")
-    @Deprecated(forRemoval = true)
-    @SuppressWarnings({ "removal" })
-    void testGetUriWithMetadata() {
-        odataRequest.setMetadata();
-        assertThat(odataRequest.getUri()).isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/$metadata");
-        odataRequest.setMetadata().setKey(1).setProperty("ignore");
-        assertThat(odataRequest.getUri()).isEqualTo(EXPECTED_SERVICE_ROOT_URL + "/$metadata");
-    }
-
-    @Test
     @DisplayName("with $count set")
     void testGetUriWithCount() {
         odataRequest.setCount();
