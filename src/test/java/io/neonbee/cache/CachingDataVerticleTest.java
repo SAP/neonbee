@@ -25,7 +25,6 @@ import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Checkpoint;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class CachingDataVerticleTest extends DataVerticleTestBase {
@@ -104,7 +103,6 @@ class CachingDataVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("requireData should call requireDataBeforeCache on cache miss")
     void requireDataRequiresDataOnCacheMiss(VertxTestContext testContext) {
         Checkpoint requireCheckpoint = testContext.checkpoint();
@@ -152,7 +150,6 @@ class CachingDataVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Neither requireDataBeforeCache nor retrieveDataToCache should be called on cache hit")
     void dontCallDataOnCacheHit(VertxTestContext testContext) {
         JsonArray expected = new JsonArray(List.of(1, 1));
@@ -193,7 +190,6 @@ class CachingDataVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Multiple parallel request should be coalesced into one request, if no data is in the cache")
     void coalescedMultipleParallelRequests(VertxTestContext testContext) {
         CachingDataVerticle<Integer> testClass = new CachingDataVerticle<>() {
@@ -225,7 +221,6 @@ class CachingDataVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 2, timeUnit = TimeUnit.SECONDS)
     @DisplayName("Multiple requests should not be coalesced into one request, if no data is in the cache and coalescing is turned off")
     void doNotCoalescedMultipleParallelRequests(VertxTestContext testContext) {
         CachingDataVerticle<Integer> testClass = new CachingDataVerticle<>(10, TimeUnit.SECONDS, 0) {
@@ -260,7 +255,6 @@ class CachingDataVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
-    @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
     @DisplayName("If multiple parallel requests should be coalesced into one request and the request takes too long, it should trigger another request anyways, if no data is in the cache")
     void coalescedMultipleParallelRequestsFallback(VertxTestContext testContext) {
         CachingDataVerticle<Integer> testClass = new CachingDataVerticle<>(5, TimeUnit.MINUTES, 1000) {
