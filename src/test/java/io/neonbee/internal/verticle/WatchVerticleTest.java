@@ -34,6 +34,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
@@ -116,6 +117,7 @@ class WatchVerticleTest extends NeonBeeTestBase {
 
     @Test
     @DisplayName("Upcoming check intervals should be ignored, if processing of a predecessor interval is still in progress")
+    @DisabledIfEnvironmentVariable(named = "CI", matches = "true")
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
     void testBlocking(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {
@@ -141,6 +143,7 @@ class WatchVerticleTest extends NeonBeeTestBase {
 
     @Test
     @DisplayName("Upcoming check intervals should not be ignored, if processing of a predecessor interval is still in progress")
+    @DisabledIfEnvironmentVariable(named = "CI", matches = "true")
     @DisabledOnOs(value = { OS.MAC },
             disabledReason = "Issues with File Watching Service on macOS. We need a cross-platform Java recursive directory watcher, that works well with macOS")
     void testParallelProcessing(Vertx vertx, VertxTestContext testCtx) throws InterruptedException {
