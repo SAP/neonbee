@@ -15,7 +15,6 @@ import io.neonbee.NeonBee;
 import io.neonbee.entity.EntityModelDefinition;
 import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.scanner.ClassPathScanner;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 
@@ -48,7 +47,7 @@ public class DeployableModels extends Deployable {
 
     @VisibleForTesting
     static Future<DeployableModels> scanClassPath(Vertx vertx, ClassPathScanner classPathScanner) {
-        // to load the models, we can use the same class-loader that the class-path-scanner uses, because we anyways
+        // to load the models, we can use the same class-loader that the class-path-scanner uses, because we anyway
         // just use it to read the resources
         ClassLoader classLoader = classPathScanner.getClassLoader(); // NOPMD false positive getClassLoader
         Future<Map<String, byte[]>> csnModelDefinitions = classPathScanner.scanManifestFiles(vertx, NEONBEE_MODELS)
@@ -56,7 +55,7 @@ public class DeployableModels extends Deployable {
         Future<Map<String, byte[]>> associatedModelDefinitions =
                 classPathScanner.scanManifestFiles(vertx, NEONBEE_MODEL_EXTENSIONS)
                         .compose(associatedModelNames -> readModelPayloads(vertx, classLoader, associatedModelNames));
-        return CompositeFuture.all(csnModelDefinitions, associatedModelDefinitions)
+        return Future.all(csnModelDefinitions, associatedModelDefinitions)
                 .map(compositeResult -> new EntityModelDefinition(csnModelDefinitions.result(),
                         associatedModelDefinitions.result()))
                 .map(DeployableModels::new);

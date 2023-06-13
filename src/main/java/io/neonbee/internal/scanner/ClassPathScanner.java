@@ -43,7 +43,6 @@ import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.helper.JarHelper;
 import io.neonbee.internal.helper.ThreadHelper;
 import io.neonbee.logging.LoggingFacade;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 
@@ -200,7 +199,7 @@ public class ClassPathScanner {
         Future<List<String>> classesFromJars = scanJarFilesWithPredicate(vertx, ClassPathScanner::isClassFile)
                 .map(classes -> classes.stream().map(JarHelper::extractFilePath).collect(Collectors.toList()));
 
-        return CompositeFuture.all(classesFromDirectories, classesFromJars)
+        return Future.all(classesFromDirectories, classesFromJars)
                 .compose(compositeResult -> AsyncHelper.executeBlocking(vertx, () -> {
                     List<AnnotationClassVisitor> classVisitors = annotationClasses.stream()
                             .map(annotationClass -> new AnnotationClassVisitor(annotationClass, elementTypes))

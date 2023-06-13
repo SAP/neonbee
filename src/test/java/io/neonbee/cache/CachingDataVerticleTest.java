@@ -20,7 +20,6 @@ import io.neonbee.data.DataMap;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.test.base.DataVerticleTestBase;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -215,7 +214,7 @@ class CachingDataVerticleTest extends DataVerticleTestBase {
 
         DataRequest dr = new DataRequest(testClass.getName());
         deployVerticle(testClass)
-                .compose(id -> CompositeFuture.all(assertDataEquals(requestData(dr), 1, testContext),
+                .compose(id -> Future.all(assertDataEquals(requestData(dr), 1, testContext),
                         assertDataEquals(requestData(dr), 1, testContext)))
                 .onComplete(testContext.succeedingThenComplete());
     }
@@ -246,7 +245,7 @@ class CachingDataVerticleTest extends DataVerticleTestBase {
 
         DataRequest dr = new DataRequest(testClass.getName());
         deployVerticle(testClass)
-                .compose(id -> CompositeFuture.all(assertDataEquals(requestData(dr), 2, testContext),
+                .compose(id -> Future.all(assertDataEquals(requestData(dr), 2, testContext),
                         assertDataEquals(requestData(dr), 2, testContext)))
                 .onComplete(testContext.succeeding(v ->
                 // Once the data is buffered though, and we *again* do a request and check response is the cached one
@@ -280,7 +279,7 @@ class CachingDataVerticleTest extends DataVerticleTestBase {
 
         DataRequest dr = new DataRequest(testClass.getName());
         deployVerticle(testClass)
-                .compose(id -> CompositeFuture.all(assertDataEquals(requestData(dr), 2, testContext),
+                .compose(id -> Future.all(assertDataEquals(requestData(dr), 2, testContext),
                         assertDataEquals(requestData(dr), 2, testContext)))
                 .onComplete(testContext.succeedingThenComplete());
     }

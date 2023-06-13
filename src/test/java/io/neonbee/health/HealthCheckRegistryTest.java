@@ -33,7 +33,6 @@ import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.health.internal.HealthCheck;
 import io.neonbee.internal.SharedDataAccessor;
 import io.neonbee.internal.codec.DataQueryMessageCodec;
-import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.registry.Registry;
 import io.neonbee.internal.registry.WriteSafeRegistry;
 import io.neonbee.internal.verticle.HealthCheckVerticle;
@@ -214,7 +213,7 @@ class HealthCheckRegistryTest {
 
         // undeploy the system deployed health check verticles of neonbee
         DeploymentHelper.undeployAllVerticlesOfClass(neonBee.getVertx(), HealthCheckVerticle.class)
-                .compose(v -> AsyncHelper.allComposite(
+                .compose(v -> Future.all(
                         List.of(vertx.deployVerticle(healthCheckVerticle1), vertx.deployVerticle(healthCheckVerticle2),
                                 neonBee.getHealthCheckRegistry().register(new DummyHealthCheck(neonBee)))))
                 .onSuccess(v -> {

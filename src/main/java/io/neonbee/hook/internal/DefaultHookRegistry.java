@@ -1,7 +1,5 @@
 package io.neonbee.hook.internal;
 
-import static io.neonbee.internal.helper.AsyncHelper.allComposite;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -71,7 +69,7 @@ public class DefaultHookRegistry implements HookRegistry {
                         registration, DefaultHookContext.of(type, parameters)))
                 .collect(Collectors.toList());
 
-        return allComposite(hookExecutions);
+        return Future.all(hookExecutions);
     }
 
     @Override

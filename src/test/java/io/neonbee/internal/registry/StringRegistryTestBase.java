@@ -1,6 +1,7 @@
 package io.neonbee.internal.registry;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.vertx.core.Future.all;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +19,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import io.neonbee.internal.helper.AsyncHelper;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -75,7 +75,7 @@ abstract class StringRegistryTestBase {
 
         List<Future<Void>> registerFutures = new ArrayList<>();
         dataToFill.forEach((key, values) -> registerFutures.add(stringRegistry.register(key, values)));
-        AsyncHelper.allComposite(registerFutures).<Void>mapEmpty()
+        all(registerFutures).<Void>mapEmpty()
                 .onSuccess(verify(stringRegistry, effectiveExpected, entriesVerified, testContext))
                 .onFailure(testContext::failNow);
     }
@@ -128,7 +128,7 @@ abstract class StringRegistryTestBase {
                     List<Future<Void>> unregisterFutures = new ArrayList<>();
                     dataToUnregister
                             .forEach((key, values) -> unregisterFutures.add(stringRegistry.unregister(key, values)));
-                    return AsyncHelper.allComposite(unregisterFutures).<Void>mapEmpty();
+                    return all(unregisterFutures).<Void>mapEmpty();
                 })
                 .onSuccess(verify(stringRegistry, expected, entriesVerified, testContext))
                 .onFailure(testContext::failNow);
@@ -171,7 +171,7 @@ abstract class StringRegistryTestBase {
     private static Future<Void> fillRegistry(Registry<String> registry, Map<String, List<String>> testData) {
         List<Future<Void>> registerFutures = new ArrayList<>();
         testData.forEach((key, values) -> registerFutures.add(registry.register(key, values)));
-        return AsyncHelper.allComposite(registerFutures).mapEmpty();
+        return all(registerFutures).mapEmpty();
     }
 
     private static Future<Void> removeFromRegistry(Registry<String> registry,
@@ -179,6 +179,6 @@ abstract class StringRegistryTestBase {
         List<Future<Void>> unregisterFutures = new ArrayList<>();
         dataToUnregister.forEach((key, valueList) -> valueList
                 .forEach(value -> unregisterFutures.add(registry.unregister(key, value))));
-        return AsyncHelper.allComposite(unregisterFutures).mapEmpty();
+        return all(unregisterFutures).mapEmpty();
     }
 }

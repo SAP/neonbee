@@ -45,7 +45,6 @@ import io.neonbee.internal.helper.FunctionalHelper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
@@ -574,18 +573,18 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
             Map<DataRequest, DataContext> receivedDataContextMap = new LinkedHashMap<>();
             return requireData(query, context).compose(requests -> {
                 // ignore the result of the require data composite future (otherwiseEmpty), the retrieve data method
-                // should decide if it needs to handle success or failure of any of the individual asynchronous results
-                return CompositeFuture.join(
+                // should decide if it needs to handle success or failure if any of the individual asynchronous results
+                return Future.join(
                         Optional.ofNullable(requests).map(Collection::stream).orElse(Stream.empty()).map(request -> {
                             // use one copy of DataContext for each request to avoid data clash
                             DataContext requestContext = context.copy();
                             receivedDataContextMap.put(request, requestContext);
                             return requestResults.computeIfAbsent(request, mapRequest -> {
-                                Future<Object> future = requestData(vertx, request, requestContext);
+                                Future<?> future = requestData(vertx, request, requestContext);
                                 reportRequestDataMetrics(request, future);
                                 return future;
                             });
-                        }).map(Future.class::cast).collect(Collectors.toList())).otherwiseEmpty();
+                        }).map(asyncResult -> (Future<?>) asyncResult).collect(Collectors.toList())).otherwiseEmpty();
             }).compose(requiredCompositeOrNothing -> {
                 List<Tag> tags = retrieveDataTags();
                 try {

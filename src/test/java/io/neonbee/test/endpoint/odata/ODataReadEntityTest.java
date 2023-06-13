@@ -25,7 +25,7 @@ import io.neonbee.test.base.ODataEndpointTestBase;
 import io.neonbee.test.base.ODataRequest;
 import io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle;
 import io.neonbee.test.endpoint.odata.verticle.TestService3EntityVerticle;
-import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
 
@@ -40,8 +40,7 @@ class ODataReadEntityTest extends ODataEndpointTestBase {
 
     @BeforeEach
     void setUp(VertxTestContext testContext) {
-        CompositeFuture
-                .all(deployVerticle(new TestService1EntityVerticle()), deployVerticle(new TestService3EntityVerticle()))
+        Future.all(deployVerticle(new TestService1EntityVerticle()), deployVerticle(new TestService3EntityVerticle()))
                 .onComplete(testContext.succeedingThenComplete());
         oDataRequest = new ODataRequestMod(TEST_ENTITY_SET_FQN);
     }

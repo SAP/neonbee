@@ -12,8 +12,8 @@ import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.test.base.DataVerticleTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
 
@@ -33,9 +33,8 @@ class DataVerticleMetricsImplTest extends DataVerticleTestBase {
         deploymentOptions.setConfig(new JsonObject().put(DataVerticle.CONFIG_METRICS_KEY,
                 new JsonObject().put(ConfiguredDataVerticleMetrics.ENABLED, true)));
 
-        CompositeFuture
-                .all(deployVerticle(new TestSourceDataVerticle(), deploymentOptions),
-                        deployVerticle(new TestRequireDataVerticle(), deploymentOptions))
+        Future.all(deployVerticle(new TestSourceDataVerticle(), deploymentOptions),
+                deployVerticle(new TestRequireDataVerticle(), deploymentOptions))
                 .onComplete(testContext.succeedingThenComplete());
     }
 

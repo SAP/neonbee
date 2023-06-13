@@ -4,7 +4,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.config.NeonBeeConfig.DEFAULT_EVENT_BUS_TIMEOUT;
 import static io.neonbee.config.NeonBeeConfig.DEFAULT_TIME_ZONE;
 import static io.neonbee.config.NeonBeeConfig.DEFAULT_TRACKING_DATA_HANDLING_STRATEGY;
-import static io.vertx.core.CompositeFuture.all;
+import static io.vertx.core.Future.all;
 
 import java.lang.reflect.Method;
 import java.util.List;

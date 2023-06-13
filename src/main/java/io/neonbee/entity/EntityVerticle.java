@@ -2,7 +2,6 @@ package io.neonbee.entity;
 
 import static io.neonbee.entity.EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS;
 import static io.neonbee.entity.EntityModelManager.getBufferedOData;
-import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.internal.verticle.ConsolidationVerticle.ENTITY_TYPE_NAME_HEADER;
 import static io.vertx.core.Future.failedFuture;
@@ -276,7 +275,7 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
                     List<Future<Void>> announceFutures =
                             entityTypeNames.stream().map(EntityVerticle::sharedEntityMapName)
                                     .map(name -> announceOrConceal.apply(name)).collect(toList());
-                    return allComposite(announceFutures).mapEmpty();
+                    return Future.all(announceFutures).mapEmpty();
                 });
     }
 

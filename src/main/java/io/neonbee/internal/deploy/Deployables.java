@@ -1,7 +1,5 @@
 package io.neonbee.internal.deploy;
 
-import static io.neonbee.internal.helper.AsyncHelper.allComposite;
-import static io.neonbee.internal.helper.AsyncHelper.joinComposite;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.Objects.requireNonNull;
@@ -40,7 +38,7 @@ public class Deployables extends Deployable {
      * @return a future to {@link Deployables}
      */
     public static Future<Deployables> fromDeployables(List<Future<? extends Deployable>> deployables) {
-        return allComposite(deployables).map(composite -> composite.<Deployable>list()).map(Deployables::new);
+        return Future.all(deployables).map(CompositeFuture::<Deployable>list).map(Deployables::new);
     }
 
     /**
@@ -138,7 +136,7 @@ public class Deployables extends Deployable {
 
         List<PendingDeployment> pendingDeployments = new ArrayList<>();
         Supplier<Future<Void>> undeploy = () -> {
-            return joinComposite(pendingDeployments.stream().map(pendingDeployment -> {
+            return Future.join(pendingDeployments.stream().map(pendingDeployment -> {
                 // three possibilities here: pendingDeployment hasn't completed yet, transform will wait for it to
                 // complete and then undeploy it. pending deployment was completed successfully, undeploy will undeploy
                 // it, or otherwise will do nothing because a failed deployment results in a successful undeploy
@@ -170,9 +168,10 @@ public class Deployables extends Deployable {
         getDeployables().stream().map(deployable -> deployable.deploy(neonBee)).forEach(pendingDeployments::add);
         // when we should keep partial deployments use a joinComposite, so we wait for all deployments to finish
         // independent if a single one fails or not. in case we should not keep partial deployments (default) use
-        // allComposite here, which will fail, when one deployment fails and thus we can start undeploying all succeeded
+        // allComposite here, which will fail, when one deployment fails, and thus we can start undeploying all
+        // succeeded
         // (or to be succeeded pending deployments) as unfortunately there is no way to cancel active deployments
-        (keepPartialDeployment ? joinComposite(pendingDeployments) : allComposite(pendingDeployments))
+        (keepPartialDeployment ? Future.join(pendingDeployments) : Future.all(pendingDeployments))
                 .onComplete(deployPromise);
 
         return pendingDeployment;

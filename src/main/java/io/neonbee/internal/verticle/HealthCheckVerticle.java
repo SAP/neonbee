@@ -11,7 +11,6 @@ import io.neonbee.NeonBeeDeployable;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataVerticle;
-import io.neonbee.internal.helper.AsyncHelper;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
@@ -47,7 +46,7 @@ public class HealthCheckVerticle extends DataVerticle<JsonArray> {
     public Future<JsonArray> retrieveData(DataQuery query, DataContext context) {
         List<Future<JsonObject>> checkList = NeonBee.get(vertx).getHealthCheckRegistry().getHealthChecks().values()
                 .stream().map(hc -> hc.result().map(CheckResult::toJson)).collect(toList());
-        return AsyncHelper.allComposite(checkList).map(v -> new JsonArray(
+        return Future.all(checkList).map(v -> new JsonArray(
                 checkList.stream().map(Future::result).peek(r -> r.remove("outcome")).collect(toList())));
     }
 

@@ -65,7 +65,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     void deployEntityVerticles(VertxTestContext testContext) {
         entityVerticleImpl1 = new EntityVerticleImpl1();
         entityVerticleImpl2 = new EntityVerticleImpl2();
-        CompositeFuture.all(deployVerticle(entityVerticleImpl1), deployVerticle(entityVerticleImpl2),
+        Future.all(deployVerticle(entityVerticleImpl1), deployVerticle(entityVerticleImpl2),
                 deployVerticle(new EntityVerticleImpl3())).onComplete(testContext.succeedingThenComplete());
     }
 
@@ -94,9 +94,8 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     @Test
     @DisplayName("Check if registered entity types are returned via verticlesForEntityType")
     void queryVerticlesForEntityType(Vertx vertx, VertxTestContext testContext) {
-        CompositeFuture
-                .join(EntityVerticle.getVerticlesForEntityType(vertx, new FullQualifiedName("ERP", "Customers")),
-                        EntityVerticle.getVerticlesForEntityType(vertx, new FullQualifiedName("Sales.Orders")))
+        Future.join(EntityVerticle.getVerticlesForEntityType(vertx, new FullQualifiedName("ERP", "Customers")),
+                EntityVerticle.getVerticlesForEntityType(vertx, new FullQualifiedName("Sales.Orders")))
                 .onComplete(asyncComposite -> {
                     CompositeFuture future = asyncComposite.result();
                     testContext.verify(() -> {

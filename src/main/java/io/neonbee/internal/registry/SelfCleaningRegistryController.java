@@ -1,7 +1,7 @@
 package io.neonbee.internal.registry;
 
-import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 import static io.neonbee.internal.registry.SelfCleaningRegistry.NODE_ID_SEPARATOR;
+import static io.vertx.core.Future.all;
 import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
@@ -93,7 +93,7 @@ public class SelfCleaningRegistryController extends WriteSafeRegistry<String> {
                     .map(regName -> removeAllKeysForNode(nodeId, regName)
                             .compose(v -> refreshReadOnlyMap(regName)))
                     .collect(toList());
-            return allComposite(cleanedRegistries).mapEmpty();
+            return all(cleanedRegistries).mapEmpty();
         });
     }
 
@@ -116,7 +116,7 @@ public class SelfCleaningRegistryController extends WriteSafeRegistry<String> {
 
         Future<Void> valuesRemovedFuture =
                 entriesToRemove.compose(entries -> getRegistryMap(registryName).compose(registryMap -> {
-                    return allComposite(entries.stream().map(registryMap::remove).collect(toList()));
+                    return all(entries.stream().map(registryMap::remove).collect(toList()));
                 })).mapEmpty();
 
         return valuesRemovedFuture
@@ -146,7 +146,7 @@ public class SelfCleaningRegistryController extends WriteSafeRegistry<String> {
         return getReadOnlyMap(registryName).compose(readOnlyMap -> readOnlyMap.clear().compose(v -> {
             List<Future<Void>> written = new ArrayList<>();
             accumulatedValues.forEach((key, values) -> written.add(readOnlyMap.put(key, values)));
-            return allComposite(written).mapEmpty();
+            return all(written).mapEmpty();
         }));
     }
 
