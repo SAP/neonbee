@@ -27,7 +27,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -50,7 +49,7 @@ class FileSystemHelperTest {
         Path subDir = tempDir.resolve("subDir");
         Path subFile = tempDir.resolve("subFile");
 
-        CompositeFuture.all(createDirs(vertx, subDir), writeFile(vertx, subFile, Buffer.buffer()))
+        Future.all(createDirs(vertx, subDir), writeFile(vertx, subFile, Buffer.buffer()))
                 .compose(v -> readDir(vertx, tempDir)).onComplete(testContext.succeeding(dirContent -> {
                     testContext.verify(() -> {
                         List<Path> tempDirContent = List.of(subFile.toRealPath(), subDir.toRealPath());
@@ -66,7 +65,7 @@ class FileSystemHelperTest {
         Path subDir = tempDir.resolve("subDir");
         Path subFile = tempDir.resolve("subFile.edmx");
 
-        CompositeFuture.all(createDirs(vertx, subDir), writeFile(vertx, subFile, Buffer.buffer()))
+        Future.all(createDirs(vertx, subDir), writeFile(vertx, subFile, Buffer.buffer()))
                 .compose(v -> readDir(vertx, tempDir, "(.+)(\\.edmx$)"))
                 .onComplete(testContext.succeeding(dirContent -> {
                     testContext.verify(() -> assertThat(dirContent).containsExactly(subFile.toRealPath()));

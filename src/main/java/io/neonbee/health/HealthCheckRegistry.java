@@ -23,7 +23,6 @@ import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.health.internal.HealthCheck;
-import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.registry.Registry;
 import io.neonbee.internal.registry.SelfCleaningRegistry;
 import io.neonbee.internal.verticle.HealthCheckVerticle;
@@ -220,7 +219,7 @@ public class HealthCheckRegistry {
         List<Future<JsonObject>> asyncCheckResults =
                 getHealthChecks().values().stream().map(hc -> hc.result().map(CheckResult::toJson)).collect(toList());
 
-        return AsyncHelper.joinComposite(asyncCheckResults).transform(v -> {
+        return Future.join(asyncCheckResults).transform(v -> {
             List<JsonObject> allSucceeded = asyncCheckResults.stream().filter(Future::succeeded).map(Future::result)
                     .peek(result -> result.remove(OUTCOME_KEY)).collect(toList());
 
@@ -233,7 +232,7 @@ public class HealthCheckRegistry {
                 .compose(qualifiedNames -> {
                     List<Future<JsonArray>> asyncCheckResults = sendDataRequests(qualifiedNames, dataContext);
 
-                    return AsyncHelper.joinComposite(asyncCheckResults).transform(v -> {
+                    return Future.join(asyncCheckResults).transform(v -> {
                         List<JsonObject> allSucceeded =
                                 asyncCheckResults.stream().filter(Future::succeeded).map(Future::result)
                                         .flatMap(JsonArray::stream).map(JsonObject.class::cast).collect(toList());

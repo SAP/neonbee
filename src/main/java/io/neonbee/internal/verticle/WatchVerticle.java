@@ -1,7 +1,5 @@
 package io.neonbee.internal.verticle;
 
-import static io.neonbee.internal.helper.AsyncHelper.joinComposite;
-import static io.neonbee.internal.helper.FunctionalHelper.uncheckedMapper;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
@@ -28,7 +26,6 @@ import io.neonbee.NeonBee;
 import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -213,8 +210,8 @@ public class WatchVerticle extends AbstractVerticle {
         List<Future<Void>> futuresToResolve = new ArrayList<>();
         return registerWatchKey(dir).compose(v -> FileSystemHelper.readDir(vertx, dir))
                 .compose(dirContent -> handleFileEvents(dirContent, futuresToResolve))
-                .compose(fileFutures -> CompositeFuture.all(uncheckedMapper(fileFutures))
-                        .compose(compFut -> CompositeFuture.all(uncheckedMapper(futuresToResolve))).mapEmpty());
+                .compose(fileFutures -> Future.all(fileFutures)
+                        .compose(compFut -> Future.all(futuresToResolve)).mapEmpty());
     }
 
     /**
@@ -247,7 +244,7 @@ public class WatchVerticle extends AbstractVerticle {
             watchEventFutures.add(processEvent(affectedPath, event.kind()));
         }
 
-        return joinComposite(watchEventFutures).onComplete(asyncCompFuture -> {
+        return Future.join(watchEventFutures).onComplete(asyncCompFuture -> {
             watchKeys.get(watchPath).reset();
         }).mapEmpty();
     }
@@ -262,7 +259,7 @@ public class WatchVerticle extends AbstractVerticle {
             watchKeyFutures.add(handleWatchKeyEvents(entry.getKey(), entry.getValue()));
         }
 
-        return joinComposite(watchKeyFutures).mapEmpty();
+        return Future.join(watchKeyFutures).mapEmpty();
     }
 
     private Future<Void> registerWatchKey(Path affectedPath) {

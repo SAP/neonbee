@@ -25,7 +25,6 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.data.internal.DataContextImpl;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.junit5.VertxTestContext;
 
@@ -104,7 +103,7 @@ class LocalPreferredClusterTest extends NeonBeeExtension.TestBase {
     }
 
     private Future<Map<String, Long>> fireRequests(DataRequest request) {
-        return CompositeFuture.all(IntStream.rangeClosed(1, REPETITION.intValue())
+        return Future.all(IntStream.rangeClosed(1, REPETITION.intValue())
                 .mapToObj(i -> DataVerticle.requestData(localNode.getVertx(), request, new DataContextImpl()))
                 .collect(Collectors.toList())).map(cpf -> mapResponses(cpf.list()));
     }

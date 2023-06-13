@@ -2,7 +2,6 @@ package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.fetchReferencedEntities;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.NavigationPropertyHelper.getRelatedEntities;
-import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.stream.Collectors.toList;
 
@@ -53,7 +52,7 @@ public final class EntityExpander {
                 return fetchReferencedEntities(navProb, vertx, routingContext)
                         .map(entities -> fetchedEntities.put(navProb.getType(), entities));
             }).collect(toList());
-            return allComposite(fetchFutures).map(v -> new EntityExpander(navigationProperties, fetchedEntities));
+            return Future.all(fetchFutures).map(v -> new EntityExpander(navigationProperties, fetchedEntities));
         } else {
             return succeededFuture(new EntityExpander(List.of(), Map.of()));
         }

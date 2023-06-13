@@ -9,7 +9,7 @@ import static io.neonbee.internal.helper.CollectionHelper.multiMapToMap;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
-import static io.vertx.core.CompositeFuture.all;
+import static io.vertx.core.Future.all;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;

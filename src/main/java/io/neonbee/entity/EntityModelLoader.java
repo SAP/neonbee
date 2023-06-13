@@ -2,7 +2,6 @@ package io.neonbee.entity;
 
 import static io.neonbee.entity.EntityModelDefinition.CSN;
 import static io.neonbee.entity.EntityModelManager.getBufferedOData;
-import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -45,7 +44,6 @@ import io.neonbee.internal.helper.BufferHelper.BufferInputStream;
 import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.scanner.ClassPathScanner;
 import io.neonbee.logging.LoggingFacade;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -96,8 +94,7 @@ class EntityModelLoader {
     public static Future<Map<String, EntityModel>> load(Vertx vertx, Collection<EntityModelDefinition> definitions) {
         LOGGER.trace("Start loading entity model definitions");
         return new EntityModelLoader(vertx).loadModelsFromModelDirectoryAndClassPath().compose(loader -> {
-            return CompositeFuture
-                    .all(definitions.stream().map(loader::loadModelsFromDefinition).collect(Collectors.toList()))
+            return Future.all(definitions.stream().map(loader::loadModelsFromDefinition).collect(Collectors.toList()))
                     .map(loader);
         }).map(EntityModelLoader::getModels).onComplete(result -> {
             if (LOGGER.isTraceEnabled()) {
@@ -122,7 +119,7 @@ class EntityModelLoader {
      */
     public Future<EntityModelLoader> loadModelsFromModelDirectoryAndClassPath() {
         NeonBeeOptions options = NeonBee.get(vertx).getOptions();
-        return CompositeFuture.all(scanDir(options.getModelsDirectory()),
+        return Future.all(scanDir(options.getModelsDirectory()),
                 options.shouldIgnoreClassPath() ? succeededFuture() : scanClassPath()).map(this);
     }
 
@@ -137,7 +134,7 @@ class EntityModelLoader {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("Load models from definition {}", csnModelDefinitions.keySet());
         }
-        return allComposite(csnModelDefinitions.entrySet().stream()
+        return Future.all(csnModelDefinitions.entrySet().stream()
                 .map(entry -> parseModel(entry.getKey(), entry.getValue(), definition.getAssociatedModelDefinitions()))
                 .collect(Collectors.toList())).map(this).onComplete(result -> {
                     if (LOGGER.isTraceEnabled()) {
@@ -164,7 +161,7 @@ class EntityModelLoader {
                     ? succeededFuture(Collections.emptyList())
                     : failedFuture(throwable);
         }).compose(
-                files -> CompositeFuture.all(files.stream()
+                files -> Future.all(files.stream()
                         .map(file -> FileSystemHelper.isDirectory(vertx, file)
                                 .compose(isDir -> isDir ? scanDir(file) : loadModel(file)))
                         .collect(Collectors.toList())))
@@ -181,11 +178,11 @@ class EntityModelLoader {
         Future<List<String>> csnFiles = scanner.scanWithPredicate(vertx, name -> name.endsWith(CSN));
         Future<List<String>> modelFiles = scanner.scanManifestFiles(vertx, NEONBEE_MODELS);
 
-        return CompositeFuture.all(csnFiles, modelFiles).compose(scanResult -> CompositeFuture
-                // use distinct because models mentioned in the manifest could also exists as file.
+        return Future.all(csnFiles, modelFiles).compose(scanResult -> Future
+                // use distinct because models mentioned in the manifest could also exist as file.
                 .all(Streams.concat(csnFiles.result().stream(), modelFiles.result().stream()).distinct()
                         .map(name -> loadModel(Path.of(name)).otherwise(throwable -> {
-                            // models loaded from the class path are non-vital for NeonBee so continue anyways
+                            // models loaded from the class path are non-vital for NeonBee so continue anyway
                             LOGGER.warn("Loading model {} from class path failed", throwable, name);
                             return null;
                         })).collect(Collectors.toList())))
@@ -201,9 +198,9 @@ class EntityModelLoader {
             LOGGER.trace("Loading model {}", csnFile);
         }
         return readCsnModel(csnFile).compose(cdsModel -> {
-            return CompositeFuture.all(EntityModelDefinition.resolveEdmxPaths(csnFile, cdsModel).stream()
+            return Future.all(EntityModelDefinition.resolveEdmxPaths(csnFile, cdsModel).stream()
                     .map(this::loadEdmxModel).collect(Collectors.toList())).onSuccess(compositeFuture -> {
-                        buildModelMap(cdsModel, compositeFuture.<ServiceMetadata>list());
+                        buildModelMap(cdsModel, compositeFuture.list());
                     });
         }).mapEmpty();
     }
@@ -216,7 +213,7 @@ class EntityModelLoader {
             }
         }).compose(cdsModel -> {
             LOGGER.trace("Parse associated models of {}", csnFile);
-            return CompositeFuture.all(EntityModelDefinition.resolveEdmxPaths(Path.of(csnFile), cdsModel).stream()
+            return Future.all(EntityModelDefinition.resolveEdmxPaths(Path.of(csnFile), cdsModel).stream()
                     .map(Path::toString).map(path -> {
                         // we do not know if the path uses windows / unix path separators, try both!
                         return FileSystemHelper.getPathFromMap(associatedModels, path);
@@ -226,7 +223,7 @@ class EntityModelLoader {
                                     result.succeeded() ? "succeeded" : "failed");
                         }
                     }).onSuccess(compositeFuture -> {
-                        buildModelMap(cdsModel, compositeFuture.<ServiceMetadata>list());
+                        buildModelMap(cdsModel, compositeFuture.list());
                     }).mapEmpty();
         });
     }

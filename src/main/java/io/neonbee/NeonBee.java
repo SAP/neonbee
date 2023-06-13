@@ -6,11 +6,9 @@ import static io.neonbee.internal.deploy.DeployableVerticle.fromVerticle;
 import static io.neonbee.internal.deploy.Deployables.allTo;
 import static io.neonbee.internal.deploy.Deployables.anyTo;
 import static io.neonbee.internal.deploy.Deployables.fromDeployables;
-import static io.neonbee.internal.helper.AsyncHelper.allComposite;
-import static io.neonbee.internal.helper.AsyncHelper.joinComposite;
 import static io.neonbee.internal.helper.HostHelper.getHostIp;
 import static io.neonbee.internal.scanner.DeployableScanner.scanForDeployableClasses;
-import static io.vertx.core.CompositeFuture.all;
+import static io.vertx.core.Future.all;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
@@ -369,7 +367,7 @@ public class NeonBee {
             }));
         }
 
-        return joinComposite(healthChecks).recover(v -> {
+        return Future.join(healthChecks).recover(v -> {
             healthChecks.stream().filter(Future::failed).map(Future::cause)
                     .forEach(t -> LOGGER.error("Failed to register health checks to registry.", t));
             return succeededFuture();
@@ -386,7 +384,7 @@ public class NeonBee {
         }
 
         return new HookScanner().scanForHooks(vertx)
-                .compose(hookClasses -> allComposite(
+                .compose(hookClasses -> all(
                         hookClasses.stream().map(hookClass -> hookRegistry.registerHooks(hookClass, CORRELATION_ID))
                                 .collect(Collectors.toList())).mapEmpty());
     }
@@ -501,7 +499,7 @@ public class NeonBee {
         // verticles from class-path with a @NeonBeeDeployable annotation
         deployFutures.add(deployClassPathVerticles());
 
-        return allComposite(deployFutures).mapEmpty();
+        return all(deployFutures).mapEmpty();
     }
 
     /**
@@ -522,8 +520,8 @@ public class NeonBee {
         optionalVerticles.add(deployableWatchVerticle(options.getModulesDirectory(), DeployerVerticle::new));
 
         LOGGER.info("Deploying system verticles ...");
-        return allComposite(List.of(fromDeployables(requiredVerticles).compose(allTo(this)),
-                allComposite(optionalVerticles).map(CompositeFuture::list).map(optionals -> {
+        return all(List.of(fromDeployables(requiredVerticles).compose(allTo(this)),
+                all(optionalVerticles).map(CompositeFuture::list).map(optionals -> {
                     return optionals.stream().map(Optional.class::cast).filter(Optional::isPresent).map(Optional::get)
                             .map(Deployable.class::cast).collect(Collectors.toList());
                 }).map(Deployables::new).compose(anyTo(this)))).mapEmpty();

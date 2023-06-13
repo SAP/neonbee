@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
@@ -63,7 +62,7 @@ public final class DeploymentHelper {
      * @return A succeeded future, or a failed future with the cause.
      */
     public static Future<Void> undeployAllVerticlesOfClass(Vertx vertx, Class<? extends Verticle> verticleClass) {
-        return CompositeFuture
+        return Future
                 .all(getAllDeployments(vertx)
                         .filter(deployment -> deployment.getVerticles().stream().anyMatch(verticleClass::isInstance))
                         .map(deployment -> undeployVerticle(vertx, deployment.deploymentID())).collect(toList()))

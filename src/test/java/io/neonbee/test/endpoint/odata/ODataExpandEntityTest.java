@@ -31,7 +31,7 @@ import io.neonbee.test.base.ODataEndpointTestBase;
 import io.neonbee.test.base.ODataRequest;
 import io.neonbee.test.endpoint.odata.verticle.NavPropsCategoriesEntityVerticle;
 import io.neonbee.test.endpoint.odata.verticle.NavPropsProductsEntityVerticle;
-import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
 
@@ -52,9 +52,8 @@ class ODataExpandEntityTest extends ODataEndpointTestBase {
 
     @BeforeEach
     void setUp(VertxTestContext testContext) {
-        CompositeFuture
-                .all(deployVerticle(new NavPropsProductsEntityVerticle()),
-                        deployVerticle(new NavPropsCategoriesEntityVerticle()))
+        Future.all(deployVerticle(new NavPropsProductsEntityVerticle()),
+                deployVerticle(new NavPropsCategoriesEntityVerticle()))
                 .onComplete(testContext.succeedingThenComplete());
     }
 

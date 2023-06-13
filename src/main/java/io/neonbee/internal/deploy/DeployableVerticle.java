@@ -1,6 +1,5 @@
 package io.neonbee.internal.deploy;
 
-import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 import static io.neonbee.internal.helper.ConfigHelper.readConfig;
 import static io.vertx.core.Future.succeededFuture;
 
@@ -72,7 +71,7 @@ public class DeployableVerticle extends Deployable {
             List<Future<DeployableVerticle>> deployables =
                     classNames.stream().map(className -> fromClassName(vertx, className, verticleClassLoader))
                             .collect(Collectors.toList());
-            return allComposite(deployables).map(CompositeFuture::list);
+            return Future.all(deployables).map(CompositeFuture::list);
         });
     }
 

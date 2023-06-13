@@ -25,7 +25,6 @@ import io.neonbee.internal.verticle.LoggerConfiguration;
 import io.neonbee.internal.verticle.LoggerManagerVerticle;
 import io.neonbee.test.helper.ConcurrentHelper;
 import io.neonbee.test.helper.DeploymentHelper;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -70,13 +69,12 @@ class LoggerManagerVerticleClusterTest extends NeonBeeExtension.TestBase {
         DataRequest readReq = new DataRequest(LoggerManagerVerticle.QUALIFIED_NAME,
                 new DataQuery().setParameter("loggers", "io.neonbee.internal")).setLocalOnly(true);
 
-        CompositeFuture
-                .all(DeploymentHelper.deployVerticle(node1.getVertx(), new LoggerManagerVerticle()),
-                        DeploymentHelper.deployVerticle(node2.getVertx(), new LoggerManagerVerticle()))
+        Future.all(DeploymentHelper.deployVerticle(node1.getVertx(), new LoggerManagerVerticle()),
+                DeploymentHelper.deployVerticle(node2.getVertx(), new LoggerManagerVerticle()))
                 .<JsonArray>compose(cf -> DataVerticle.requestData(node1.getVertx(), updateReq, dataContext))
-                .<Void>compose(it -> ConcurrentHelper.waitFor(node1.getVertx(), 150L))
-                .<CompositeFuture>compose(
-                        up -> CompositeFuture.all(DataVerticle.requestData(node1.getVertx(), readReq, dataContext),
+                .compose(it -> ConcurrentHelper.waitFor(node1.getVertx(), 150L))
+                .compose(
+                        up -> Future.all(DataVerticle.requestData(node1.getVertx(), readReq, dataContext),
                                 DataVerticle.requestData(node2.getVertx(), readReq, dataContext)))
                 .compose(cf -> {
                     List<LoggerConfiguration> node1Response =
@@ -101,7 +99,7 @@ class LoggerManagerVerticleClusterTest extends NeonBeeExtension.TestBase {
                         assertThat(level.isPresent()).isTrue();
                         assertThat(level.get()).isEqualTo(expectedLogLevel2);
                     });
-                    return Future.succeededFuture().<Void>mapEmpty();
+                    return Future.succeededFuture();
                 }).onComplete(testContext.succeedingThenComplete());
     }
 }

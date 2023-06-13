@@ -29,7 +29,7 @@ import io.neonbee.NeonBeeOptions;
 import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.FileSystemHelper;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
-import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
 
@@ -133,8 +133,7 @@ public class EntityModelManagerTest extends NeonBeeTestBase { // NOPMD (public d
                 defaultOptions().clearActiveProfiles().setWorkingDirectory(workingDir));
         EntityModelManager modelManager = neonBee.getModelManager();
 
-        CompositeFuture
-                .all(modelManager.getSharedModel("io.neonbee.test1"), modelManager.getSharedModel("io.neonbee.test2"))
+        Future.all(modelManager.getSharedModel("io.neonbee.test1"), modelManager.getSharedModel("io.neonbee.test2"))
                 .onComplete(testContext.succeeding(models -> testContext.verify(() -> {
                     assertThat(models.<EntityModel>resultAt(0).getEdmxMetadata().getEdm().getEntityContainer()
                             .getNamespace()).isEqualTo("io.neonbee.test1.TestService1");

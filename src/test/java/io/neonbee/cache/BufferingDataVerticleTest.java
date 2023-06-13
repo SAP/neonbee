@@ -19,7 +19,6 @@ import io.neonbee.data.DataMap;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.test.base.DataVerticleTestBase;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -127,7 +126,7 @@ class BufferingDataVerticleTest extends DataVerticleTestBase {
     @DisplayName("Expect only one write to buffer on two parallel requests")
     void expectOneWriteToBuffer(Vertx vertx, VertxTestContext testContext) {
         delayResponse.set(true);
-        CompositeFuture.all(requestData(dr), requestData(dr))
+        Future.all(requestData(dr), requestData(dr))
                 .onComplete(testContext.succeeding(v -> testContext.verify(() -> {
                     assertThat(requireDataCount.get()).isEqualTo(2);
                     assertThat(retrieveDataCount.get()).isEqualTo(1);
@@ -142,7 +141,7 @@ class BufferingDataVerticleTest extends DataVerticleTestBase {
     void expectOneReadFromBuffer(Vertx vertx, VertxTestContext testContext) {
         respondFromBuffer.set(true);
         delayResponse.set(true);
-        CompositeFuture.all(requestData(dr), requestData(dr))
+        Future.all(requestData(dr), requestData(dr))
                 .onComplete(testContext.succeeding(v -> testContext.verify(() -> {
                     assertThat(requireDataCount.get()).isEqualTo(0);
                     assertThat(retrieveDataCount.get()).isEqualTo(0);

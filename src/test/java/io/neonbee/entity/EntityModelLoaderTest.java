@@ -20,7 +20,6 @@ import com.sap.cds.reflect.CdsModel;
 
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.test.base.NeonBeeTestBase;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -49,9 +48,8 @@ class EntityModelLoaderTest extends NeonBeeTestBase {
     @DisplayName("check if multiple models can be loaded from files")
     void loadEDMXModelsTest(Vertx vertx, VertxTestContext testContext) {
         EntityModelLoader loader = new EntityModelLoader(vertx);
-        CompositeFuture
-                .all(loader.loadModel(TEST_SERVICE_1_MODEL_PATH), loader.loadModel(TEST_SERVICE_2_MODEL_PATH),
-                        loader.loadModel(REFERENCE_SERVICE_MODEL_PATH))
+        Future.all(loader.loadModel(TEST_SERVICE_1_MODEL_PATH), loader.loadModel(TEST_SERVICE_2_MODEL_PATH),
+                loader.loadModel(REFERENCE_SERVICE_MODEL_PATH))
                 .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
                     assertThat(loader.models.get("io.neonbee.test1").getEdmxMetadata().getEdm().getEntityContainer()
                             .getNamespace()).isEqualTo("io.neonbee.test1.TestService1");
@@ -70,9 +68,8 @@ class EntityModelLoaderTest extends NeonBeeTestBase {
     @DisplayName("check if models from file system can be loaded")
     void loadModelsFileSystemTest(Vertx vertx, VertxTestContext testContext) {
         EntityModelLoader loader = new EntityModelLoader(vertx);
-        CompositeFuture
-                .all(loader.loadModel(TEST_SERVICE_1_MODEL_PATH), loader.loadModel(TEST_SERVICE_2_MODEL_PATH),
-                        loader.loadModel(REFERENCE_SERVICE_MODEL_PATH))
+        Future.all(loader.loadModel(TEST_SERVICE_1_MODEL_PATH), loader.loadModel(TEST_SERVICE_2_MODEL_PATH),
+                loader.loadModel(REFERENCE_SERVICE_MODEL_PATH))
                 .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
                     EntityModel model = loader.models.get("io.neonbee.test1");
                     assertThat(model.getAllEdmxMetadata()).hasSize(1);

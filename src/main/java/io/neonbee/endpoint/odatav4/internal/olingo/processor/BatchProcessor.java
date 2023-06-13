@@ -1,6 +1,5 @@
 package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
-import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 
 import java.io.InputStream;
@@ -23,6 +22,7 @@ import org.apache.olingo.server.api.deserializer.batch.BatchRequestPart;
 import org.apache.olingo.server.api.deserializer.batch.ODataResponsePart;
 import org.apache.olingo.server.api.serializer.BatchSerializerException;
 
+import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
@@ -67,7 +67,7 @@ public class BatchProcessor extends AsynchronousProcessor
         }
 
         // wrap up the batch processing here, which will complete the current processing phase
-        allComposite(wrapUpBatchProcessing()).onComplete(resultHandler -> {
+        Future.all(wrapUpBatchProcessing()).onComplete(resultHandler -> {
             if (resultHandler.failed()) {
                 processPromise.fail(resultHandler.cause());
                 return;

@@ -23,11 +23,12 @@ public final class AsyncHelper {
      * {@link CompositeFuture#all(List)} again).
      *
      * @param futures The futures to be checked for completeness
-     * @return A {@link CompositeFuture}, succeeded if all of the passed futures succeeded, failing otherwise.
+     * @return A {@link CompositeFuture}, succeeded if all the passed futures succeeded, failing otherwise.
+     * @deprecated Vert.x now supports Lists containing typed Futures
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @Deprecated(forRemoval = true)
     public static CompositeFuture allComposite(List<? extends Future<?>> futures) {
-        return CompositeFuture.all((List<Future>) (Object) futures);
+        return Future.all(futures);
     }
 
     /**
@@ -36,10 +37,11 @@ public final class AsyncHelper {
      *
      * @param futures A list of futures to be converted
      * @return A {@link CompositeFuture} containing the passed futures
+     * @deprecated Vert.x now supports Lists containing typed Futures
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @Deprecated(forRemoval = true)
     public static CompositeFuture joinComposite(List<? extends Future<?>> futures) {
-        return CompositeFuture.join((List<Future>) (Object) futures);
+        return Future.join(futures);
     }
 
     /**

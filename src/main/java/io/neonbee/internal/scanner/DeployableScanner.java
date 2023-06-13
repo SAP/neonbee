@@ -10,7 +10,6 @@ import io.neonbee.internal.deploy.DeployableVerticle;
 import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.helper.ThreadHelper;
 import io.neonbee.logging.LoggingFacade;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
@@ -37,9 +36,9 @@ public class DeployableScanner {
         Future<List<String>> deployablesFromManifest =
                 scanner.scanManifestFiles(vertx, DeployableVerticle.NEONBEE_DEPLOYABLES);
 
-        return CompositeFuture.all(deployablesFromClassPath, deployablesFromManifest)
+        return Future.all(deployablesFromClassPath, deployablesFromManifest)
                 .compose(compositeResult -> AsyncHelper.executeBlocking(vertx, () -> {
-                    // Use distinct because the Deployables mentioned in the manifest could also exists as file.
+                    // Use distinct because the Deployables mentioned in the manifest could also exist as file.
                     List<String> deployableFQNs = Streams.concat(deployablesFromClassPath.result().stream(),
                             deployablesFromManifest.result().stream()).distinct().collect(Collectors.toList());
 

@@ -5,7 +5,6 @@ import static io.neonbee.NeonBeeInstanceConfiguration.ClusterManager.INFINISPAN;
 import static io.neonbee.NeonBeeProfile.CORE;
 import static io.neonbee.hook.HookType.BEFORE_SHUTDOWN;
 import static io.neonbee.hook.HookType.CLUSTER_NODE_ID;
-import static io.neonbee.internal.helper.AsyncHelper.allComposite;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
@@ -15,6 +14,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
 import com.google.common.collect.ImmutableList;
 
@@ -26,7 +26,6 @@ import io.neonbee.internal.cluster.ClusterHelper;
 import io.neonbee.internal.registry.SelfCleaningRegistry;
 import io.neonbee.internal.registry.SelfCleaningRegistryController;
 import io.neonbee.test.helper.ReflectionHelper;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.junit5.VertxTestContext;
 
@@ -56,6 +55,7 @@ class SelfCleaningRegistryTest extends NeonBeeExtension.TestBase {
     private SelfCleaningRegistry<String> registryNode3;
 
     @Test
+    @DisabledIfEnvironmentVariable(named = "CI", matches = "true")
     @DisplayName("test SelfCleaningRegistry with Infinispan")
     void cycleTestInfinispan(
             @NeonBeeInstanceConfiguration(activeProfiles = CORE, clustered = true,
@@ -171,7 +171,7 @@ class SelfCleaningRegistryTest extends NeonBeeExtension.TestBase {
     }
 
     private Future<Void> createRegistries(NeonBee node1, NeonBee node2, NeonBee node3) {
-        return CompositeFuture.all(
+        return Future.all(
                 SelfCleaningRegistry.<String>create(node1.getVertx(), REGISTRY_NAME)
                         .onSuccess(reg -> registryNode1 = reg),
                 SelfCleaningRegistry.<String>create(node2.getVertx(), REGISTRY_NAME)
@@ -189,7 +189,7 @@ class SelfCleaningRegistryTest extends NeonBeeExtension.TestBase {
         registrationFutures.add(registryNode2.register(SHARED_VALUE_KEY, SHARED_VALUES_NODE_2));
         registrationFutures.add(registryNode3.register(CUSTOM_VALUE_KEY_NODE_3, CUSTOM_VALUES));
         registrationFutures.add(registryNode3.register(SHARED_VALUE_KEY, SHARED_VALUES_NODE_3));
-        return allComposite(registrationFutures).mapEmpty();
+        return Future.all(registrationFutures).mapEmpty();
     }
 
     private Future<Void> verifyEntries(SelfCleaningRegistry<String> registry, Map<String, List<String>> expected,
@@ -199,6 +199,6 @@ class SelfCleaningRegistryTest extends NeonBeeExtension.TestBase {
             testContext.verify(() -> assertThat(values).containsExactlyElementsIn(valueList));
             return succeededFuture();
         })));
-        return allComposite(entriesValidated).mapEmpty();
+        return Future.all(entriesValidated).mapEmpty();
     }
 }

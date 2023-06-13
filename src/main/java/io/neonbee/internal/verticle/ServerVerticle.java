@@ -24,9 +24,7 @@ import io.neonbee.internal.handler.ChainAuthHandler;
 import io.neonbee.internal.handler.DefaultErrorHandler;
 import io.neonbee.internal.handler.NotFoundHandler;
 import io.neonbee.internal.handler.factories.RoutingHandlerFactory;
-import io.neonbee.internal.helper.AsyncHelper;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
@@ -89,9 +87,10 @@ public class ServerVerticle extends AbstractVerticle {
 
         return createErrorHandler(config.getErrorHandlerClassName(), vertx).onSuccess(rootRoute::failureHandler)
                 .compose(unused -> {
-                    List<Future> handlerFutures = config.getHandlerFactoriesClassNames().stream()
-                            .map(ServerVerticle::instantiateHandler).collect(Collectors.toList());
-                    return CompositeFuture.all(handlerFutures);
+                    List<Future<Handler<RoutingContext>>> handlerFutures =
+                            config.getHandlerFactoriesClassNames().stream()
+                                    .map(ServerVerticle::instantiateHandler).collect(Collectors.toList());
+                    return Future.all(handlerFutures);
                 }).compose(compositeFuture -> {
                     List<Handler<RoutingContext>> handlers = compositeFuture.list();
                     handlers.forEach(routingContextHandler -> {
@@ -189,7 +188,7 @@ public class ServerVerticle extends AbstractVerticle {
         // iterate the endpoint configurations, as order is important here!
         List<Future<MountableEndpoint>> mountableEndpoints =
                 endpointConfigs.stream().map(ec -> MountableEndpoint.create(vertx, ec)).collect(Collectors.toList());
-        return AsyncHelper.allComposite(mountableEndpoints).onSuccess(v -> {
+        return Future.all(mountableEndpoints).onSuccess(v -> {
             for (Future<MountableEndpoint> endpointFuture : mountableEndpoints) {
                 endpointFuture.result().mount(vertx, router, defaultAuthHandler);
             }

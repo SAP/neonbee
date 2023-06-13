@@ -20,7 +20,6 @@ import io.neonbee.internal.SelfFirstClassLoader;
 import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.scanner.ClassPathScanner;
 import io.neonbee.logging.LoggingFacade;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 
@@ -86,7 +85,7 @@ public class DeployableModule extends Deployables {
                         DeployableVerticle.scanClassPath(vertx, classPathScanner, moduleClassLoader.get());
                 Future<DeployableModels> deployableModels = DeployableModels.scanClassPath(vertx, classPathScanner);
 
-                return CompositeFuture.all(deployableVerticles, deployableModels).onComplete(scanResult -> {
+                return Future.all(deployableVerticles, deployableModels).onComplete(scanResult -> {
                     // in case scanning failed, or there are no verticles, immediately close the module class loader
                     if (scanResult.failed() || deployableVerticles.result().isEmpty()) {
                         try {
