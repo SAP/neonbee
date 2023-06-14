@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.23.0 (2023-06-13)
+
+### Bug Fixes
+
+- disable unstable JobVerticle test ([136fd762](https://github.com/SAP/neonbee/commit/136fd7627eb4bf5b95f203aefd79f33b591c2006))
+- removed Timout annotations ([997e8efa](https://github.com/SAP/neonbee/commit/997e8efad1a0dd52f233547253e31d6c25297236))
+
+
+### Features
+
+- update logback to 1.4.7 and slf4j to 2.0.7 ([94a21327](https://github.com/SAP/neonbee/commit/94a21327f762c81136c653e6c066d37559271cbb))
+- return 201 (not 204) for POST requests to entity verticles and optional Location-header ([5aacd279](https://github.com/SAP/neonbee/commit/5aacd27978a5fd7cc880233293e15b16c0261c4b))
+- add BufferingDataVerticle ([9f30e742](https://github.com/SAP/neonbee/commit/9f30e7422b4cc844a8eea8745001a2950032e36f))
+- introduce in-memory caching / request coalescing ([5b5b0055](https://github.com/SAP/neonbee/commit/5b5b00555a64d7c5e13fe2bf2fa0cbcd72206ab1))
+- add SelfCleaningRegistry and make Registry interface type safe ([5f981326](https://github.com/SAP/neonbee/commit/5f981326ad77546611a1a0e8bdd9f76788d12f17))
+- disable tests influenced by available CPU time on GitHub CI ([c2377c23](https://github.com/SAP/neonbee/commit/c2377c2372a33c20410c9bb5cd790bad5d121f13))
+- add jsonMaxStringSize configuration ([2d978f26](https://github.com/SAP/neonbee/commit/2d978f269c8a161963757a785f2bd22c43fe6b11))
+- remove methods which became deprecated in previous versions ([9f4e2ca7](https://github.com/SAP/neonbee/commit/9f4e2ca7fc87ffe99ba7533e9a8a771c2316169f))
+- bump Vert.x to 4.4.3 and deprecate joinComposite and allComposite ([46d5fd53](https://github.com/SAP/neonbee/commit/46d5fd53e91d26996c1d4fbafa0dacdc9e96e456))
+
+
+### Build System
+
+- **deps**: bump io.micrometer:micrometer-registry-prometheus ([2287460f](https://github.com/SAP/neonbee/commit/2287460f812ed017b772567c34fde879a3745a4e))
+- **deps**: bump com.diffplug.spotless from 6.18.0 to 6.19.0 ([97041d80](https://github.com/SAP/neonbee/commit/97041d80a00b7474510144011fa576da9fe67e02))
+- **deps**: bump org.infinispan:infinispan-component-annotations ([82de2b2c](https://github.com/SAP/neonbee/commit/82de2b2c311ca17cccdd96a61151d7aabbc76909))
+- **deps**: bump com.google.guava:guava from 31.1-jre to 32.0.0-jre ([3fdd5836](https://github.com/SAP/neonbee/commit/3fdd58367adc5f1cbaa472538906259d613bb10a))
+- **deps**: bump org.sonarqube from 4.0.0.2929 to 4.1.0.3113 ([53f0d83b](https://github.com/SAP/neonbee/commit/53f0d83be43afd06ccd912d779de94fa9e3c5b1e))
+- **deps**: bump se.bjurr.violations.violations-gradle-plugin ([84a72bec](https://github.com/SAP/neonbee/commit/84a72becc374f0fe17dd76403f154765bc9736e9))
+- **deps**: bump org.sonarqube from 4.1.0.3113 to 4.2.0.3129 ([4066a12b](https://github.com/SAP/neonbee/commit/4066a12b7b903228d32dd02dba7cda699a3c392c))
+- **deps**: bump org.infinispan:infinispan-component-annotations ([7f2358a1](https://github.com/SAP/neonbee/commit/7f2358a16b8227b8bb5a13e96ed7035010993fc3))
+
+
 ## 0.22.0 (2023-05-12)
 
 ### Bug Fixes
