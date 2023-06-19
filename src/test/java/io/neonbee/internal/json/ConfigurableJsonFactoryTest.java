@@ -3,10 +3,17 @@ package io.neonbee.internal.json;
 import static com.fasterxml.jackson.core.StreamReadConstraints.DEFAULT_MAX_STRING_LEN;
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.neonbee.test.helper.ReflectionHelper.setValueOfPrivateField;
+import static io.neonbee.test.helper.ReflectionHelper.setValueOfPrivateStaticField;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.Mockito.RETURNS_SMART_NULLS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.function.Supplier;
 
 import org.junit.jupiter.api.AfterEach;
@@ -14,17 +21,26 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.parallel.Isolated;
+import org.mockito.ArgumentCaptor;
+import org.slf4j.Logger;
+
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
+import io.neonbee.internal.json.ConfigurableJsonFactory.ConfigurableJacksonCodec;
 import io.neonbee.test.base.DataVerticleTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.Future;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.jackson.DatabindCodec;
+import io.vertx.core.json.jackson.JacksonCodec;
+import io.vertx.core.json.jackson.JacksonFactory;
 import io.vertx.junit5.VertxTestContext;
 
 @Isolated("The maximum string size is set on the JsonCodec that is injected to Vert.x using SPI, thus it is a global setting, that may influence other tests")
@@ -48,6 +64,65 @@ class ConfigurableJsonFactoryTest extends DataVerticleTestBase {
     @AfterEach
     void resetToDefault() {
         ConfigurableJsonFactory.CODEC.setMaxStringLength(DEFAULT_MAX_STRING_LEN);
+    }
+
+    @Test
+    @DisplayName("Databind module registration should be ignored if no Databind Codec is used")
+    void testIgnoreModuleRegistrationWithoutDatabindCodec() throws Throwable {
+        Logger mockedLogger = mock(Logger.class);
+        VertxTestContext.ExecutionBlock resetLogger =
+                setValueOfPrivateStaticField(ConfigurableJsonFactory.class, "LOGGER", mockedLogger);
+        VertxTestContext.ExecutionBlock resetConfigurableJsonFactoryCodec =
+                setValueOfPrivateStaticField(ConfigurableJsonFactory.class, "CODEC", new ConfigurableJacksonCodec());
+        VertxTestContext.ExecutionBlock resetJacksonFactoryCodec =
+                setValueOfPrivateStaticField(JacksonFactory.class, "CODEC", new JacksonCodec());
+
+        try {
+            ConfigurableJsonFactory.CODEC.registerDeserializationModule(null);
+            ConfigurableJsonFactory.CODEC.registerSerializationModule(null);
+            ArgumentCaptor<String> logMsgCaptor = ArgumentCaptor.forClass(String.class);
+            verify(mockedLogger, times(2)).warn(logMsgCaptor.capture());
+            List<String> messages = logMsgCaptor.getAllValues();
+
+            assertThat(messages).contains(
+                    "JsonCodec is no instance of DatabindCodec, registerDeserializationModule will be ignored.");
+            assertThat(messages).contains(
+                    "JsonCodec is no instance of DatabindCodec, registerSerializationModule will be ignored.");
+        } finally {
+            resetLogger.apply();
+            resetConfigurableJsonFactoryCodec.apply();
+            resetJacksonFactoryCodec.apply();
+        }
+    }
+
+    @Test
+    @DisplayName("Databind module registration should happen if Databind Codec is used")
+    void testModuleRegistrationWithDatabindCodec() throws Throwable {
+        ObjectMapper serializationMapperMock = mock(ObjectMapper.class);
+        ObjectMapper serializationPrettyMapperMock = mock(ObjectMapper.class);
+        ObjectMapper deserializationMapperMock = mock(ObjectMapper.class);
+
+        VertxTestContext.ExecutionBlock resetSerializationMapper =
+                setValueOfPrivateStaticField(DatabindCodec.class, "mapper", serializationMapperMock);
+        VertxTestContext.ExecutionBlock resetSerializationPrettyMapper =
+                setValueOfPrivateStaticField(DatabindCodec.class, "prettyMapper", serializationPrettyMapperMock);
+        VertxTestContext.ExecutionBlock resetDeserializationMapper =
+                setValueOfPrivateField(ConfigurableJsonFactory.CODEC, "mapper", deserializationMapperMock);
+
+        try {
+            Module mockedModule = mock(Module.class, RETURNS_SMART_NULLS);
+
+            ConfigurableJsonFactory.CODEC.registerSerializationModule(mockedModule);
+            verify(serializationMapperMock).registerModule(mockedModule);
+            verify(serializationPrettyMapperMock).registerModule(mockedModule);
+
+            ConfigurableJsonFactory.CODEC.registerDeserializationModule(mockedModule);
+            verify(deserializationMapperMock).registerModule(mockedModule);
+        } finally {
+            resetSerializationMapper.apply();
+            resetSerializationPrettyMapper.apply();
+            resetDeserializationMapper.apply();
+        }
     }
 
     @Test

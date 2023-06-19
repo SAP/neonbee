@@ -68,7 +68,7 @@ import io.neonbee.internal.deploy.Deployable;
 import io.neonbee.internal.deploy.Deployables;
 import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.helper.FileSystemHelper;
-import io.neonbee.internal.json.ConfigurableJsonFactory;
+import io.neonbee.internal.json.ConfigurableJsonFactory.ConfigurableJsonCodec;
 import io.neonbee.internal.json.ImmutableJsonArray;
 import io.neonbee.internal.json.ImmutableJsonObject;
 import io.neonbee.internal.registry.Registry;
@@ -94,6 +94,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.impl.ConcurrentHashSet;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.LocalMap;
@@ -323,6 +324,20 @@ public class NeonBee {
         });
     }
 
+    @VisibleForTesting
+    void applyJsonCodecSettings() {
+        // set the maximum JSON string size for Jackson parsing (or stay with the default if not set)
+        int jsonMaxStringSize = config.getJsonMaxStringSize();
+        if (jsonMaxStringSize > 0) {
+            if (Json.CODEC instanceof ConfigurableJsonCodec) {
+                ((ConfigurableJsonCodec) Json.CODEC).setMaxStringLength(jsonMaxStringSize);
+            } else {
+                LOGGER.warn(
+                        "The used JSON codec is no instance of ConfigurableJsonCodec, therefore property \"jsonMaxStringSize\" will be ignored.");
+            }
+        }
+    }
+
     private Future<Void> boot() {
         LOGGER.info("Booting NeonBee (ID: {})", nodeId);
         return registerHooks().compose(nothing -> hookRegistry.executeHooks(HookType.BEFORE_BOOTSTRAP))
@@ -330,11 +345,7 @@ public class NeonBee {
                     // set the default timezone and overwrite any configured user.timezone property
                     TimeZone.setDefault(TimeZone.getTimeZone(config.getTimeZone()));
 
-                    // set the maximum JSON string size for Jackson parsing (or stay with the default if not set)
-                    int jsonMaxStringSize = config.getJsonMaxStringSize();
-                    if (jsonMaxStringSize > 0) {
-                        ConfigurableJsonFactory.CODEC.setMaxStringLength(jsonMaxStringSize);
-                    }
+                    applyJsonCodecSettings();
 
                     // further synchronous initializations which should happen before verticles are getting deployed
                 }).compose(nothing -> all(initializeSharedMaps(), decorateEventBus(), createMicrometerRegistries()))
