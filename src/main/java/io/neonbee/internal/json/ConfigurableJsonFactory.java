@@ -1,18 +1,23 @@
 package io.neonbee.internal.json;
 
-import static io.vertx.core.json.jackson.JacksonCodec.fromParser;
-
 import java.io.IOException;
 import java.io.InputStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.StreamReadConstraints;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 
 import io.netty.buffer.ByteBufInputStream;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.jackson.DatabindCodec;
+import io.vertx.core.json.jackson.JacksonCodec;
 import io.vertx.core.json.jackson.JacksonFactory;
 import io.vertx.core.json.jackson.VertxModule;
 import io.vertx.core.spi.json.JsonCodec;
@@ -22,10 +27,13 @@ import io.vertx.core.spi.json.JsonCodec;
  * change the maximum allowed length of JSON strings.
  */
 public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
+
     /**
      * A singleton instance to the {@link ConfigurableJsonCodec}.
      */
     public static final ConfigurableJsonCodec CODEC;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurableJsonFactory.class);
 
     static {
         ConfigurableJsonCodec codec;
@@ -50,12 +58,20 @@ public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
     public abstract static class ConfigurableJsonCodec implements JsonCodec {
         @Override
         public <T> T fromString(String json, Class<T> clazz) {
-            return fromParser(createParser(json), clazz);
+            if (JacksonFactory.CODEC instanceof DatabindCodec) {
+                return DatabindCodec.fromParser(createParser(json), clazz);
+            } else {
+                return JacksonCodec.fromParser(createParser(json), clazz);
+            }
         }
 
         @Override
         public <T> T fromBuffer(Buffer json, Class<T> clazz) {
-            return fromParser(createParser(json), clazz);
+            if (JacksonFactory.CODEC instanceof DatabindCodec) {
+                return DatabindCodec.fromParser(createParser(json), clazz);
+            } else {
+                return JacksonCodec.fromParser(createParser(json), clazz);
+            }
         }
 
         @Override
@@ -71,6 +87,42 @@ public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
         @Override
         public Buffer toBuffer(Object object, boolean pretty) {
             return JacksonFactory.CODEC.toBuffer(object, pretty);
+        }
+
+        /**
+         * This method registers a {@link Module} for the mapper (also the pretty mapper) which is currently used to
+         * write JSON to String or Buffer.
+         * <p>
+         * <b>Important:</b> The currently used {@link JsonCodec} must be an instance of {@link DatabindCodec},
+         * otherwise this method has no effect.
+         *
+         * @param module The module to register
+         * @return the {@linkplain ConfigurableJsonCodec} for fluent use
+         */
+        public ConfigurableJsonCodec registerSerializationModule(Module module) {
+            if (JacksonFactory.CODEC instanceof DatabindCodec) {
+                DatabindCodec.mapper().registerModule(module);
+                DatabindCodec.prettyMapper().registerModule(module);
+            } else {
+                LOGGER.warn(
+                        "JsonCodec is no instance of DatabindCodec, registerSerializationModule will be ignored.");
+            }
+            return this;
+        }
+
+        /**
+         * This method registers a {@link Module} for the mapper which is currently used to parse JSON from String or
+         * Buffer.
+         * <p>
+         * <b>Important:</b> The currently used {@link JsonCodec} must be an instance of {@link DatabindCodec},
+         * otherwise this method has no effect.
+         *
+         * @param module The module to register
+         * @return the {@linkplain ConfigurableJsonCodec} for fluent use
+         */
+        public ConfigurableJsonCodec registerDeserializationModule(Module module) {
+            LOGGER.warn("JsonCodec is no instance of DatabindCodec, registerDeserializationModule will be ignored.");
+            return this;
         }
 
         /**
@@ -98,7 +150,8 @@ public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
         protected abstract JsonParser createParser(Buffer buf);
     }
 
-    private static class ConfigurableJacksonCodec extends ConfigurableJsonCodec {
+    @VisibleForTesting
+    static class ConfigurableJacksonCodec extends ConfigurableJsonCodec {
         protected final JsonFactory factory;
 
         protected ConfigurableJacksonCodec() {
@@ -135,7 +188,8 @@ public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
         }
     }
 
-    private static class ConfigurableDatabindCodec extends ConfigurableJacksonCodec {
+    @VisibleForTesting
+    static class ConfigurableDatabindCodec extends ConfigurableJacksonCodec {
         @SuppressWarnings("unused")
         private final ObjectMapper mapper;
 
@@ -148,7 +202,13 @@ public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
 
             // Non-standard JSON but we allow C style comments in our JSON
             (this.mapper = mapper).configure(JsonParser.Feature.ALLOW_COMMENTS, true);
-            mapper.registerModule(new VertxModule());
+            registerDeserializationModule(new VertxModule());
+        }
+
+        @Override
+        public ConfigurableDatabindCodec registerDeserializationModule(Module module) {
+            this.mapper.registerModule(module);
+            return this;
         }
     }
 }
