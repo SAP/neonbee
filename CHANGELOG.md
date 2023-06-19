@@ -1,6 +1,13 @@
 # Changelog
 
-## 0.23.0 (2023-06-13)
+## 0.24.0 (2023-06-19)
+
+### Features
+
+- expose module registration for Databind codec ([7092837c](https://github.com/SAP/neonbee/commit/7092837c4422b3de7f16438b63103c9a1e88b853))
+
+
+## 0.23.0 (2023-06-14)
 
 ### Bug Fixes
 
