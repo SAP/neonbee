@@ -70,7 +70,7 @@ dependencies {
     // required for annotationProcessing and needs to match vertx-infinispan version
     implementation group: 'org.infinispan', name: 'infinispan-component-annotations', version: '13.0.18.Final'
 
-    implementation group: 'com.sap.cds', name: 'cds4j-core', version: '1.38.1'
+    implementation group: 'com.sap.cds', name: 'cds4j-core', version: '2.0.0'
     implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.11.1'
     implementation group: 'org.ow2.asm', name: 'asm', version: '9.5'
 
