@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -75,12 +76,15 @@ import io.neonbee.internal.verticle.LoggerManagerVerticle;
 import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.DeliveryContext;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.EventBusOptions;
+import io.vertx.core.http.ClientAuth;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.jackson.DatabindCodec;
@@ -407,6 +411,68 @@ class NeonBeeTest extends NeonBeeTestBase {
             resetLogger.apply();
             resetCodec.apply();
         }
+    }
+
+    static Stream<Arguments> testEncryptionOptions() {
+        Path dummyPath = Path.of("/foo/bar");
+        String dummyPassword = "dummyPw";
+
+        BiFunction<EventBusOptions, VertxTestContext, Handler<AsyncResult<Void>>> onlyKeyOrTruststoreVerifier =
+                (ebo, testContext) -> asyncVertx -> testContext.verify(() -> {
+                    assertThat(asyncVertx.failed()).isTrue();
+                    assertThat(asyncVertx.cause()).hasMessageThat().isEqualTo(
+                            "Failed to start NeonBee: Truststore options require keystore options and vice versa.");
+                    testContext.completeNow();
+                });
+
+        BiFunction<EventBusOptions, VertxTestContext, Handler<AsyncResult<Void>>> keyAndTruststoreVerifier =
+                (ebo, testContext) -> asyncVertx -> testContext.verify(() -> {
+                    assertThat(asyncVertx.succeeded()).isTrue();
+                    assertThat(ebo.getPfxTrustOptions().getPath()).isEqualTo(dummyPath.toString());
+                    assertThat(ebo.getPfxTrustOptions().getPassword()).isEqualTo(dummyPassword);
+                    assertThat(ebo.getPfxKeyCertOptions().getPath()).isEqualTo(dummyPath.toString());
+                    assertThat(ebo.getPfxKeyCertOptions().getPassword()).isEqualTo(dummyPassword);
+                    assertThat(ebo.getClientAuth()).isEqualTo(ClientAuth.REQUIRED);
+                    assertThat(ebo.getSslOptions().getTrustOptions()).isNotNull();
+                    assertThat(ebo.getSslOptions().getKeyCertOptions()).isNotNull();
+                    testContext.completeNow();
+                });
+
+        BiFunction<EventBusOptions, VertxTestContext, Handler<AsyncResult<Void>>> noKeyOrTruststoreVerifier =
+                (ebo, testContext) -> asyncVertx -> testContext.verify(() -> {
+                    assertThat(asyncVertx.succeeded()).isTrue();
+                    assertThat(ebo.getTrustStoreOptions()).isNull();
+                    assertThat(ebo.getKeyStoreOptions()).isNull();
+                    assertThat(ebo.getClientAuth()).isEqualTo(ClientAuth.NONE);
+                    assertThat(ebo.getSslOptions().getTrustOptions()).isNull();
+                    assertThat(ebo.getSslOptions().getKeyCertOptions()).isNull();
+                    testContext.completeNow();
+                });
+
+        Arguments onlyTruststore = Arguments.of("Only truststore",
+                new NeonBeeOptions.Mutable().setClustered(true).setClusterTruststore(dummyPath),
+                onlyKeyOrTruststoreVerifier);
+        Arguments onlyKeystore = Arguments.of("Only keystore",
+                new NeonBeeOptions.Mutable().setClustered(true).setClusterKeystore(dummyPath),
+                onlyKeyOrTruststoreVerifier);
+        Arguments trustAndKeystore = Arguments.of("Key- and truststore",
+                new NeonBeeOptions.Mutable().setClustered(true).setClusterTruststore(dummyPath)
+                        .setClusterTruststorePassword(dummyPassword).setClusterKeystore(dummyPath)
+                        .setClusterKeystorePassword(dummyPassword),
+                keyAndTruststoreVerifier);
+        Arguments noTrustOrKeystore = Arguments.of("No key- or truststore",
+                new NeonBeeOptions.Mutable().setClustered(true), noKeyOrTruststoreVerifier);
+        return Stream.of(onlyTruststore, onlyKeystore, trustAndKeystore, noTrustOrKeystore);
+    }
+
+    @ParameterizedTest(name = "{index}: {0}")
+    @MethodSource
+    @DisplayName("Test encryption options for eventbus")
+    void testEncryptionOptions(String scenario, NeonBeeOptions neonBeeOptions,
+            BiFunction<EventBusOptions, VertxTestContext, Handler<AsyncResult<Void>>> verifier,
+            VertxTestContext testContext) {
+        EventBusOptions ebo = new EventBusOptions();
+        NeonBee.applyEncryptionOptions(neonBeeOptions, ebo).onComplete(verifier.apply(ebo, testContext));
     }
 
     @NeonBeeDeployable(profile = CORE)

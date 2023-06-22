@@ -2,6 +2,7 @@ package io.neonbee;
 
 import static ch.qos.logback.classic.ClassicConstants.CONFIG_FILE_PROPERTY;
 import static io.neonbee.test.helper.OptionsHelper.options;
+import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static java.lang.System.setProperty;
 
 import java.io.Closeable;
@@ -40,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hazelcast.core.LifecycleService;
 
+import io.neonbee.NeonBeeOptions.Mutable;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.impl.VertxImpl;
@@ -69,6 +71,49 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         // nothing to add here, everything else is to be configured via the NeonBeeExtension
     }
 
+    public static class EncryptedEventbusTestBase extends NeonBeeExtension.TestBase {
+        public static final String KEYSTORE_PASSWORD = "wibble";
+
+        public static final Path TRUSTSTORE_PATH = TEST_RESOURCES.resolveRelated("certificates/truststore.p12");
+
+        public static final Path KEYSTORE_1_PATH = TEST_RESOURCES.resolveRelated("certificates/keystore-1.p12");
+
+        public static final Path KEYSTORE_2_PATH = TEST_RESOURCES.resolveRelated("certificates/keystore-2.p12");
+
+        public static final Path KEYSTORE_3_PATH = TEST_RESOURCES.resolveRelated("certificates/keystore-3.p12");
+
+        /**
+         * This method is called during parameter resolution and allows to configure a custom key- or truststore for
+         * every NeonBee instance.
+         *
+         * @param options          the NeonBee options to configure trust options
+         * @param parameterContext the related parameter context
+         * @param extensionContext the related extension context
+         */
+        @SuppressWarnings("unused")
+        protected void configureTrust(Mutable options, ParameterContext parameterContext,
+                ExtensionContext extensionContext) {
+            options.setClusterTruststorePassword(KEYSTORE_PASSWORD);
+            options.setClusterTruststore(TRUSTSTORE_PATH);
+
+            options.setClusterKeystorePassword(KEYSTORE_PASSWORD);
+            switch (parameterContext.getIndex()) {
+            case 0:
+                options.setClusterKeystore(KEYSTORE_1_PATH);
+                break;
+            case 1:
+                options.setClusterKeystore(KEYSTORE_2_PATH);
+                break;
+            case 2:
+                options.setClusterKeystore(KEYSTORE_3_PATH);
+                break;
+            default:
+                String msg = "Default implementation of configureTrust() only supports 3 different NeonBee nodes.";
+                throw new ParameterResolutionException(msg);
+            }
+        }
+    }
+
     private static final Logger LOGGER = LoggerFactory.getLogger(NeonBeeExtension.class);
 
     public static final int DEFAULT_TIMEOUT_DURATION = 60;
@@ -84,7 +129,7 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
          */
     }
 
-    private static final Set<Class> INJECTABLE_TYPES = Set.<Class>of(VertxTestContext.class, NeonBee.class);
+    private static final Set<Class> INJECTABLE_TYPES = Set.of(VertxTestContext.class, NeonBee.class);
 
     private static final String TEST_CONTEXT_KEY = "NeonBeeTestContext";
 
@@ -105,7 +150,7 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
             throws ParameterResolutionException {
         Class<?> type = parameterContext.getParameter().getType();
         if (type == NeonBee.class) {
-            NeonBeeOptions options;
+            Mutable options;
             Optional<NeonBeeInstanceConfiguration> neonBeeInstanceConfiguration;
 
             try {
@@ -115,8 +160,18 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
                 throw new ParameterResolutionException("Error while finding a free port for server verticle.", e);
             }
 
+            if (neonBeeInstanceConfiguration.map(NeonBeeInstanceConfiguration::encrypted).orElse(false)) {
+                if (extensionContext.getRequiredTestInstance() instanceof EncryptedEventbusTestBase) {
+                    ((EncryptedEventbusTestBase) extensionContext.getRequiredTestInstance())
+                            .configureTrust(options, parameterContext, extensionContext);
+                } else {
+                    throw new ParameterResolutionException(
+                            "Tests with encrypted eventbus must extend EncryptedEventbusTestBase");
+                }
+            }
+
             return unpack(store(extensionContext).getOrComputeIfAbsent(options.getInstanceName(),
-                    key -> new ScopedObject<NeonBee>(
+                    key -> new ScopedObject<>(
                             createNeonBee(options,
                                     neonBeeInstanceConfiguration.map(NeonBeeInstanceConfiguration::clusterManager)
                                             .orElse(NeonBeeInstanceConfiguration.ClusterManager.FAKE)),
