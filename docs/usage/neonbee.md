@@ -6,28 +6,35 @@ NeonBee comes with a command line interface for starting and configuring NeonBee
 NeonBee options can also be provided via environment variables, which always takes precedence. See the following
 table for a full list of configuration options.
 
-| CLI parameter                            | Environment Variable             | Description                                                                           |
-| ---------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------- |
-| `--event-loop-pool-size` or `-elps`      | `NEONBEE_EVENT_LOOP_POOL_SIZE`   | Set the number of threads `(> 0)` for the event loop pool.                            |
-| `--worker-pool-size` or `-wps`           | `NEONBEE_WORKER_POOL_SIZE`       | Set the number of threads for the worker pool. Default is `20`.                       |
-| `--instance-name` or `-name`             | `NEONBEE_INSTANCE_NAME`          | Set the NeonBee instance name. Must have at least one character.                      |
-| `--working-directory` or `-cwd`          | `NEONBEE_WORKING_DIRECTORY`      | Set the working directory. Default is `"working_dir/".`                               |
-| `--ignore-classpath` or `-no-cp`         | `NEONBEE_IGNORE_CLASSPATH`       | Ignore verticle / models on the class path. Default is `false`.                       |
-| `--disable-job-scheduling` or `-no-jobs` | `NEONBEE_DISABLE_JOB_SCHEDULING` | Do not schedule any job verticle. Default is `false`.                                 |
-| `--do-not-watch-files` or `-no-watchers` | `NEONBEE_DO_NOT_WATCH_FILES`     | Do not watch files. Default is `false`.                                               |
-| `--cluster-port` or `-clp`               | `NEONBEE_CLUSTER_PORT`           | Set the port of the event bus. Default is a random port.                              |
-| `--clustered` or `-cl`                   | `NEONBEE_CLUSTERED`              | Start in cluster mode. Default is `false`.                                            |
-| `--cluster-config` or `-cc`              | `NEONBEE_CLUSTER_CONFIG`         | Set the cluster configuration file path.                                              |
-| `--cluster-manager` or `-cm`             | `NEONBEE_CLUSTER_MANAGER`        | Set the cluster manager factory to create the cluster manager. Default is `hazelcast` |
-| `--active-profiles` or `-ap`             | `NEONBEE_ACTIVE_PROFILES`        | Set the active profiles. If not set, the default value is `ALL`.                      |
-| `--module-jar-paths` or `-mjp`           | `NEONBEE_MODULE_JARS`            | Set the module JAR paths to be loaded during startup.                                 |
-| `--metrics-registry-name` or `-mrn`      | `NEONBEE_METRICS_REGISTRY_NAME`  | Set the metrics registry by name. See [metrics](./metrics.md) for details.            |
-| `--server-port` or `-port`               | `NEONBEE_SERVER_PORT`            | Set the HTTP(S) port of the server verticle.                                          |
-| `--server-host` or `-sh`                 | `NEONBEE_SERVER_HOST`            | Set the host of the server verticle                                                   |
+| CLI parameter                                | Environment Variable                  | Description                                                                           |
+|----------------------------------------------|---------------------------------------|---------------------------------------------------------------------------------------|
+| `--event-loop-pool-size` or `-elps`          | `NEONBEE_EVENT_LOOP_POOL_SIZE`        | Set the number of threads `(> 0)` for the event loop pool.                            |
+| `--worker-pool-size` or `-wps`               | `NEONBEE_WORKER_POOL_SIZE`            | Set the number of threads for the worker pool. Default is `20`.                       |
+| `--instance-name` or `-name`                 | `NEONBEE_INSTANCE_NAME`               | Set the NeonBee instance name. Must have at least one character.                      |
+| `--working-directory` or `-cwd`              | `NEONBEE_WORKING_DIRECTORY`           | Set the working directory. Default is `"working_dir/".`                               |
+| `--ignore-classpath` or `-no-cp`             | `NEONBEE_IGNORE_CLASSPATH`            | Ignore verticle / models on the class path. Default is `false`.                       |
+| `--disable-job-scheduling` or `-no-jobs`     | `NEONBEE_DISABLE_JOB_SCHEDULING`      | Do not schedule any job verticle. Default is `false`.                                 |
+| `--do-not-watch-files` or `-no-watchers`     | `NEONBEE_DO_NOT_WATCH_FILES`          | Do not watch files. Default is `false`.                                               |
+| `--cluster-port` or `-clp`                   | `NEONBEE_CLUSTER_PORT`                | Set the port of the event bus. Default is a random port.                              |
+| `--clustered` or `-cl`                       | `NEONBEE_CLUSTERED`                   | Start in cluster mode. Default is `false`.                                            |
+| `--cluster-config` or `-cc`                  | `NEONBEE_CLUSTER_CONFIG`              | Set the cluster configuration file path.                                              |
+| `--cluster-truststore` or `-cts`             | `NEONBEE_CLUSTER_TRUSTSTORE`          | Set the cluster truststore file path (must be PKCS #12).                                              |
+| `--cluster-truststore-password` or `-cts-pw` | `NEONBEE_CLUSTER_TRUSTSTORE_PASSWORD` | Set the cluster truststore password.                                                  |
+| `--cluster-keystore` or `-cks`               | `NEONBEE_CLUSTER_KEYSTORE`            | Set the cluster keystore file path (must be PKCS #12).                                |
+| `--cluster-keystore-password` or `-cks-pw`   | `NEONBEE_CLUSTER_KEYSTORE_PASSWORD`   | Set the cluster keystore password.                                                    |
+| `--cluster-manager` or `-cm`                 | `NEONBEE_CLUSTER_MANAGER`             | Set the cluster manager factory to create the cluster manager. Default is `hazelcast` |
+| `--active-profiles` or `-ap`                 | `NEONBEE_ACTIVE_PROFILES`             | Set the active profiles. If not set, the default value is `ALL`.                      |
+| `--module-jar-paths` or `-mjp`               | `NEONBEE_MODULE_JARS`                 | Set the module JAR paths to be loaded during startup.                                 |
+| `--metrics-registry-name` or `-mrn`          | `NEONBEE_METRICS_REGISTRY_NAME`       | Set the metrics registry by name. See [metrics](./metrics.md) for details.            |
+| `--server-port` or `-port`                   | `NEONBEE_SERVER_PORT`                 | Set the HTTP(S) port of the server verticle.                                          |
+| `--server-host` or `-sh`                     | `NEONBEE_SERVER_HOST`                 | Set the host of the server verticle                                                   |
 
 **Note:** For the `--active-profiles` option, only the [available profiles](#neonbee-profiles) are allowed to set.
 Multiple profiles can be set by separating them with commas, e.g. `--active-profiles INCUBATOR,STABLE,CORE`. If this
 option is not set, the default value is `ALL`.
+
+**Note:** Truststore option can only be set in combination with keystore option and vice versa. Setting the key- and
+truststore options automatically activates the eventbus encryption.
 
 The default for the event loop pool size is `2 x number of available processors` on the host. This is the same as
 the Vert.x default.

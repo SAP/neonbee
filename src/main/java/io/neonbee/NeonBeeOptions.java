@@ -4,6 +4,7 @@ import static io.neonbee.NeonBeeProfile.parseProfiles;
 import static io.neonbee.cluster.ClusterManagerFactory.HAZELCAST_FACTORY;
 import static io.neonbee.cluster.ClusterManagerFactory.INFINISPAN_FACTORY;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.vertx.core.eventbus.EventBusOptions.DEFAULT_CLUSTER_PORT;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.file.Path;
@@ -32,7 +33,6 @@ import io.vertx.core.cli.annotations.Name;
 import io.vertx.core.cli.annotations.Option;
 import io.vertx.core.cli.annotations.Summary;
 import io.vertx.core.cli.converters.Converter;
-import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 
 @SuppressWarnings("PMD.ExcessivePublicCount")
@@ -148,6 +148,34 @@ public interface NeonBeeOptions {
     String getClusterConfig();
 
     /**
+     * Gets the cluster truststore file path.
+     *
+     * @return cluster truststore file path.
+     */
+    Path getClusterTruststore();
+
+    /**
+     * Gets the cluster truststore password.
+     *
+     * @return cluster truststore password.
+     */
+    String getClusterTruststorePassword();
+
+    /**
+     * Gets the cluster keystore file path.
+     *
+     * @return cluster keystore file path.
+     */
+    Path getClusterKeystore();
+
+    /**
+     * Gets the cluster keystore password.
+     *
+     * @return cluster keystore password.
+     */
+    String getClusterKeystorePassword();
+
+    /**
      * Gets the factory to create the chosen cluster manager.
      *
      * @return cluster manager factory to create the chosen cluster manager.
@@ -200,11 +228,19 @@ public interface NeonBeeOptions {
 
         private int workerPoolSize = VertxOptions.DEFAULT_WORKER_POOL_SIZE;
 
-        private int clusterPort = EventBusOptions.DEFAULT_CLUSTER_PORT;
+        private int clusterPort = DEFAULT_CLUSTER_PORT;
 
         private boolean clustered;
 
         private String clusterConfig;
+
+        private Path clusterTruststore;
+
+        private Path clusterKeystore;
+
+        private String clusterTruststorePassword;
+
+        private String clusterKeystorePassword;
 
         private ClusterManagerFactory clusterManagerFactory = HAZELCAST_FACTORY;
 
@@ -429,6 +465,86 @@ public interface NeonBeeOptions {
         @Description("Set the cluster configuration file path")
         public Mutable setClusterConfig(String clusterConfig) {
             this.clusterConfig = clusterConfig;
+            return this;
+        }
+
+        @Override
+        public Path getClusterTruststore() {
+            return clusterTruststore;
+        }
+
+        /**
+         * Sets the truststore (must be PKCS #12) to encrypt communication in the cluster.
+         * <p>
+         * <b>Important:</b> If this option is set, it is required to also set the {@link #setClusterKeystore(Path)
+         * keystore path}.
+         *
+         * @param truststorePath the path to the truststore
+         * @return this instance for chaining
+         */
+        @Option(longName = "cluster-truststore", shortName = "cts")
+        @Description("Set the cluster truststore file path")
+        @ConvertedBy(PathConverter.class)
+        public Mutable setClusterTruststore(Path truststorePath) {
+            this.clusterTruststore = truststorePath;
+            return this;
+        }
+
+        @Override
+        public String getClusterTruststorePassword() {
+            return clusterTruststorePassword;
+        }
+
+        /**
+         * Sets the truststore password.
+         *
+         * @param password the password for the truststore
+         * @return this instance for chaining
+         */
+        @Option(longName = "cluster-truststore-password", shortName = "cts-pw")
+        @Description("Set the cluster truststore password")
+        public Mutable setClusterTruststorePassword(String password) {
+            this.clusterTruststorePassword = password;
+            return this;
+        }
+
+        @Override
+        public Path getClusterKeystore() {
+            return clusterKeystore;
+        }
+
+        /**
+         * Sets the keystore (must be PKCS #12) to encrypt communication in the cluster.
+         * <p>
+         * <b>Important:</b> If this option is set, it is required to also set the {@link #setClusterTruststore(Path)
+         * truststore path}.
+         *
+         * @param keystorePath the path to the keystore
+         * @return this instance for chaining
+         */
+        @Option(longName = "cluster-keystore", shortName = "cks")
+        @Description("Set the cluster keystore file path")
+        @ConvertedBy(PathConverter.class)
+        public Mutable setClusterKeystore(Path keystorePath) {
+            this.clusterKeystore = keystorePath;
+            return this;
+        }
+
+        @Override
+        public String getClusterKeystorePassword() {
+            return clusterKeystorePassword;
+        }
+
+        /**
+         * Sets the keystore password.
+         *
+         * @param password the password for the keystore
+         * @return this instance for chaining
+         */
+        @Option(longName = "cluster-keystore-password", shortName = "cks-pw")
+        @Description("Set the cluster keystore password")
+        public Mutable setClusterKeystorePassword(String password) {
+            this.clusterKeystorePassword = password;
             return this;
         }
 

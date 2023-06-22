@@ -19,6 +19,8 @@ import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.google.common.truth.Truth8;
+
 import io.neonbee.NeonBeeOptions.Mutable;
 import io.neonbee.test.helper.FileSystemHelper;
 import io.vertx.core.VertxOptions;
@@ -168,6 +170,50 @@ class NeonBeeOptionsTest {
 
         mutable.setClusterConfig("hazelcast-local.xml");
         assertThat(mutable.getClusterConfig()).isEqualTo("hazelcast-local.xml");
+    }
+
+    @Test
+    @DisplayName("Test clusterTruststore getter and setter")
+    void testClusterTruststore() {
+        Mutable mutable = new NeonBeeOptions.Mutable();
+        Truth8.assertThat(mutable.getClusterTruststore()).isNull();
+
+        Path path = Path.of("/my/truststore/path");
+        mutable.setClusterTruststore(path);
+        Truth8.assertThat(mutable.getClusterTruststore()).isEqualTo(path);
+    }
+
+    @Test
+    @DisplayName("Test clusterTruststorePassword getter and setter")
+    void testClusterTruststorePassword() {
+        Mutable mutable = new NeonBeeOptions.Mutable();
+        assertThat(mutable.getClusterTruststorePassword()).isNull();
+
+        String password = "foobar";
+        mutable.setClusterTruststorePassword(password);
+        assertThat(mutable.getClusterTruststorePassword()).isEqualTo(password);
+    }
+
+    @Test
+    @DisplayName("Test clusterKeystore getter and setter")
+    void testClusterKeystore() {
+        Mutable mutable = new NeonBeeOptions.Mutable();
+        Truth8.assertThat(mutable.getClusterKeystore()).isNull();
+
+        Path path = Path.of("/my/keystore/path");
+        mutable.setClusterKeystore(path);
+        Truth8.assertThat(mutable.getClusterKeystore()).isEqualTo(path);
+    }
+
+    @Test
+    @DisplayName("Test clusterKeystorePassword getter and setter")
+    void testClusterKeystorePassword() {
+        Mutable mutable = new NeonBeeOptions.Mutable();
+        assertThat(mutable.getClusterKeystorePassword()).isNull();
+
+        String password = "foobar";
+        mutable.setClusterKeystorePassword(password);
+        assertThat(mutable.getClusterKeystorePassword()).isEqualTo(password);
     }
 
     @Test

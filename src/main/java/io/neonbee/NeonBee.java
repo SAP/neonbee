@@ -11,6 +11,7 @@ import static io.neonbee.internal.scanner.DeployableScanner.scanForDeployableCla
 import static io.vertx.core.Future.all;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
+import static io.vertx.core.http.ClientAuth.REQUIRED;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -92,17 +93,19 @@ import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.PfxOptions;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.core.spi.cluster.NodeListener;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 
-@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass" })
+@SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass", "PMD.ExcessiveImports" })
 public class NeonBee {
     /* // @formatter:off
      *
@@ -314,9 +317,33 @@ public class NeonBee {
         vertxOptions.getEventBusOptions().setPort(options.getClusterPort());
         Optional.ofNullable(getHostIp()).filter(Predicate.not(String::isEmpty))
                 .ifPresent(currentIp -> vertxOptions.getEventBusOptions().setHost(currentIp));
-        return Vertx.clusteredVertx(vertxOptions).onFailure(throwable -> {
-            LOGGER.error("Failed to start clustered Vert.x", throwable); // NOPMD slf4j
-        });
+
+        return applyEncryptionOptions(options, vertxOptions.getEventBusOptions())
+                .compose(v -> Vertx.clusteredVertx(vertxOptions)).onFailure(throwable -> {
+                    LOGGER.error("Failed to start clustered Vert.x", throwable); // NOPMD slf4j
+                });
+    }
+
+    static Future<Void> applyEncryptionOptions(NeonBeeOptions neonBeeOptions, EventBusOptions ebo) {
+        if (neonBeeOptions.getClusterKeystore() != null && neonBeeOptions.getClusterTruststore() != null) {
+            PfxOptions keystoreOpts = new PfxOptions().setPath(neonBeeOptions.getClusterKeystore().toString());
+            Optional.ofNullable(neonBeeOptions.getClusterKeystorePassword()).ifPresent(keystoreOpts::setPassword);
+            Optional.ofNullable(neonBeeOptions.getClusterKeystorePassword()).ifPresent(keystoreOpts::setAliasPassword);
+
+            PfxOptions truststoreOpts = new PfxOptions().setPath(neonBeeOptions.getClusterTruststore().toString());
+            Optional.ofNullable(neonBeeOptions.getClusterTruststorePassword()).ifPresent(truststoreOpts::setPassword);
+            Optional.ofNullable(neonBeeOptions.getClusterTruststorePassword())
+                    .ifPresent(truststoreOpts::setAliasPassword);
+
+            ebo.setSsl(true).setClientAuth(REQUIRED).setPfxKeyCertOptions(keystoreOpts)
+                    .setPfxTrustOptions(truststoreOpts);
+            return succeededFuture();
+        } else if (neonBeeOptions.getClusterKeystore() == null && neonBeeOptions.getClusterTruststore() == null) {
+            return succeededFuture();
+        } else {
+            return failedFuture(new IllegalArgumentException(
+                    "Failed to start NeonBee: Truststore options require keystore options and vice versa."));
+        }
     }
 
     @VisibleForTesting

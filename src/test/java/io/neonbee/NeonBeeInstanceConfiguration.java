@@ -33,6 +33,13 @@ public @interface NeonBeeInstanceConfiguration {
 
     String clusterConfigFile() default "";
 
+    /**
+     * Use this option only in combination with {@link io.neonbee.NeonBeeExtension.EncryptedEventbusTestBase}.
+     *
+     * @return True if the node should encrypt its eventbus communication, or false if not.
+     */
+    boolean encrypted() default false;
+
     String instanceName() default "";
 
     String workingDirectoryPath() default "./working_dir/";
