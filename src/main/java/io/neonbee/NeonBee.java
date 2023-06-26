@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.hazelcast.core.HazelcastInstance;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
@@ -71,6 +72,7 @@ import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.json.ConfigurableJsonFactory.ConfigurableJsonCodec;
 import io.neonbee.internal.json.ImmutableJsonArray;
 import io.neonbee.internal.json.ImmutableJsonObject;
+import io.neonbee.internal.registry.HazelcastClusterSafeRegistry;
 import io.neonbee.internal.registry.Registry;
 import io.neonbee.internal.registry.SelfCleaningRegistry;
 import io.neonbee.internal.registry.SelfCleaningRegistryHook;
@@ -101,6 +103,7 @@ import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.core.spi.cluster.NodeListener;
 import io.vertx.micrometer.MicrometerMetricsOptions;
+import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 @SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass" })
 public class NeonBee {
@@ -293,8 +296,20 @@ public class NeonBee {
                 }
 
                 Future<HealthCheckRegistry> healthCheckRegistryFuture = HealthCheckRegistry.create(vertx);
-                Future<SelfCleaningRegistry<String>> entityRegistryFuture =
-                        SelfCleaningRegistry.create(vertx, EntityVerticle.REGISTRY_NAME);
+                Future<Registry<String>> entityRegistryFuture =
+                        SelfCleaningRegistry.<String>create(vertx, EntityVerticle.REGISTRY_NAME)
+                                .map(registry -> {
+                                    if (ClusterHelper.getHazelcastClusterManager(vertx).isPresent()) {
+                                        return ClusterHelper.getHazelcastClusterManager(vertx)
+                                                .map(HazelcastClusterManager::getHazelcastInstance)
+                                                .map(HazelcastInstance::getPartitionService)
+                                                .map(partitionService -> (Registry<String>) new HazelcastClusterSafeRegistry<>(
+                                                        registry, partitionService))
+                                                .orElse(registry);
+                                    } else {
+                                        return registry;
+                                    }
+                                });
 
                 // create a NeonBee instance, hook registry and close handler
                 Future<NeonBee> neonBeeFuture = all(configFuture, healthCheckRegistryFuture, entityRegistryFuture)
