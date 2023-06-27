@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.25.0 (2023-06-26)
+
+### Build System
+
+- **deps**: bump io.micrometer:micrometer-registry-prometheus ([17558c49](https://github.com/SAP/neonbee/commit/17558c498389dc9a6e1164d6fc02fa0be0492e69))
+- **deps**: bump ch.qos.logback:logback-classic from 1.4.7 to 1.4.8 ([c9cb23a4](https://github.com/SAP/neonbee/commit/c9cb23a41668404da1193d1c0964277c5a73fa09))
+- **deps**: upgrade `vertx` to 4.4.4 ([04dc73c4](https://github.com/SAP/neonbee/commit/04dc73c4cb746fcb1867957cf401f22c0b6fec32))
+- **deps**: bump org.sonarqube from 4.2.0.3129 to 4.2.1.3168 ([e194283a](https://github.com/SAP/neonbee/commit/e194283a2991c3626bd454d313add04df9146fe1))
+
+
 ## 0.24.0 (2023-06-19)
 
 ### Features
