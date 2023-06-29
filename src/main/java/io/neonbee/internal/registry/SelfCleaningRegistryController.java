@@ -70,9 +70,9 @@ public class SelfCleaningRegistryController extends WriteSafeRegistry<String> {
      * @param registryName The name of the registry
      * @return a succeeded or failed future depending on the success of the refresh.
      */
-    public Future<Void> refreshReadOnlyMap(String registryName) {
+    public Future<Void> refreshReadOnlyMap(String registryName, String key) {
         LOGGER.debug("Begin to refresh read only map of registry \"{}\" at node \"{}\"", registryName, nodeId);
-        Future<Void> refreshedFuture = modifyReadOnlyMap(registryName, () -> getEntriesOfRegistry(registryName)
+        Future<Void> refreshedFuture = modifyReadOnlyMap(registryName, key, () -> getEntriesOfRegistry(registryName)
                 .map(this::accumulateValues)
                 .compose(accumulatedValues -> setReadOnlyValues(registryName, accumulatedValues)));
 
@@ -91,7 +91,7 @@ public class SelfCleaningRegistryController extends WriteSafeRegistry<String> {
         return getKeys().compose(registryNames -> {
             List<Future<Void>> cleanedRegistries = registryNames.stream()
                     .map(regName -> removeAllKeysForNode(nodeId, regName)
-                            .compose(v -> refreshReadOnlyMap(regName)))
+                            .compose(v -> refreshReadOnlyMap(regName, "")))
                     .collect(toList());
             return all(cleanedRegistries).mapEmpty();
         });
@@ -126,8 +126,8 @@ public class SelfCleaningRegistryController extends WriteSafeRegistry<String> {
                         registryName));
     }
 
-    private Future<Void> modifyReadOnlyMap(String registryName, Supplier<Future<Void>> action) {
-        return SharedDataHelper.lock(vertx, getReadOnlyMapName(registryName), action);
+    private Future<Void> modifyReadOnlyMap(String registryName, String key, Supplier<Future<Void>> action) {
+        return SharedDataHelper.lock(vertx, getReadOnlyMapName(registryName + "-" + key), action);
     }
 
     private Future<Map<String, JsonArray>> getEntriesOfRegistry(String registryName) {

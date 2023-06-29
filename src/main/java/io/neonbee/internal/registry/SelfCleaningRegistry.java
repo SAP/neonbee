@@ -41,12 +41,12 @@ public final class SelfCleaningRegistry<T> extends WriteSafeRegistry<T> {
 
     @Override
     public Future<Void> register(String key, Collection<T> values) {
-        return super.register(addNodeSuffix(key), values, () -> controller.refreshReadOnlyMap(registryName));
+        return super.register(addNodeSuffix(key), values, () -> controller.refreshReadOnlyMap(registryName, key));
     }
 
     @Override
     public Future<Void> unregister(String key, Collection<T> values) {
-        return super.unregister(addNodeSuffix(key), values, () -> controller.refreshReadOnlyMap(registryName));
+        return super.unregister(addNodeSuffix(key), values, () -> controller.refreshReadOnlyMap(registryName, key));
     }
 
     @Override
