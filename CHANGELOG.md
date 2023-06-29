@@ -1,6 +1,13 @@
 # Changelog
 
-## 0.25.0 (2023-06-26)
+## 0.26.0 (2023-06-29)
+
+### Bug Fixes
+
+- revert SelfCleaningRegistry change, due to conceptual issues ([e22979a5](https://github.com/SAP/neonbee/commit/e22979a566d4c28646795443bf36add3f9bc92c0))
+
+
+## 0.25.0 (2023-06-27)
 
 ### Build System
 
