@@ -1,7 +1,6 @@
 package io.neonbee;
 
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
-import static io.neonbee.test.helper.ReflectionHelper.createObjectWithPrivateConstructor;
 import static io.vertx.core.Future.succeededFuture;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -11,8 +10,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -21,10 +18,6 @@ import org.mockito.stubbing.Answer;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.NeonBeeInstanceConfiguration.ClusterManager;
 import io.neonbee.config.NeonBeeConfig;
-import io.neonbee.entity.EntityVerticle;
-import io.neonbee.health.HealthCheckRegistry;
-import io.neonbee.internal.registry.Registry;
-import io.neonbee.internal.registry.WriteSafeRegistry;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Closeable;
 import io.vertx.core.DeploymentOptions;
@@ -167,13 +160,6 @@ public final class NeonBeeMockHelper {
             return null;
         }).when(sharedDataMock).getLocalLock(any(), any());
 
-        // mock global locks (and always grant them)
-        when(sharedDataMock.getLock(any())).thenReturn(succeededFuture(mock(Lock.class)));
-        doAnswer(invocation -> {
-            invocation.<Handler<AsyncResult<Lock>>>getArgument(1).handle(succeededFuture(mock(Lock.class)));
-            return null;
-        }).when(sharedDataMock).getLock(any(), any());
-
         return vertxMock;
     }
 
@@ -279,17 +265,6 @@ public final class NeonBeeMockHelper {
      */
     @SuppressWarnings("PMD.EmptyCatchBlock")
     public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config) {
-        try {
-            Constructor<HealthCheckRegistry> hcrc =
-                    HealthCheckRegistry.class.getDeclaredConstructor(Vertx.class, Registry.class);
-            Registry<String> healthRegistry = new WriteSafeRegistry<>(vertx, HealthCheckRegistry.REGISTRY_NAME);
-            Registry<String> entityRegistry = new WriteSafeRegistry<>(vertx, EntityVerticle.REGISTRY_NAME);
-            HealthCheckRegistry hcr = createObjectWithPrivateConstructor(hcrc, vertx, healthRegistry);
-            return new NeonBee(vertx, options, config, new CompositeMeterRegistry(), hcr, entityRegistry);
-        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException
-                | IllegalAccessException e) {
-            // Can't happen the constructor exists ..
-            throw new RuntimeException(e);
-        }
+        return new NeonBee(vertx, options, config, new CompositeMeterRegistry());
     }
 }

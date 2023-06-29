@@ -89,6 +89,7 @@ import io.vertx.junit5.VertxTestContext.ExecutionBlock;
 
 @Isolated("Some of the methods in this test class run clustered and use the FakeClusterManager for it. The FakeClusterManager uses a static state and can therefore not be run with other clustered tests.")
 @Tag(LONG_RUNNING_TEST)
+@SuppressWarnings({ "PMD.CouplingBetweenObjects" })
 class NeonBeeTest extends NeonBeeTestBase {
     private Vertx vertx;
 
@@ -366,7 +367,7 @@ class NeonBeeTest extends NeonBeeTestBase {
                     .thenReturn(failedFuture(new RuntimeException("Failing Vert.x!")));
             mocked.when(() -> NeonBee.create(any(), any(), any(), any())).thenCallRealMethod();
 
-            Vertx failingVertxMock = defaultVertxMock();
+            Vertx failingVertxMock = mock(Vertx.class);
             when(failingVertxMock.close()).thenReturn(result);
 
             Function<VertxOptions, Future<Vertx>> vertxFunction;

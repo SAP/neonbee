@@ -37,6 +37,7 @@ import io.neonbee.data.DataAction;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataVerticle;
+import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.test.base.EntityVerticleTestBase;
 import io.vertx.core.CompositeFuture;
@@ -72,20 +73,22 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     @Test
     @DisplayName("Check if entity types are registered in shared entity map")
     void registerEntityTypes(VertxTestContext testContext) {
+        WriteSafeRegistry<String> registry =
+                new WriteSafeRegistry<>(getNeonBee().getVertx(), EntityVerticle.REGISTRY_NAME);
 
         Checkpoint checkpoint = testContext.checkpoint(2);
-        getNeonBee().getEntityRegistry().get(sharedEntityMapName(new FullQualifiedName("ERP.Customers")))
+        registry.get(sharedEntityMapName(new FullQualifiedName("ERP.Customers")))
                 .onComplete(testContext.succeeding(result -> {
                     testContext.verify(() -> {
-                        assertThat(result).containsExactly(entityVerticleImpl1.getQualifiedName(),
+                        assertThat((JsonArray) result).containsExactly(entityVerticleImpl1.getQualifiedName(),
                                 entityVerticleImpl2.getQualifiedName());
                     });
                     checkpoint.flag();
                 }));
-        getNeonBee().getEntityRegistry().get(sharedEntityMapName(new FullQualifiedName("Sales.Orders")))
+        registry.get(sharedEntityMapName(new FullQualifiedName("Sales.Orders")))
                 .onComplete(testContext.succeeding(result -> {
                     testContext.verify(() -> {
-                        assertThat(result).containsExactly(entityVerticleImpl1.getQualifiedName());
+                        assertThat((JsonArray) result).containsExactly(entityVerticleImpl1.getQualifiedName());
                     });
                     checkpoint.flag();
                 }));
