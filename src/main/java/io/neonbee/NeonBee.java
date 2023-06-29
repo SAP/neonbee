@@ -54,10 +54,13 @@ import io.neonbee.health.internal.HealthCheck;
 import io.neonbee.hook.HookRegistry;
 import io.neonbee.hook.HookType;
 import io.neonbee.hook.internal.DefaultHookRegistry;
+import io.neonbee.internal.Registry;
 import io.neonbee.internal.ReplyInboundInterceptor;
 import io.neonbee.internal.SharedDataAccessor;
+import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.buffer.ImmutableBuffer;
 import io.neonbee.internal.cluster.ClusterHelper;
+import io.neonbee.internal.cluster.entity.ClusterEntityRegistry;
 import io.neonbee.internal.codec.DataExceptionMessageCodec;
 import io.neonbee.internal.codec.DataQueryMessageCodec;
 import io.neonbee.internal.codec.EntityWrapperMessageCodec;
@@ -71,9 +74,6 @@ import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.json.ConfigurableJsonFactory.ConfigurableJsonCodec;
 import io.neonbee.internal.json.ImmutableJsonArray;
 import io.neonbee.internal.json.ImmutableJsonObject;
-import io.neonbee.internal.registry.Registry;
-import io.neonbee.internal.registry.SelfCleaningRegistry;
-import io.neonbee.internal.registry.SelfCleaningRegistryHook;
 import io.neonbee.internal.scanner.HookScanner;
 import io.neonbee.internal.tracking.MessageDirection;
 import io.neonbee.internal.tracking.TrackingDataHandlingStrategy;
@@ -292,15 +292,10 @@ public class NeonBee {
                     configFuture = succeededFuture(config);
                 }
 
-                Future<HealthCheckRegistry> healthCheckRegistryFuture = HealthCheckRegistry.create(vertx);
-                Future<SelfCleaningRegistry<String>> entityRegistryFuture =
-                        SelfCleaningRegistry.create(vertx, EntityVerticle.REGISTRY_NAME);
-
                 // create a NeonBee instance, hook registry and close handler
-                Future<NeonBee> neonBeeFuture = all(configFuture, healthCheckRegistryFuture, entityRegistryFuture)
-                        .map(loadedConfig -> new NeonBee(vertx, options, configFuture.result(),
-                                compositeMeterRegistry, healthCheckRegistryFuture.result(),
-                                entityRegistryFuture.result()));
+                Future<NeonBee> neonBeeFuture = configFuture.map(loadedConfig -> {
+                    return new NeonBee(vertx, options, loadedConfig, compositeMeterRegistry);
+                });
                 // boot NeonBee, on failure close Vert.x
                 return neonBeeFuture.compose(NeonBee::boot).recover(closeVertx).compose(unused -> neonBeeFuture);
             } catch (Throwable t) {
@@ -387,10 +382,6 @@ public class NeonBee {
 
     private Future<Void> registerHooks() {
         if (options.shouldIgnoreClassPath()) {
-            if (vertx.isClustered()) {
-                // We still need the cleanup Hooks for SelfCleaningRegistry
-                return getHookRegistry().registerHooks(SelfCleaningRegistryHook.class, CORRELATION_ID).mapEmpty();
-            }
             return succeededFuture();
         }
 
@@ -612,16 +603,18 @@ public class NeonBee {
     }
 
     @VisibleForTesting
-    NeonBee(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config,
-            CompositeMeterRegistry compositeMeterRegistry, HealthCheckRegistry healthCheckRegistry,
-            Registry<String> entityRegistry) {
+    NeonBee(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config, CompositeMeterRegistry compositeMeterRegistry) {
         this.vertx = vertx;
         this.options = options;
         this.config = config;
 
-        this.healthRegistry = healthCheckRegistry;
+        this.healthRegistry = new HealthCheckRegistry(vertx);
         this.modelManager = new EntityModelManager(this);
-        this.entityRegistry = entityRegistry;
+        if (vertx.isClustered()) {
+            this.entityRegistry = new ClusterEntityRegistry(vertx, EntityVerticle.REGISTRY_NAME);
+        } else {
+            this.entityRegistry = new WriteSafeRegistry<>(vertx, EntityVerticle.REGISTRY_NAME);
+        }
 
         this.compositeMeterRegistry = compositeMeterRegistry;
 
@@ -781,9 +774,9 @@ public class NeonBee {
     }
 
     /**
-     * The entity registry is used to store all available entity verticle addresses for a given entity type.
+     * Get the {@link WriteSafeRegistry} for {@link EntityVerticle}.
      *
-     * @return the entity registry
+     * @return the entity verticle {@link WriteSafeRegistry}
      */
     public Registry<String> getEntityRegistry() {
         return entityRegistry;

@@ -23,9 +23,7 @@ import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.health.internal.HealthCheck;
-import io.neonbee.internal.registry.Registry;
-import io.neonbee.internal.registry.SelfCleaningRegistry;
-import io.neonbee.internal.verticle.HealthCheckVerticle;
+import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -38,11 +36,8 @@ import io.vertx.ext.healthchecks.HealthChecks;
 import io.vertx.ext.healthchecks.Status;
 
 public class HealthCheckRegistry {
-
-    /**
-     * Name for the internally used registry.
-     */
-    public static final String REGISTRY_NAME = HealthCheckRegistry.class.getSimpleName();
+    @VisibleForTesting
+    static final String REGISTRY_NAME = HealthCheckRegistry.class.getSimpleName();
 
     private static final String UP = "UP";
 
@@ -62,30 +57,19 @@ public class HealthCheckRegistry {
     final Map<String, HealthCheck> checks;
 
     @VisibleForTesting
-    final Registry<String> healthVerticleRegistry;
-
-    @VisibleForTesting
     HealthChecks healthChecks;
 
     private final Vertx vertx;
 
     /**
-     * Creates a new {@link HealthCheckRegistry}.
+     * Constructs a new instance of {@link HealthCheckRegistry}.
      *
-     * @param vertx the related {@link Vertx} instance
-     * @return a succeeded or failed future depending on the success of the HealthCheckRegistry creation.
+     * @param vertx the current Vert.x instance
      */
-    public static Future<HealthCheckRegistry> create(Vertx vertx) {
-        return SelfCleaningRegistry.<String>create(vertx, REGISTRY_NAME)
-                .map(registry -> new HealthCheckRegistry(vertx, registry));
-    }
-
-    @VisibleForTesting
-    HealthCheckRegistry(Vertx vertx, Registry<String> healthVerticleRegistry) {
+    public HealthCheckRegistry(Vertx vertx) {
         this.vertx = vertx;
         checks = new HashMap<>();
         healthChecks = HealthChecks.create(vertx);
-        this.healthVerticleRegistry = healthVerticleRegistry;
     }
 
     /**
@@ -111,16 +95,6 @@ public class HealthCheckRegistry {
     public HealthCheck registerGlobalCheck(String id, long retentionTime,
             Function<NeonBee, Handler<Promise<Status>>> procedure, JsonObject config) throws HealthCheckException {
         return register(id, retentionTime, true, procedure, config);
-    }
-
-    /**
-     * Registers a HealthCheckVerticle to collect data from.
-     *
-     * @param verticle The related HealthCheckVerticle
-     * @return a succeeded or failed Future, depends on the success of the registration
-     */
-    public Future<Void> registerVerticle(HealthCheckVerticle verticle) {
-        return healthVerticleRegistry.register(SHARED_MAP_KEY, verticle.getQualifiedName());
     }
 
     /**
@@ -228,7 +202,9 @@ public class HealthCheckRegistry {
     }
 
     private Future<List<JsonObject>> getClusteredHealthCheckResults(DataContext dataContext) {
-        return healthVerticleRegistry.get(SHARED_MAP_KEY)
+        WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, REGISTRY_NAME);
+        return registry.get(SHARED_MAP_KEY)
+                .map(qualifiedNames -> qualifiedNames == null ? new JsonArray() : qualifiedNames)
                 .compose(qualifiedNames -> {
                     List<Future<JsonArray>> asyncCheckResults = sendDataRequests(qualifiedNames, dataContext);
 
@@ -242,8 +218,8 @@ public class HealthCheckRegistry {
                 });
     }
 
-    private List<Future<JsonArray>> sendDataRequests(List<String> qualifiedNames, DataContext dataContext) {
-        return qualifiedNames.stream().map(DataRequest::new)
+    private List<Future<JsonArray>> sendDataRequests(JsonArray qualifiedNames, DataContext dataContext) {
+        return qualifiedNames.stream().map(Object::toString).map(DataRequest::new)
                 .map(dr -> DataVerticle.<JsonArray>requestData(vertx, dr, dataContext).onSuccess(data -> {
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.correlateWith(dataContext).debug("Retrieved health check of verticle {}",
