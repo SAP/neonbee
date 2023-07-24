@@ -14,7 +14,7 @@ RUN gradle -x test -x spotlessJava \
     -x javadoc -x javadocJar -x testJavadoc -x testJavadocJar \
     --no-daemon clean build
 
-FROM sapmachine:11.0.19
+FROM sapmachine:11.0.20
 
 # Creates app working directory and a system user (r) with
 # no password, no home directory, no shell.
