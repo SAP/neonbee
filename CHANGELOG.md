@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.27.0 (2023-07-25)
+
+### Bug Fixes
+
+- prefer using user name / id in caching tuple ([449309a1](https://github.com/SAP/neonbee/commit/449309a15d34914c7b5afe0d792d2044446107ba))
+
+
+### Features
+
+- add a CodeQL Github Workflow ([614cc1f0](https://github.com/SAP/neonbee/commit/614cc1f0e93c9e4617bcd4c1786e270789d8f5b5))
+- extend NeonBeeOptions with trust configuration ([69f37c2b](https://github.com/SAP/neonbee/commit/69f37c2b2d637953c09f2a9602b40a7775646a27))
+
+
+### Build System
+
+- **deps**: bump io.micrometer:micrometer-registry-prometheus ([a89c35d8](https://github.com/SAP/neonbee/commit/a89c35d8908ba29a2f84230133b833a75df89e6a))
+- **deps**: bump org.sonarqube from 4.2.1.3168 to 4.3.0.3225 ([7c65e37e](https://github.com/SAP/neonbee/commit/7c65e37e0974e1f81da87d72d0d5fbc1e6b0234e))
+- **deps**: bump com.diffplug.spotless from 6.19.0 to 6.20.0 ([558fb48f](https://github.com/SAP/neonbee/commit/558fb48f2c62fd242571b93b729d9fe1be537268))
+- **deps**: bump sapmachine from 11.0.19 to 11.0.20 ([fccf4b58](https://github.com/SAP/neonbee/commit/fccf4b58387b6dd281f744284d04c5ca7f6e4096))
+
+
 ## 0.26.0 (2023-06-29)
 
 ### Bug Fixes
