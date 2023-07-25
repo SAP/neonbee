@@ -1,27 +1,368 @@
 {
   "nextVersion" : {
     "major" : 0,
+    "minor" : 28,
+    "patch" : 0,
+    "preReleaseParts" : [ ],
+    "buildMetaDataParts" : [ ],
+    "preRelease" : "",
+    "buildMetaData" : "",
+    "stable" : true,
+    "initialDevelopment" : true
+  },
+  "lastVersion" : {
+    "major" : 0,
     "minor" : 27,
     "patch" : 0,
     "preReleaseParts" : [ ],
     "buildMetaDataParts" : [ ],
     "preRelease" : "",
     "buildMetaData" : "",
-    "initialDevelopment" : true,
-    "stable" : true
-  },
-  "lastVersion" : {
-    "major" : 0,
-    "minor" : 26,
-    "patch" : 0,
-    "preReleaseParts" : [ ],
-    "buildMetaDataParts" : [ ],
-    "preRelease" : "",
-    "buildMetaData" : "",
-    "initialDevelopment" : true,
-    "stable" : true
+    "stable" : true,
+    "initialDevelopment" : true
   },
   "tags" : [ {
+    "version" : {
+      "major" : 0,
+      "minor" : 27,
+      "patch" : 0,
+      "preReleaseParts" : [ ],
+      "buildMetaDataParts" : [ ],
+      "preRelease" : "",
+      "buildMetaData" : "",
+      "stable" : true,
+      "initialDevelopment" : true
+    },
+    "releaseDate" : "2023-07-25 15:38:08.000 +0200",
+    "sections" : [ {
+      "title" : "Bug Fixes",
+      "commits" : [ {
+        "hashFull" : "449309a15d34914c7b5afe0d792d2044446107ba",
+        "hash" : "449309a15d34914",
+        "hash7" : "449309a",
+        "hash8" : "449309a1",
+        "commitTime" : "2023-07-25 15:38:08.000 +0200",
+        "commitTimeLong" : 1690292288,
+        "message" : "fix: prefer using user name / id in caching tuple\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-07-25 14:06:03.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "committerIdent" : {
+          "when" : "2023-07-25 15:38:08.000 +0200",
+          "name" : "Kristian Kraljic",
+          "email" : "kris@kra.lc"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/449309a15d34914c7b5afe0d792d2044446107ba",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "prefer using user name / id in caching tuple",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "prefer using user name / id in caching tuple",
+        "messageBody" : "",
+        "messageTitle" : "fix: prefer using user name / id in caching tuple"
+      } ]
+    }, {
+      "title" : "Features",
+      "commits" : [ {
+        "hashFull" : "614cc1f0e93c9e4617bcd4c1786e270789d8f5b5",
+        "hash" : "614cc1f0e93c9e4",
+        "hash7" : "614cc1f",
+        "hash8" : "614cc1f0",
+        "commitTime" : "2023-07-18 16:59:41.000 +0200",
+        "commitTimeLong" : 1689692381,
+        "message" : "feat: add a CodeQL Github Workflow\n\nFixes #356.\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-07-17 21:41:42.000 +0200",
+          "name" : "Martin Todorov",
+          "email" : "carlspring@gmail.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-07-18 16:59:41.000 +0200",
+          "name" : "Martin Todorov",
+          "email" : "carlspring@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ {
+          "repo" : null,
+          "id" : 356,
+          "url" : "https://github.com/SAP/neonbee/issues/356",
+          "action" : null
+        } ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/614cc1f0e93c9e4617bcd4c1786e270789d8f5b5",
+        "commitType" : "feat",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "add a CodeQL Github Workflow",
+        "commitBody" : "Fixes #356.",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "feat",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "add a CodeQL Github Workflow",
+        "messageBody" : "Fixes #356.",
+        "messageTitle" : "feat: add a CodeQL Github Workflow"
+      }, {
+        "hashFull" : "69f37c2b2d637953c09f2a9602b40a7775646a27",
+        "hash" : "69f37c2b2d63795",
+        "hash7" : "69f37c2",
+        "hash8" : "69f37c2b",
+        "commitTime" : "2023-07-25 09:00:15.000 +0200",
+        "commitTimeLong" : 1690268415,
+        "message" : "feat: extend NeonBeeOptions with trust configuration\n\nWith this commit it is possible to configure a keystore and a truststore to enable event bus encryption.\n\nThe keystore and truststore must be in the PKCS #12 format.\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-06-22 14:01:21.000 +0200",
+          "name" : "Pascal Krause",
+          "email" : "pascal.krause@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-07-25 09:00:15.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ {
+          "repo" : null,
+          "id" : 12,
+          "url" : "https://github.com/SAP/neonbee/issues/12",
+          "action" : null
+        } ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/69f37c2b2d637953c09f2a9602b40a7775646a27",
+        "commitType" : "feat",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "extend NeonBeeOptions with trust configuration",
+        "commitBody" : "With this commit it is possible to configure a keystore and a truststore to enable event bus encryption.\n\nThe keystore and truststore must be in the PKCS #12 format.",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "feat",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "extend NeonBeeOptions with trust configuration",
+        "messageBody" : "With this commit it is possible to configure a keystore and a truststore to enable event bus encryption.\n\nThe keystore and truststore must be in the PKCS #12 format.",
+        "messageTitle" : "feat: extend NeonBeeOptions with trust configuration"
+      } ]
+    }, {
+      "title" : "Build System",
+      "commits" : [ {
+        "hashFull" : "a89c35d8908ba29a2f84230133b833a75df89e6a",
+        "hash" : "a89c35d8908ba29",
+        "hash7" : "a89c35d",
+        "hash8" : "a89c35d8",
+        "commitTime" : "2023-07-18 13:32:50.000 +0200",
+        "commitTimeLong" : 1689679970,
+        "message" : "build(deps): bump io.micrometer:micrometer-registry-prometheus\n\nBumps [io.micrometer:micrometer-registry-prometheus](https://github.com/micrometer-metrics/micrometer) from 1.11.1 to 1.11.2.\n- [Release notes](https://github.com/micrometer-metrics/micrometer/releases)\n- [Commits](https://github.com/micrometer-metrics/micrometer/compare/v1.11.1...v1.11.2)\n\n---\nupdated-dependencies:\n- dependency-name: io.micrometer:micrometer-registry-prometheus\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-07-17 16:41:23.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-07-18 13:32:50.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/a89c35d8908ba29a2f84230133b833a75df89e6a",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump io.micrometer:micrometer-registry-prometheus",
+        "commitBody" : "Bumps [io.micrometer:micrometer-registry-prometheus](https://github.com/micrometer-metrics/micrometer) from 1.11.1 to 1.11.2.\n- [Release notes](https://github.com/micrometer-metrics/micrometer/releases)\n- [Commits](https://github.com/micrometer-metrics/micrometer/compare/v1.11.1...v1.11.2)\n\n---\nupdated-dependencies:\n- dependency-name: io.micrometer:micrometer-registry-prometheus\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump io.micrometer:micrometer-registry-prometheus",
+        "messageBody" : "Bumps [io.micrometer:micrometer-registry-prometheus](https://github.com/micrometer-metrics/micrometer) from 1.11.1 to 1.11.2.\n- [Release notes](https://github.com/micrometer-metrics/micrometer/releases)\n- [Commits](https://github.com/micrometer-metrics/micrometer/compare/v1.11.1...v1.11.2)\n\n---\nupdated-dependencies:\n- dependency-name: io.micrometer:micrometer-registry-prometheus\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "messageTitle" : "build(deps): bump io.micrometer:micrometer-registry-prometheus"
+      }, {
+        "hashFull" : "7c65e37e0974e1f81da87d72d0d5fbc1e6b0234e",
+        "hash" : "7c65e37e0974e1f",
+        "hash7" : "7c65e37",
+        "hash8" : "7c65e37e",
+        "commitTime" : "2023-07-25 08:49:58.000 +0200",
+        "commitTimeLong" : 1690267798,
+        "message" : "build(deps): bump org.sonarqube from 4.2.1.3168 to 4.3.0.3225\n\nBumps org.sonarqube from 4.2.1.3168 to 4.3.0.3225.\n\n---\nupdated-dependencies:\n- dependency-name: org.sonarqube\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-07-24 16:45:32.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-07-25 08:49:58.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/7c65e37e0974e1f81da87d72d0d5fbc1e6b0234e",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump org.sonarqube from 4.2.1.3168 to 4.3.0.3225",
+        "commitBody" : "Bumps org.sonarqube from 4.2.1.3168 to 4.3.0.3225.\n\n---\nupdated-dependencies:\n- dependency-name: org.sonarqube\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump org.sonarqube from 4.2.1.3168 to 4.3.0.3225",
+        "messageBody" : "Bumps org.sonarqube from 4.2.1.3168 to 4.3.0.3225.\n\n---\nupdated-dependencies:\n- dependency-name: org.sonarqube\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "messageTitle" : "build(deps): bump org.sonarqube from 4.2.1.3168 to 4.3.0.3225"
+      }, {
+        "hashFull" : "558fb48f2c62fd242571b93b729d9fe1be537268",
+        "hash" : "558fb48f2c62fd2",
+        "hash7" : "558fb48",
+        "hash8" : "558fb48f",
+        "commitTime" : "2023-07-25 08:50:09.000 +0200",
+        "commitTimeLong" : 1690267809,
+        "message" : "build(deps): bump com.diffplug.spotless from 6.19.0 to 6.20.0\n\nBumps com.diffplug.spotless from 6.19.0 to 6.20.0.\n\n---\nupdated-dependencies:\n- dependency-name: com.diffplug.spotless\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-07-24 16:45:31.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-07-25 08:50:09.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/558fb48f2c62fd242571b93b729d9fe1be537268",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump com.diffplug.spotless from 6.19.0 to 6.20.0",
+        "commitBody" : "Bumps com.diffplug.spotless from 6.19.0 to 6.20.0.\n\n---\nupdated-dependencies:\n- dependency-name: com.diffplug.spotless\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump com.diffplug.spotless from 6.19.0 to 6.20.0",
+        "messageBody" : "Bumps com.diffplug.spotless from 6.19.0 to 6.20.0.\n\n---\nupdated-dependencies:\n- dependency-name: com.diffplug.spotless\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "messageTitle" : "build(deps): bump com.diffplug.spotless from 6.19.0 to 6.20.0"
+      }, {
+        "hashFull" : "fccf4b58387b6dd281f744284d04c5ca7f6e4096",
+        "hash" : "fccf4b58387b6dd",
+        "hash7" : "fccf4b5",
+        "hash8" : "fccf4b58",
+        "commitTime" : "2023-07-25 08:50:24.000 +0200",
+        "commitTimeLong" : 1690267824,
+        "message" : "build(deps): bump sapmachine from 11.0.19 to 11.0.20\n\nBumps sapmachine from 11.0.19 to 11.0.20.\n\n---\nupdated-dependencies:\n- dependency-name: sapmachine\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-07-24 16:21:13.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-07-25 08:50:24.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/fccf4b58387b6dd281f744284d04c5ca7f6e4096",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump sapmachine from 11.0.19 to 11.0.20",
+        "commitBody" : "Bumps sapmachine from 11.0.19 to 11.0.20.\n\n---\nupdated-dependencies:\n- dependency-name: sapmachine\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump sapmachine from 11.0.19 to 11.0.20",
+        "messageBody" : "Bumps sapmachine from 11.0.19 to 11.0.20.\n\n---\nupdated-dependencies:\n- dependency-name: sapmachine\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "messageTitle" : "build(deps): bump sapmachine from 11.0.19 to 11.0.20"
+      } ]
+    } ]
+  }, {
     "version" : {
       "major" : 0,
       "minor" : 26,
@@ -30,10 +371,10 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
-    "releaseDate" : "2023-06-29 14:56:58.000 +0200",
+    "releaseDate" : "2023-06-29 15:11:48.000 +0200",
     "sections" : [ {
       "title" : "Bug Fixes",
       "commits" : [ {
@@ -91,8 +432,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-06-27 16:06:58.000 +0200",
     "sections" : [ {
@@ -284,8 +625,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-06-19 13:07:52.000 +0200",
     "sections" : [ {
@@ -345,8 +686,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-06-14 09:00:41.000 +0200",
     "sections" : [ {
@@ -1204,8 +1545,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-05-12 15:57:08.000 +0200",
     "sections" : [ {
@@ -1799,8 +2140,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-03-27 12:13:21.000 +0200",
     "sections" : [ {
@@ -2177,8 +2518,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-03-07 16:13:57.000 +0100",
     "sections" : [ {
@@ -3629,8 +3970,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-01-19 17:00:06.000 +0100",
     "sections" : [ {
@@ -4502,8 +4843,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-11-15 13:57:10.000 +0100",
     "sections" : [ {
@@ -4838,8 +5179,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-10-24 10:44:48.000 +0200",
     "sections" : [ {
@@ -5128,8 +5469,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-10-12 17:43:37.000 +0200",
     "sections" : [ {
@@ -5189,8 +5530,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-10-11 11:31:42.000 +0200",
     "sections" : [ {
@@ -5476,8 +5817,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-10-05 11:46:05.000 +0200",
     "sections" : [ {
@@ -5948,8 +6289,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-08-30 13:15:07.000 +0200",
     "sections" : [ {
@@ -6144,8 +6485,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-08-10 09:09:11.000 +0200",
     "sections" : [ {
@@ -6390,8 +6731,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-07-14 16:23:19.000 +0200",
     "sections" : [ {
@@ -6630,8 +6971,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-07-13 08:29:40.000 +0200",
     "sections" : [ {
@@ -6970,8 +7311,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-06-06 16:06:00.000 +0200",
     "sections" : [ {
@@ -7031,8 +7372,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-06-03 12:13:06.000 +0200",
     "sections" : [ {
@@ -7644,8 +7985,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-03-07 22:17:58.000 +0100",
     "sections" : [ {
@@ -7978,8 +8319,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-02-17 17:52:27.000 +0100",
     "sections" : [ {
@@ -8039,8 +8380,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-02-15 17:58:20.000 +0100",
     "sections" : [ {
@@ -8191,8 +8532,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-01-27 11:41:02.000 +0100",
     "sections" : [ {
@@ -8799,8 +9140,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-12-15 15:08:44.000 +0100",
     "sections" : [ {
@@ -9042,8 +9383,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-11-23 12:25:14.000 +0100",
     "sections" : [ {
@@ -9150,8 +9491,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-10-05 13:44:34.000 +0200",
     "sections" : [ {
@@ -9211,8 +9552,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-10-04 15:47:42.000 +0200",
     "sections" : [ {
@@ -10698,8 +11039,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-07-27 09:22:26.000 +0200",
     "sections" : [ {
@@ -11032,8 +11373,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-06-07 07:52:14.000 +0200",
     "sections" : [ {
@@ -12607,8 +12948,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-03-18 14:45:15.000 +0100",
     "sections" : [ {
@@ -12991,8 +13332,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-03-10 16:24:12.000 +0100",
     "sections" : [ {
