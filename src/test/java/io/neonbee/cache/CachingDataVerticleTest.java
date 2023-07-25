@@ -1,6 +1,7 @@
 package io.neonbee.cache;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.cache.CachingDataVerticle.getUserIdentifier;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -10,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import com.google.common.testing.EqualsTester;
@@ -135,11 +137,50 @@ class CachingDataVerticleTest extends DataVerticleTestBase {
     }
 
     @Test
+    @Tag(DOESNT_REQUIRE_NEONBEE)
     void testCacheTupleEquals() {
         CacheTuple t = new CacheTuple("foo", "bar", "bla");
         CacheTuple t2 = new CacheTuple("foo", "bar", "bla");
         new EqualsTester().addEqualityGroup(t).testEquals();
         assertThat(t).isEqualTo(t2);
+    }
+
+    @Test
+    @Tag(DOESNT_REQUIRE_NEONBEE)
+    void testCacheTupleEqualsNull() {
+        CacheTuple t = new CacheTuple(null, "foo", "bar", "bla");
+        CacheTuple t2 = new CacheTuple(null, "foo", "bar", "bla");
+        CacheTuple t3 = new CacheTuple(null, null, "foo", "bar", "bla");
+        new EqualsTester().addEqualityGroup(t).testEquals();
+        assertThat(t).isEqualTo(t2);
+        assertThat(t).isNotEqualTo(t3);
+    }
+
+    @Test
+    @Tag(DOESNT_REQUIRE_NEONBEE)
+    void testGetUserIdentifier() {
+        assertThat(getUserIdentifier(null)).isNull();
+        JsonObject any = new JsonObject();
+        assertThat(getUserIdentifier(any)).isSameInstanceAs(any);
+        JsonObject anyOther = new JsonObject().put("test", "abc");
+        assertThat(getUserIdentifier(anyOther)).isSameInstanceAs(anyOther);
+
+        assertThat(getUserIdentifier(new JsonObject().put("id", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("ID", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("user", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("USER", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("userid", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("USER_ID", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("user_id", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("userId", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("username", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("USER_NAME", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("user_name", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("userName", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("useridentifier", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("user_identifier", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("USER_IDENTIFIER", "abc"))).isEqualTo("abc");
+        assertThat(getUserIdentifier(new JsonObject().put("userIdentifier", "abc"))).isEqualTo("abc");
     }
 
     @Test

@@ -1,5 +1,7 @@
 package io.neonbee.cache;
 
+import static com.google.common.base.CaseFormat.LOWER_CAMEL;
+import static com.google.common.base.CaseFormat.LOWER_UNDERSCORE;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.Collections.emptyList;
 
@@ -7,7 +9,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +31,7 @@ import io.neonbee.internal.SharedDataAccessor;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.Lock;
 
 /**
@@ -49,6 +55,41 @@ public abstract class CachingDataVerticle<T> extends DataVerticle<T> {
 
     @SuppressWarnings("InlineFormatString")
     private static final String COALESCING_LOCK_NAME = "#coalescing_%h"; // %h hashCode of the cacheKey
+
+    /**
+     * We create a list of user identifying attributes (like userId, user_id, username, USERNAME, etc.) upfront, on the
+     * one hand side for security reason, so we exactly know the attributes identifying a user (so this is not relying
+     * on some kind of algorithm at runtime), but also to simply safe the processing time during runtime as the
+     * {@link #getUserIdentifier(JsonObject)} method will be called quite often so creating the different variations of
+     * the attribute name always at runtime, would eat up much very much processing time. So better to calculate the
+     * list once and then use the same list when {@link #getUserIdentifier(JsonObject)} is called.
+     */
+    private static final String[] USER_IDENTIFYING_ATTRIBUTES;
+
+    static {
+        @SuppressWarnings("JdkObsolete")
+        List<String> attributes = new LinkedList<>();
+
+        for (String suffix : new String[] { "name", "id", "identifier" }) {
+            for (String prefix : new String[] { "user", "user_", "" }) {
+                attributes.add(prefix + suffix);
+            }
+        }
+
+        // add at last, so all other identifying attributes take precedence
+        attributes.add("user");
+
+        ListIterator<String> iterator = attributes.listIterator();
+        while (iterator.hasNext()) {
+            String attribute = iterator.next();
+            if (attribute.contains("_")) {
+                iterator.add(LOWER_UNDERSCORE.to(LOWER_CAMEL, attribute));
+            }
+            iterator.add(attribute.toUpperCase(Locale.ROOT));
+        }
+
+        USER_IDENTIFYING_ATTRIBUTES = attributes.toArray(new String[0]);
+    }
 
     private final Cache<Object, T> cache;
 
@@ -109,9 +150,21 @@ public abstract class CachingDataVerticle<T> extends DataVerticle<T> {
     }
 
     /**
-     * Return a unique cache key. The cache key could be any object. In the default implementation of this method a
-     * tuple of the user principal and the query will be returned, which means every same query for one user will be
-     * cached.
+     * Return a unique cache key. The cache key could be any object.
+     *
+     * The default implementation returns a {@link CacheTuple} identifying the user and the query, meaning every query
+     * of the same user will be cached. In order to determine the logged-in user the {@link DataContext#userPrincipal()}
+     * will be used. As the structure of the user principal is determined by the authentication stack the
+     * {@link CachingDataVerticle} will use the following user value for the tuple:
+     * <ul>
+     * <li>{@code null} in case no user is signed in / {@link DataContext#userPrincipal()} returned {@code null}</li>
+     * <li>in case the {@link DataContext#userPrincipal()} contains a "name", "id", "identifier", or "user" attribute,
+     * this attribute will be used in the cache tuple case-sensitive (so username kristian does not equal Kristian). The
+     * attribute name allows for the following variations: prefixed "user" (e.g. userid or username), camel-case "userX"
+     * (e.g. userId, userName), prefixed "user_" (e.g. user_id or user_name), no prefix (e.g. id, or name), or any of
+     * the previous in all upper case (e.g. USERID, USER_NAME, or ID)</li>
+     * <li>the whole {@link DataContext#userPrincipal()} as a {@link JsonObject} in any other case</li>
+     * </ul>
      *
      * @param query   the query of the request
      * @param context the context
@@ -119,7 +172,22 @@ public abstract class CachingDataVerticle<T> extends DataVerticle<T> {
      */
     @VisibleForTesting
     protected Future<Object> getCacheKey(DataQuery query, DataContext context) {
-        return succeededFuture(new CacheTuple(context.userPrincipal(), query));
+        return succeededFuture(new CacheTuple(getUserIdentifier(context.userPrincipal()), query));
+    }
+
+    @VisibleForTesting
+    static Object getUserIdentifier(JsonObject userPrincipal) {
+        if (userPrincipal == null) {
+            return null;
+        }
+
+        for (String attribute : USER_IDENTIFYING_ATTRIBUTES) {
+            if (userPrincipal.containsKey(attribute)) {
+                return userPrincipal.getValue(attribute);
+            }
+        }
+
+        return userPrincipal; // use the full user principal as a fallback
     }
 
     /**
