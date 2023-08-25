@@ -34,6 +34,10 @@ project.ext {
 }
 
 repositories {
+    maven {
+        url "https://s01.oss.sonatype.org/content/repositories/snapshots"
+    }
+    mavenLocal()
     mavenCentral()
 }
 
@@ -54,7 +58,9 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-auth-oauth2', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-hazelcast', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-health-check', version: vertx_version
-    implementation group: 'io.vertx', name: 'vertx-infinispan', version: vertx_version
+//    implementation group: 'io.vertx', name: 'vertx-infinispan', version: '4.4.4'
+    implementation group: 'io.vertx', name: 'vertx-infinispan', version: '4.4.5-SNAPSHOT-ISPN14'
+
 
     def jackson_version = '2.15.0'
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
@@ -68,7 +74,7 @@ dependencies {
     implementation group: 'org.apache.olingo', name: 'odata-server-core-ext', version: olingo_version
 
     // required for annotationProcessing and needs to match vertx-infinispan version
-    implementation group: 'org.infinispan', name: 'infinispan-component-annotations', version: '13.0.18.Final'
+    implementation group: 'org.infinispan', name: 'infinispan-component-annotations', version: '14.0.14.Final'
 
     implementation group: 'com.sap.cds', name: 'cds4j-core', version: '1.38.1'
     implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.11.3'
