@@ -11,8 +11,20 @@ config:
     useAlpn: true
     # one of: NONE, LOCAL or CLUSTERED, defaults to NONE
     sessionHandling: NONE
+    # the session timeout in minutes, defaults to 30
+    sessionTimeout: 30
     # the name of the session cookie, defaults to neonbee-web.session
     sessionCookieName: neonbee-web.session
+    # the path of the session cookie, defaults to /
+    sessionCookiePath: /
+    # sets whether to set the `secure` flag of the session cookie, defaults to false
+    secureSessionCookie: false
+    # sets whether to set the `HttpOnly` flag of the session cookie, defaults to false
+    httpOnlySessionCookie: false
+    # one of: null, none, strict, or lax, defaults to null
+    sessionCookieSameSitePolicy: ~
+    # the minimum length of the session id, defaults to 32
+    minSessionIdLength: 32
 
     # sets whether the server should decompress request bodies, defaults to true
     decompressionSupported: true
@@ -39,69 +51,69 @@ config:
 
     # specific endpoint configuration, defaults to the object seen below
     endpoints:
-      # provides a OData V4 compliant endpoint, for accessing entity verticle data
-      - type: io.neonbee.endpoint.odatav4.ODataV4Endpoint
-        # enable the OData endpoint, defaults to true
-        enabled: true
-        # the base path to map this endpoint to, defaults to /odata/
-        basePath: /odata/
-        # endpoint specific authentication chain, defaults to null and using the default authentication chain
-        authenticationChain: ~
-        # namespace and service name URI mapping (STRICT, or LOOSE based on CDS)
-        uriConversion: STRICT
-        # a block / allow list of verticles to expose via this endpoint (defaults to empty / all entities exposed)
-        # the value of block / allow must be an array with Strings representing a regexp.
-        exposedEntities:
-          block: [any_allow_list_of_regexp_here]
-          allow: [any_block_list_of_regexp_here]
+        # provides a OData V4 compliant endpoint, for accessing entity verticle data
+        - type: io.neonbee.endpoint.odatav4.ODataV4Endpoint
+          # enable the OData endpoint, defaults to true
+          enabled: true
+          # the base path to map this endpoint to, defaults to /odata/
+          basePath: /odata/
+          # endpoint specific authentication chain, defaults to null and using the default authentication chain
+          authenticationChain: ~
+          # namespace and service name URI mapping (STRICT, or LOOSE based on CDS)
+          uriConversion: STRICT
+          # a block / allow list of verticles to expose via this endpoint (defaults to empty / all entities exposed)
+          # the value of block / allow must be an array with Strings representing a regexp.
+          exposedEntities:
+              block: [any_allow_list_of_regexp_here]
+              allow: [any_block_list_of_regexp_here]
 
-      # provides a REST endpoint (JSON, text, binary), for accessing data verticles
-      - type: io.neonbee.endpoint.raw.RawEndpoint
-        # enable the raw endpoint, defaults to true
-        enabled: true
-        # the base path to map this endpoint to, defaults to /raw/
-        basePath: /raw/
-        # endpoint specific authentication chain, defaults to null and using the default authentication chain
-        authenticationChain: ~
-        # whether or not to expose hidden verticles, defaults to false
-        exposeHiddenVerticles: false
-        # a block / allow list of verticles to expose via this endpoint (defaults to empty all verticles exposed)
-        # the value of block / allow must be an array with Strings representing a regexp.
-        exposedVerticles:
-          block: [any_allow_list_of_regexp_here]
-          allow: [any_block_list_of_regexp_here]
+        # provides a REST endpoint (JSON, text, binary), for accessing data verticles
+        - type: io.neonbee.endpoint.raw.RawEndpoint
+          # enable the raw endpoint, defaults to true
+          enabled: true
+          # the base path to map this endpoint to, defaults to /raw/
+          basePath: /raw/
+          # endpoint specific authentication chain, defaults to null and using the default authentication chain
+          authenticationChain: ~
+          # whether or not to expose hidden verticles, defaults to false
+          exposeHiddenVerticles: false
+          # a block / allow list of verticles to expose via this endpoint (defaults to empty all verticles exposed)
+          # the value of block / allow must be an array with Strings representing a regexp.
+          exposedVerticles:
+              block: [any_allow_list_of_regexp_here]
+              allow: [any_block_list_of_regexp_here]
 
-      # provides an Prometheus scraping endpoint for Micrometer.io metrics
-      - type: io.neonbee.endpoint.metrics.MetricsEndpoint
-        # enable the metrics endpoint, defaults to true
-        enabled: true
-        # the base path to map this endpoint to, defaults to /metrics/
-        basePath: /metrics/
-        # endpoint specific authentication chain, (special case!) defaults to an empty array [] and no authentication required
-        authenticationChain: []
+        # provides an Prometheus scraping endpoint for Micrometer.io metrics
+        - type: io.neonbee.endpoint.metrics.MetricsEndpoint
+          # enable the metrics endpoint, defaults to true
+          enabled: true
+          # the base path to map this endpoint to, defaults to /metrics/
+          basePath: /metrics/
+          # endpoint specific authentication chain, (special case!) defaults to an empty array [] and no authentication required
+          authenticationChain: []
 
     # default authentication chain, defaults to an empty array (no authentication), use:
     authenticationChain:
         # any of: BASIC, DIGEST, JWT, OAUTH2, REDIRECT, mandatory attribute
-      - type: string
-        # ... more authentication handler options (see the specific handler implementations)
+        - type: string
+          # ... more authentication handler options (see the specific handler implementations)
 
-        # the authentication provider to be set for this handler
-        provider:
-            # the authentication provider to be set for this handler# any of: HTDIGEST, HTPASSWD, JDBC, JWT, MONGO, OAUTH2, mandatory attribute
-            type: string
-            # ... more authentication provider options (see the specific provider implementations)
+          # the authentication provider to be set for this handler
+          provider:
+              # the authentication provider to be set for this handler# any of: HTDIGEST, HTPASSWD, JDBC, JWT, MONGO, OAUTH2, mandatory attribute
+              type: string
+              # ... more authentication provider options (see the specific provider implementations)
 
     #  default handler factories. The order of handler factories has to take the priority of the returned handlers into account.
     handlerFactories:
-    - io.neonbee.internal.handler.factories.LoggerHandlerFactory
-    - io.neonbee.internal.handler.factories.InstanceInfoHandlerFactory
-    - io.neonbee.internal.handler.factories.CorrelationIdHandlerFactory
-    - io.neonbee.internal.handler.factories.TimeoutHandlerFactory
-    - io.neonbee.internal.handler.factories.SessionHandlerFactory
-    - io.neonbee.internal.handler.factories.CacheControlHandlerFactory
-    - io.neonbee.internal.handler.factories.CorsHandlerFactory
-    - io.neonbee.internal.handler.factories.DisallowingFileUploadBodyHandlerFactory
+        - io.neonbee.internal.handler.factories.LoggerHandlerFactory
+        - io.neonbee.internal.handler.factories.InstanceInfoHandlerFactory
+        - io.neonbee.internal.handler.factories.CorrelationIdHandlerFactory
+        - io.neonbee.internal.handler.factories.TimeoutHandlerFactory
+        - io.neonbee.internal.handler.factories.SessionHandlerFactory
+        - io.neonbee.internal.handler.factories.CacheControlHandlerFactory
+        - io.neonbee.internal.handler.factories.CorsHandlerFactory
+        - io.neonbee.internal.handler.factories.DisallowingFileUploadBodyHandlerFactory
 
     # configures the CORS handler (Disabled by default)
     cors:

@@ -1,6 +1,7 @@
 package io.neonbee.internal.handler.factories;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -37,7 +38,14 @@ public class SessionHandlerFactory implements RoutingHandlerFactory {
         ServerConfig config = NeonBee.get().getServerConfig();
         Handler<RoutingContext> sh =
                 createSessionStore(NeonBee.get().getVertx(), config.getSessionHandling()).map(SessionHandler::create)
-                        .map(sessionHandler -> sessionHandler.setSessionCookieName(config.getSessionCookieName()))
+                        .map(sessionHandler -> sessionHandler
+                                .setSessionTimeout(TimeUnit.SECONDS.toMillis(config.getSessionTimeout()))
+                                .setSessionCookieName(config.getSessionCookieName())
+                                .setSessionCookiePath(config.getSessionCookiePath())
+                                .setCookieSecureFlag(config.useSecureSessionCookie())
+                                .setCookieHttpOnlyFlag(config.useHttpOnlySessionCookie())
+                                .setCookieSameSite(config.getSessionCookieSameSitePolicy())
+                                .setMinLength(config.getMinSessionIdLength()))
                         .map(sessionHandler -> (Handler<RoutingContext>) sessionHandler).orElseGet(NoOpHandler::new);
         return Future.succeededFuture(sh);
     }
