@@ -2,6 +2,10 @@ package io.neonbee.config;
 
 import static io.neonbee.internal.helper.ConfigHelper.rephraseConfigNames;
 import static io.netty.handler.codec.http.HttpResponseStatus.GATEWAY_TIMEOUT;
+import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_COOKIE_HTTP_ONLY_FLAG;
+import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_COOKIE_SECURE_FLAG;
+import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_SESSION_COOKIE_PATH;
+import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,8 +39,11 @@ import io.neonbee.internal.json.ImmutableJsonObject;
 import io.neonbee.internal.verticle.ServerVerticle;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.GenIgnore;
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.ClientAuth;
+import io.vertx.core.http.CookieSameSite;
 import io.vertx.core.http.Http2Settings;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
@@ -72,7 +79,13 @@ import io.vertx.ext.web.handler.ErrorHandler;
  *   timeout: number, // the number of seconds before the router timeout applies, defaults to 30
  *   timeoutStatusCode: number, // the status code for the default timeout, defaults to 504
  *   sessionHandling: string, // one of: none, local or clustered, defaults to none
+ *   sessionTimeout: integer, // the session timeout in minutes, defaults to 30
  *   sessionCookieName: string, // the name of the session cookie, defaults to neonbee-web.session
+ *   sessionCookiePath: string, // the path of the session cookie, defaults to /
+ *   secureSessionCookie: boolean, // sets whether to set the `secure` flag of the session cookie, defaults to false
+ *   httpOnlySessionCookie: boolean, // sets whether to set the `HttpOnly` flag of the session cookie, defaults to false
+ *   sessionCookieSameSitePolicy: string, // one of: null, none, strict, or lax, defaults to null
+ *   minSessionIdLength: integer, // the minimum length of the session id, defaults to 32
  *   correlationStrategy: string, // one of: request_header, generate_uuid, defaults to request_header
  *   endpoints: [ // endpoint configurations, defaults to the objects seen below
  *     {
@@ -216,6 +229,11 @@ public class ServerConfig extends HttpServerOptions {
     public static final String DEFAULT_SESSION_COOKIE_NAME = "neonbee-web.session";
 
     /**
+     * The default minimum length of the session ID.
+     */
+    public static final int DEFAULT_SESSIONID_MIN_LENGTH = 32;
+
+    /**
      * List of instances of {@link RoutingHandlerFactory} that are loaded by default.
      */
     public static final List<String> DEFAULT_HANDLER_FACTORIES_CLASS_NAMES =
@@ -241,7 +259,19 @@ public class ServerConfig extends HttpServerOptions {
 
     private SessionHandling sessionHandling = SessionHandling.NONE;
 
+    private int sessionTimeout = (int) TimeUnit.MICROSECONDS.toSeconds(DEFAULT_SESSION_TIMEOUT);
+
     private String sessionCookieName = DEFAULT_SESSION_COOKIE_NAME;
+
+    private String sessionCookiePath = DEFAULT_SESSION_COOKIE_PATH;
+
+    private boolean secureSessionCookie = DEFAULT_COOKIE_SECURE_FLAG;
+
+    private boolean httpOnlySessionCookie = DEFAULT_COOKIE_HTTP_ONLY_FLAG;
+
+    private CookieSameSite sessionCookieSameSitePolicy;
+
+    private int minSessionIdLength = DEFAULT_SESSIONID_MIN_LENGTH;
 
     private CorrelationStrategy correlationStrategy = CorrelationStrategy.REQUEST_HEADER;
 
@@ -358,6 +388,27 @@ public class ServerConfig extends HttpServerOptions {
     }
 
     /**
+     * Get the session timeout in minutes.
+     *
+     * @return the session timeout in minutes
+     */
+    public int getSessionTimeout() {
+        return sessionTimeout;
+    }
+
+    /**
+     * Set the session timeout in minutes.
+     *
+     * @param sessionTimeout the session timeout in minutes
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
+    public ServerConfig setSessionTimeout(int sessionTimeout) {
+        this.sessionTimeout = sessionTimeout;
+        return this;
+    }
+
+    /**
      * Get the cookie name to use to store the session identifier.
      *
      * @return the cookie name in use
@@ -375,6 +426,137 @@ public class ServerConfig extends HttpServerOptions {
     @Fluent
     public ServerConfig setSessionCookieName(String sessionCookieName) {
         this.sessionCookieName = sessionCookieName;
+        return this;
+    }
+
+    /**
+     * Get the path to use for storing the session cookie.
+     *
+     * @return the cookie path to use
+     */
+    public String getSessionCookiePath() {
+        return sessionCookiePath;
+    }
+
+    /**
+     * Set the cookie path to use for storing the session cookie.
+     *
+     * @param sessionCookiePath the cookie path to set
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
+    public ServerConfig setSessionCookiePath(String sessionCookiePath) {
+        this.sessionCookiePath = sessionCookiePath;
+        return this;
+    }
+
+    /**
+     * Returns if the {@code Secure} property should be used for the session cookie.
+     *
+     * @return true if the {@code Secure} property should be used for the session cookie
+     */
+    public boolean useSecureSessionCookie() {
+        return secureSessionCookie;
+    }
+
+    /**
+     * Returns if the {@code Secure} property should be used for the session cookie.
+     *
+     * Note that this method only used for the Vert.x code generation, as "use..." are not recognized as getters.
+     *
+     * @see #useSecureSessionCookie()
+     * @return true if the {@code Secure} property should be used for the session cookie
+     */
+    public boolean isSecureSessionCookie() {
+        return useSecureSessionCookie();
+    }
+
+    /**
+     * Set the {@code Secure} property for the session cookie.
+     *
+     * @param secureSessionCookie if the {@code Secure} property should be set for the session cookie
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
+    public ServerConfig setSecureSessionCookie(boolean secureSessionCookie) {
+        this.secureSessionCookie = secureSessionCookie;
+        return this;
+    }
+
+    /**
+     * Returns if the {@code HttpOnly} property should be used for the session cookie.
+     *
+     * @return true if the {@code HttpOnly} property should be used for the session cookie
+     */
+    @GenIgnore
+    public boolean useHttpOnlySessionCookie() {
+        return httpOnlySessionCookie;
+    }
+
+    /**
+     * Returns if the {@code HttpOnly} property should be used for the session cookie.
+     *
+     * Note that this method only used for the Vert.x code generation, as "use..." are not recognized as getters.
+     *
+     * @see #useHttpOnlySessionCookie()
+     * @return true if the {@code HttpOnly} property should be used for the session cookie
+     */
+    public boolean isHttpOnlySessionCookie() {
+        return useHttpOnlySessionCookie();
+    }
+
+    /**
+     * Set the {@code HttpOnly} property for the session cookie.
+     *
+     * @param httpOnlySessionCookie if the {@code HttpOnly} property should be set for the session cookie
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
+    public ServerConfig setHttpOnlySessionCookie(boolean httpOnlySessionCookie) {
+        this.httpOnlySessionCookie = httpOnlySessionCookie;
+        return this;
+    }
+
+    /**
+     * Get the {@code SameSite} policy for the session cookie.
+     *
+     * @return the {@code SameSite} property
+     */
+    public CookieSameSite getSessionCookieSameSitePolicy() {
+        return sessionCookieSameSitePolicy;
+    }
+
+    /**
+     * Set the {@code SameSite} policy for the session cookie.
+     *
+     * @param sessionCookieSameSitePolicy the {@code SameSite} property
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
+    @Nullable
+    public ServerConfig setSessionCookieSameSitePolicy(CookieSameSite sessionCookieSameSitePolicy) {
+        this.sessionCookieSameSitePolicy = sessionCookieSameSitePolicy;
+        return this;
+    }
+
+    /**
+     * Get the minimum length of the session ID.
+     *
+     * @return the minimum number of characters of the session ID
+     */
+    public int getMinSessionIdLength() {
+        return minSessionIdLength;
+    }
+
+    /**
+     * Set the minimum length of the session ID.
+     *
+     * @param minSessionIdLength the minimum number of characters of the session ID
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
+    public ServerConfig setMinSessionIdLength(int minSessionIdLength) {
+        this.minSessionIdLength = minSessionIdLength;
         return this;
     }
 

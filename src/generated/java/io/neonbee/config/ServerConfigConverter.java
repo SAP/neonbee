@@ -71,15 +71,46 @@ public class ServerConfigConverter {
                     obj.setHandlerFactoriesClassNames(list);
                 }
                 break;
+            case "httpOnlySessionCookie":
+                if (member.getValue() instanceof Boolean) {
+                    obj.setHttpOnlySessionCookie((Boolean) member.getValue());
+                }
+                break;
+            case "minSessionIdLength":
+                if (member.getValue() instanceof Number) {
+                    obj.setMinSessionIdLength(((Number) member.getValue()).intValue());
+                }
+                break;
+            case "secureSessionCookie":
+                if (member.getValue() instanceof Boolean) {
+                    obj.setSecureSessionCookie((Boolean) member.getValue());
+                }
+                break;
             case "sessionCookieName":
                 if (member.getValue() instanceof String) {
                     obj.setSessionCookieName((String) member.getValue());
+                }
+                break;
+            case "sessionCookiePath":
+                if (member.getValue() instanceof String) {
+                    obj.setSessionCookiePath((String) member.getValue());
+                }
+                break;
+            case "sessionCookieSameSitePolicy":
+                if (member.getValue() instanceof String) {
+                    obj.setSessionCookieSameSitePolicy(
+                            io.vertx.core.http.CookieSameSite.valueOf((String) member.getValue()));
                 }
                 break;
             case "sessionHandling":
                 if (member.getValue() instanceof String) {
                     obj.setSessionHandling(
                             io.neonbee.config.ServerConfig.SessionHandling.valueOf((String) member.getValue()));
+                }
+                break;
+            case "sessionTimeout":
+                if (member.getValue() instanceof Number) {
+                    obj.setSessionTimeout(((Number) member.getValue()).intValue());
                 }
                 break;
             case "timeout":
@@ -128,12 +159,22 @@ public class ServerConfigConverter {
             obj.getHandlerFactoriesClassNames().forEach(item -> array.add(item));
             json.put("handlerFactoriesClassNames", array);
         }
+        json.put("httpOnlySessionCookie", obj.isHttpOnlySessionCookie());
+        json.put("minSessionIdLength", obj.getMinSessionIdLength());
+        json.put("secureSessionCookie", obj.isSecureSessionCookie());
         if (obj.getSessionCookieName() != null) {
             json.put("sessionCookieName", obj.getSessionCookieName());
+        }
+        if (obj.getSessionCookiePath() != null) {
+            json.put("sessionCookiePath", obj.getSessionCookiePath());
+        }
+        if (obj.getSessionCookieSameSitePolicy() != null) {
+            json.put("sessionCookieSameSitePolicy", obj.getSessionCookieSameSitePolicy().name());
         }
         if (obj.getSessionHandling() != null) {
             json.put("sessionHandling", obj.getSessionHandling().name());
         }
+        json.put("sessionTimeout", obj.getSessionTimeout());
         json.put("timeout", obj.getTimeout());
         json.put("timeoutStatusCode", obj.getTimeoutStatusCode());
     }
