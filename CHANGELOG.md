@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.28.0 (2023-09-04)
+
+### Features
+
+- return 200 (not 204) for PUT requests to entity verticles ([4bdf45a8](https://github.com/SAP/neonbee/commit/4bdf45a8e9dce941a880fa4ae8dd9cddc0768433))
+- more session settings in ServerConfig ([26afd9f4](https://github.com/SAP/neonbee/commit/26afd9f46ad6e14bb5145ca5330c80d2d1f5e7cf))
+
+
+### Documentation
+
+- add documentation for generating certificates ([4859bc6a](https://github.com/SAP/neonbee/commit/4859bc6ad8224fedf2ce4c9c8e698f1c8d01a340))
+
+
+### Build System
+
+- **deps**: bump io.micrometer:micrometer-registry-prometheus ([8a74893e](https://github.com/SAP/neonbee/commit/8a74893ee44ebec67afda1246cc687ff4e8f5a9c))
+- **deps**: bump com.github.spotbugs from 5.0.14 to 5.1.3 ([5ec2d355](https://github.com/SAP/neonbee/commit/5ec2d3552a7653a63197811c1d71a0bb6f6da6aa))
+- **deps**: bump ch.qos.logback:logback-classic from 1.4.8 to 1.4.11 ([57e005c8](https://github.com/SAP/neonbee/commit/57e005c87732991520f7c2646d678557b23c35fd))
+
+
 ## 0.27.0 (2023-07-25)
 
 ### Bug Fixes
