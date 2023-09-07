@@ -46,7 +46,7 @@ public class HazelcastClusterHealthCheck extends AbstractHealthCheck {
 
     @Override
     public Function<NeonBee, Handler<Promise<Status>>> createProcedure() {
-        return neonBee -> healthCheckPromise -> neonBee.getVertx().executeBlocking(promise -> {
+        return neonBee -> healthCheckPromise -> neonBee.getVertx().executeBlocking(() -> {
             HazelcastInstance instance = clusterManager.getHazelcastInstance();
             boolean lifecycleServiceRunning = instance.getLifecycleService().isRunning();
             boolean ok = instance.getPartitionService().isClusterSafe() && lifecycleServiceRunning;
@@ -56,10 +56,10 @@ public class HazelcastClusterHealthCheck extends AbstractHealthCheck {
                 ok = ok && config.getInteger(EXPECTED_CLUSTER_SIZE_KEY) == clusterSize;
             }
 
-            promise.complete(new Status().setOk(ok)
+            return new Status().setOk(ok)
                     .setData(new JsonObject().put("clusterState", instance.getCluster().getClusterState())
                             .put("clusterSize", clusterSize)
-                            .put("lifecycleServiceState", lifecycleServiceRunning ? "ACTIVE" : "INACTIVE")));
-        }, false, healthCheckPromise);
+                            .put("lifecycleServiceState", lifecycleServiceRunning ? "ACTIVE" : "INACTIVE"));
+        }, false).onComplete(healthCheckPromise);
     }
 }

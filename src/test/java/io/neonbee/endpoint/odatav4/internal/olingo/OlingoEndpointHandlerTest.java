@@ -29,6 +29,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 
@@ -84,7 +85,9 @@ class OlingoEndpointHandlerTest {
         when(request.path()).thenReturn(expectedPath);
         when(request.query()).thenReturn(expectedQuery);
         when(request.scheme()).thenReturn("http");
-        when(request.host()).thenReturn("localhost");
+        HostAndPort authority = mock(HostAndPort.class);
+        when(authority.host()).thenReturn("localhost");
+        when(request.authority()).thenReturn(authority);
         when(request.method()).thenReturn(HttpMethod.GET);
         when(request.headers()).thenReturn(MultiMap.caseInsensitiveMultiMap());
 

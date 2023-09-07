@@ -1,6 +1,7 @@
 package io.neonbee.internal.helper;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -50,15 +51,14 @@ public final class AsyncHelper {
      * @param vertx     the underlying Vert.x instance
      * @param asyncTask the runnable that executes the task logic
      * @return a Future representing the asynchronous result of the consumer logic
+     *
+     * @deprecated Use {@link Vertx#executeBlocking(Callable)} instead
      */
+    @Deprecated(forRemoval = true)
     public static Future<Void> executeBlocking(Vertx vertx, ThrowingRunnable<Exception> asyncTask) {
-        return vertx.executeBlocking(promise -> {
-            try {
-                asyncTask.run();
-                promise.complete();
-            } catch (Exception e) {
-                promise.fail(e);
-            }
+        return vertx.executeBlocking(() -> {
+            asyncTask.run();
+            return null;
         });
     }
 
@@ -69,7 +69,10 @@ public final class AsyncHelper {
      * @param blockingSupplier the supplier that will be executed
      * @param <T>              the return type of the supplier
      * @return a Future representing the asynchronous result of the supplier logic
+     *
+     * @deprecated Use {@link Vertx#executeBlocking(Callable)} instead
      */
+    @Deprecated(forRemoval = true)
     public static <T> Future<T> executeBlocking(Vertx vertx, ThrowingSupplier<T, Exception> blockingSupplier) {
         return executeBlocking(vertx, promise -> {
             try {
@@ -88,7 +91,10 @@ public final class AsyncHelper {
      * @param asyncTask the Promise consumer that contains the task logic
      * @param <T>       the return type of the task
      * @return a Future representing the asynchronous result of the consumer logic
+     *
+     * @deprecated Use {@link Vertx#executeBlocking(Callable)} instead
      */
+    @Deprecated(forRemoval = true)
     public static <T> Future<T> executeBlocking(Vertx vertx, ThrowingConsumer<Promise<T>, Exception> asyncTask) {
         Promise<T> asyncTaskPromise = Promise.promise();
         vertx.executeBlocking(promise -> {
@@ -102,16 +108,7 @@ public final class AsyncHelper {
     }
 
     @FunctionalInterface
-    public interface ThrowingRunnable<E extends Exception> {
-        /**
-         * Run this operation.
-         *
-         * @throws E the exception that this runnable may throws
-         */
-        void run() throws E;
-    }
-
-    @FunctionalInterface
+    @Deprecated(forRemoval = true)
     public interface ThrowingConsumer<T, E extends Exception> {
         /**
          * Performs this operation on the given argument.
@@ -123,6 +120,7 @@ public final class AsyncHelper {
     }
 
     @FunctionalInterface
+    @Deprecated(forRemoval = true)
     public interface ThrowingSupplier<T, E extends Exception> {
         /**
          * Gets a result.
@@ -131,5 +129,16 @@ public final class AsyncHelper {
          * @return a result
          */
         T get() throws E;
+    }
+
+    @FunctionalInterface
+    @Deprecated(forRemoval = true)
+    public interface ThrowingRunnable<E extends Exception> {
+        /**
+         * Run this operation.
+         *
+         * @throws E the exception that this runnable may throws
+         */
+        void run() throws E;
     }
 }

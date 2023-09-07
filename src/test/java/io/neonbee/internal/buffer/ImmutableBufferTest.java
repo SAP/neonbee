@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.core.buffer.Buffer;
 
+@SuppressWarnings("deprecation") // see https://github.com/SAP/neonbee/issues/387
 class ImmutableBufferTest {
     @Test
     void testStaticConstructors() {

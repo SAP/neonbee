@@ -17,7 +17,6 @@ import com.google.common.collect.Lists;
 
 import io.neonbee.NeonBee;
 import io.neonbee.internal.SelfFirstClassLoader;
-import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.scanner.ClassPathScanner;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
@@ -127,14 +126,13 @@ public class DeployableModule extends Deployables {
 
     @Override
     public PendingDeployment deploy(NeonBee neonBee) {
-        return super.deploy(neonBee, undeployResult -> {
-            return AsyncHelper.executeBlocking(neonBee.getVertx(), () -> {
-                // if there is a module class loader, it came from our class, because we have a package private
-                // constructor, thus we also need to close it when the module is undeployed!
-                if (moduleClassLoader != null) {
-                    moduleClassLoader.close();
-                }
-            });
-        });
+        return super.deploy(neonBee, undeployResult -> neonBee.getVertx().executeBlocking(() -> {
+            // if there is a module class loader, it came from our class, because we have a package private
+            // constructor, thus we also need to close it when the module is undeployed!
+            if (moduleClassLoader != null) {
+                moduleClassLoader.close();
+            }
+            return null;
+        }));
     }
 }

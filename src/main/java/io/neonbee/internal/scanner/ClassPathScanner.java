@@ -38,7 +38,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Streams;
 
-import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.helper.JarHelper;
 import io.neonbee.internal.helper.ThreadHelper;
@@ -138,7 +137,7 @@ public class ClassPathScanner {
      * @return a future to a list of strings (separated list of manifest attribute values)
      */
     public Future<List<String>> scanManifestFiles(Vertx vertx, String attributeName) {
-        return AsyncHelper.executeBlocking(vertx, () -> {
+        return vertx.executeBlocking(() -> {
             List<String> resources = new ArrayList<>();
             for (URL manifestResources : getManifestResourceURLs()) {
                 try (InputStream inputStream = manifestResources.openStream()) {
@@ -200,7 +199,7 @@ public class ClassPathScanner {
                 .map(classes -> classes.stream().map(JarHelper::extractFilePath).collect(Collectors.toList()));
 
         return Future.all(classesFromDirectories, classesFromJars)
-                .compose(compositeResult -> AsyncHelper.executeBlocking(vertx, () -> {
+                .compose(compositeResult -> vertx.executeBlocking(() -> {
                     List<AnnotationClassVisitor> classVisitors = annotationClasses.stream()
                             .map(annotationClass -> new AnnotationClassVisitor(annotationClass, elementTypes))
                             .collect(Collectors.toList());
@@ -235,7 +234,7 @@ public class ClassPathScanner {
      */
     @SuppressWarnings("PMD.EmptyCatchBlock")
     public Future<List<String>> scanWithPredicate(Vertx vertx, Predicate<String> predicate) {
-        return AsyncHelper.executeBlocking(vertx, () -> {
+        return vertx.executeBlocking(() -> {
             List<String> resources = new ArrayList<>();
             Enumeration<URL> rootResources = classLoader.getResources(EMPTY);
             while (rootResources.hasMoreElements()) {
@@ -270,7 +269,7 @@ public class ClassPathScanner {
      * @return a future to a list of URIs representing the files which matches the given predicate
      */
     public Future<List<URI>> scanJarFilesWithPredicate(Vertx vertx, Predicate<String> predicate) {
-        return AsyncHelper.executeBlocking(vertx, () -> {
+        return vertx.executeBlocking(() -> {
             List<URI> resources = new ArrayList<>();
             for (URL manifestResource : getManifestResourceURLs()) {
                 URI uri = manifestResource.toURI();
@@ -355,12 +354,13 @@ public class ClassPathScanner {
          *         when called
          */
         public <U> Function<Void, Future<U>> close(Vertx vertx) {
-            return nothing -> AsyncHelper.executeBlocking(vertx, () -> {
+            return nothing -> vertx.executeBlocking(() -> {
                 try {
                     close();
                 } catch (IOException e) {
                     LOGGER.error("Failed to close {}", this, e);
                 }
+                return null;
             }).mapEmpty();
         }
     }

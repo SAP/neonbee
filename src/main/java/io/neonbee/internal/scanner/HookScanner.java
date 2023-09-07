@@ -11,7 +11,6 @@ import com.google.common.collect.Streams;
 
 import io.neonbee.hook.Hook;
 import io.neonbee.hook.Hooks;
-import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.helper.ThreadHelper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
@@ -65,7 +64,7 @@ public class HookScanner {
                 .map(names -> names.stream().map(name -> name + ".class").collect(Collectors.toList()));
 
         return Future.all(hookClassesWithAnnotations, hooksFromManifest)
-                .compose(compositeResult -> AsyncHelper.executeBlocking(vertx, () -> {
+                .compose(compositeResult -> vertx.executeBlocking(() -> {
                     if (LOGGER.isInfoEnabled()) {
                         LOGGER.info("Annotated hook classes on class path {}.",
                                 String.join(",", hookClassesWithAnnotations.result()));

@@ -60,7 +60,7 @@ public class EventLoopHealthCheck extends AbstractHealthCheck {
         };
     }
 
-    @SuppressWarnings("PMD.DoNotUseThreads")
+    @SuppressWarnings({ "PMD.DoNotUseThreads", "deprecation" }) // see https://github.com/SAP/neonbee/issues/387
     private JsonObject getCriticalEventLoops(NeonBee neonBee, int threshold) {
         JsonObject busyEventLoops = new JsonObject();
         for (EventExecutor elg : neonBee.getVertx().nettyEventLoopGroup()) {

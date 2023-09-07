@@ -19,6 +19,7 @@ public final class CompositeBuffer {
      * @param buffers Any number of buffers to create a composite of
      * @return a resulting composite buffer as a view on all passed buffers
      */
+    @SuppressWarnings("deprecation") // see https://github.com/SAP/neonbee/issues/387
     public static Buffer buffer(Buffer... buffers) {
         switch (buffers.length) {
         case 0:

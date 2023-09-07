@@ -11,8 +11,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
+import org.mockito.ArgumentMatchers;
 import org.mockito.stubbing.Answer;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
@@ -23,7 +25,6 @@ import io.vertx.core.Closeable;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -131,23 +132,15 @@ public final class NeonBeeMockHelper {
         doAnswer(timerAnswer(3)).when(vertxMock).setPeriodic(anyLong(), any());
 
         // mock execute blocking by invoking the handlers immediately
-        Answer<?> executeHandlerAnswer = invocation -> {
-            Promise<?> promise = Promise.promise();
-            invocation.<Handler<Promise<?>>>getArgument(0).handle(promise);
-            invocation.<Handler<AsyncResult<?>>>getArgument(invocation.getArguments().length - 1)
-                    .handle(promise.future());
-            return null;
-        };
-        doAnswer(executeHandlerAnswer).when(vertxMock).executeBlocking(any(), anyBoolean(), any());
-        doAnswer(executeHandlerAnswer).when(vertxMock).executeBlocking(any(), any());
-
         Answer<?> executeFutureAnswer = invocation -> {
-            Promise<?> promise = Promise.promise();
-            invocation.<Handler<Promise<?>>>getArgument(0).handle(promise);
-            return promise.future();
+            try {
+                return succeededFuture(invocation.<Callable<?>>getArgument(0).call());
+            } catch (Exception e) {
+                return Future.failedFuture(e);
+            }
         };
-        doAnswer(executeFutureAnswer).when(vertxMock).executeBlocking(any(), anyBoolean());
-        doAnswer(executeFutureAnswer).when(vertxMock).executeBlocking(any());
+        doAnswer(executeFutureAnswer).when(vertxMock).executeBlocking(ArgumentMatchers.<Callable>any(), anyBoolean());
+        doAnswer(executeFutureAnswer).when(vertxMock).executeBlocking(ArgumentMatchers.<Callable>any());
 
         // mock shared data
         SharedData sharedDataMock = mock(SharedData.class);

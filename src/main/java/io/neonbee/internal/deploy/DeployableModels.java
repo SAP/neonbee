@@ -13,7 +13,6 @@ import com.google.common.io.ByteStreams;
 
 import io.neonbee.NeonBee;
 import io.neonbee.entity.EntityModelDefinition;
-import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.scanner.ClassPathScanner;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -90,7 +89,7 @@ public class DeployableModels extends Deployable {
     @VisibleForTesting
     static Future<Map<String, byte[]>> readModelPayloads(Vertx vertx, ClassLoader classLoader,
             List<String> modelPaths) {
-        return AsyncHelper.executeBlocking(vertx, () -> {
+        return vertx.executeBlocking(() -> {
             Map<String, byte[]> modelDefinitions = new HashMap<>(modelPaths.size());
             for (String modelPath : modelPaths) {
                 try (InputStream input = requireNonNull(classLoader.getResourceAsStream(modelPath),
