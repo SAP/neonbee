@@ -23,7 +23,8 @@ import io.vertx.core.json.JsonObject;
  *
  * This issue gets fixed with https://github.com/eclipse-vertx/vert.x/pull/4111.
  */
-@SuppressWarnings({ "PMD.ExcessivePublicCount", "PMD.CyclomaticComplexity", "PMD.TooManyMethods", "PMD.GodClass" })
+@SuppressWarnings({ "PMD.ExcessivePublicCount", "PMD.CyclomaticComplexity", "PMD.TooManyMethods", "PMD.GodClass",
+        "deprecation" }) // see https://github.com/SAP/neonbee/issues/387
 public final class ImmutableBuffer implements Buffer {
     /**
      * An empty immutable buffer.

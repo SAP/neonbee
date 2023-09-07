@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 import com.google.common.annotations.VisibleForTesting;
 
 import io.neonbee.NeonBee;
-import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.helper.ThreadHelper;
 import io.neonbee.internal.json.ImmutableJsonObject;
 import io.neonbee.internal.scanner.ClassPathScanner;
@@ -131,7 +130,7 @@ public class DeployableVerticle extends Deployable {
         // requires a huge change in the test base, because all the verticle which are dynamically generated during
         // tests are not instance of DataVerticle or JobVerticle. so we maybe should make this check optional and just
         // enabled during execution runtime execution of NeonBee but disable it for the tests
-        return AsyncHelper.executeBlocking(vertx, () -> (Class<Verticle>) classLoader.loadClass(className))
+        return vertx.executeBlocking(() -> (Class<Verticle>) classLoader.loadClass(className))
                 .compose(verticleClass -> fromClass(vertx, verticleClass, defaultConfig));
     }
 

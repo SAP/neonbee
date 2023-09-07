@@ -58,7 +58,7 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
         // done, in case Olingo handles the request synchronously, the processPromise will be completed here
         Vertx vertx = routingContext.vertx();
         Promise<Void> processPromise = Promise.promise();
-        vertx.<ODataResponse>executeBlocking(blockingPromise -> {
+        vertx.executeBlocking(() -> {
             OData odata = OData.newInstance();
             ODataHandler odataHandler = odata.createRawHandler(serviceMetadata);
 
@@ -68,19 +68,15 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
             odataHandler.register(new BatchProcessor(vertx, routingContext, processPromise));
             odataHandler.register(new PrimitiveProcessor(vertx, routingContext, processPromise));
 
-            try {
-                ODataResponse odataResponse = odataHandler.process(mapToODataRequest(routingContext,
-                        serviceMetadata.getEdm().getEntityContainer().getNamespace()));
-                // check for synchronous processing, complete the processPromise in case a response body is set
-                if ((odataResponse.getStatusCode() != INTERNAL_SERVER_ERROR.code())
-                        || (odataResponse.getContent() != null) || (odataResponse.getODataContent() != null)) {
-                    processPromise.tryComplete();
-                }
-                blockingPromise.complete(odataResponse);
-            } catch (ODataLibraryException e) {
-                blockingPromise.fail(e);
+            ODataResponse odataResponse = odataHandler.process(mapToODataRequest(routingContext,
+                    serviceMetadata.getEdm().getEntityContainer().getNamespace()));
+            // check for synchronous processing, complete the processPromise in case a response body is set
+            if ((odataResponse.getStatusCode() != INTERNAL_SERVER_ERROR.code())
+                    || (odataResponse.getContent() != null) || (odataResponse.getODataContent() != null)) {
+                processPromise.tryComplete();
             }
-        }, asyncODataResponse -> {
+            return odataResponse;
+        }).onComplete(asyncODataResponse -> {
             // failed to map / process OData request, so fail the web request
             if (asyncODataResponse.failed()) {
                 Throwable cause = asyncODataResponse.cause();

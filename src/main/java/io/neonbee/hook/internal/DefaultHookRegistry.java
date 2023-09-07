@@ -20,7 +20,6 @@ import io.neonbee.hook.HookRegistration;
 import io.neonbee.hook.HookRegistry;
 import io.neonbee.hook.HookType;
 import io.neonbee.hook.Hooks;
-import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -51,7 +50,7 @@ public class DefaultHookRegistry implements HookRegistry {
 
     @Override
     public Future<Collection<HookRegistration>> registerInstanceHooks(Object instance, String correlationId) {
-        return AsyncHelper.executeBlocking(vertx, () -> findHooks(instance, correlationId)).map(hookRegistrations -> {
+        return vertx.executeBlocking(() -> findHooks(instance, correlationId)).map(hookRegistrations -> {
             hookRegistrations.forEach(registration -> {
                 LOGGER.correlateWith(correlationId).info("Registering hook {}", registration.getName());
                 hookRegistry.computeIfAbsent(registration.getType(),

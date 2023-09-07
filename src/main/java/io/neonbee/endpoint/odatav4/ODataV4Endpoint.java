@@ -453,7 +453,7 @@ public class ODataV4Endpoint implements Endpoint {
             }
 
             // parse out the base URI and path
-            String hostUri = request.scheme() + "://" + request.host();
+            String hostUri = request.scheme() + "://" + request.authority().host();
             baseUri = hostUri + (basePath = routeMountPoint);
 
             // parse out the resource path and entity name

@@ -37,9 +37,17 @@ repositories {
     mavenCentral()
 }
 
+configurations.all {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'org.infinispan') {
+            details.useVersion '14.0.14.Final'
+        }
+    }
+}
+
 dependencies {
     // Framework dependencies
-    def vertx_version = '4.4.4'
+    def vertx_version = '4.4.5'
     implementation group: 'io.vertx', name: 'vertx-core', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-web', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-web-client', version: vertx_version
@@ -54,7 +62,15 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-auth-oauth2', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-hazelcast', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-health-check', version: vertx_version
-    implementation group: 'io.vertx', name: 'vertx-infinispan', version: vertx_version
+
+    def ispn_version = '14.0.14.Final'
+    implementation (group: 'io.vertx', name: 'vertx-infinispan', version: vertx_version) {
+        exclude group: 'org.infinispan', module: 'infinispan-core'
+        exclude group: 'org.infinispan', module: 'infinispan-commons'
+        exclude group: 'org.infinispan', module: 'infinispan-multimap'
+    }
+    implementation group: 'org.infinispan', name: 'infinispan-multimap-jakarta'
+    implementation group: 'org.infinispan', name: 'infinispan-core-jakarta'
 
     def jackson_version = '2.15.0'
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
@@ -66,9 +82,6 @@ dependencies {
         exclude group: 'io.netty'
     }
     implementation group: 'org.apache.olingo', name: 'odata-server-core-ext', version: olingo_version
-
-    // required for annotationProcessing and needs to match vertx-infinispan version
-    implementation group: 'org.infinispan', name: 'infinispan-component-annotations', version: '13.0.18.Final'
 
     implementation group: 'com.sap.cds', name: 'cds4j-core', version: '1.38.1'
     implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.11.4'

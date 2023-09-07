@@ -116,13 +116,9 @@ public final class FileSystemHelper {
     }
 
     private static Future<JsonObject> parseYAML(Vertx vertx, Buffer buffer) {
-        return vertx.executeBlocking(promise -> {
-            try {
-                JsonNode node = YAML_MAPPER.readTree(buffer.getBytes());
-                promise.complete(new JsonObject(node.toString()));
-            } catch (Exception e) {
-                promise.fail(e);
-            }
+        return vertx.executeBlocking(() -> {
+            JsonNode node = YAML_MAPPER.readTree(buffer.getBytes());
+            return new JsonObject(node.toString());
         });
     }
 

@@ -39,7 +39,6 @@ import com.sap.cds.reflect.CdsModel;
 
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeOptions;
-import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.helper.BufferHelper.BufferInputStream;
 import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.scanner.ClassPathScanner;
@@ -271,7 +270,7 @@ class EntityModelLoader {
      */
     @VisibleForTesting
     Future<CdsModel> parseCsnModel(byte[] csnModel) {
-        return AsyncHelper.executeBlocking(vertx, () -> {
+        return vertx.executeBlocking(() -> {
             try (InputStream inputStream = new ByteArrayInputStream(csnModel)) {
                 return CdsModel.read(inputStream);
             }
@@ -299,7 +298,7 @@ class EntityModelLoader {
     }
 
     private Future<ServiceMetadata> createServiceMetadataWithSchema(Buffer csdl) {
-        return AsyncHelper.executeBlocking(vertx, () -> {
+        return vertx.executeBlocking(() -> {
             // Get the service metadata first w/o the schema namespace, because we have to read it
             return createServiceMetadataWithSchema(csdl, getSchemaNamespace(createServiceMetadata(csdl)));
         });

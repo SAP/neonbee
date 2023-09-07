@@ -13,7 +13,6 @@ import io.neonbee.config.EndpointConfig;
 import io.neonbee.config.ServerConfig;
 import io.neonbee.internal.handler.ChainAuthHandler;
 import io.neonbee.internal.handler.HooksHandler;
-import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -47,7 +46,7 @@ public final class MountableEndpoint {
             return failedFuture(new IllegalArgumentException("Endpoint is missing the 'type' field"));
         }
 
-        return AsyncHelper.executeBlocking(vertx, () -> loadClass(endpointType)).compose(endpoint -> {
+        return vertx.executeBlocking(() -> loadClass(endpointType)).compose(endpoint -> {
             JsonObject endpointAdditionalConfig = Optional.ofNullable(endpoint.getDefaultConfig().getAdditionalConfig())
                     .map(JsonObject::copy).orElseGet(JsonObject::new);
             Optional.ofNullable(endpointConfig.getAdditionalConfig()).ifPresent(endpointAdditionalConfig::mergeIn);

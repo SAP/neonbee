@@ -179,6 +179,7 @@ public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
         }
 
         @Override
+        @SuppressWarnings("deprecation") // see https://github.com/SAP/neonbee/issues/387
         protected JsonParser createParser(Buffer buf) {
             try {
                 return factory.createParser((InputStream) new ByteBufInputStream(buf.getByteBuf()));

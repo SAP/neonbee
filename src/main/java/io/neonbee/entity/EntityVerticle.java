@@ -27,7 +27,6 @@ import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.internal.Registry;
 import io.neonbee.internal.WriteSafeRegistry;
-import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
@@ -182,10 +181,9 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
 
         String serviceName = uriMatcher.group(SERVICE_NAMESPACE_GROUP);
         return neonBee.getModelManager().getSharedModel(EntityModelDefinition.retrieveNamespace(serviceName))
-                .compose(entityModel -> AsyncHelper.executeBlocking(neonBee.getVertx(), () -> {
-                    return new Parser(entityModel.getEdmxMetadata(serviceName).getEdm(), getBufferedOData())
-                            .parseUri(uriMatcher.group(ENTITY_PATH_GROUP), query.getRawQuery(), EMPTY, EMPTY);
-                }));
+                .compose(entityModel -> neonBee.getVertx().executeBlocking(
+                        () -> new Parser(entityModel.getEdmxMetadata(serviceName).getEdm(), getBufferedOData())
+                                .parseUri(uriMatcher.group(ENTITY_PATH_GROUP), query.getRawQuery(), EMPTY, EMPTY)));
     }
 
     /**

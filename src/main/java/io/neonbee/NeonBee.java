@@ -70,7 +70,6 @@ import io.neonbee.internal.codec.ImmutableJsonArrayMessageCodec;
 import io.neonbee.internal.codec.ImmutableJsonObjectMessageCodec;
 import io.neonbee.internal.deploy.Deployable;
 import io.neonbee.internal.deploy.Deployables;
-import io.neonbee.internal.helper.AsyncHelper;
 import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.json.ConfigurableJsonFactory.ConfigurableJsonCodec;
 import io.neonbee.internal.json.ImmutableJsonArray;
@@ -439,7 +438,7 @@ public class NeonBee {
      */
     @VisibleForTesting
     Future<Void> decorateEventBus() {
-        return AsyncHelper.executeBlocking(vertx, () -> {
+        return vertx.executeBlocking(() -> {
             TrackingDataHandlingStrategy strategy;
 
             try {
@@ -468,6 +467,7 @@ public class NeonBee {
 
             // add any additional default codecs configured in NeonBeeConfig
             config.getEventBusCodecs().forEach(this::registerCodec);
+            return null;
         });
     }
 
