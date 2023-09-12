@@ -17,6 +17,7 @@ import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.cli.CLI;
 import io.vertx.core.cli.CLIException;
 import io.vertx.core.cli.CommandLine;
@@ -57,12 +58,24 @@ public class Launcher {
      * @param options NeonBeeOptions
      */
     public static void startNeonBee(NeonBeeOptions options) {
+        startNeonBee(options, null);
+    }
+
+    /**
+     * Configure and start NeonBee.
+     *
+     * @param options      NeonBeeOptions
+     * @param vertxOptions VertxOptions
+     */
+    public static void startNeonBee(NeonBeeOptions options, VertxOptions vertxOptions) {
         // do not use a Logger before this!
         configureLogging(options);
 
         Vertx launcherVertx = Vertx.vertx();
         Future.succeededFuture().compose(unused -> NeonBeeConfig.load(launcherVertx, options.getConfigDirectory()))
-                .eventually(unused -> closeVertx(launcherVertx)).compose(config -> NeonBee.create(options, config))
+                .eventually(unused -> closeVertx(launcherVertx))
+                .compose(config -> vertxOptions == null ? NeonBee.create(options, config)
+                        : NeonBee.create(options, config, vertxOptions))
                 .onSuccess(neonBee -> Launcher.neonBee = neonBee).onFailure(throwable -> LoggerFactory
                         .getLogger(Launcher.class).error("Failed to start NeonBee", throwable));
     }

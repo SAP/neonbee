@@ -246,6 +246,24 @@ public class NeonBee {
                 options, config);
     }
 
+    /**
+     * Create a new NeonBee instance, with the given options. Similar to the static Vert.x method.
+     * <p>
+     *
+     * @param options      the NeonBee command line options
+     * @param config       the {@link NeonBeeConfig} to use. If config is null the configuration gets loaded
+     * @param vertxOptions the {@link VertxOptions} to use.
+     * @return the future to a new NeonBee instance initialized with default options and a new Vert.x instance
+     */
+    public static Future<NeonBee> create(NeonBeeOptions options, NeonBeeConfig config, VertxOptions vertxOptions) {
+        return create(
+                (OwnVertxFactory) preconfiguredVertxOptions -> newVertx(
+                        new VertxOptions(vertxOptions.toJson().mergeIn(preconfiguredVertxOptions.toJson())), options),
+                options.getClusterManager(),
+                options,
+                config);
+    }
+
     @VisibleForTesting
     @SuppressWarnings({ "PMD.EmptyCatchBlock", "PMD.AvoidCatchingThrowable" })
     static Future<NeonBee> create(Function<VertxOptions, Future<Vertx>> vertxFactory,
@@ -265,8 +283,9 @@ public class NeonBee {
         vertxOptions.setMetricsOptions(new MicrometerMetricsOptions().setRegistryName(options.getMetricsRegistryName())
                 .setMicrometerRegistry(compositeMeterRegistry).setEnabled(true));
 
-        Future<VertxOptions> loadClusterManager = !options.isClustered() ? succeededFuture(vertxOptions)
-                : clusterManagerFactory.create(options).map(vertxOptions::setClusterManager);
+        Future<VertxOptions> loadClusterManager = options.isClustered()
+                ? clusterManagerFactory.create(options).map(vertxOptions::setClusterManager)
+                : succeededFuture(vertxOptions);
 
         // create a Vert.x instance (clustered or unclustered)
         return loadClusterManager.compose(vertxFactory).compose(vertx -> {
