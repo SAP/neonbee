@@ -13,6 +13,7 @@ task coreJar(type: Jar) {
     manifest {
         attributes 'Main-Class': "${mainClass}"
         attributes 'Multi-Release': 'true' // see https://github.com/infinispan/infinispan-quarkus/issues/55#issuecomment-995027501
+        attributes('Automatic-Module-Name': 'io.neonbee.core')
     }
 
     exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/NOTICE', 'META-INF/LICENSE'
