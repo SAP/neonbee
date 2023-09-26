@@ -25,9 +25,14 @@ class HooksHandlerTest extends DataVerticleTestBase {
     @Test
     @DisplayName("Checks that HooksHandler executes hook")
     void checkHookGetsExecutedSuccess(VertxTestContext testContext) {
-        Checkpoint cp = testContext.checkpoint(2);
+        Checkpoint cp = testContext.checkpoint(3);
         TestHook hook = new TestHook();
-        hook.doSomething = p -> {
+        hook.executeBR = p -> {
+            cp.flag();
+            p.complete();
+        };
+
+        hook.executeOPR = p -> {
             cp.flag();
             p.complete();
         };
@@ -43,9 +48,14 @@ class HooksHandlerTest extends DataVerticleTestBase {
     @Test
     @DisplayName("Checks that HooksHanlder executes hook and fail request in case of error")
     void checkHookGetsExecutedAndFailsRequestInCaseOfException(VertxTestContext testContext) {
-        Checkpoint cp = testContext.checkpoint(2);
+        Checkpoint cp = testContext.checkpoint(3);
         TestHook hook = new TestHook();
-        hook.doSomething = p -> {
+        hook.executeBR = p -> {
+            cp.flag();
+            p.complete();
+        };
+
+        hook.executeOPR = p -> {
             cp.flag();
             p.fail(new Exception("Hodor"));
         };
@@ -61,9 +71,14 @@ class HooksHandlerTest extends DataVerticleTestBase {
     @Test
     @DisplayName("Checks that HooksHanlder executes hook and propagate error code in case of DataException")
     void checkHookGetsExecutedAndPropagateErrorCodeIfDataException(VertxTestContext testContext) {
-        Checkpoint cp = testContext.checkpoint(2);
+        Checkpoint cp = testContext.checkpoint(3);
         TestHook hook = new TestHook();
-        hook.doSomething = p -> {
+        hook.executeBR = p -> {
+            cp.flag();
+            p.complete();
+        };
+
+        hook.executeOPR = p -> {
             cp.flag();
             p.fail(new DataException(403, "Hodor"));
         };
@@ -76,17 +91,46 @@ class HooksHandlerTest extends DataVerticleTestBase {
                 })));
     }
 
+    @Test
+    @DisplayName("Checks that ONCE_PER_REQUEST hook isn't called if BEFORE_REQUEST hook fails the request in case of error")
+    void checkOnePerRequestHookIsntCalledInCaseBeforeRequestFailsTheRequest(VertxTestContext testContext) {
+        Checkpoint cp = testContext.checkpoint(2);
+        TestHook hook = new TestHook();
+        hook.executeBR = p -> {
+            cp.flag();
+            p.fail(new Exception("Hodor"));
+        };
+
+        hook.executeOPR = p -> testContext.failNow("Must not be called");
+
+        getNeonBee().getHookRegistry().registerInstanceHooks(hook, CORRELATION_ID)
+                .compose(v -> sendRequestReturnStatusCode())
+                .onComplete(testContext.succeeding(statusCode -> testContext.verify(() -> {
+                    assertThat(statusCode).isEqualTo(500);
+                    cp.flag();
+                })));
+    }
+
     private Future<Integer> sendRequestReturnStatusCode() {
         return createRequest(HttpMethod.GET, "/raw/core/Hodor").send().map(response -> response.statusCode());
     }
 
     public static class TestHook {
-        private Consumer<Promise<Void>> doSomething = p -> {};
+        private Consumer<Promise<Void>> executeOPR = p -> {};
+
+        private Consumer<Promise<Void>> executeBR = p -> {};
 
         @SuppressWarnings("PMD.UnusedFormalParameter")
         @Hook(HookType.ONCE_PER_REQUEST)
         public void test(NeonBee neonBee, HookContext hookContext, Promise<Void> promise) {
-            doSomething.accept(promise);
+            executeOPR.accept(promise);
+            promise.complete();
+        }
+
+        @SuppressWarnings("PMD.UnusedFormalParameter")
+        @Hook(HookType.BEFORE_REQUEST)
+        public void test2(NeonBee neonBee, HookContext hookContext, Promise<Void> promise) {
+            executeBR.accept(promise);
             promise.complete();
         }
     }

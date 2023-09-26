@@ -20,6 +20,7 @@ import io.neonbee.config.ServerConfig;
 import io.neonbee.endpoint.Endpoint;
 import io.neonbee.endpoint.MountableEndpoint;
 import io.neonbee.handler.ErrorHandler;
+import io.neonbee.internal.handler.BeforeRequestHandler;
 import io.neonbee.internal.handler.ChainAuthHandler;
 import io.neonbee.internal.handler.DefaultErrorHandler;
 import io.neonbee.internal.handler.NotFoundHandler;
@@ -84,6 +85,9 @@ public class ServerVerticle extends AbstractVerticle {
         // instead of creating new routes, vert.x recommends to add multiple handlers to one route instead. to prevent
         // sequence issues, block scope the variable to prevent using it after the endpoints have been mounted
         Route rootRoute = router.route();
+
+        // The first handler added to the route must be the "BEFORE_REQUEST" HooksHandler.
+        rootRoute.handler(new BeforeRequestHandler());
 
         return createErrorHandler(config.getErrorHandlerClassName(), vertx).onSuccess(rootRoute::failureHandler)
                 .compose(unused -> {

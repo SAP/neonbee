@@ -12,20 +12,32 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
 /**
- * This handler will trigger the execution of the ONCE_PER_REQUEST hook, preventing execution of the next handlers if
- * any is any error occurs.
+ * This handler will trigger the execution of the passed {@link HookType} and prevents execution of the next handlers if
+ * any error occurs during the hook execution.
  */
 public class HooksHandler implements Handler<RoutingContext> {
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
+    private final HookType hookType;
+
+    /**
+     * Creates a new HooksHandler with the passed HookType.
+     *
+     * @param hookType the HookType to execute inside this handler
+     */
+    public HooksHandler(HookType hookType) {
+        this.hookType = hookType;
+    }
+
     @Override
     public void handle(RoutingContext routingContext) {
         NeonBee.get(routingContext.vertx()).getHookRegistry()
-                .executeHooks(HookType.ONCE_PER_REQUEST, Map.of(ROUTING_CONTEXT, routingContext))
+                .executeHooks(hookType, Map.of(ROUTING_CONTEXT, routingContext))
                 .onComplete(asyncResult -> {
                     if (asyncResult.failed()) {
                         Throwable cause = asyncResult.cause();
-                        LOGGER.error("An error has occurred while executing the request hook", cause);
+                        LOGGER.error("An error has occurred while executing the request hook of type {}", hookType,
+                                cause);
                         if (cause instanceof DataException) {
                             routingContext.fail(((DataException) cause).failureCode());
                         } else {
