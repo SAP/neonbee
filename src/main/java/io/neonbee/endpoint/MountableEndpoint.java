@@ -1,5 +1,6 @@
 package io.neonbee.endpoint;
 
+import static io.neonbee.hook.HookType.ONCE_PER_REQUEST;
 import static io.vertx.core.Future.failedFuture;
 
 import java.lang.reflect.InvocationTargetException;
@@ -98,7 +99,7 @@ public final class MountableEndpoint {
         effectiveAuthChainConfig.map(authChainConfig -> ChainAuthHandler.create(vertx, authChainConfig))
                 .or(() -> defaultAuthHandler).ifPresent(endpointRoute::handler);
 
-        endpointRoute.handler(new HooksHandler());
+        endpointRoute.handler(new HooksHandler(ONCE_PER_REQUEST));
 
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info(

@@ -30,6 +30,19 @@ public enum HookType {
     ONCE_PER_REQUEST,
 
     /**
+     * This hook is called for each incoming web request before any other handler gets executed, which guarantees the
+     * execution of this hook.
+     * <p>
+     * Note: In case this hook handles the provided {@linkplain #ROUTING_CONTEXT} in the {@linkplain HookContext} it may
+     * not call the {@code hookPromise}, to break the chain.
+     * <p>
+     * Available parameters in the {@linkplain HookContext}:
+     * <p>
+     * {@link #ROUTING_CONTEXT}: {@linkplain io.vertx.ext.web.RoutingContext}
+     */
+    BEFORE_REQUEST,
+
+    /**
      * The shutdown hook is called before the associated Vert.x instance to a NeonBee object is closed / shut down.
      */
     BEFORE_SHUTDOWN,

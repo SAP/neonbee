@@ -57,6 +57,9 @@ hooks.
   endpoint for handling. Note: This hook is intended for the implementation of cross-cutting concerns (for example,
   logging or global authorization checks). In case this hook handles the provided routing context in the HookContext,
   it may not call the hookPromise, to break the chain.
+* `BEFORE_REQUEST`: This hook is called for each incoming web request before any other handler gets executed, which
+  guarantees the execution of this hook. In case this hook handles the provided routing context in the HookContext, it
+  may not call the hookPromise, to break the chain.
 * `BEFORE_SHUTDOWN`: This hook is called before the associated Vert.x instance to a NeonBee object is closed/shut down.
 * `NODE_ADDED`: This hook is called when a node has been added to the cluster.
 * `NODE_LEFT`: This hook is called when a node has left the cluster.
