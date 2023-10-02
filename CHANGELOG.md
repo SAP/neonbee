@@ -1,6 +1,24 @@
 # Changelog
 
-## 0.28.0 (2023-09-04)
+## 0.29.0 (2023-10-02)
+
+### Features
+
+- update to Vert.x 4.4.5 ([450aaa68](https://github.com/SAP/neonbee/commit/450aaa6856c0f5142fc52f85c8cbe99f112f9716))
+- add BEFORE_REQUEST hook ([4494a304](https://github.com/SAP/neonbee/commit/4494a30478eeb59be0a0b58686745a9dc6c945cb))
+
+
+### Build System
+
+- **deps**: bump com.diffplug.spotless from 6.20.0 to 6.21.0 ([2e3a9aff](https://github.com/SAP/neonbee/commit/2e3a9aff6b069c0dedfab66dc66a5352deb2dd3d))
+- **deps**: bump org.slf4j:slf4j-api from 2.0.7 to 2.0.9 ([a4180c88](https://github.com/SAP/neonbee/commit/a4180c885d8b5321c58e08128a5cb68c111afe49))
+- **deps**: bump org.sonarqube from 4.3.0.3225 to 4.3.1.3277 ([92030a78](https://github.com/SAP/neonbee/commit/92030a78a65cbe6b67b833b4aa239c42c7fb9435))
+- **deps**: bump sapmachine from 11.0.20 to 11.0.20.1 ([a0523bf3](https://github.com/SAP/neonbee/commit/a0523bf3afdce90ca741f2df99588650a6f82053))
+- **deps**: bump se.bjurr.violations.violations-gradle-plugin ([7a6e8356](https://github.com/SAP/neonbee/commit/7a6e8356047c1b6d4ff24f6ef6c072712981ec18))
+- **deps**: bump io.micrometer:micrometer-registry-prometheus ([4041f9cd](https://github.com/SAP/neonbee/commit/4041f9cd4b51311d5cc20e9f565541c5a50e4b27))
+
+
+## 0.28.0 (2023-09-05)
 
 ### Features
 
