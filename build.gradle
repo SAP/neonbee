@@ -63,7 +63,6 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-hazelcast', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-health-check', version: vertx_version
 
-    def ispn_version = '14.0.14.Final'
     implementation (group: 'io.vertx', name: 'vertx-infinispan', version: vertx_version) {
         exclude group: 'org.infinispan', module: 'infinispan-core'
         exclude group: 'org.infinispan', module: 'infinispan-commons'
