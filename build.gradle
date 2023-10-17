@@ -47,7 +47,7 @@ configurations.all {
 
 dependencies {
     // Framework dependencies
-    def vertx_version = '4.4.5'
+    def vertx_version = '4.4.6'
     implementation group: 'io.vertx', name: 'vertx-core', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-web', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-web-client', version: vertx_version
