@@ -6,8 +6,17 @@ import static io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants.EDM_S
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.util.Arrays;
+import java.util.UUID;
+import java.util.stream.Stream;
 
+import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import io.vertx.ext.web.RoutingContext;
 
 class EntityComparisonTest {
     private final EntityComparison testEntityComparisonImplementation = new EntityComparison() {};
@@ -59,5 +68,25 @@ class EntityComparisonTest {
         // Byte[] and Byte[] => true
         assertThat(testEntityComparisonImplementation.instanceOfExpectedType(EDM_BINARY_JAVA_TYPES, byteArrayToBeTested,
                 byteArrayToBeTested)).isTrue();
+    }
+
+    static Stream<Arguments> comparePropertyValuesParameters() {
+        UUID uuid1 = UUID.fromString("1386d8da-4cb4-4fee-97ef-5a24d6a41b34");
+        UUID uuid2 = UUID.fromString("74affcbf-1c66-4903-9cf3-685f511c93b0");
+
+        return Stream.of(
+                Arguments.of(null, uuid1, uuid1, EdmPrimitiveTypeKind.Guid, "ID", 0),
+                Arguments.of(null, uuid1, uuid1.toString(), EdmPrimitiveTypeKind.Guid, "ID", 0),
+                Arguments.of(null, uuid1, uuid2, EdmPrimitiveTypeKind.Guid, "ID", -1),
+                Arguments.of(null, uuid2, uuid1.toString(), EdmPrimitiveTypeKind.Guid, "ID", 1));
+    }
+
+    @ParameterizedTest(name = "{index}: compare {3} result should be {5}")
+    @MethodSource("comparePropertyValuesParameters")
+    @DisplayName("Test to compare entity properties of unknown concrete Java types (Object).")
+    void comparePropertyValues(RoutingContext routingContext, Object leadingPropertyValue1, Object propertyValue2,
+            EdmPrimitiveTypeKind propertyTypeKind, String propertyName, int expected) {
+        assertThat(testEntityComparisonImplementation.comparePropertyValues(routingContext, leadingPropertyValue1,
+                propertyValue2, propertyTypeKind, propertyName)).isEqualTo(expected);
     }
 }
