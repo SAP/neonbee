@@ -298,7 +298,14 @@ public interface EntityComparison {
                 try {
                     // Example UUID: xxxxxxxx-xxxx-Bxxx-Axxx-xxxxxxxxxxxx
                     // The order is determined by 3 most significant bit of A
-                    return ((UUID) leadingPropertyValue1).compareTo((UUID) propertyValue2);
+                    if (propertyValue2 instanceof UUID) {
+                        return ((UUID) leadingPropertyValue1).compareTo((UUID) propertyValue2);
+                    } else if (propertyValue2 instanceof String) {
+                        return ((UUID) leadingPropertyValue1).compareTo(UUID.fromString((String) propertyValue2));
+                    }
+                    throw createAndLogException(routingContext, EDM_GUID_JAVA_TYPES, leadingPropertyValue1,
+                            propertyValue2,
+                            propertyName);
                 } catch (Exception e) {
                     errorLog(routingContext, e);
                 }

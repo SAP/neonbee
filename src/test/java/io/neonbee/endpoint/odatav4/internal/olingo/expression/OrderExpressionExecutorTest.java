@@ -481,8 +481,7 @@ class OrderExpressionExecutorTest {
         calendar1.setTimeInMillis(date1.getTime());
         Entity entity1 = new Entity() //
                 .addProperty(new Property(null, "name", ValueType.PRIMITIVE, "entity1"))
-                .addProperty(new Property(null, "testGuidProperty", ValueType.PRIMITIVE,
-                        UUID.fromString("A7CF6C58-31FF-4B12-9670-F4FD80B2E82D").toString()))
+                .addProperty(new Property(null, "testGuidProperty", ValueType.PRIMITIVE, "NotAUuidButAString"))
                 .addProperty(new Property(null, "testStringProperty", ValueType.PRIMITIVE, Integer.valueOf(1337)))
                 .addProperty(new Property(null, "testNumberProperty", ValueType.PRIMITIVE, 111))
                 .addProperty(new Property(null, "testDateProperty", ValueType.PRIMITIVE, date1))
