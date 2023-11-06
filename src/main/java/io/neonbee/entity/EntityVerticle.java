@@ -220,7 +220,17 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
         // Entity verticle are generally not exposed via any web interface, but only via the event bus. Also, they are
         // generally never accessed directly, but only via the shared entity name map, so return a generated name here.
         // The name must be unique in the Vert.x instance / cluster and the same for every entity verticle of this type.
-        return String.format("_%s-%d", getClass().getSimpleName(), getClass().getName().hashCode());
+        return getName(getClass());
+    }
+
+    /**
+     * Returns a unique name for a given EntityVerticle class.
+     *
+     * @param clazz the EntityVerticle class
+     * @return a unique name for a given EntityVerticle class
+     */
+    public static String getName(Class<? extends EntityVerticle> clazz) {
+        return String.format("_%s-%d", clazz.getSimpleName(), clazz.getName().hashCode());
     }
 
     /**

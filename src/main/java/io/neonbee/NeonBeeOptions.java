@@ -127,6 +127,13 @@ public interface NeonBeeOptions {
     boolean doNotWatchFiles();
 
     /**
+     * Check if NeonBee should redeploy EntityVerticles if there are not deployed.
+     *
+     * @return true if NeonBee should redeploy EntityVerticles if there are not deployed, otherwise false.
+     */
+    boolean shouldRedeployEntities();
+
+    /**
      * Get the port number of the event bus. If not set, a random port will be selected.
      *
      * @return the port number of the event bus
@@ -253,6 +260,8 @@ public interface NeonBeeOptions {
         private boolean disableJobScheduling;
 
         private boolean doNotWatchFiles;
+
+        private boolean shouldRedeployEntities;
 
         private Integer serverPort;
 
@@ -411,6 +420,24 @@ public interface NeonBeeOptions {
         @Description("Set whether to watch any files")
         public Mutable setDoNotWatchFiles(boolean doNotWatchFiles) {
             this.doNotWatchFiles = doNotWatchFiles;
+            return this;
+        }
+
+        @Override
+        public boolean shouldRedeployEntities() {
+            return shouldRedeployEntities;
+        }
+
+        /**
+         * Sets whether NeonBee should re-deploy EntityVerticles if there are not deployed.
+         *
+         * @param shouldRedeployEntities flag true/false
+         * @return a reference to this, so the API can be used fluently
+         */
+        @Option(longName = "should-redeploy-entities", shortName = "redeploy-entities", flag = false)
+        @Description("Set whether to redeploy entity verticles that are not deployed")
+        public Mutable setShouldRedeployEntities(boolean shouldRedeployEntities) {
+            this.shouldRedeployEntities = shouldRedeployEntities;
             return this;
         }
 
