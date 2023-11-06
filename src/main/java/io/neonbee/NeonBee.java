@@ -6,6 +6,7 @@ import static io.neonbee.internal.deploy.DeployableVerticle.fromVerticle;
 import static io.neonbee.internal.deploy.Deployables.allTo;
 import static io.neonbee.internal.deploy.Deployables.anyTo;
 import static io.neonbee.internal.deploy.Deployables.fromDeployables;
+import static io.neonbee.internal.helper.ConfigHelper.notFound;
 import static io.neonbee.internal.helper.HostHelper.getHostIp;
 import static io.neonbee.internal.scanner.DeployableScanner.scanForDeployableClasses;
 import static io.vertx.core.Future.all;
@@ -70,7 +71,9 @@ import io.neonbee.internal.codec.ImmutableJsonArrayMessageCodec;
 import io.neonbee.internal.codec.ImmutableJsonObjectMessageCodec;
 import io.neonbee.internal.deploy.Deployable;
 import io.neonbee.internal.deploy.Deployables;
+import io.neonbee.internal.helper.ConfigHelper;
 import io.neonbee.internal.helper.FileSystemHelper;
+import io.neonbee.internal.job.RedeployEntitiesJob;
 import io.neonbee.internal.json.ConfigurableJsonFactory.ConfigurableJsonCodec;
 import io.neonbee.internal.json.ImmutableJsonArray;
 import io.neonbee.internal.json.ImmutableJsonObject;
@@ -547,6 +550,7 @@ public class NeonBee {
         }
         optionalVerticles.add(deployableWatchVerticle(options.getModelsDirectory(), ModelRefreshVerticle::new));
         optionalVerticles.add(deployableWatchVerticle(options.getModulesDirectory(), DeployerVerticle::new));
+        optionalVerticles.add(deployableRedeployEntitiesJobVerticle(options));
 
         LOGGER.info("Deploying system verticles ...");
         return all(List.of(fromDeployables(requiredVerticles).compose(allTo(this)),
@@ -556,7 +560,8 @@ public class NeonBee {
                 }).map(Deployables::new).compose(anyTo(this)))).mapEmpty();
     }
 
-    private Future<Optional<? extends Deployable>> deployableWatchVerticle(Path dirPath,
+    private Future<Optional<? extends Deployable>> deployableWatchVerticle(
+            Path dirPath,
             Function<Path, ? extends Verticle> verticleFactory) {
         if (options.doNotWatchFiles()) {
             return succeededFuture(Optional.empty());
@@ -572,6 +577,17 @@ public class NeonBee {
             }
             return fromVerticle(vertx, verticleFactory.apply(dirPath)).map(Optional::of);
         });
+    }
+
+    private Future<Optional<? extends Deployable>> deployableRedeployEntitiesJobVerticle(NeonBeeOptions options) {
+        if (!options.shouldRedeployEntities()) {
+            return succeededFuture(Optional.empty());
+        }
+
+        return ConfigHelper.readConfig(vertx, RedeployEntitiesJob.class.getName())
+                .compose(config -> fromVerticle(vertx, RedeployEntitiesJob.create(config)))
+                .recover(notFound(() -> fromVerticle(vertx, new RedeployEntitiesJob())))
+                .map(Optional::of);
     }
 
     /**

@@ -31,9 +31,15 @@ import io.vertx.core.shareddata.AsyncMap;
  */
 public class ClusterEntityRegistry implements Registry<String> {
 
-    private static final String QUALIFIED_NAME = "qualifiedName";
+    /**
+     * The key for the qualified name.
+     */
+    public static final String QUALIFIED_NAME_KEY = "qualifiedName";
 
-    private static final String ENTITY_NAME = "entityName";
+    /**
+     * The key for the entity name.
+     */
+    public static final String ENTITY_NAME_KEY = "entityName";
 
     @VisibleForTesting
     final WriteSafeRegistry<JsonObject> clusteringInformation;
@@ -56,7 +62,7 @@ public class ClusterEntityRegistry implements Registry<String> {
 
     @VisibleForTesting
     static JsonObject clusterRegistrationInformation(String sharedMapKey, String value) {
-        return JsonObject.of(QUALIFIED_NAME, value, ENTITY_NAME, sharedMapKey);
+        return JsonObject.of(QUALIFIED_NAME_KEY, value, ENTITY_NAME_KEY, sharedMapKey);
     }
 
     @Override
@@ -96,7 +102,7 @@ public class ClusterEntityRegistry implements Registry<String> {
      * @param clusterNodeId the ID of the cluster node
      * @return the future
      */
-    Future<JsonArray> getClusteringInformation(String clusterNodeId) {
+    public Future<JsonArray> getClusteringInformation(String clusterNodeId) {
         return clusteringInformation.get(clusterNodeId);
     }
 
@@ -123,8 +129,8 @@ public class ClusterEntityRegistry implements Registry<String> {
             for (Object o : registeredEntities) {
                 if (remove(map, o)) {
                     JsonObject jo = (JsonObject) o;
-                    String entityName = jo.getString(ENTITY_NAME);
-                    String qualifiedName = jo.getString(QUALIFIED_NAME);
+                    String entityName = jo.getString(ENTITY_NAME_KEY);
+                    String qualifiedName = jo.getString(QUALIFIED_NAME_KEY);
                     futureList.add(unregister(entityName, qualifiedName));
                 }
             }
