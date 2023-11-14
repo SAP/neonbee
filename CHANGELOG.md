@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.30.0 (2023-11-14)
+
+### Bug Fixes
+
+- remove unnessary ISPN version variable ([fa94c55b](https://github.com/SAP/neonbee/commit/fa94c55b6d969471bb2b803a0652755b24910369))
+- add compare UUID with UUID string ([559342a8](https://github.com/SAP/neonbee/commit/559342a861cc597a3e4ed32f5759f28b49383b1c))
+
+
+### Features
+
+- add job verticle to deploy missing entity verticles ([ff576d4a](https://github.com/SAP/neonbee/commit/ff576d4aa3ddccd99fe972a7ba479f263bdfaf8b))
+
+
+### Build System
+
+- **deps**: bump org.sonarqube from 4.3.1.3277 to 4.4.0.3356 ([27f7f5a4](https://github.com/SAP/neonbee/commit/27f7f5a441cbcfca5a70e3487ce1d78bf6ced996))
+- **deps**: bump com.diffplug.spotless from 6.21.0 to 6.22.0 ([7af047cf](https://github.com/SAP/neonbee/commit/7af047cf29919c638b87884163485b50a1dd7956))
+- **deps**: bump org.ow2.asm:asm from 9.5 to 9.6 ([bdbd6c03](https://github.com/SAP/neonbee/commit/bdbd6c0391e839faf5c9d21f67e9a19de66c5919))
+- **deps**: bump org.sonarqube from 4.4.0.3356 to 4.4.1.3373 ([e449d030](https://github.com/SAP/neonbee/commit/e449d03092cf7b122ca729d837d22e3c33f8b293))
+- **deps**: bump com.github.spotbugs from 5.1.3 to 5.1.4 ([f08f9d7a](https://github.com/SAP/neonbee/commit/f08f9d7a0fffaaed624b177f06e325e330373c55))
+- **deps**: bump io.micrometer:micrometer-registry-prometheus ([51dc6478](https://github.com/SAP/neonbee/commit/51dc6478d5b1651dd8d0ea805ff15bbfa2fc6384))
+- **deps**: bump com.github.spotbugs from 5.1.4 to 5.2.0 ([c7c2809e](https://github.com/SAP/neonbee/commit/c7c2809ec9006c728f564fd8642703f5de155a8c))
+- **deps**: bump com.github.spotbugs:spotbugs-annotations ([7aeb1cdd](https://github.com/SAP/neonbee/commit/7aeb1cdd6eb00cc2b4c1cf6716511035fbe47690))
+- **deps**: upgrade `vertx` to 4.4.6 ([8d4f63ad](https://github.com/SAP/neonbee/commit/8d4f63ad0ce775f11e36775611bce99fdd67b68b))
+- **deps**: bump com.github.spotbugs from 5.2.0 to 5.2.1 ([3ac09f14](https://github.com/SAP/neonbee/commit/3ac09f1423841c77487bdc86f400a3d61cf75852))
+- **deps**: bump sapmachine from 11.0.20.1 to 11.0.21 ([c41475f5](https://github.com/SAP/neonbee/commit/c41475f5e3461e70a7f6bca1639875c4fb6bfad3))
+- **deps**: bump org.ajoberstar.grgit from 5.2.0 to 5.2.1 ([5282a498](https://github.com/SAP/neonbee/commit/5282a4986b345c83b3e6b8872b55e887c211e5a5))
+
+
 ## 0.29.0 (2023-10-02)
 
 ### Features
