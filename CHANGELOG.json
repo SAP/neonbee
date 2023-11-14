@@ -1,27 +1,710 @@
 {
   "nextVersion" : {
     "major" : 0,
+    "minor" : 31,
+    "patch" : 0,
+    "preReleaseParts" : [ ],
+    "buildMetaDataParts" : [ ],
+    "preRelease" : "",
+    "buildMetaData" : "",
+    "stable" : true,
+    "initialDevelopment" : true
+  },
+  "lastVersion" : {
+    "major" : 0,
     "minor" : 30,
     "patch" : 0,
     "preReleaseParts" : [ ],
     "buildMetaDataParts" : [ ],
     "preRelease" : "",
     "buildMetaData" : "",
-    "initialDevelopment" : true,
-    "stable" : true
-  },
-  "lastVersion" : {
-    "major" : 0,
-    "minor" : 29,
-    "patch" : 0,
-    "preReleaseParts" : [ ],
-    "buildMetaDataParts" : [ ],
-    "preRelease" : "",
-    "buildMetaData" : "",
-    "initialDevelopment" : true,
-    "stable" : true
+    "stable" : true,
+    "initialDevelopment" : true
   },
   "tags" : [ {
+    "version" : {
+      "major" : 0,
+      "minor" : 30,
+      "patch" : 0,
+      "preReleaseParts" : [ ],
+      "buildMetaDataParts" : [ ],
+      "preRelease" : "",
+      "buildMetaData" : "",
+      "stable" : true,
+      "initialDevelopment" : true
+    },
+    "releaseDate" : "2023-11-14 13:40:43.000 +0100",
+    "sections" : [ {
+      "title" : "Bug Fixes",
+      "commits" : [ {
+        "hashFull" : "fa94c55b6d969471bb2b803a0652755b24910369",
+        "hash" : "fa94c55b6d96947",
+        "hash7" : "fa94c55",
+        "hash8" : "fa94c55b",
+        "commitTime" : "2023-10-02 23:02:47.000 +0200",
+        "commitTimeLong" : 1696280567,
+        "message" : "fix: remove unnessary ISPN version variable\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-10-02 20:28:07.000 +0200",
+          "name" : "Pascal Krause",
+          "email" : "pascal.krause@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-10-02 23:02:47.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/fa94c55b6d969471bb2b803a0652755b24910369",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "remove unnessary ISPN version variable",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "remove unnessary ISPN version variable",
+        "messageTitle" : "fix: remove unnessary ISPN version variable",
+        "messageBody" : ""
+      }, {
+        "hashFull" : "559342a861cc597a3e4ed32f5759f28b49383b1c",
+        "hash" : "559342a861cc597",
+        "hash7" : "559342a",
+        "hash8" : "559342a8",
+        "commitTime" : "2023-10-25 12:43:13.000 +0200",
+        "commitTimeLong" : 1698230593,
+        "message" : "fix: add compare UUID with UUID string\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-10-24 13:39:50.000 +0200",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-10-25 12:43:13.000 +0200",
+          "name" : "halber",
+          "email" : "michael.halberstadt@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/559342a861cc597a3e4ed32f5759f28b49383b1c",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "add compare UUID with UUID string",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "add compare UUID with UUID string",
+        "messageTitle" : "fix: add compare UUID with UUID string",
+        "messageBody" : ""
+      } ]
+    }, {
+      "title" : "Features",
+      "commits" : [ {
+        "hashFull" : "ff576d4aa3ddccd99fe972a7ba479f263bdfaf8b",
+        "hash" : "ff576d4aa3ddccd",
+        "hash7" : "ff576d4",
+        "hash8" : "ff576d4a",
+        "commitTime" : "2023-11-14 13:40:43.000 +0100",
+        "commitTimeLong" : 1699965643,
+        "message" : "feat: add job verticle to deploy missing entity verticles\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-11-06 17:56:56.000 +0100",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-11-14 13:40:43.000 +0100",
+          "name" : "halber",
+          "email" : "michael.halberstadt@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/ff576d4aa3ddccd99fe972a7ba479f263bdfaf8b",
+        "commitType" : "feat",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "add job verticle to deploy missing entity verticles",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "feat",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "add job verticle to deploy missing entity verticles",
+        "messageTitle" : "feat: add job verticle to deploy missing entity verticles",
+        "messageBody" : ""
+      } ]
+    }, {
+      "title" : "Build System",
+      "commits" : [ {
+        "hashFull" : "27f7f5a441cbcfca5a70e3487ce1d78bf6ced996",
+        "hash" : "27f7f5a441cbcfc",
+        "hash7" : "27f7f5a",
+        "hash8" : "27f7f5a4",
+        "commitTime" : "2023-10-02 18:31:31.000 +0200",
+        "commitTimeLong" : 1696264291,
+        "message" : "build(deps): bump org.sonarqube from 4.3.1.3277 to 4.4.0.3356\n\nBumps org.sonarqube from 4.3.1.3277 to 4.4.0.3356.\n\n---\nupdated-dependencies:\n- dependency-name: org.sonarqube\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-10-02 16:29:53.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-10-02 18:31:31.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/27f7f5a441cbcfca5a70e3487ce1d78bf6ced996",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump org.sonarqube from 4.3.1.3277 to 4.4.0.3356",
+        "commitBody" : "Bumps org.sonarqube from 4.3.1.3277 to 4.4.0.3356.\n\n---\nupdated-dependencies:\n- dependency-name: org.sonarqube\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump org.sonarqube from 4.3.1.3277 to 4.4.0.3356",
+        "messageTitle" : "build(deps): bump org.sonarqube from 4.3.1.3277 to 4.4.0.3356",
+        "messageBody" : "Bumps org.sonarqube from 4.3.1.3277 to 4.4.0.3356.\n\n---\nupdated-dependencies:\n- dependency-name: org.sonarqube\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>"
+      }, {
+        "hashFull" : "7af047cf29919c638b87884163485b50a1dd7956",
+        "hash" : "7af047cf29919c6",
+        "hash7" : "7af047c",
+        "hash8" : "7af047cf",
+        "commitTime" : "2023-10-02 18:32:04.000 +0200",
+        "commitTimeLong" : 1696264324,
+        "message" : "build(deps): bump com.diffplug.spotless from 6.21.0 to 6.22.0\n\nBumps com.diffplug.spotless from 6.21.0 to 6.22.0.\n\n---\nupdated-dependencies:\n- dependency-name: com.diffplug.spotless\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-10-02 16:29:47.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-10-02 18:32:04.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/7af047cf29919c638b87884163485b50a1dd7956",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump com.diffplug.spotless from 6.21.0 to 6.22.0",
+        "commitBody" : "Bumps com.diffplug.spotless from 6.21.0 to 6.22.0.\n\n---\nupdated-dependencies:\n- dependency-name: com.diffplug.spotless\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump com.diffplug.spotless from 6.21.0 to 6.22.0",
+        "messageTitle" : "build(deps): bump com.diffplug.spotless from 6.21.0 to 6.22.0",
+        "messageBody" : "Bumps com.diffplug.spotless from 6.21.0 to 6.22.0.\n\n---\nupdated-dependencies:\n- dependency-name: com.diffplug.spotless\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>"
+      }, {
+        "hashFull" : "bdbd6c0391e839faf5c9d21f67e9a19de66c5919",
+        "hash" : "bdbd6c0391e839f",
+        "hash7" : "bdbd6c0",
+        "hash8" : "bdbd6c03",
+        "commitTime" : "2023-10-02 18:32:22.000 +0200",
+        "commitTimeLong" : 1696264342,
+        "message" : "build(deps): bump org.ow2.asm:asm from 9.5 to 9.6\n\nBumps org.ow2.asm:asm from 9.5 to 9.6.\n\n---\nupdated-dependencies:\n- dependency-name: org.ow2.asm:asm\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-10-02 16:29:52.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-10-02 18:32:22.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/bdbd6c0391e839faf5c9d21f67e9a19de66c5919",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump org.ow2.asm:asm from 9.5 to 9.6",
+        "commitBody" : "Bumps org.ow2.asm:asm from 9.5 to 9.6.\n\n---\nupdated-dependencies:\n- dependency-name: org.ow2.asm:asm\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump org.ow2.asm:asm from 9.5 to 9.6",
+        "messageTitle" : "build(deps): bump org.ow2.asm:asm from 9.5 to 9.6",
+        "messageBody" : "Bumps org.ow2.asm:asm from 9.5 to 9.6.\n\n---\nupdated-dependencies:\n- dependency-name: org.ow2.asm:asm\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>"
+      }, {
+        "hashFull" : "e449d03092cf7b122ca729d837d22e3c33f8b293",
+        "hash" : "e449d03092cf7b1",
+        "hash7" : "e449d03",
+        "hash8" : "e449d030",
+        "commitTime" : "2023-10-09 16:36:36.000 +0200",
+        "commitTimeLong" : 1696862196,
+        "message" : "build(deps): bump org.sonarqube from 4.4.0.3356 to 4.4.1.3373\n\nBumps org.sonarqube from 4.4.0.3356 to 4.4.1.3373.\n\n---\nupdated-dependencies:\n- dependency-name: org.sonarqube\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-10-09 16:16:04.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-10-09 16:36:36.000 +0200",
+          "name" : "Martin Todorov",
+          "email" : "carlspring@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/e449d03092cf7b122ca729d837d22e3c33f8b293",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump org.sonarqube from 4.4.0.3356 to 4.4.1.3373",
+        "commitBody" : "Bumps org.sonarqube from 4.4.0.3356 to 4.4.1.3373.\n\n---\nupdated-dependencies:\n- dependency-name: org.sonarqube\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump org.sonarqube from 4.4.0.3356 to 4.4.1.3373",
+        "messageTitle" : "build(deps): bump org.sonarqube from 4.4.0.3356 to 4.4.1.3373",
+        "messageBody" : "Bumps org.sonarqube from 4.4.0.3356 to 4.4.1.3373.\n\n---\nupdated-dependencies:\n- dependency-name: org.sonarqube\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>"
+      }, {
+        "hashFull" : "f08f9d7a0fffaaed624b177f06e325e330373c55",
+        "hash" : "f08f9d7a0fffaae",
+        "hash7" : "f08f9d7",
+        "hash8" : "f08f9d7a",
+        "commitTime" : "2023-10-09 16:37:10.000 +0200",
+        "commitTimeLong" : 1696862230,
+        "message" : "build(deps): bump com.github.spotbugs from 5.1.3 to 5.1.4\n\nBumps com.github.spotbugs from 5.1.3 to 5.1.4.\n\n---\nupdated-dependencies:\n- dependency-name: com.github.spotbugs\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-10-09 16:16:06.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-10-09 16:37:10.000 +0200",
+          "name" : "Martin Todorov",
+          "email" : "carlspring@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/f08f9d7a0fffaaed624b177f06e325e330373c55",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump com.github.spotbugs from 5.1.3 to 5.1.4",
+        "commitBody" : "Bumps com.github.spotbugs from 5.1.3 to 5.1.4.\n\n---\nupdated-dependencies:\n- dependency-name: com.github.spotbugs\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump com.github.spotbugs from 5.1.3 to 5.1.4",
+        "messageTitle" : "build(deps): bump com.github.spotbugs from 5.1.3 to 5.1.4",
+        "messageBody" : "Bumps com.github.spotbugs from 5.1.3 to 5.1.4.\n\n---\nupdated-dependencies:\n- dependency-name: com.github.spotbugs\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>"
+      }, {
+        "hashFull" : "51dc6478d5b1651dd8d0ea805ff15bbfa2fc6384",
+        "hash" : "51dc6478d5b1651",
+        "hash7" : "51dc647",
+        "hash8" : "51dc6478",
+        "commitTime" : "2023-10-16 17:13:27.000 +0200",
+        "commitTimeLong" : 1697469207,
+        "message" : "build(deps): bump io.micrometer:micrometer-registry-prometheus\n\nBumps [io.micrometer:micrometer-registry-prometheus](https://github.com/micrometer-metrics/micrometer) from 1.11.4 to 1.11.5.\n- [Release notes](https://github.com/micrometer-metrics/micrometer/releases)\n- [Commits](https://github.com/micrometer-metrics/micrometer/compare/v1.11.4...v1.11.5)\n\n---\nupdated-dependencies:\n- dependency-name: io.micrometer:micrometer-registry-prometheus\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-10-16 16:45:37.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-10-16 17:13:27.000 +0200",
+          "name" : "Martin Todorov",
+          "email" : "carlspring@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/51dc6478d5b1651dd8d0ea805ff15bbfa2fc6384",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump io.micrometer:micrometer-registry-prometheus",
+        "commitBody" : "Bumps [io.micrometer:micrometer-registry-prometheus](https://github.com/micrometer-metrics/micrometer) from 1.11.4 to 1.11.5.\n- [Release notes](https://github.com/micrometer-metrics/micrometer/releases)\n- [Commits](https://github.com/micrometer-metrics/micrometer/compare/v1.11.4...v1.11.5)\n\n---\nupdated-dependencies:\n- dependency-name: io.micrometer:micrometer-registry-prometheus\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump io.micrometer:micrometer-registry-prometheus",
+        "messageTitle" : "build(deps): bump io.micrometer:micrometer-registry-prometheus",
+        "messageBody" : "Bumps [io.micrometer:micrometer-registry-prometheus](https://github.com/micrometer-metrics/micrometer) from 1.11.4 to 1.11.5.\n- [Release notes](https://github.com/micrometer-metrics/micrometer/releases)\n- [Commits](https://github.com/micrometer-metrics/micrometer/compare/v1.11.4...v1.11.5)\n\n---\nupdated-dependencies:\n- dependency-name: io.micrometer:micrometer-registry-prometheus\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>"
+      }, {
+        "hashFull" : "c7c2809ec9006c728f564fd8642703f5de155a8c",
+        "hash" : "c7c2809ec9006c7",
+        "hash7" : "c7c2809",
+        "hash8" : "c7c2809e",
+        "commitTime" : "2023-10-17 14:19:43.000 +0200",
+        "commitTimeLong" : 1697545183,
+        "message" : "build(deps): bump com.github.spotbugs from 5.1.4 to 5.2.0\n\nBumps com.github.spotbugs from 5.1.4 to 5.2.0.\n\n---\nupdated-dependencies:\n- dependency-name: com.github.spotbugs\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-10-16 16:45:38.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-10-17 14:19:43.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/c7c2809ec9006c728f564fd8642703f5de155a8c",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump com.github.spotbugs from 5.1.4 to 5.2.0",
+        "commitBody" : "Bumps com.github.spotbugs from 5.1.4 to 5.2.0.\n\n---\nupdated-dependencies:\n- dependency-name: com.github.spotbugs\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump com.github.spotbugs from 5.1.4 to 5.2.0",
+        "messageTitle" : "build(deps): bump com.github.spotbugs from 5.1.4 to 5.2.0",
+        "messageBody" : "Bumps com.github.spotbugs from 5.1.4 to 5.2.0.\n\n---\nupdated-dependencies:\n- dependency-name: com.github.spotbugs\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>"
+      }, {
+        "hashFull" : "7aeb1cdd6eb00cc2b4c1cf6716511035fbe47690",
+        "hash" : "7aeb1cdd6eb00cc",
+        "hash7" : "7aeb1cd",
+        "hash8" : "7aeb1cdd",
+        "commitTime" : "2023-10-17 14:19:59.000 +0200",
+        "commitTimeLong" : 1697545199,
+        "message" : "build(deps): bump com.github.spotbugs:spotbugs-annotations\n\nBumps [com.github.spotbugs:spotbugs-annotations](https://github.com/spotbugs/spotbugs) from 4.7.3 to 4.8.0.\n- [Release notes](https://github.com/spotbugs/spotbugs/releases)\n- [Changelog](https://github.com/spotbugs/spotbugs/blob/master/CHANGELOG.md)\n- [Commits](https://github.com/spotbugs/spotbugs/compare/4.7.3...4.8.0)\n\n---\nupdated-dependencies:\n- dependency-name: com.github.spotbugs:spotbugs-annotations\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-10-16 16:45:29.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-10-17 14:19:59.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/7aeb1cdd6eb00cc2b4c1cf6716511035fbe47690",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump com.github.spotbugs:spotbugs-annotations",
+        "commitBody" : "Bumps [com.github.spotbugs:spotbugs-annotations](https://github.com/spotbugs/spotbugs) from 4.7.3 to 4.8.0.\n- [Release notes](https://github.com/spotbugs/spotbugs/releases)\n- [Changelog](https://github.com/spotbugs/spotbugs/blob/master/CHANGELOG.md)\n- [Commits](https://github.com/spotbugs/spotbugs/compare/4.7.3...4.8.0)\n\n---\nupdated-dependencies:\n- dependency-name: com.github.spotbugs:spotbugs-annotations\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump com.github.spotbugs:spotbugs-annotations",
+        "messageTitle" : "build(deps): bump com.github.spotbugs:spotbugs-annotations",
+        "messageBody" : "Bumps [com.github.spotbugs:spotbugs-annotations](https://github.com/spotbugs/spotbugs) from 4.7.3 to 4.8.0.\n- [Release notes](https://github.com/spotbugs/spotbugs/releases)\n- [Changelog](https://github.com/spotbugs/spotbugs/blob/master/CHANGELOG.md)\n- [Commits](https://github.com/spotbugs/spotbugs/compare/4.7.3...4.8.0)\n\n---\nupdated-dependencies:\n- dependency-name: com.github.spotbugs:spotbugs-annotations\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>"
+      }, {
+        "hashFull" : "8d4f63ad0ce775f11e36775611bce99fdd67b68b",
+        "hash" : "8d4f63ad0ce775f",
+        "hash7" : "8d4f63a",
+        "hash8" : "8d4f63ad",
+        "commitTime" : "2023-10-17 14:20:25.000 +0200",
+        "commitTimeLong" : 1697545225,
+        "message" : "build(deps): upgrade `vertx` to 4.4.6",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-10-17 02:09:45.000 +0200",
+          "name" : "github-actions[bot]",
+          "email" : "github-actions[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-10-17 14:20:25.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/8d4f63ad0ce775f11e36775611bce99fdd67b68b",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "upgrade `vertx` to 4.4.6",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "upgrade `vertx` to 4.4.6",
+        "messageTitle" : "build(deps): upgrade `vertx` to 4.4.6",
+        "messageBody" : ""
+      }, {
+        "hashFull" : "3ac09f1423841c77487bdc86f400a3d61cf75852",
+        "hash" : "3ac09f1423841c7",
+        "hash7" : "3ac09f1",
+        "hash8" : "3ac09f14",
+        "commitTime" : "2023-10-24 12:01:55.000 +0200",
+        "commitTimeLong" : 1698141715,
+        "message" : "build(deps): bump com.github.spotbugs from 5.2.0 to 5.2.1\n\nBumps com.github.spotbugs from 5.2.0 to 5.2.1.\n\n---\nupdated-dependencies:\n- dependency-name: com.github.spotbugs\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-10-23 16:56:04.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-10-24 12:01:55.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/3ac09f1423841c77487bdc86f400a3d61cf75852",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump com.github.spotbugs from 5.2.0 to 5.2.1",
+        "commitBody" : "Bumps com.github.spotbugs from 5.2.0 to 5.2.1.\n\n---\nupdated-dependencies:\n- dependency-name: com.github.spotbugs\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump com.github.spotbugs from 5.2.0 to 5.2.1",
+        "messageTitle" : "build(deps): bump com.github.spotbugs from 5.2.0 to 5.2.1",
+        "messageBody" : "Bumps com.github.spotbugs from 5.2.0 to 5.2.1.\n\n---\nupdated-dependencies:\n- dependency-name: com.github.spotbugs\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>"
+      }, {
+        "hashFull" : "c41475f5e3461e70a7f6bca1639875c4fb6bfad3",
+        "hash" : "c41475f5e3461e7",
+        "hash7" : "c41475f",
+        "hash8" : "c41475f5",
+        "commitTime" : "2023-10-24 12:02:34.000 +0200",
+        "commitTimeLong" : 1698141754,
+        "message" : "build(deps): bump sapmachine from 11.0.20.1 to 11.0.21\n\nBumps sapmachine from 11.0.20.1 to 11.0.21.\n\n---\nupdated-dependencies:\n- dependency-name: sapmachine\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-10-23 17:01:08.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-10-24 12:02:34.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/c41475f5e3461e70a7f6bca1639875c4fb6bfad3",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump sapmachine from 11.0.20.1 to 11.0.21",
+        "commitBody" : "Bumps sapmachine from 11.0.20.1 to 11.0.21.\n\n---\nupdated-dependencies:\n- dependency-name: sapmachine\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump sapmachine from 11.0.20.1 to 11.0.21",
+        "messageTitle" : "build(deps): bump sapmachine from 11.0.20.1 to 11.0.21",
+        "messageBody" : "Bumps sapmachine from 11.0.20.1 to 11.0.21.\n\n---\nupdated-dependencies:\n- dependency-name: sapmachine\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>"
+      }, {
+        "hashFull" : "5282a4986b345c83b3e6b8872b55e887c211e5a5",
+        "hash" : "5282a4986b345c8",
+        "hash7" : "5282a49",
+        "hash8" : "5282a498",
+        "commitTime" : "2023-10-24 12:09:53.000 +0200",
+        "commitTimeLong" : 1698142193,
+        "message" : "build(deps): bump org.ajoberstar.grgit from 5.2.0 to 5.2.1\n\nBumps [org.ajoberstar.grgit](https://github.com/ajoberstar/grgit) from 5.2.0 to 5.2.1.\n- [Release notes](https://github.com/ajoberstar/grgit/releases)\n- [Commits](https://github.com/ajoberstar/grgit/compare/5.2.0...5.2.1)\n\n---\nupdated-dependencies:\n- dependency-name: org.ajoberstar.grgit\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2023-10-24 12:02:53.000 +0200",
+          "name" : "dependabot[bot]",
+          "email" : "49699333+dependabot[bot]@users.noreply.github.com"
+        },
+        "committerIdent" : {
+          "when" : "2023-10-24 12:09:53.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/5282a4986b345c83b3e6b8872b55e887c211e5a5",
+        "commitType" : "build",
+        "commitPackage" : null,
+        "commitScope" : "deps",
+        "commitSubject" : "bump org.ajoberstar.grgit from 5.2.0 to 5.2.1",
+        "commitBody" : "Bumps [org.ajoberstar.grgit](https://github.com/ajoberstar/grgit) from 5.2.0 to 5.2.1.\n- [Release notes](https://github.com/ajoberstar/grgit/releases)\n- [Commits](https://github.com/ajoberstar/grgit/compare/5.2.0...5.2.1)\n\n---\nupdated-dependencies:\n- dependency-name: org.ajoberstar.grgit\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "rawCommitType" : "build",
+        "rawCommitScope" : "deps",
+        "rawCommitSubject" : "bump org.ajoberstar.grgit from 5.2.0 to 5.2.1",
+        "messageTitle" : "build(deps): bump org.ajoberstar.grgit from 5.2.0 to 5.2.1",
+        "messageBody" : "Bumps [org.ajoberstar.grgit](https://github.com/ajoberstar/grgit) from 5.2.0 to 5.2.1.\n- [Release notes](https://github.com/ajoberstar/grgit/releases)\n- [Commits](https://github.com/ajoberstar/grgit/compare/5.2.0...5.2.1)\n\n---\nupdated-dependencies:\n- dependency-name: org.ajoberstar.grgit\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>"
+      } ]
+    } ]
+  }, {
     "version" : {
       "major" : 0,
       "minor" : 29,
@@ -30,10 +713,10 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
-    "releaseDate" : "2023-10-02 12:06:41.000 +0200",
+    "releaseDate" : "2023-10-02 14:24:16.000 +0200",
     "sections" : [ {
       "title" : "Features",
       "commits" : [ {
@@ -402,8 +1085,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-09-05 09:51:06.000 +0200",
     "sections" : [ {
@@ -689,8 +1372,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-07-25 16:38:30.000 +0200",
     "sections" : [ {
@@ -1030,8 +1713,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-06-29 15:11:48.000 +0200",
     "sections" : [ {
@@ -1091,8 +1774,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-06-27 16:06:58.000 +0200",
     "sections" : [ {
@@ -1284,8 +1967,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-06-19 13:07:52.000 +0200",
     "sections" : [ {
@@ -1345,8 +2028,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-06-14 09:00:41.000 +0200",
     "sections" : [ {
@@ -2204,8 +2887,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-05-12 15:57:08.000 +0200",
     "sections" : [ {
@@ -2799,8 +3482,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-03-27 12:13:21.000 +0200",
     "sections" : [ {
@@ -3177,8 +3860,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-03-07 16:13:57.000 +0100",
     "sections" : [ {
@@ -4629,8 +5312,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2023-01-19 17:00:06.000 +0100",
     "sections" : [ {
@@ -5502,8 +6185,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-11-15 13:57:10.000 +0100",
     "sections" : [ {
@@ -5838,8 +6521,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-10-24 10:44:48.000 +0200",
     "sections" : [ {
@@ -6128,8 +6811,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-10-12 17:43:37.000 +0200",
     "sections" : [ {
@@ -6189,8 +6872,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-10-11 11:31:42.000 +0200",
     "sections" : [ {
@@ -6476,8 +7159,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-10-05 11:46:05.000 +0200",
     "sections" : [ {
@@ -6948,8 +7631,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-08-30 13:15:07.000 +0200",
     "sections" : [ {
@@ -7144,8 +7827,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-08-10 09:09:11.000 +0200",
     "sections" : [ {
@@ -7390,8 +8073,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-07-14 16:23:19.000 +0200",
     "sections" : [ {
@@ -7630,8 +8313,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-07-13 08:29:40.000 +0200",
     "sections" : [ {
@@ -7970,8 +8653,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-06-06 16:06:00.000 +0200",
     "sections" : [ {
@@ -8031,8 +8714,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-06-03 12:13:06.000 +0200",
     "sections" : [ {
@@ -8644,8 +9327,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-03-07 22:17:58.000 +0100",
     "sections" : [ {
@@ -8978,8 +9661,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-02-17 17:52:27.000 +0100",
     "sections" : [ {
@@ -9039,8 +9722,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-02-15 17:58:20.000 +0100",
     "sections" : [ {
@@ -9191,8 +9874,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2022-01-27 11:41:02.000 +0100",
     "sections" : [ {
@@ -9799,8 +10482,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-12-15 15:08:44.000 +0100",
     "sections" : [ {
@@ -10042,8 +10725,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-11-23 12:25:14.000 +0100",
     "sections" : [ {
@@ -10150,8 +10833,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-10-05 13:44:34.000 +0200",
     "sections" : [ {
@@ -10211,8 +10894,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-10-04 15:47:42.000 +0200",
     "sections" : [ {
@@ -11698,8 +12381,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-07-27 09:22:26.000 +0200",
     "sections" : [ {
@@ -12032,8 +12715,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-06-07 07:52:14.000 +0200",
     "sections" : [ {
@@ -13607,8 +14290,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-03-18 14:45:15.000 +0100",
     "sections" : [ {
@@ -13991,8 +14674,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "buildMetaData" : "",
-      "initialDevelopment" : true,
-      "stable" : true
+      "stable" : true,
+      "initialDevelopment" : true
     },
     "releaseDate" : "2021-03-10 16:24:12.000 +0100",
     "sections" : [ {
