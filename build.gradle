@@ -37,14 +37,6 @@ repositories {
     mavenCentral()
 }
 
-configurations.all {
-    resolutionStrategy.eachDependency { details ->
-        if (details.requested.group == 'org.infinispan') {
-            details.useVersion '14.0.14.Final'
-        }
-    }
-}
-
 dependencies {
     // Framework dependencies
     def vertx_version = '4.4.6'
@@ -68,8 +60,12 @@ dependencies {
         exclude group: 'org.infinispan', module: 'infinispan-commons'
         exclude group: 'org.infinispan', module: 'infinispan-multimap'
     }
-    implementation group: 'org.infinispan', name: 'infinispan-multimap-jakarta'
-    implementation group: 'org.infinispan', name: 'infinispan-core-jakarta'
+    def infinispan_version = '14.0.14.Final'
+    implementation group: 'org.infinispan', name: 'infinispan-multimap-jakarta', version: infinispan_version
+    implementation group: 'org.infinispan', name: 'infinispan-core-jakarta', version: infinispan_version
+    implementation group: 'org.infinispan', name: 'infinispan-clustered-lock', version: infinispan_version
+    implementation group: 'org.infinispan', name: 'infinispan-clustered-counter', version: infinispan_version
+    implementation group: 'org.infinispan', name: 'infinispan-component-annotations', version: infinispan_version
 
     def jackson_version = '2.15.0'
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
