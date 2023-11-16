@@ -64,6 +64,7 @@ import io.neonbee.health.HazelcastClusterHealthCheck;
 import io.neonbee.health.HealthCheckProvider;
 import io.neonbee.health.HealthCheckRegistry;
 import io.neonbee.health.MemoryHealthCheck;
+import io.neonbee.health.NeonBeeStartHealthCheck;
 import io.neonbee.health.internal.HealthCheck;
 import io.neonbee.internal.NeonBeeModuleJar;
 import io.neonbee.internal.ReplyInboundInterceptor;
@@ -235,10 +236,11 @@ class NeonBeeTest extends NeonBeeTestBase {
     @DisplayName("NeonBee should register all default health checks")
     void testRegisterDefaultHealthChecks() {
         Map<String, HealthCheck> registeredChecks = getNeonBee().getHealthCheckRegistry().getHealthChecks();
-        assertThat(registeredChecks.size()).isEqualTo(2);
+        assertThat(registeredChecks.size()).isEqualTo(3);
         String nodePrefix = "node." + getNeonBee().getNodeId() + ".";
-        assertThat(registeredChecks.containsKey(nodePrefix + EventLoopHealthCheck.NAME)).isTrue();
-        assertThat(registeredChecks.containsKey(nodePrefix + MemoryHealthCheck.NAME)).isTrue();
+        assertThat(registeredChecks).containsKey(nodePrefix + NeonBeeStartHealthCheck.NAME);
+        assertThat(registeredChecks).containsKey(nodePrefix + EventLoopHealthCheck.NAME);
+        assertThat(registeredChecks).containsKey(nodePrefix + MemoryHealthCheck.NAME);
     }
 
     @Test
@@ -250,8 +252,8 @@ class NeonBeeTest extends NeonBeeTestBase {
                 .onSuccess(newVertx -> vertx = newVertx), HAZELCAST.factory(), options, null)
                 .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
                     Map<String, HealthCheck> registeredChecks = neonBee.getHealthCheckRegistry().getHealthChecks();
-                    assertThat(registeredChecks.size()).isEqualTo(3);
-                    assertThat(registeredChecks.containsKey(HazelcastClusterHealthCheck.NAME)).isTrue();
+                    assertThat(registeredChecks.size()).isEqualTo(4);
+                    assertThat(registeredChecks).containsKey(HazelcastClusterHealthCheck.NAME);
                     testContext.completeNow();
                 })));
     }
@@ -267,8 +269,8 @@ class NeonBeeTest extends NeonBeeTestBase {
         runWithMetaInfService(HealthCheckProvider.class, DummyHealthCheckProvider.class.getName(), testContext, () -> {
             getNeonBee().registerHealthChecks().onComplete(testContext.succeeding(v -> testContext.verify(() -> {
                 Map<String, HealthCheck> registeredChecks = registry.getHealthChecks();
-                assertThat(registeredChecks.size()).isEqualTo(3);
-                assertThat(registeredChecks.containsKey(DummyHealthCheck.DUMMY_ID)).isTrue();
+                assertThat(registeredChecks.size()).isEqualTo(4);
+                assertThat(registeredChecks).containsKey(DummyHealthCheck.DUMMY_ID);
                 testContext.completeNow();
             })));
         });

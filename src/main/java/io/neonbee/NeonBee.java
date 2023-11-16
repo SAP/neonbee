@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -52,6 +53,7 @@ import io.neonbee.health.HazelcastClusterHealthCheck;
 import io.neonbee.health.HealthCheckProvider;
 import io.neonbee.health.HealthCheckRegistry;
 import io.neonbee.health.MemoryHealthCheck;
+import io.neonbee.health.NeonBeeStartHealthCheck;
 import io.neonbee.health.internal.HealthCheck;
 import io.neonbee.hook.HookRegistry;
 import io.neonbee.hook.HookType;
@@ -188,6 +190,8 @@ public class NeonBee {
 
     private final CompositeMeterRegistry compositeMeterRegistry;
 
+    private final AtomicBoolean started = new AtomicBoolean();
+
     /**
      * Convenience method for returning the current NeonBee instance.
      * <p>
@@ -301,6 +305,7 @@ public class NeonBee {
                 Future<NeonBee> neonBeeFuture = configFuture.map(loadedConfig -> {
                     return new NeonBee(vertx, options, loadedConfig, compositeMeterRegistry);
                 });
+
                 // boot NeonBee, on failure close Vert.x
                 return neonBeeFuture.compose(NeonBee::boot).recover(closeVertx).compose(unused -> neonBeeFuture);
             } catch (Throwable t) {
@@ -373,8 +378,10 @@ public class NeonBee {
 
                     // further synchronous initializations which should happen before verticles are getting deployed
                 }).compose(nothing -> all(initializeSharedMaps(), decorateEventBus(), createMicrometerRegistries()))
-                .compose(nothing -> all(deployVerticles(), deployModules())) // deployment of verticles & modules
                 .compose(nothing -> registerHealthChecks())
+                .compose(nothing -> all(deployVerticles(), deployModules())) // deployment of verticles & modules
+                // startup & booting procedure has completed, set started to true and call the after startup hook(s)
+                .onSuccess(nothing -> started.set(true))
                 .compose(nothing -> hookRegistry.executeHooks(HookType.AFTER_STARTUP))
                 .onSuccess(result -> LOGGER.info("Successfully booted NeonBee (ID: {}})!", nodeId)).mapEmpty();
     }
@@ -382,13 +389,14 @@ public class NeonBee {
     /**
      * Registers default NeonBee health checks to the {@link HealthCheckRegistry}.
      *
-     * @return a Future
+     * @return a future to indicate if all health checks have been registered
      */
     @VisibleForTesting
     Future<Void> registerHealthChecks() {
         List<Future<HealthCheck>> healthChecks = new ArrayList<>();
 
         if (Optional.ofNullable(config.getHealthConfig()).map(HealthConfig::isEnabled).orElse(true)) {
+            healthChecks.add(healthRegistry.register(new NeonBeeStartHealthCheck(this)));
             healthChecks.add(healthRegistry.register(new MemoryHealthCheck(this)));
             healthChecks.add(healthRegistry.register(new EventLoopHealthCheck(this)));
 
@@ -850,6 +858,15 @@ public class NeonBee {
      */
     public HealthCheckRegistry getHealthCheckRegistry() {
         return healthRegistry;
+    }
+
+    /**
+     * Indicating if the starting boot sequence of NeonBee has completed.
+     *
+     * @return true if NeonBee is started
+     */
+    public boolean isStarted() {
+        return started.get();
     }
 
     /**
