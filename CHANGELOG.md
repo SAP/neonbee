@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.30.1 (2023-11-16)
+
+### Bug Fixes
+
+- overriding dependency target maven-publish ([c077d3ad](https://github.com/SAP/neonbee/commit/c077d3ad53697f9df959e78ccd9c520003c6078a))
+- flaky NativeClusterManagerTest test ([deab712d](https://github.com/SAP/neonbee/commit/deab712d5f34a9bc38a48ee7a064434c3d698a4b))
+
+
 ## 0.30.0 (2023-11-14)
 
 ### Bug Fixes
