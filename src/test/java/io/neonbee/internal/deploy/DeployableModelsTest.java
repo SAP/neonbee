@@ -1,8 +1,7 @@
 package io.neonbee.internal.deploy;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.NeonBeeMockHelper.defaultVertxMock;
-import static io.neonbee.NeonBeeMockHelper.registerNeonBeeMock;
+import static io.neonbee.internal.deploy.DeploymentTest.newNeonBeeMockForDeployment;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -58,13 +57,12 @@ class DeployableModelsTest {
                 Map.of("okay", new JsonObject().put("namespace", "test").toBuffer().getBytes()), Map.of());
         DeployableModels deployable = new DeployableModels(definition);
 
-        Vertx vertxMock = defaultVertxMock();
-        NeonBee neonBee = registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setIgnoreClassPath(true));
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment(new NeonBeeOptions.Mutable().setIgnoreClassPath(true));
 
-        PendingDeployment deployment = deployable.deploy(neonBee);
+        PendingDeployment deployment = deployable.deploy(neonBeeMock);
         assertThat(deployment.succeeded()).isTrue();
         Set<EntityModelDefinition> definitions =
-                ReflectionHelper.getValueOfPrivateField(neonBee.getModelManager(), "externalModelDefinitions");
+                ReflectionHelper.getValueOfPrivateField(neonBeeMock.getModelManager(), "externalModelDefinitions");
         assertThat(definitions).contains(definition);
 
         assertThat(deployment.undeploy().succeeded()).isTrue();
@@ -77,11 +75,11 @@ class DeployableModelsTest {
         EntityModelDefinition definition = new EntityModelDefinition(Map.of(), Map.of());
         DeployableModels deployable = new DeployableModels(definition);
 
-        Vertx vertxMock = defaultVertxMock();
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment(new NeonBeeOptions.Mutable().setIgnoreClassPath(true));
+        Vertx vertxMock = neonBeeMock.getVertx();
         when(vertxMock.fileSystem().readDir(any())).thenReturn(failedFuture("any failure"));
-        NeonBee neonBee = registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setIgnoreClassPath(true));
 
-        PendingDeployment deployment = deployable.deploy(neonBee);
+        PendingDeployment deployment = deployable.deploy(neonBeeMock);
         assertThat(deployment.failed()).isTrue();
         assertThat(deployment.cause()).hasMessageThat().isEqualTo("any failure");
         assertThat(deployment.undeploy().succeeded()).isTrue();
@@ -90,7 +88,8 @@ class DeployableModelsTest {
     @Test
     @DisplayName("test read model payloads")
     void testReadModelPayloads() {
-        Vertx vertxMock = defaultVertxMock();
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment();
+        Vertx vertxMock = neonBeeMock.getVertx();
 
         ClassLoader classLoaderMock = mock(ClassLoader.class);
         when(classLoaderMock.getResourceAsStream(any())).thenAnswer(invocation -> {
@@ -106,7 +105,8 @@ class DeployableModelsTest {
     @Test
     @DisplayName("test scan class path")
     void testScanClassPath() {
-        Vertx vertxMock = defaultVertxMock();
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment();
+        Vertx vertxMock = neonBeeMock.getVertx();
 
         ClassPathScanner classPathScannerMock = mock(ClassPathScanner.class);
         when(classPathScannerMock.scanManifestFiles(any(), any())).thenReturn(succeededFuture(List.of("entry")));
@@ -129,8 +129,11 @@ class DeployableModelsTest {
     @Test
     @DisplayName("test from JAR")
     void testFromJar() throws IOException {
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment();
+        Vertx vertxMock = neonBeeMock.getVertx();
+
         NeonBeeModuleJar moduleJar = NeonBeeModuleJar.create("testmodule").withModels().build();
-        Future<DeployableModels> deployable = DeployableModels.fromJar(defaultVertxMock(), moduleJar.writeToTempPath());
+        Future<DeployableModels> deployable = DeployableModels.fromJar(vertxMock, moduleJar.writeToTempPath());
         assertThat(deployable.succeeded()).isTrue();
         assertThat(deployable.result().modelDefinition.getCSNModelDefinitions())
                 .comparingValuesUsing(Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))

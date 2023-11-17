@@ -1,6 +1,7 @@
 package io.neonbee.internal.deploy;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.internal.deploy.DeploymentTest.newNeonBeeMockForDeployment;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
@@ -34,15 +35,15 @@ class DeployableTest {
     @DisplayName("test deploy/undeploy of Deployable")
     void testDeployUndeploy() {
         DeployableThing deployable = new DeployableThing("foo");
-        assertThat(deployable.deploy(null).succeeded()).isTrue();
-        assertThat(deployable.deploy(null).undeploy().succeeded()).isTrue();
+        assertThat(deployable.deploy().succeeded()).isTrue();
+        assertThat(deployable.deploy().undeploy().succeeded()).isTrue();
 
         deployable.undeployFuture = failedFuture("foo");
-        assertThat(deployable.deploy(null).succeeded()).isTrue();
-        assertThat(deployable.deploy(null).undeploy().failed()).isTrue();
+        assertThat(deployable.deploy().succeeded()).isTrue();
+        assertThat(deployable.deploy().undeploy().failed()).isTrue();
 
         deployable.deployFuture = failedFuture("foo");
-        assertThat(deployable.deploy(null).failed()).isTrue();
+        assertThat(deployable.deploy().failed()).isTrue();
     }
 
     static class DeployableThing extends Deployable {
@@ -71,6 +72,10 @@ class DeployableTest {
         @Override
         public String getIdentifier() {
             return identifier;
+        }
+
+        public PendingDeployment deploy() {
+            return deploy(newNeonBeeMockForDeployment());
         }
 
         @Override
