@@ -192,6 +192,6 @@ class ConfigurableJsonFactoryTest extends DataVerticleTestBase {
 
     static void assertStringLengthExceptionMessage(Throwable e) {
         assertThat(e).hasMessageThat()
-                .containsMatch("String length \\(\\d+\\) exceeds the maximum length \\(\\d+\\)");
+                .containsMatch("String value length \\(\\d+\\) exceeds the maximum allowed \\(\\d+\\,.*?\\)");
     }
 }
