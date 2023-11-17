@@ -40,7 +40,7 @@ public class DeployableModels extends Deployable {
      */
     public static Future<DeployableModels> fromJar(Vertx vertx, Path jarPath) {
         return ClassPathScanner.forJarFile(vertx, jarPath).compose(classPathScanner -> {
-            return scanClassPath(vertx, classPathScanner).eventually(classPathScanner.close(vertx));
+            return scanClassPath(vertx, classPathScanner).eventually(() -> classPathScanner.close(vertx));
         });
     }
 

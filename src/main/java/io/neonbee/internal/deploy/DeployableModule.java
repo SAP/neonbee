@@ -98,7 +98,7 @@ public class DeployableModule extends Deployables {
                     return new DeployableModule(moduleName, moduleClassLoader.get(), Lists.newArrayList(
                             Iterables.concat(List.of(deployableModels.result()), deployableVerticles.result())));
                 });
-            }).eventually(classPathScanner.close(vertx));
+            }).eventually(() -> classPathScanner.close(vertx));
         });
     }
 

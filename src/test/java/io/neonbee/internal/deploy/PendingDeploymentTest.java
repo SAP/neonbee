@@ -10,7 +10,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
@@ -52,10 +54,11 @@ class PendingDeploymentTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "deprecation" })
     void testFutureInterface() {
         FutureInternal<String> futureMock = mock(FutureInternal.class);
         doReturn(futureMock).when(futureMock).map((Function<String, ?>) any());
+        doReturn(futureMock).when(futureMock).map((Supplier<String>) any());
         doReturn(futureMock).when(futureMock).map((Deployable) any());
         doReturn(futureMock).when(futureMock).onSuccess(any());
         doReturn(futureMock).when(futureMock).onFailure(any());
@@ -90,8 +93,11 @@ class PendingDeploymentTest {
         deployment.transform(null);
         verify(futureMock).transform(any());
 
-        deployment.eventually(null);
-        verify(futureMock).eventually(any());
+        deployment.eventually((Function) null);
+        verify(futureMock).eventually((Function) any());
+
+        deployment.eventually((Supplier) null);
+        verify(futureMock).eventually((Supplier) any());
 
         clearInvocations(futureMock);
         deployment.map((Function<String, ?>) null);
@@ -112,6 +118,9 @@ class PendingDeploymentTest {
 
         deployment.addListener(null);
         verify(futureMock).addListener(any());
+
+        deployment.timeout(10, TimeUnit.SECONDS);
+        verify(futureMock).timeout(10, TimeUnit.SECONDS);
     }
 
     private static class TestPendingDeployment extends PendingDeployment {
