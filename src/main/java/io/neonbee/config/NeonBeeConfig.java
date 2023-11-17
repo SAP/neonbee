@@ -3,13 +3,16 @@ package io.neonbee.config;
 import static io.neonbee.internal.helper.ConfigHelper.notFound;
 import static io.neonbee.internal.helper.ConfigHelper.readConfig;
 import static io.neonbee.internal.helper.ConfigHelper.rephraseConfigNames;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.vertx.core.Future.future;
 import static io.vertx.core.Future.succeededFuture;
 
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.StreamReadConstraints;
@@ -43,6 +46,11 @@ public class NeonBeeConfig {
     public static final int DEFAULT_EVENT_BUS_TIMEOUT = 30;
 
     /**
+     * The default timeout for a deployment to finish.
+     */
+    public static final int DEFAULT_DEPLOYMENT_TIMEOUT = 30;
+
+    /**
      * The default tracking data handling strategy.
      */
     public static final String DEFAULT_TRACKING_DATA_HANDLING_STRATEGY = TrackingDataLoggingStrategy.class.getName();
@@ -56,6 +64,14 @@ public class NeonBeeConfig {
             ImmutableBiMap.of("healthConfig", "health", "metricsConfig", "metrics");
 
     private int eventBusTimeout = DEFAULT_EVENT_BUS_TIMEOUT;
+
+    private int deploymentTimeout = DEFAULT_DEPLOYMENT_TIMEOUT;
+
+    private Integer modelsDeploymentTimeout;
+
+    private Integer moduleDeploymentTimeout;
+
+    private Integer verticleDeploymentTimeout;
 
     private Map<String, String> eventBusCodecs = Map.of();
 
@@ -228,6 +244,119 @@ public class NeonBeeConfig {
     @Fluent
     public NeonBeeConfig setEventBusTimeout(int eventBusTimeout) {
         this.eventBusTimeout = eventBusTimeout;
+        return this;
+    }
+
+    /**
+     * Returns the general deployment timeout for an individual deployment of any type in seconds. If unset / equal or
+     * smaller than 0, no timeout applies to the deployment.
+     *
+     * @return the deployment timeout in seconds
+     */
+    public int getDeploymentTimeout() {
+        return deploymentTimeout;
+    }
+
+    /**
+     * Returns the deployment timeout for a given deployment type, or the general {@link #getDeploymentTimeout()} if the
+     * deployment timeout for a given type is unset / equal or smaller than zero or an unrecognized type / {@code null}
+     * was passed.
+     *
+     * @param deploymentType the type of the deployment, e.g. modules, module, verticle or {@code null}
+     * @return the individual or general deployment timeout in seconds
+     */
+    public int getDeploymentTimeout(String deploymentType) {
+        switch (Optional.ofNullable(deploymentType).map(type -> type.toLowerCase(Locale.ROOT)).orElse(EMPTY)) {
+        case "models":
+            return getModelsDeploymentTimeout();
+        case "module":
+            return getModuleDeploymentTimeout();
+        case "verticle":
+            return getVerticleDeploymentTimeout();
+        default:
+            return getDeploymentTimeout();
+        }
+    }
+
+    /**
+     * Set the general deployment timeout for an individual deployment of any type in seconds. If equal or smaller than
+     * 0, no timeout applies to the deployment.
+     *
+     * @param deploymentTimeout the deployment timeout in seconds
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    @Fluent
+    public NeonBeeConfig setDeploymentTimeout(int deploymentTimeout) {
+        this.deploymentTimeout = deploymentTimeout;
+        return this;
+    }
+
+    /**
+     * Returns the deployment timeout of an individual models deployment in seconds. If unset the general
+     * {@link #getDeploymentTimeout()} is returned.
+     *
+     * @return the deployment timeout in seconds
+     */
+    public Integer getModelsDeploymentTimeout() {
+        return modelsDeploymentTimeout != null ? modelsDeploymentTimeout : getDeploymentTimeout();
+    }
+
+    /**
+     * Set the deployment timeout of an individual models deployment in seconds. If equal or smaller than 0, no timeout
+     * applies to the deployment. If set to {@code null} the general {@link #getDeploymentTimeout()} applies.
+     *
+     * @param modelsDeploymentTimeout the deployment timeout in seconds or {@code null}
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    @Fluent
+    public NeonBeeConfig setModelsDeploymentTimeout(Integer modelsDeploymentTimeout) {
+        this.modelsDeploymentTimeout = modelsDeploymentTimeout;
+        return this;
+    }
+
+    /**
+     * Returns the deployment timeout of an individual module deployment in seconds. If unset the general
+     * {@link #getDeploymentTimeout()} is returned.
+     *
+     * @return the deployment timeout in seconds
+     */
+    public Integer getModuleDeploymentTimeout() {
+        return moduleDeploymentTimeout != null ? moduleDeploymentTimeout : getDeploymentTimeout();
+    }
+
+    /**
+     * Set the deployment timeout of an individual module deployment in seconds. If equal or smaller than 0, no timeout
+     * applies to the deployment. If set to {@code null} the general {@link #getDeploymentTimeout()} applies.
+     *
+     * @param moduleDeploymentTimeout the deployment timeout in seconds or {@code null}
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    @Fluent
+    public NeonBeeConfig setModuleDeploymentTimeout(Integer moduleDeploymentTimeout) {
+        this.moduleDeploymentTimeout = moduleDeploymentTimeout;
+        return this;
+    }
+
+    /**
+     * Returns the deployment timeout of an individual verticle deployment in seconds. If unset the general
+     * {@link #getDeploymentTimeout()} is returned.
+     *
+     * @return the deployment timeout in seconds
+     */
+    public Integer getVerticleDeploymentTimeout() {
+        return verticleDeploymentTimeout != null ? verticleDeploymentTimeout : getDeploymentTimeout();
+    }
+
+    /**
+     * Set the deployment timeout of an individual verticle deployment in seconds. If equal or smaller than 0, no
+     * timeout applies to the deployment. If set to {@code null} the general {@link #getDeploymentTimeout()} applies.
+     *
+     * @param verticleDeploymentTimeout the deployment timeout in seconds or {@code null}
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    @Fluent
+    public NeonBeeConfig setVerticleDeploymentTimeout(Integer verticleDeploymentTimeout) {
+        this.verticleDeploymentTimeout = verticleDeploymentTimeout;
         return this;
     }
 

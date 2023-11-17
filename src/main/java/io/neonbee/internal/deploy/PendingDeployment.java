@@ -12,6 +12,8 @@ import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.future.FutureInternal;
 import io.vertx.core.impl.future.Listener;
@@ -26,7 +28,23 @@ public abstract class PendingDeployment extends Deployment implements FutureInte
 
         LOGGER.info("Started deployment of {} ...", deployable);
 
-        this.deployFuture = deployFuture.map(deploymentId -> {
+        Future<String> timeoutFuture = deployFuture;
+        int timeout = neonBee.getConfig().getDeploymentTimeout(deployable.getType());
+        if (timeout > 0) {
+            Vertx vertx = neonBee.getVertx();
+            Promise<String> timeoutPromise = Promise.promise();
+            // fail the promise after the timeout is expired
+            long timerId = vertx.setTimer(TimeUnit.SECONDS.toMillis(timeout), nothing -> {
+                timeoutPromise.fail("Deployment timed-out after " + timeout + " seconds");
+            });
+            // in case the deployment finished, it completes the promise and we can cancel the timer
+            deployFuture.onComplete(timeoutPromise).onComplete(deploymentId -> {
+                vertx.cancelTimer(timerId);
+            });
+            timeoutFuture = timeoutPromise.future();
+        }
+
+        this.deployFuture = timeoutFuture.map(deploymentId -> {
             // in case a deployment doesn't want to specify a own deployment ID, generate one based on the hash code of
             // the pending deployment (thus all deployables, might just return an empty future)
             return deploymentId != null ? deploymentId : super.getDeploymentId();

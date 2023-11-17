@@ -2,8 +2,7 @@ package io.neonbee.internal.deploy;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
-import static io.neonbee.NeonBeeMockHelper.defaultVertxMock;
-import static io.neonbee.NeonBeeMockHelper.registerNeonBeeMock;
+import static io.neonbee.internal.deploy.DeploymentTest.newNeonBeeMockForDeployment;
 import static io.neonbee.test.helper.DummyVerticleHelper.DUMMY_VERTICLE;
 import static io.neonbee.test.helper.FileSystemHelper.createTempDirectory;
 import static io.vertx.core.Future.succeededFuture;
@@ -28,6 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import com.google.common.truth.Correspondence;
 
+import io.neonbee.NeonBee;
 import io.neonbee.internal.BasicJar;
 import io.neonbee.internal.NeonBeeModuleJar;
 import io.vertx.core.DeploymentOptions;
@@ -74,9 +74,11 @@ class DeployableModuleTest {
     @Test
     @DisplayName("test that undeploy closes the module class loader")
     void testUndeployClosesModuleClassLoader() throws IOException {
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment();
+
         URLClassLoader classLoaderMock = mock(URLClassLoader.class);
         PendingDeployment deployment = new DeployableModule("module", classLoaderMock, List.of())
-                .deploy(registerNeonBeeMock(defaultVertxMock()));
+                .deploy(neonBeeMock);
         assertThat(deployment.succeeded()).isTrue();
         assertThat(deployment.undeploy().succeeded()).isTrue();
         verify(classLoaderMock).close();
@@ -88,8 +90,8 @@ class DeployableModuleTest {
         NeonBeeModuleJar moduleJar = NeonBeeModuleJar.create("testmodule").withVerticles().withModels().build();
         Path moduleJarPath = moduleJar.writeToTempPath();
 
-        Vertx vertxMock = defaultVertxMock();
-        registerNeonBeeMock(vertxMock);
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment();
+        Vertx vertxMock = neonBeeMock.getVertx();
 
         Future<DeployableModule> deployableFuture = DeployableModule.fromJar(vertxMock, moduleJarPath);
         assertThat(deployableFuture.cause()).isNull();
@@ -122,8 +124,8 @@ class DeployableModuleTest {
         NeonBeeModuleJar moduleJar = NeonBeeModuleJar.create("testmodule").withModels().build();
         Path moduleJarPath = moduleJar.writeToTempPath();
 
-        Vertx vertxMock = defaultVertxMock();
-        registerNeonBeeMock(vertxMock);
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment();
+        Vertx vertxMock = neonBeeMock.getVertx();
 
         Future<DeployableModule> deployableFuture = DeployableModule.fromJar(vertxMock, moduleJarPath);
         assertThat(deployableFuture.cause()).isNull();
@@ -150,8 +152,8 @@ class DeployableModuleTest {
     @Test
     @DisplayName("test fromJar exceptions")
     void testFromJarExceptions() throws IOException {
-        Vertx vertxMock = defaultVertxMock();
-        registerNeonBeeMock(vertxMock);
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment();
+        Vertx vertxMock = neonBeeMock.getVertx();
 
         BasicJar noModuleAttribute = new BasicJar(Map.of(), Map.of());
         Throwable noModuleAttributeException =

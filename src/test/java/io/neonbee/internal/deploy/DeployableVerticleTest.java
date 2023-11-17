@@ -2,8 +2,7 @@ package io.neonbee.internal.deploy;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
-import static io.neonbee.NeonBeeMockHelper.defaultVertxMock;
-import static io.neonbee.NeonBeeMockHelper.registerNeonBeeMock;
+import static io.neonbee.internal.deploy.DeploymentTest.newNeonBeeMockForDeployment;
 import static io.neonbee.test.helper.DummyVerticleHelper.DUMMY_VERTICLE;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
@@ -76,13 +75,13 @@ class DeployableVerticleTest {
     void testDeployUndeploy() {
         DeploymentOptions options = new DeploymentOptions();
 
-        Vertx vertxMock = defaultVertxMock();
-        NeonBee neonBee = registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setIgnoreClassPath(true));
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment(new NeonBeeOptions.Mutable().setIgnoreClassPath(true));
+        Vertx vertxMock = neonBeeMock.getVertx();
 
         DeployableVerticle deployable1 = new DeployableVerticle(DUMMY_VERTICLE, options);
         assertThat(deployable1.getIdentifier()).isEqualTo(DUMMY_VERTICLE.getClass().getName());
 
-        PendingDeployment deployment1 = deployable1.deploy(neonBee);
+        PendingDeployment deployment1 = deployable1.deploy(neonBeeMock);
         assertThat(deployment1.succeeded()).isTrue();
         verify(vertxMock).deployVerticle(DUMMY_VERTICLE, deployable1.options);
 
@@ -92,7 +91,7 @@ class DeployableVerticleTest {
         DeployableVerticle deployable2 = new DeployableVerticle(DUMMY_VERTICLE.getClass(), options);
         assertThat(deployable2.getIdentifier()).isEqualTo(DUMMY_VERTICLE.getClass().getName());
 
-        PendingDeployment deployment2 = deployable2.deploy(neonBee);
+        PendingDeployment deployment2 = deployable2.deploy(neonBeeMock);
         assertThat(deployment2.succeeded()).isTrue();
         verify(vertxMock).deployVerticle(DUMMY_VERTICLE.getClass(), deployable2.options);
 
@@ -103,14 +102,14 @@ class DeployableVerticleTest {
     @Test
     @DisplayName("test deploy failed")
     void testDeployFailed() {
-        Vertx vertxMock = defaultVertxMock();
-        NeonBee neonBee = registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setIgnoreClassPath(true));
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment(new NeonBeeOptions.Mutable().setIgnoreClassPath(true));
+        Vertx vertxMock = neonBeeMock.getVertx();
         when(vertxMock.deployVerticle(any(Verticle.class), any(DeploymentOptions.class)))
                 .thenReturn(failedFuture("any failure"));
 
         DeployableVerticle deployable = new DeployableVerticle(DUMMY_VERTICLE, new DeploymentOptions());
 
-        PendingDeployment deployment = deployable.deploy(neonBee);
+        PendingDeployment deployment = deployable.deploy(neonBeeMock);
         assertThat(deployment.failed()).isTrue();
         assertThat(deployment.cause()).hasMessageThat().isEqualTo("any failure");
         assertThat(deployment.undeploy().succeeded()).isTrue();
@@ -119,9 +118,10 @@ class DeployableVerticleTest {
     @Test
     @DisplayName("test read not found verticle config")
     void testReadVerticleConfigNotFound() throws IOException {
-        Vertx vertxMock = defaultVertxMock();
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment(
+                new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")));
+        Vertx vertxMock = neonBeeMock.getVertx();
         FileSystem fileSystemMock = vertxMock.fileSystem();
-        registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")));
 
         when(fileSystemMock.readFile(any()))
                 .thenReturn(failedFuture(new FileSystemException(new NoSuchFileException("file"))));
@@ -141,9 +141,10 @@ class DeployableVerticleTest {
     @Test
     @DisplayName("test read not found verticle config not found with default")
     void testReadVerticleConfigNotFoundWithDefault() throws IOException {
-        Vertx vertxMock = defaultVertxMock();
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment(
+                new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")));
+        Vertx vertxMock = neonBeeMock.getVertx();
         FileSystem fileSystemMock = vertxMock.fileSystem();
-        registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")));
 
         when(fileSystemMock.readFile(any()))
                 .thenReturn(failedFuture(new FileSystemException(new NoSuchFileException("file"))));
@@ -156,9 +157,10 @@ class DeployableVerticleTest {
     @Test
     @DisplayName("test read verticle config")
     void testReadVerticleConfig() throws IOException {
-        Vertx vertxMock = defaultVertxMock();
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment(
+                new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")));
+        Vertx vertxMock = neonBeeMock.getVertx();
         FileSystem fileSystemMock = vertxMock.fileSystem();
-        registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")));
 
         when(fileSystemMock.readFile(any()))
                 .thenReturn(failedFuture(new FileSystemException(new NoSuchFileException("file"))));
@@ -172,9 +174,10 @@ class DeployableVerticleTest {
     @Test
     @DisplayName("test read verticle config with default")
     void testReadVerticleConfigWithDefault() throws IOException {
-        Vertx vertxMock = defaultVertxMock();
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment(
+                new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")));
+        Vertx vertxMock = neonBeeMock.getVertx();
         FileSystem fileSystemMock = vertxMock.fileSystem();
-        registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")));
 
         when(fileSystemMock.readFile(any()))
                 .thenReturn(failedFuture(new FileSystemException(new NoSuchFileException("file"))));
@@ -189,9 +192,10 @@ class DeployableVerticleTest {
     @Test
     @DisplayName("test read verticle config failure")
     void testReadVerticleConfigFailure() throws IOException {
-        Vertx vertxMock = defaultVertxMock();
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment(
+                new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")));
+        Vertx vertxMock = neonBeeMock.getVertx();
         FileSystem fileSystemMock = vertxMock.fileSystem();
-        registerNeonBeeMock(vertxMock, new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")));
 
         when(fileSystemMock.readFile(any()))
                 .thenReturn(failedFuture(new FileSystemException(new NoSuchFileException("file"))));
@@ -206,8 +210,8 @@ class DeployableVerticleTest {
     @DisplayName("test scan class path")
     @SuppressWarnings("rawtypes")
     void testScanClassPath() throws ClassNotFoundException {
-        Vertx vertxMock = defaultVertxMock();
-        registerNeonBeeMock(vertxMock);
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment();
+        Vertx vertxMock = neonBeeMock.getVertx();
 
         ClassPathScanner classPathScannerMock = mock(ClassPathScanner.class);
         when(classPathScannerMock.scanManifestFiles(any(), any()))
@@ -234,8 +238,8 @@ class DeployableVerticleTest {
     @Test
     @DisplayName("test from JAR")
     void testFromJar() throws IOException {
-        Vertx vertxMock = defaultVertxMock();
-        registerNeonBeeMock(vertxMock);
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment();
+        Vertx vertxMock = neonBeeMock.getVertx();
 
         NeonBeeModuleJar moduleJar = NeonBeeModuleJar.create("testmodule").withVerticles().build();
         Path moduleJarPath = moduleJar.writeToTempPath();
@@ -255,8 +259,8 @@ class DeployableVerticleTest {
     @DisplayName("test from class name")
     @SuppressWarnings("rawtypes")
     void testFromClassName() throws ClassNotFoundException {
-        Vertx vertxMock = defaultVertxMock();
-        registerNeonBeeMock(vertxMock);
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment();
+        Vertx vertxMock = neonBeeMock.getVertx();
 
         JsonObject config = new JsonObject().put("config", new JsonObject().put("foo", "bar"));
 
@@ -288,8 +292,8 @@ class DeployableVerticleTest {
     @Test
     @DisplayName("test from wrong class name")
     void testFromWrongClassName() throws ClassNotFoundException {
-        Vertx vertxMock = defaultVertxMock();
-        registerNeonBeeMock(vertxMock);
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment();
+        Vertx vertxMock = neonBeeMock.getVertx();
 
         ClassLoader classLoaderMock = mock(ClassLoader.class);
         when(classLoaderMock.loadClass(any())).thenThrow(ClassNotFoundException.class);
@@ -303,8 +307,8 @@ class DeployableVerticleTest {
     @Test
     @DisplayName("test from class")
     void testFromClass() {
-        Vertx vertxMock = defaultVertxMock();
-        registerNeonBeeMock(vertxMock);
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment();
+        Vertx vertxMock = neonBeeMock.getVertx();
 
         JsonObject config = new JsonObject().put("config", new JsonObject().put("foo", "bar"));
 
@@ -322,8 +326,8 @@ class DeployableVerticleTest {
     @Test
     @DisplayName("test from verticle")
     void testFromVerticle() {
-        Vertx vertxMock = defaultVertxMock();
-        registerNeonBeeMock(vertxMock);
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment();
+        Vertx vertxMock = neonBeeMock.getVertx();
 
         JsonObject config = new JsonObject().put("config", new JsonObject().put("foo", "bar"));
 

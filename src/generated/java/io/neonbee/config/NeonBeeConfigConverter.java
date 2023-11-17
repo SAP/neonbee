@@ -19,6 +19,11 @@ public class NeonBeeConfigConverter {
     static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, NeonBeeConfig obj) {
         for (java.util.Map.Entry<String, Object> member : json) {
             switch (member.getKey()) {
+            case "deploymentTimeout":
+                if (member.getValue() instanceof Number) {
+                    obj.setDeploymentTimeout(((Number) member.getValue()).intValue());
+                }
+                break;
             case "eventBusCodecs":
                 if (member.getValue() instanceof JsonObject) {
                     java.util.Map<String, java.lang.String> map = new java.util.LinkedHashMap<>();
@@ -62,6 +67,16 @@ public class NeonBeeConfigConverter {
                     obj.setMicrometerRegistries(list);
                 }
                 break;
+            case "modelsDeploymentTimeout":
+                if (member.getValue() instanceof Number) {
+                    obj.setModelsDeploymentTimeout(((Number) member.getValue()).intValue());
+                }
+                break;
+            case "moduleDeploymentTimeout":
+                if (member.getValue() instanceof Number) {
+                    obj.setModuleDeploymentTimeout(((Number) member.getValue()).intValue());
+                }
+                break;
             case "platformClasses":
                 if (member.getValue() instanceof JsonArray) {
                     java.util.ArrayList<java.lang.String> list = new java.util.ArrayList<>();
@@ -82,6 +97,11 @@ public class NeonBeeConfigConverter {
                     obj.setTrackingDataHandlingStrategy((String) member.getValue());
                 }
                 break;
+            case "verticleDeploymentTimeout":
+                if (member.getValue() instanceof Number) {
+                    obj.setVerticleDeploymentTimeout(((Number) member.getValue()).intValue());
+                }
+                break;
             }
         }
     }
@@ -91,6 +111,7 @@ public class NeonBeeConfigConverter {
     }
 
     static void toJson(NeonBeeConfig obj, java.util.Map<String, Object> json) {
+        json.put("deploymentTimeout", obj.getDeploymentTimeout());
         if (obj.getEventBusCodecs() != null) {
             JsonObject map = new JsonObject();
             obj.getEventBusCodecs().forEach((key, value) -> map.put(key, value));
@@ -109,6 +130,12 @@ public class NeonBeeConfigConverter {
             obj.getMicrometerRegistries().forEach(item -> array.add(item.toJson()));
             json.put("micrometerRegistries", array);
         }
+        if (obj.getModelsDeploymentTimeout() != null) {
+            json.put("modelsDeploymentTimeout", obj.getModelsDeploymentTimeout());
+        }
+        if (obj.getModuleDeploymentTimeout() != null) {
+            json.put("moduleDeploymentTimeout", obj.getModuleDeploymentTimeout());
+        }
         if (obj.getPlatformClasses() != null) {
             JsonArray array = new JsonArray();
             obj.getPlatformClasses().forEach(item -> array.add(item));
@@ -119,6 +146,9 @@ public class NeonBeeConfigConverter {
         }
         if (obj.getTrackingDataHandlingStrategy() != null) {
             json.put("trackingDataHandlingStrategy", obj.getTrackingDataHandlingStrategy());
+        }
+        if (obj.getVerticleDeploymentTimeout() != null) {
+            json.put("verticleDeploymentTimeout", obj.getVerticleDeploymentTimeout());
         }
     }
 }
