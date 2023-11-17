@@ -67,7 +67,7 @@ dependencies {
     implementation group: 'org.infinispan', name: 'infinispan-clustered-counter', version: infinispan_version
     implementation group: 'org.infinispan', name: 'infinispan-component-annotations', version: infinispan_version
 
-    def jackson_version = '2.15.0'
+    def jackson_version = '2.16.0'
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jackson_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jackson_version
