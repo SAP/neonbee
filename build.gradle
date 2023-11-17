@@ -11,7 +11,7 @@ plugins {
     // community plugins
     id 'com.diffplug.spotless' version '6.22.0'
     id 'net.ltgt.errorprone' version '3.1.0'
-    id 'com.github.spotbugs' version '5.2.1'
+    id 'com.github.spotbugs' version '5.2.3'
     id 'org.ajoberstar.grgit' version '5.2.1'
     id 'com.github.ksoichiro.console.reporter' version '0.6.3'
     id 'se.bjurr.violations.violations-gradle-plugin' version '1.52.7'
@@ -60,7 +60,7 @@ dependencies {
         exclude group: 'org.infinispan', module: 'infinispan-commons'
         exclude group: 'org.infinispan', module: 'infinispan-multimap'
     }
-    def infinispan_version = '14.0.14.Final'
+    def infinispan_version = '14.0.19.Final'
     implementation group: 'org.infinispan', name: 'infinispan-multimap-jakarta', version: infinispan_version
     implementation group: 'org.infinispan', name: 'infinispan-core-jakarta', version: infinispan_version
     implementation group: 'org.infinispan', name: 'infinispan-clustered-lock', version: infinispan_version
@@ -72,21 +72,21 @@ dependencies {
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jackson_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jackson_version
 
-    def olingo_version = '4.9.0'
+    def olingo_version = '4.10.0'
     implementation(group: 'org.apache.olingo', name: 'odata-server-core', version: olingo_version) {
         exclude group: 'io.netty'
     }
     implementation group: 'org.apache.olingo', name: 'odata-server-core-ext', version: olingo_version
 
     implementation group: 'com.sap.cds', name: 'cds4j-core', version: '1.38.1'
-    implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.11.5'
+    implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.12.0'
     implementation group: 'org.ow2.asm', name: 'asm', version: '9.6'
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.9'
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.11'
-    def guava_version = '32.0.0-jre'
+    def guava_version = '32.1.3-jre'
     implementation group: 'com.google.guava', name: 'guava', version: guava_version
-    implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.8.0'
+    implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.8.1'
 
     // Compile only
     compileOnly group: 'io.vertx', name: 'vertx-codegen', version: vertx_version
