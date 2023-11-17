@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
@@ -350,11 +349,11 @@ public class ClassPathScanner {
          *
          * @param vertx the Vert.x instance on which to execute the closing operation on
          * @param <U>   an empty future of a given type
-         * @return returns a mapper to a future that closes the underlying class loader of this {@link ClassPathScanner}
-         *         when called
+         * @return returns a mapper to a supplier that closes the underlying class loader of this
+         *         {@link ClassPathScanner} when called
          */
-        public <U> Function<Void, Future<U>> close(Vertx vertx) {
-            return nothing -> vertx.executeBlocking(() -> {
+        public <U> Future<U> close(Vertx vertx) {
+            return vertx.executeBlocking(() -> {
                 try {
                     close();
                 } catch (IOException e) {

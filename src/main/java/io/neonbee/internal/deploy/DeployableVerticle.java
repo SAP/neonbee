@@ -60,7 +60,7 @@ public class DeployableVerticle extends Deployable {
             ClassLoader verticleClassLoader) {
         return ClassPathScanner.forJarFile(vertx, jarPath).compose(classPathScanner -> {
             return scanClassPath(vertx, classPathScanner, verticleClassLoader)
-                    .eventually(classPathScanner.close(vertx));
+                    .eventually(() -> classPathScanner.close(vertx));
         });
     }
 

@@ -3,7 +3,9 @@ package io.neonbee.internal.deploy;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import io.neonbee.NeonBee;
 import io.neonbee.logging.LoggingFacade;
@@ -112,8 +114,14 @@ public abstract class PendingDeployment extends Deployment implements FutureInte
     }
 
     @Override
+    @Deprecated
     public <U> Future<Deployment> eventually(Function<Void, Future<U>> mapper) {
         return mapDeployment().eventually(mapper);
+    }
+
+    @Override
+    public <U> Future<Deployment> eventually(Supplier<Future<U>> supplier) {
+        return mapDeployment().eventually(supplier);
     }
 
     @Override
@@ -144,6 +152,11 @@ public abstract class PendingDeployment extends Deployment implements FutureInte
     @Override
     public void addListener(Listener<Deployment> listener) {
         ((FutureInternal<Deployment>) mapDeployment()).addListener(listener);
+    }
+
+    @Override
+    public Future<Deployment> timeout(long delay, TimeUnit unit) {
+        return mapDeployment().timeout(delay, unit);
     }
 
     private Future<Deployment> mapDeployment() {
