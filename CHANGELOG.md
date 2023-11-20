@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.31.0 (2023-11-20)
+
+### Features
+
+- add timeout for deployments ([d843b105](https://github.com/SAP/neonbee/commit/d843b105215998c2c9256ac100c7409cb726ee4b))
+- health check for succesfull NeonBee start ([e11644d1](https://github.com/SAP/neonbee/commit/e11644d1d4b25e088d7fa799813b4fe612085358))
+
+
+### Build System
+
+- **deps**: upgrade `vertx` to 4.5 ([3593b492](https://github.com/SAP/neonbee/commit/3593b49293360e68e0bcc47216697313d9fab208))
+- **deps**: infinispan, olingo, micrometer, guava, spotbugs ([f9ab633c](https://github.com/SAP/neonbee/commit/f9ab633ca20395d77a4b429908251cdc6feaa519))
+- **deps**: upgrade `jackson` to 2.16.0 ([ddfbb693](https://github.com/SAP/neonbee/commit/ddfbb693fe83f63b9d3bd321168aac20ee8abd78))
+
+
 ## 0.30.1 (2023-11-16)
 
 ### Bug Fixes
