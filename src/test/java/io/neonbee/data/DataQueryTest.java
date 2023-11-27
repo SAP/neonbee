@@ -3,6 +3,7 @@ package io.neonbee.data;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,17 @@ class DataQueryTest {
         query.addParameter("Jon", "Snow");
         String expected = "Hodor";
         assertThat(query.getParameter("Hodor")).isEqualTo(expected);
+    }
+
+    @Test
+    @DisplayName("getParameter should return null if the parameter value is null")
+    void testGetNonExistingParameter() {
+        ArrayList<String> list = new ArrayList<>();
+        list.add(null);
+        query.getParameters().put("Hodor", list);
+        assertThat(query.getParameters()).hasSize(1);
+        assertThat(query.getParameter("Hodor")).isNull();
+        assertThat(query.getParameter("Hodor", "default")).isEqualTo("default");
     }
 
     @Test
@@ -120,6 +132,15 @@ class DataQueryTest {
     @DisplayName("DataQuery should have empty map when no header is passed")
     void testEmptyHeader() {
         assertThat(query.getHeaders()).isEqualTo(Map.of());
+    }
+
+    @Test
+    @DisplayName("DataQuery should return null if the header value is null")
+    void testNullHeader() {
+        ArrayList<String> strings = new ArrayList<>();
+        strings.add(null);
+        query.getHeaders().put("foo", strings);
+        assertThat(query.getHeader("foo")).isNull();
     }
 
     @Test
