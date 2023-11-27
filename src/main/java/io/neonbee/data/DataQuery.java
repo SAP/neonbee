@@ -11,12 +11,12 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -248,7 +248,10 @@ public final class DataQuery { // NOPMD not a "god class"
      * @return The value for a given query parameter or {@code defaultValue} if parameter is not present
      */
     public String getParameter(String name, String defaultValue) {
-        return Optional.ofNullable(getParameterValues(name)).map(List::stream).flatMap(Stream::findFirst)
+        return Stream.ofNullable(getParameterValues(name))
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .findFirst()
                 .orElse(defaultValue);
     }
 
@@ -339,7 +342,10 @@ public final class DataQuery { // NOPMD not a "god class"
      * @return The header or null
      */
     public String getHeader(String name) {
-        return Optional.ofNullable(getHeaderValues(name)).map(List::stream).orElseGet(Stream::empty).findFirst()
+        return Stream.ofNullable(getHeaderValues(name))
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .findFirst()
                 .orElse(null);
     }
 
