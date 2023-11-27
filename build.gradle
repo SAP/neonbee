@@ -17,7 +17,7 @@ plugins {
     id 'se.bjurr.violations.violations-gradle-plugin' version '1.52.7'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'org.sonarqube' version '4.4.1.3373'
-    id 'team.yi.semantic-gitlog' version '0.5.17'
+    id 'team.yi.semantic-gitlog' version '0.6.5'
 }
 
 group = 'io.neonbee'
