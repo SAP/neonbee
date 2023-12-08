@@ -13,7 +13,9 @@ import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHel
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.RESPONSE_HEADER_PREFIX;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.forwardRequest;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
+import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
 
 import java.io.ByteArrayInputStream;
@@ -53,6 +55,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.neonbee.endpoint.odatav4.internal.olingo.expression.FilterExpressionVisitor;
 import io.neonbee.endpoint.odatav4.internal.olingo.expression.OrderExpressionExecutor;
+import io.neonbee.entity.EntityWrapper;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -108,81 +111,87 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
         EdmEntityType edmEntityType = uriResourceEntitySet.getEntitySet().getEntityType();
 
         EntityCollection entityCollection = new EntityCollection();
-        Promise<List<Entity>> responsePromise = Promise.promise();
 
         // Fetch the data from backend
-        forwardRequest(request, READ, uriInfo, vertx, routingContext, processPromise).onSuccess(ew -> {
-            boolean expandExecuted = ofNullable(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_EXPAND_KEY))
-                    .orElse(Boolean.FALSE);
-            if (resourceParts.size() == 1) {
-                try {
-                    boolean filterExecuted =
-                            ofNullable(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_FILTER_KEY))
-                                    .orElse(Boolean.FALSE);
-                    List<Entity> resultEntityList = filterExecuted ? ew.getEntities()
-                            : applyFilterQueryOption(uriInfo.getFilterOption(), ew.getEntities());
-                    applyCountOption(uriInfo.getCountOption(), resultEntityList, entityCollection, routingContext);
-                    if (!resultEntityList.isEmpty()) {
-                        boolean orderByExecuted =
-                                ofNullable(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_ORDER_BY_KEY))
-                                        .orElse(Boolean.FALSE);
-                        if (!orderByExecuted) {
-                            applyOrderByQueryOption(uriInfo.getOrderByOption(), resultEntityList);
-                        }
-                        boolean skipExecuted =
-                                ofNullable(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_SKIP_KEY))
-                                        .orElse(Boolean.FALSE);
-                        resultEntityList = skipExecuted ? resultEntityList
-                                : applySkipQueryOption(uriInfo.getSkipOption(), resultEntityList);
-                        boolean topExecuted =
-                                ofNullable(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_TOP_KEY))
-                                        .orElse(Boolean.FALSE);
-                        resultEntityList = topExecuted ? resultEntityList
-                                : applyTopQueryOption(uriInfo.getTopOption(), resultEntityList);
-                        Future<List<Entity>> resultEntityListFuture = expandExecuted ? succeededFuture(resultEntityList)
-                                : applyExpandQueryOptions(uriInfo, resultEntityList);
-                        resultEntityListFuture.onComplete(responsePromise);
-                    } else {
-                        responsePromise.complete(resultEntityList);
+        forwardRequest(request, READ, uriInfo, vertx, routingContext, processPromise)
+                .compose(ew -> processEntityResult(ew, uriInfo, resourceParts, uriResourceEntitySet, entityCollection))
+                .onSuccess(finalResultEntities -> {
+                    entityCollection.getEntities().addAll(finalResultEntities);
+                    EntityCollectionSerializerOptions opts;
+                    try {
+                        EdmEntitySet edmEntitySet =
+                                chooseEntitySet(resourceParts, uriResourceEntitySet.getEntitySet(), routingContext);
+                        opts = createSerializerOptions(request, uriInfo, edmEntitySet);
+                        response.setContent(odata.createSerializer(responseFormat)
+                                .entityCollection(serviceMetadata, edmEntityType, entityCollection, opts).getContent());
+                        response.setStatusCode(HttpStatusCode.OK.getStatusCode());
+                        response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+                        processPromise.complete();
+                    } catch (ODataException e) {
+                        processPromise.fail(e);
                     }
-                } catch (ODataException | ClassCastException e) {
-                    processPromise.fail(e);
+                }).onFailure(processPromise::fail);
+    }
+
+    private Future<List<Entity>> processEntityResult(EntityWrapper ew, UriInfo uriInfo, List<UriResource> resourceParts,
+            UriResourceEntitySet uriResourceEntitySet, EntityCollection entityCollection) {
+        try {
+            if (resourceParts.size() == 1) {
+                List<Entity> resultEntityList;
+                boolean filterExecuted = TRUE.equals(routingContext.get(RESPONSE_HEADER_PREFIX + ODATA_FILTER_KEY));
+                if (filterExecuted) {
+                    resultEntityList = ew.getEntities();
+                } else {
+                    resultEntityList = applyFilterQueryOption(uriInfo.getFilterOption(), ew.getEntities());
+                }
+
+                applyCountOption(uriInfo.getCountOption(), resultEntityList, entityCollection, routingContext);
+
+                if (resultEntityList.isEmpty()) {
+                    return succeededFuture(resultEntityList);
+                }
+
+                boolean orderByExecuted = TRUE.equals(routingContext.get(RESPONSE_HEADER_PREFIX + ODATA_ORDER_BY_KEY));
+                if (!orderByExecuted) {
+                    applyOrderByQueryOption(uriInfo.getOrderByOption(), resultEntityList);
+                }
+
+                boolean skipExecuted = TRUE.equals(routingContext.get(RESPONSE_HEADER_PREFIX + ODATA_SKIP_KEY));
+                if (!skipExecuted) {
+                    resultEntityList = applySkipQueryOption(uriInfo.getSkipOption(), resultEntityList);
+                }
+
+                boolean topExecuted = TRUE.equals(routingContext.get(RESPONSE_HEADER_PREFIX + ODATA_TOP_KEY));
+                if (!topExecuted) {
+                    resultEntityList = applyTopQueryOption(uriInfo.getTopOption(), resultEntityList);
+                }
+
+                boolean expandExecuted = TRUE.equals(routingContext.get(RESPONSE_HEADER_PREFIX + ODATA_EXPAND_KEY));
+                if (expandExecuted) {
+                    return succeededFuture(resultEntityList);
+                } else {
+                    return applyExpandQueryOptions(uriInfo, resultEntityList);
                 }
             } else {
-                try {
-                    boolean keyPredicateExecuted =
-                            ofNullable(routingContext.<Boolean>get(ProcessorHelper.ODATA_KEY_PREDICATE_KEY))
-                                    .orElse(Boolean.FALSE);
-                    Entity foundEntity = keyPredicateExecuted ? ew.getEntities().get(0)
-                            : findEntityByKeyPredicates(routingContext, uriResourceEntitySet, ew.getEntities());
-                    if (!expandExecuted) {
-                        fetchNavigationTargetEntities(resourceParts.get(1), foundEntity, vertx, routingContext)
-                                .onComplete(responsePromise);
-                    } else {
-                        responsePromise.complete(List.of(foundEntity));
-                    }
-                } catch (ODataApplicationException e) {
-                    processPromise.fail(e);
+                Entity foundEntity;
+
+                boolean keyPredicateExecuted = TRUE.equals(routingContext.get(ProcessorHelper.ODATA_KEY_PREDICATE_KEY));
+                if (keyPredicateExecuted) {
+                    foundEntity = ew.getEntities().get(0);
+                } else {
+                    foundEntity = findEntityByKeyPredicates(routingContext, uriResourceEntitySet, ew.getEntities());
+                }
+
+                boolean expandExecuted = TRUE.equals(routingContext.get(RESPONSE_HEADER_PREFIX + ODATA_EXPAND_KEY));
+                if (expandExecuted) {
+                    return succeededFuture(List.of(foundEntity));
+                } else {
+                    return fetchNavigationTargetEntities(resourceParts.get(1), foundEntity, vertx, routingContext);
                 }
             }
-        });
-
-        responsePromise.future().onSuccess(finalResultEntities -> {
-            entityCollection.getEntities().addAll(finalResultEntities);
-            EntityCollectionSerializerOptions opts;
-            try {
-                EdmEntitySet edmEntitySet =
-                        chooseEntitySet(resourceParts, uriResourceEntitySet.getEntitySet(), routingContext);
-                opts = createSerializerOptions(request, uriInfo, edmEntitySet);
-                response.setContent(odata.createSerializer(responseFormat)
-                        .entityCollection(serviceMetadata, edmEntityType, entityCollection, opts).getContent());
-                response.setStatusCode(HttpStatusCode.OK.getStatusCode());
-                response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
-                processPromise.complete();
-            } catch (ODataException e) {
-                processPromise.fail(e);
-            }
-        }).onFailure(processPromise::fail);
+        } catch (ODataException e) {
+            return failedFuture(e);
+        }
     }
 
     private void applyCountOption(CountOption countOption, List<Entity> filteredEntities,
@@ -214,7 +223,7 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
                 LOGGER.correlateWith(routingContext).debug("FilterExpressionVisitor for entity '{}' was created",
                         entity);
                 try {
-                    if (Boolean.TRUE.equals(filterOption.getExpression().accept(filterExpressionVisitor).getValue())) {
+                    if (TRUE.equals(filterOption.getExpression().accept(filterExpressionVisitor).getValue())) {
                         filteredEntities.add(entity);
                     }
                 } catch (ODataApplicationException | ExpressionVisitException e) {
