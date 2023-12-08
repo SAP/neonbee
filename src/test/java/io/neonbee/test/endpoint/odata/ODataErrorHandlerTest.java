@@ -1,0 +1,84 @@
+package io.neonbee.test.endpoint.odata;
+
+import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
+
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.olingo.commons.api.data.Entity;
+import org.apache.olingo.commons.api.data.Property;
+import org.apache.olingo.commons.api.data.ValueType;
+import org.apache.olingo.commons.api.edm.FullQualifiedName;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import io.neonbee.data.DataContext;
+import io.neonbee.data.DataQuery;
+import io.neonbee.entity.EntityVerticle;
+import io.neonbee.entity.EntityWrapper;
+import io.neonbee.test.base.ODataEndpointTestBase;
+import io.neonbee.test.base.ODataRequest;
+import io.neonbee.test.endpoint.odata.verticle.TestService1EntityVerticle;
+import io.vertx.core.Future;
+import io.vertx.junit5.VertxTestContext;
+
+class ODataErrorHandlerTest extends ODataEndpointTestBase {
+    private ODataRequest oDataRequest;
+
+    @Override
+    protected List<Path> provideEntityModels() {
+        return List.of(TestService1EntityVerticle.getDeclaredEntityModel());
+    }
+
+    private static Map<String, String> filterOf(String value) {
+        return Map.of("$filter", value);
+    }
+
+    @BeforeEach
+    void setUp(VertxTestContext testContext) {
+        deployVerticle(new TestEntityVerticle()).onComplete(testContext.succeedingThenComplete());
+        oDataRequest = new ODataRequest(TestEntityVerticle.TEST_ENTITY_SET_FQN);
+    }
+
+    @Test
+    @DisplayName("Test that an exception is handled correctly")
+    void testExceptionHandling(VertxTestContext testContext) {
+        // we query the PropertyString100 property, but that is not added in the
+        // ODataErrorHandlerTest.TestService1EntityVerticle.retrieveData method. That will cause a NoSuchFileException.
+        Map<String, String> filter = filterOf("PropertyString100 eq 'value'");
+        oDataRequest.setQuery(filter);
+        requestOData(oDataRequest)
+                .onFailure(testContext::failNow)
+                .onSuccess(event -> testContext.verify(() -> {
+                    assertThat(event.statusCode()).isEqualTo(500);
+                    testContext.completeNow();
+                }));
+    }
+
+    private static class TestEntityVerticle extends EntityVerticle {
+        public static final FullQualifiedName TEST_ENTITY_SET_FQN =
+                new FullQualifiedName("io.neonbee.test.TestService1", "AllPropertiesNullable");
+
+        @Override
+        public Future<Set<FullQualifiedName>> entityTypeNames() {
+            return Future.succeededFuture(Set.of(TEST_ENTITY_SET_FQN));
+        }
+
+        @Override
+        public Future<EntityWrapper> retrieveData(DataQuery query, DataContext context) {
+            Entity entity1 = new Entity()
+                    .addProperty(new Property(null, "KeyPropertyString", ValueType.PRIMITIVE, "id-0"))
+                    .addProperty(new Property(null, "PropertyString", ValueType.PRIMITIVE, "a"));
+
+            return Future.succeededFuture(new EntityWrapper(TEST_ENTITY_SET_FQN, List.of(entity1)));
+        }
+
+        public static Path getDeclaredEntityModel() {
+            return TEST_RESOURCES.resolveRelated("TestService1.csn");
+        }
+    }
+}
