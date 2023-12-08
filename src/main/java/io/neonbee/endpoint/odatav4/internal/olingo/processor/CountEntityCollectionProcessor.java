@@ -158,6 +158,8 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
                     if (!expandExecuted) {
                         fetchNavigationTargetEntities(resourceParts.get(1), foundEntity, vertx, routingContext)
                                 .onComplete(responsePromise);
+                    } else {
+                        responsePromise.complete(List.of(foundEntity));
                     }
                 } catch (ODataApplicationException e) {
                     processPromise.fail(e);
