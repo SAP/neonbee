@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
@@ -111,6 +110,7 @@ public class DummyVerticleHelper {
          * @return a {@link DataVerticle} of generic type T which returns a dynamic response based on the implementation
          *         of the passed {@link DataAdapter}.
          */
+        @SuppressWarnings("PMD.NullAssignment")
         public <T> DataVerticle<T> withDataAdapter(DataAdapter<T> dataAdapter) {
             int beginNameIdx = fqn.lastIndexOf('/');
 
@@ -142,13 +142,9 @@ public class DummyVerticleHelper {
                 }
             };
 
-            try {
-                Supplier<String> dummySupplier = () -> beginNameIdx <= 0 ? null : fqn.substring(0, beginNameIdx);
-                ReflectionHelper.setValueOfPrivateField(dummyVerticle, "namespaceSupplier", dummySupplier);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            return dummyVerticle;
+            DataVerticle spy = spy(dummyVerticle);
+            when(spy.getNamespace()).thenReturn(beginNameIdx <= 0 ? null : fqn.substring(0, beginNameIdx));
+            return spy;
         }
     }
 
