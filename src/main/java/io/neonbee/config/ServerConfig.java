@@ -857,6 +857,7 @@ public class ServerConfig extends HttpServerOptions {
     }
 
     @Override
+    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
     public ServerConfig setJdkSslEngineOptions(JdkSSLEngineOptions sslEngineOptions) {
         super.setJdkSslEngineOptions(sslEngineOptions);
         return this;
@@ -869,6 +870,7 @@ public class ServerConfig extends HttpServerOptions {
     }
 
     @Override
+    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
     public ServerConfig setKeyStoreOptions(JksOptions options) {
         super.setKeyStoreOptions(options);
         return this;
@@ -911,18 +913,21 @@ public class ServerConfig extends HttpServerOptions {
     }
 
     @Override
+    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
     public ServerConfig setOpenSslEngineOptions(OpenSSLEngineOptions sslEngineOptions) {
         super.setOpenSslEngineOptions(sslEngineOptions);
         return this;
     }
 
     @Override
+    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
     public ServerConfig setPemKeyCertOptions(PemKeyCertOptions options) {
         super.setPemKeyCertOptions(options);
         return this;
     }
 
     @Override
+    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
     public ServerConfig setPemTrustOptions(PemTrustOptions options) {
         super.setPemTrustOptions(options);
         return this;
@@ -941,12 +946,14 @@ public class ServerConfig extends HttpServerOptions {
     }
 
     @Override
+    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
     public ServerConfig setPfxKeyCertOptions(PfxOptions options) {
         super.setPfxKeyCertOptions(options);
         return this;
     }
 
     @Override
+    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
     public ServerConfig setPfxTrustOptions(PfxOptions options) {
         super.setPfxTrustOptions(options);
         return this;
@@ -1079,6 +1086,7 @@ public class ServerConfig extends HttpServerOptions {
     }
 
     @Override
+    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
     public ServerConfig setTrustStoreOptions(JksOptions options) {
         super.setTrustStoreOptions(options);
         return this;

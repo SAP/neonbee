@@ -32,6 +32,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -197,12 +199,12 @@ public class NeonBee {
      * <p>
      * Important: Will only return a value in case a Vert.x context is available, otherwise returns null. Attention:
      * This method is NOT signature compliant to {@link Vertx#vertx()}! It will NOT create a new NeonBee instance,
-     * please use {@link NeonBee#create(NeonBeeOptions)} or
-     * {@link NeonBee#create(Function, ClusterManagerFactory, NeonBeeOptions, NeonBeeConfig)} instead.
+     * please use {@link NeonBee#create(NeonBeeOptions)} or {@link NeonBee#create(NeonBeeOptions, NeonBeeConfig)}
+     * instead.
      *
      * @return A NeonBee instance or null
      */
-    public static NeonBee get() {
+    public static @Nullable NeonBee get() {
         Context context = Vertx.currentContext();
         return context != null ? get(context.owner()) : null;
     }
@@ -248,14 +250,16 @@ public class NeonBee {
      * @return the future to a new NeonBee instance initialized with default options and a new Vert.x instance
      */
     public static Future<NeonBee> create(NeonBeeOptions options, NeonBeeConfig config) {
-        return create((OwnVertxFactory) vertxOptions -> newVertx(vertxOptions, options), options.getClusterManager(),
-                options, config);
+        // using the marker interface we signal, that we are responsible of also closing Vert.x if NeonBee shuts down
+        return create((OwnVertxFactory) (vertxOptions, clusterManager) -> {
+            return newVertx(vertxOptions, clusterManager, options);
+        }, options.getClusterManager(), options, config);
     }
 
     @VisibleForTesting
     @SuppressWarnings({ "PMD.EmptyCatchBlock", "PMD.AvoidCatchingThrowable" })
-    static Future<NeonBee> create(Function<VertxOptions, Future<Vertx>> vertxFactory,
-            ClusterManagerFactory clusterManagerFactory, NeonBeeOptions options, NeonBeeConfig config) {
+    static Future<NeonBee> create(VertxFactory vertxFactory, @Nullable ClusterManagerFactory clusterManagerFactory,
+            NeonBeeOptions options, NeonBeeConfig config) {
         try {
             // create the NeonBee working and logging directory (as the only mandatory directory for NeonBee)
             Files.createDirectories(options.getLogDirectory());
@@ -271,52 +275,61 @@ public class NeonBee {
         vertxOptions.setMetricsOptions(new MicrometerMetricsOptions().setRegistryName(options.getMetricsRegistryName())
                 .setMicrometerRegistry(compositeMeterRegistry).setEnabled(true));
 
-        Future<VertxOptions> loadClusterManager = !options.isClustered() ? succeededFuture(vertxOptions)
-                : clusterManagerFactory.create(options).map(vertxOptions::setClusterManager);
+        Future<ClusterManager> loadClusterManager = succeededFuture();
+        if (options.isClustered()) {
+            if (clusterManagerFactory == null) {
+                return failedFuture("Missing a cluster manager factory to create a clustered NeonBee instance");
+            }
+
+            loadClusterManager = clusterManagerFactory.create(options);
+        }
 
         // create a Vert.x instance (clustered or unclustered)
-        return loadClusterManager.compose(vertxFactory).compose(vertx -> {
-            // at this point at any failure that occurs, it is in our responsibility to properly close down the created
-            // Vert.x instance again. we have to be vigilant the fact that a runtime exception could happen anytime!
-            Function<Throwable, Future<Void>> closeVertx = throwable -> {
-                if (!(vertxFactory instanceof OwnVertxFactory)) {
-                    // the Vert.x instance is *not* owned by us, thus don't close it either
-                    LOGGER.error("Failure during bootstrap phase.", throwable); // NOPMD slf4j
-                    return failedFuture(throwable);
-                }
+        return loadClusterManager.compose(clusterManager -> vertxFactory.create(vertxOptions, clusterManager))
+                .compose(vertx -> {
+                    // from this point onwards, if any failure that occurs it will be our responsibility to properly
+                    // close down the Vert.x instance again (in case it was created by us in the first place). we have
+                    // to be vigilant the fact that a runtime exception could happen anytime!
+                    Function<Throwable, Future<Void>> closeVertx = throwable -> {
+                        if (!(vertxFactory instanceof OwnVertxFactory)) {
+                            // the Vert.x instance is *not* owned by us, thus don't close it either
+                            LOGGER.error("Failure during bootstrap phase.", throwable); // NOPMD slf4j
+                            return failedFuture(throwable);
+                        }
 
-                // the instance has been created, but after initialization some post-initialization
-                // tasks went wrong, stop Vert.x again. This will also call the close hook and clean up.
-                LOGGER.error("Failure during bootstrap phase. Shutting down Vert.x instance.", throwable);
+                        // the instance has been created, but after initialization some post-initialization tasks went
+                        // wrong, stop Vert.x again. This will also call the close hook and clean up
+                        LOGGER.error("Failure during bootstrap phase. Shutting down Vert.x instance.", throwable);
 
-                // we wait for Vert.x to close, before we propagate the reason why booting failed
-                return vertx.close().transform(closeResult -> failedFuture(throwable));
-            };
+                        // we wait for Vert.x to close, before we propagate the reason why booting failed
+                        return vertx.close().transform(closeResult -> failedFuture(throwable));
+                    };
 
-            try {
-                Future<NeonBeeConfig> configFuture;
-                if (config == null) {
-                    configFuture = loadConfig(vertx, options.getConfigDirectory());
-                } else {
-                    configFuture = succeededFuture(config);
-                }
+                    try {
+                        Future<NeonBeeConfig> configFuture;
+                        if (config == null) {
+                            configFuture = loadConfig(vertx, options.getConfigDirectory());
+                        } else {
+                            configFuture = succeededFuture(config);
+                        }
 
-                // create a NeonBee instance, hook registry and close handler
-                Future<NeonBee> neonBeeFuture = configFuture.map(loadedConfig -> {
-                    return new NeonBee(vertx, options, loadedConfig, compositeMeterRegistry);
+                        // create a NeonBee instance, hook registry and close handler
+                        Future<NeonBee> neonBeeFuture = configFuture.map(loadedConfig -> {
+                            return new NeonBee(vertx, options, loadedConfig, compositeMeterRegistry);
+                        });
+
+                        // boot NeonBee, on failure close Vert.x
+                        return neonBeeFuture.compose(NeonBee::boot).recover(closeVertx)
+                                .compose(unused -> neonBeeFuture);
+                    } catch (Throwable t) {
+                        // on any exception (e.g. during initialization of NeonBee) don't forget to close Vert.x!
+                        return closeVertx.apply(t).mapEmpty();
+                    }
                 });
-
-                // boot NeonBee, on failure close Vert.x
-                return neonBeeFuture.compose(NeonBee::boot).recover(closeVertx).compose(unused -> neonBeeFuture);
-            } catch (Throwable t) {
-                // on any exception (e.g. during the initialization of a NeonBee object) don't forget to close Vert.x!
-                return closeVertx.apply(t).mapEmpty();
-            }
-        });
     }
 
     @VisibleForTesting
-    static Future<Vertx> newVertx(VertxOptions vertxOptions, NeonBeeOptions options) {
+    static Future<Vertx> newVertx(VertxOptions vertxOptions, ClusterManager clusterManager, NeonBeeOptions options) {
         if (!options.isClustered()) {
             return succeededFuture(Vertx.vertx(vertxOptions));
         }
@@ -326,7 +339,9 @@ public class NeonBee {
                 .ifPresent(currentIp -> vertxOptions.getEventBusOptions().setHost(currentIp));
 
         return applyEncryptionOptions(options, vertxOptions.getEventBusOptions())
-                .compose(v -> Vertx.clusteredVertx(vertxOptions)).onFailure(throwable -> {
+                .compose(v -> Vertx.builder().with(vertxOptions)
+                        .withClusterManager(clusterManager).buildClustered())
+                .onFailure(throwable -> {
                     LOGGER.error("Failed to start clustered Vert.x", throwable); // NOPMD slf4j
                 });
     }
@@ -342,8 +357,7 @@ public class NeonBee {
             Optional.ofNullable(neonBeeOptions.getClusterTruststorePassword())
                     .ifPresent(truststoreOpts::setAliasPassword);
 
-            ebo.setSsl(true).setClientAuth(REQUIRED).setPfxKeyCertOptions(keystoreOpts)
-                    .setPfxTrustOptions(truststoreOpts);
+            ebo.setSsl(true).setClientAuth(REQUIRED).setKeyCertOptions(keystoreOpts).setTrustOptions(truststoreOpts);
             return succeededFuture();
         } else if (neonBeeOptions.getClusterKeystore() == null && neonBeeOptions.getClusterTruststore() == null) {
             return succeededFuture();
@@ -870,9 +884,24 @@ public class NeonBee {
     }
 
     /**
+     * Vert.x factory by NeonBee to create a Vert.x instance.
+     */
+    @FunctionalInterface
+    public interface VertxFactory {
+        /**
+         * Called (exactly once) by NeonBee to create a Vert.x instance to use for initialization afterwards.
+         *
+         * @param options        The Vert.x options to be used, parameterized according to the options / configuration
+         * @param clusterManager in case NeonBee is configured to be started clustered, the cluster manager to use
+         * @return a future to a Vert.x instance
+         */
+        Future<Vertx> create(VertxOptions options, @Nullable ClusterManager clusterManager);
+    }
+
+    /**
      * Hidden marker function interface, that indicates to the boot-stage that an own Vert.x instance was created, and
      * we must be held responsible to close it again.
      */
     @VisibleForTesting
-    interface OwnVertxFactory extends Function<VertxOptions, Future<Vertx>> {}
+    interface OwnVertxFactory extends VertxFactory {}
 }

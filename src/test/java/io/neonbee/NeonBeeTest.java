@@ -36,7 +36,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -81,7 +80,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.DeliveryContext;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.EventBusOptions;
@@ -89,6 +87,7 @@ import io.vertx.core.http.ClientAuth;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.jackson.DatabindCodec;
+import io.vertx.core.net.PfxOptions;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.junit5.VertxTestContext.ExecutionBlock;
 
@@ -200,7 +199,8 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Tag(DOESNT_REQUIRE_NEONBEE)
     void testStandaloneInitialization(VertxTestContext testContext) {
         NeonBeeOptions options = defaultOptions().clearActiveProfiles().addActiveProfile(NO_WEB);
-        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options)
+        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions, clusterManager) -> NeonBee
+                .newVertx(vertxOptions, clusterManager, options)
                 .onSuccess(newVertx -> vertx = newVertx), ClusterManager.FAKE.factory(), options, null)
                 .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
                     assertThat(neonBee.getVertx().isClustered()).isFalse();
@@ -213,7 +213,8 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Tag(DOESNT_REQUIRE_NEONBEE)
     void testClusterInitialization(VertxTestContext testContext) {
         NeonBeeOptions options = defaultOptions().clearActiveProfiles().addActiveProfile(NO_WEB).setClustered(true);
-        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options)
+        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions, clusterManager) -> NeonBee
+                .newVertx(vertxOptions, clusterManager, options)
                 .onSuccess(newVertx -> vertx = newVertx), ClusterManager.FAKE.factory(), options, null)
                 .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
                     assertThat(neonBee.getVertx().isClustered()).isTrue();
@@ -248,8 +249,11 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Tag(DOESNT_REQUIRE_NEONBEE)
     void testRegisterClusterHealthChecks(VertxTestContext testContext) {
         NeonBeeOptions options = defaultOptions().clearActiveProfiles().addActiveProfile(NO_WEB).setClustered(true);
-        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options)
-                .onSuccess(newVertx -> vertx = newVertx), HAZELCAST.factory(), options, null)
+        NeonBee.create(
+                (NeonBee.OwnVertxFactory) (vertxOptions, clusterManager) -> NeonBee
+                        .newVertx(vertxOptions, clusterManager, options)
+                        .onSuccess(newVertx -> vertx = newVertx),
+                HAZELCAST.factory(), options, null)
                 .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
                     Map<String, HealthCheck> registeredChecks = neonBee.getHealthCheckRegistry().getHealthChecks();
                     assertThat(registeredChecks.size()).isEqualTo(4);
@@ -376,14 +380,15 @@ class NeonBeeTest extends NeonBeeTestBase {
             Vertx failingVertxMock = mock(Vertx.class);
             when(failingVertxMock.close()).thenReturn(result);
 
-            Function<VertxOptions, Future<Vertx>> vertxFunction;
+            NeonBee.VertxFactory vertxFactory;
             if (ownVertx) {
-                vertxFunction = (NeonBee.OwnVertxFactory) (vertxOptions) -> succeededFuture(failingVertxMock);
+                vertxFactory =
+                        (NeonBee.OwnVertxFactory) (vertxOptions, clusterManager) -> succeededFuture(failingVertxMock);
             } else {
-                vertxFunction = (vertxOptions) -> succeededFuture(failingVertxMock);
+                vertxFactory = (vertxOptions, clusterManager) -> succeededFuture(failingVertxMock);
             }
 
-            NeonBee.create(vertxFunction, HAZELCAST.factory(),
+            NeonBee.create(vertxFactory, HAZELCAST.factory(),
                     defaultOptions().clearActiveProfiles().addActiveProfile(NO_WEB), null)
                     .onComplete(testContext.failing(throwable -> {
                         testContext.verify(() -> {
@@ -430,10 +435,12 @@ class NeonBeeTest extends NeonBeeTestBase {
         BiFunction<EventBusOptions, VertxTestContext, Handler<AsyncResult<Void>>> keyAndTruststoreVerifier =
                 (ebo, testContext) -> asyncVertx -> testContext.verify(() -> {
                     assertThat(asyncVertx.succeeded()).isTrue();
-                    assertThat(ebo.getPfxTrustOptions().getPath()).isEqualTo(dummyPath.toString());
-                    assertThat(ebo.getPfxTrustOptions().getPassword()).isEqualTo(dummyPassword);
-                    assertThat(ebo.getPfxKeyCertOptions().getPath()).isEqualTo(dummyPath.toString());
-                    assertThat(ebo.getPfxKeyCertOptions().getPassword()).isEqualTo(dummyPassword);
+                    assertThat(ebo.getTrustOptions()).isInstanceOf(PfxOptions.class);
+                    assertThat(((PfxOptions) ebo.getTrustOptions()).getPath()).isEqualTo(dummyPath.toString());
+                    assertThat(((PfxOptions) ebo.getTrustOptions()).getPassword()).isEqualTo(dummyPassword);
+                    assertThat(ebo.getKeyCertOptions()).isInstanceOf(PfxOptions.class);
+                    assertThat(((PfxOptions) ebo.getKeyCertOptions()).getPath()).isEqualTo(dummyPath.toString());
+                    assertThat(((PfxOptions) ebo.getKeyCertOptions()).getPassword()).isEqualTo(dummyPassword);
                     assertThat(ebo.getClientAuth()).isEqualTo(ClientAuth.REQUIRED);
                     assertThat(ebo.getSslOptions().getTrustOptions()).isNotNull();
                     assertThat(ebo.getSslOptions().getKeyCertOptions()).isNotNull();
@@ -443,8 +450,8 @@ class NeonBeeTest extends NeonBeeTestBase {
         BiFunction<EventBusOptions, VertxTestContext, Handler<AsyncResult<Void>>> noKeyOrTruststoreVerifier =
                 (ebo, testContext) -> asyncVertx -> testContext.verify(() -> {
                     assertThat(asyncVertx.succeeded()).isTrue();
-                    assertThat(ebo.getTrustStoreOptions()).isNull();
-                    assertThat(ebo.getKeyStoreOptions()).isNull();
+                    assertThat(ebo.getTrustOptions()).isNull();
+                    assertThat(ebo.getKeyCertOptions()).isNull();
                     assertThat(ebo.getClientAuth()).isEqualTo(ClientAuth.NONE);
                     assertThat(ebo.getSslOptions().getTrustOptions()).isNull();
                     assertThat(ebo.getSslOptions().getKeyCertOptions()).isNull();
