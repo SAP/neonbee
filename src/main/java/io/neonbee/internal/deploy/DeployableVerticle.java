@@ -5,6 +5,7 @@ import static io.vertx.core.Future.succeededFuture;
 
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -251,6 +252,15 @@ public class DeployableVerticle extends Deployable {
                             : config; // if there is no default config, or what we read was the default config return it
                 }).onFailure(throwable -> {
                     LOGGER.warn("Could not read deployment options for deployable {}", className, throwable);
+                }).map(config -> {
+                    if (!config.containsKey("threadingModel")) {
+                        // create a shallow copy, quicker than calling JsonObject.copy()
+                        return new JsonObject(new HashMap<>(config.getMap()))
+                                .put("threadingModel", NeonBee.get(vertx).getConfig()
+                                        .getDefaultThreadingModel().toString());
+                    }
+
+                    return config;
                 }).map(DeploymentOptions::new);
     }
 }

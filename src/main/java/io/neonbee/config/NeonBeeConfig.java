@@ -26,7 +26,9 @@ import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.json.annotations.JsonGen;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
@@ -53,6 +55,11 @@ public class NeonBeeConfig {
     public static final int DEFAULT_DEPLOYMENT_TIMEOUT = 30;
 
     /**
+     * The default threading model for deploying verticles (event loop).
+     */
+    public static final ThreadingModel DEFAULT_THREADING_MODEL = DeploymentOptions.DEFAULT_MODE;
+
+    /**
      * The default tracking data handling strategy.
      */
     public static final String DEFAULT_TRACKING_DATA_HANDLING_STRATEGY = TrackingDataLoggingStrategy.class.getName();
@@ -74,6 +81,8 @@ public class NeonBeeConfig {
     private Integer moduleDeploymentTimeout;
 
     private Integer verticleDeploymentTimeout;
+
+    private ThreadingModel defaultThreadingModel = DEFAULT_THREADING_MODEL;
 
     private Map<String, String> eventBusCodecs = Map.of();
 
@@ -359,6 +368,28 @@ public class NeonBeeConfig {
     @Fluent
     public NeonBeeConfig setVerticleDeploymentTimeout(Integer verticleDeploymentTimeout) {
         this.verticleDeploymentTimeout = verticleDeploymentTimeout;
+        return this;
+    }
+
+    /**
+     * Get the default threading model to be used when deploying verticles.
+     *
+     * @return the default threading model for verticles
+     */
+    public ThreadingModel getDefaultThreadingModel() {
+        return defaultThreadingModel;
+    }
+
+    /**
+     * Set the default threading model to be used when deploying verticles. Can be overridden either on runtime or using
+     * the verticle configuration.
+     *
+     * @param threadingModel the threading model to use when deploying verticles
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    @Fluent
+    public NeonBeeConfig setDefaultThreadingModel(ThreadingModel threadingModel) {
+        this.defaultThreadingModel = threadingModel;
         return this;
     }
 

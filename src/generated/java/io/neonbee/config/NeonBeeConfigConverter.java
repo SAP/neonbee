@@ -19,6 +19,11 @@ public class NeonBeeConfigConverter {
     static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, NeonBeeConfig obj) {
         for (java.util.Map.Entry<String, Object> member : json) {
             switch (member.getKey()) {
+            case "defaultThreadingModel":
+                if (member.getValue() instanceof String) {
+                    obj.setDefaultThreadingModel(io.vertx.core.ThreadingModel.valueOf((String) member.getValue()));
+                }
+                break;
             case "deploymentTimeout":
                 if (member.getValue() instanceof Number) {
                     obj.setDeploymentTimeout(((Number) member.getValue()).intValue());
@@ -111,6 +116,9 @@ public class NeonBeeConfigConverter {
     }
 
     static void toJson(NeonBeeConfig obj, java.util.Map<String, Object> json) {
+        if (obj.getDefaultThreadingModel() != null) {
+            json.put("defaultThreadingModel", obj.getDefaultThreadingModel().name());
+        }
         json.put("deploymentTimeout", obj.getDeploymentTimeout());
         if (obj.getEventBusCodecs() != null) {
             JsonObject map = new JsonObject();

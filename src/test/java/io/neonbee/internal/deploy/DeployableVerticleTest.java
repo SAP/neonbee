@@ -34,6 +34,7 @@ import io.neonbee.internal.NeonBeeModuleJar;
 import io.neonbee.internal.scanner.ClassPathScanner;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.ThreadingModel;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -204,6 +205,24 @@ class DeployableVerticleTest {
         JsonObject defaultObject = new JsonObject().put("ha", false).put("instances", 1337);
         assertThat(DeployableVerticle.readVerticleConfig(vertxMock, "test", defaultObject).cause()).hasMessageThat()
                 .isEqualTo("test");
+    }
+
+    @Test
+    @DisplayName("test read verticle config threading model")
+    void testReadVerticleConfigThreadingModel() throws IOException {
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment(
+                new NeonBeeOptions.Mutable().setWorkingDirectory(Path.of("")));
+        Vertx vertxMock = neonBeeMock.getVertx();
+        FileSystem fileSystemMock = vertxMock.fileSystem();
+
+        when(fileSystemMock.readFile(any()))
+                .thenReturn(failedFuture(new FileSystemException(new NoSuchFileException("file"))));
+        when(fileSystemMock.readFile(endsWith(".yml")))
+                .thenReturn(succeededFuture(Buffer.buffer("---\nthreadingModel: WORKER")));
+
+        JsonObject defaultObject = new JsonObject().put("threadingModel", "EVENT_LOOP");
+        assertThat(DeployableVerticle.readVerticleConfig(vertxMock, "test", defaultObject).result().toJson())
+                .isEqualTo(new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER).toJson());
     }
 
     @Test
