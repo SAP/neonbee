@@ -245,16 +245,16 @@ class ServerConfigTest {
         assertThat(sc.getInitialSettings()).isEqualTo(http2Settings);
 
         JdkSSLEngineOptions jdkSSLEngineOptions = new JdkSSLEngineOptions();
-        assertThat(sc.setJdkSslEngineOptions(jdkSSLEngineOptions)).isSameInstanceAs(sc);
-        assertThat(sc.getJdkSslEngineOptions()).isEqualTo(jdkSSLEngineOptions);
+        assertThat(sc.setSslEngineOptions(jdkSSLEngineOptions)).isSameInstanceAs(sc);
+        assertThat(sc.getSslEngineOptions()).isEqualTo(jdkSSLEngineOptions);
 
         KeyCertOptions keyCertOptions = Mockito.mock(KeyCertOptions.class);
         assertThat(sc.setKeyCertOptions(keyCertOptions)).isSameInstanceAs(sc);
         assertThat(sc.getKeyCertOptions()).isEqualTo(keyCertOptions);
 
         JksOptions jksOptions = new JksOptions();
-        assertThat(sc.setKeyStoreOptions(jksOptions)).isSameInstanceAs(sc);
-        assertThat(sc.getKeyStoreOptions()).isEqualTo(jksOptions);
+        assertThat(sc.setKeyCertOptions(jksOptions)).isSameInstanceAs(sc);
+        assertThat(sc.getKeyCertOptions()).isEqualTo(jksOptions);
 
         assertThat(sc.setLogActivity(false)).isSameInstanceAs(sc);
         assertThat(sc.getLogActivity()).isEqualTo(false);
@@ -275,16 +275,16 @@ class ServerConfigTest {
         assertThat(sc.getMaxWebSocketMessageSize()).isEqualTo(10);
 
         OpenSSLEngineOptions openSSLEngineOptions = new OpenSSLEngineOptions();
-        assertThat(sc.setOpenSslEngineOptions(openSSLEngineOptions)).isSameInstanceAs(sc);
-        assertThat(sc.getOpenSslEngineOptions()).isEqualTo(openSSLEngineOptions);
+        assertThat(sc.setSslEngineOptions(openSSLEngineOptions)).isSameInstanceAs(sc);
+        assertThat(sc.getSslEngineOptions()).isEqualTo(openSSLEngineOptions);
 
         PemKeyCertOptions pemKeyCertOptions = new PemKeyCertOptions();
         assertThat(sc.setPemKeyCertOptions(pemKeyCertOptions)).isSameInstanceAs(sc);
-        assertThat(sc.getPemKeyCertOptions()).isEqualTo(pemKeyCertOptions);
+        assertThat(sc.getKeyCertOptions()).isEqualTo(pemKeyCertOptions);
 
         PemTrustOptions pemTrustOptions = new PemTrustOptions();
-        assertThat(sc.setPemTrustOptions(pemTrustOptions)).isSameInstanceAs(sc);
-        assertThat(sc.getPemTrustOptions()).isEqualTo(pemTrustOptions);
+        assertThat(sc.setTrustOptions(pemTrustOptions)).isSameInstanceAs(sc);
+        assertThat(sc.getTrustOptions()).isEqualTo(pemTrustOptions);
 
         assertThat(sc.setPerFrameWebSocketCompressionSupported(false)).isSameInstanceAs(sc);
         assertThat(sc.getPerFrameWebSocketCompressionSupported()).isEqualTo(false);
@@ -293,11 +293,11 @@ class ServerConfigTest {
         assertThat(sc.getPerMessageWebSocketCompressionSupported()).isEqualTo(false);
 
         PfxOptions pfxOptions = new PfxOptions();
-        assertThat(sc.setPfxKeyCertOptions(pfxOptions)).isSameInstanceAs(sc);
-        assertThat(sc.getPfxKeyCertOptions()).isEqualTo(pfxOptions);
+        assertThat(sc.setKeyCertOptions(pfxOptions)).isSameInstanceAs(sc);
+        assertThat(sc.getKeyCertOptions()).isEqualTo(pfxOptions);
 
-        assertThat(sc.setPfxTrustOptions(pfxOptions)).isSameInstanceAs(sc);
-        assertThat(sc.getPfxTrustOptions()).isEqualTo(pfxOptions);
+        assertThat(sc.setTrustOptions(pfxOptions)).isSameInstanceAs(sc);
+        assertThat(sc.getTrustOptions()).isEqualTo(pfxOptions);
 
         assertThat(sc.setPort(11)).isSameInstanceAs(sc);
         assertThat(sc.getPort()).isEqualTo(11);
@@ -367,8 +367,8 @@ class ServerConfigTest {
         assertThat(sc.setTrustOptions(trustOptions)).isSameInstanceAs(sc);
         assertThat(sc.getTrustOptions()).isEqualTo(trustOptions);
 
-        assertThat(sc.setTrustStoreOptions(jksOptions)).isSameInstanceAs(sc);
-        assertThat(sc.getTrustStoreOptions()).isEqualTo(jksOptions);
+        assertThat(sc.setTrustOptions(jksOptions)).isSameInstanceAs(sc);
+        assertThat(sc.getTrustOptions()).isEqualTo(jksOptions);
 
         assertThat(sc.setUseAlpn(false)).isSameInstanceAs(sc);
         assertThat(sc.isUseAlpn()).isEqualTo(false);

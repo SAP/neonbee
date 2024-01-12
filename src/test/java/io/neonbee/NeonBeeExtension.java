@@ -317,7 +317,9 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         AtomicReference<NeonBee> neonBeeBox = new AtomicReference<>();
         AtomicReference<Throwable> errorBox = new AtomicReference<>();
 
-        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions) -> NeonBee.newVertx(vertxOptions, options),
+        NeonBee.create(
+                (NeonBee.OwnVertxFactory) (vertxOptions, clusterManagerInstance) -> NeonBee.newVertx(vertxOptions,
+                        clusterManagerInstance, options),
                 clusterManager.factory(), options, null).onComplete(ar -> {
                     if (ar.succeeded()) {
                         neonBeeBox.set(ar.result());

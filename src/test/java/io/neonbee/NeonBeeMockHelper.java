@@ -192,7 +192,7 @@ public final class NeonBeeMockHelper {
      * @return the mocked NeonBee instance
      */
     public static Future<NeonBee> createNeonBee(Vertx vertx, NeonBeeOptions options) {
-        return NeonBee.create((vertxOptions) -> {
+        return NeonBee.create((vertxOptions, clusterManager) -> {
             if (vertxOptions.getMetricsOptions() != null) {
                 new VertxMetricsFactoryImpl().metrics(vertxOptions);
             }
