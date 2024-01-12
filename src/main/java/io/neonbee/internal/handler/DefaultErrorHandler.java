@@ -43,6 +43,15 @@ public class DefaultErrorHandler implements ErrorHandler {
     private String errorTemplate;
 
     /**
+     * Create a new {@link DefaultErrorHandler}.
+     */
+    public DefaultErrorHandler() {
+        // no initialization needed, however:
+        // checkstyle suggests to create an empty constructor to explain the use of the class and
+        // sonarcube is complaining if the constructor is empty and suggests to add (this) comment ;)
+    }
+
+    /**
      * Initializes the ErrorHandler with the passed template.
      *
      * @param neonBee the related NeonBee instance
@@ -71,8 +80,8 @@ public class DefaultErrorHandler implements ErrorHandler {
         }
         String errorMessage = null;
         int errorCode = routingContext.statusCode();
-        if (errorCode == -1 && failure instanceof DataException) {
-            errorCode = ((DataException) failure).failureCode();
+        if (errorCode == -1 && failure instanceof DataException dataException) {
+            errorCode = dataException.failureCode();
         }
         // treat errorCodes >= 100 and errorCodes <= 1000 as HTTP errors
         if (errorCode < HTTP_ERROR_CODE_LOWER_LIMIT || errorCode >= HTTP_ERROR_CODE_UPPER_LIMIT) {

@@ -2,12 +2,14 @@ package io.neonbee.config;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 
 /**
  * Global metrics configuration.
  */
-@DataObject(generateConverter = true, publicConverter = false)
+@DataObject
+@JsonGen(publicConverter = false)
 public class HealthConfig {
     private static final int DEFAULT_TIMEOUT = 1;
 

@@ -23,7 +23,7 @@ import io.vertx.ext.web.client.HttpResponse;
  * "http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_MultipartBatchResponse">OData
  * Multipart Batch Response</a>.
  */
-public class MultipartResponse {
+public final class MultipartResponse {
     private final HttpResponse<Buffer> httpResponse;
 
     private final List<Part> parts;

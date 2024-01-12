@@ -7,11 +7,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.lang.reflect.Field;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import io.neonbee.test.helper.ReflectionHelper;
 import io.vertx.core.eventbus.DeliveryContext;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.ReplyException;
@@ -66,8 +65,6 @@ class ReplyInboundInterceptorTest {
 
     private static Object getMessageBody(Message<?> message)
             throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-        Field field = MessageImpl.class.getDeclaredField("receivedBody");
-        field.setAccessible(true);
-        return field.get(message);
+        return ReflectionHelper.getValueOfPrivateField(MessageImpl.class, message, "receivedBody");
     }
 }

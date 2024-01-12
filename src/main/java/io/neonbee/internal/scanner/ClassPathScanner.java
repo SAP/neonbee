@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.objectweb.asm.ClassReader;
@@ -195,13 +194,13 @@ public class ClassPathScanner {
 
         Future<List<String>> classesFromDirectories = scanWithPredicate(vertx, ClassPathScanner::isClassFile);
         Future<List<String>> classesFromJars = scanJarFilesWithPredicate(vertx, ClassPathScanner::isClassFile)
-                .map(classes -> classes.stream().map(JarHelper::extractFilePath).collect(Collectors.toList()));
+                .map(classes -> classes.stream().map(JarHelper::extractFilePath).toList());
 
         return Future.all(classesFromDirectories, classesFromJars)
                 .compose(compositeResult -> vertx.executeBlocking(() -> {
                     List<AnnotationClassVisitor> classVisitors = annotationClasses.stream()
                             .map(annotationClass -> new AnnotationClassVisitor(annotationClass, elementTypes))
-                            .collect(Collectors.toList());
+                            .toList();
                     Streams.concat(classesFromDirectories.result().stream(), classesFromJars.result().stream())
                             .forEach(name -> {
                                 try {
@@ -220,7 +219,7 @@ public class ClassPathScanner {
                             });
 
                     return classVisitors.stream().flatMap(acv -> acv.getClassNames().stream()).distinct()
-                            .collect(Collectors.toList());
+                            .toList();
                 }));
     }
 
@@ -313,7 +312,7 @@ public class ClassPathScanner {
             throws IOException {
         try (Stream<Path> walk = Files.walk(basePath)) {
             return walk.filter(path -> predicate.test(basePath.relativize(path).toString()))
-                    .collect(Collectors.toList());
+                    .toList();
         }
     }
 

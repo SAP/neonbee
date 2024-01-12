@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
@@ -68,7 +67,7 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
         config.setMicrometerRegistries(List.of(new MicrometerRegistryConfig()
                 .setClassName(TestMicrometerRegistryLoaderImpl.class.getName()).setConfig(new JsonObject())));
 
-        all(config.createMicrometerRegistries(vertx).collect(Collectors.toList()))
+        all(config.createMicrometerRegistries(vertx).toList())
                 .onSuccess(h -> h.<MeterRegistry>list().forEach(registry::add)).onComplete(context.succeeding(event -> {
                     Set<MeterRegistry> registries = registry.getRegistries();
                     assertThat(registries).hasSize(1);
@@ -96,7 +95,7 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
         NeonBeeConfig config = new NeonBeeConfig();
         config.setMicrometerRegistries(List.of(new MicrometerRegistryConfig().setClassName(className)));
 
-        all(config.createMicrometerRegistries(vertx).collect(Collectors.toList()))
+        all(config.createMicrometerRegistries(vertx).toList())
                 .onComplete(context.failing(throwable -> {
                     assertThat(throwable).isInstanceOf(expectedException);
                     assertThat(throwable).hasMessageThat().isEqualTo(exceptionMessage);

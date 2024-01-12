@@ -42,6 +42,8 @@ import io.vertx.core.shareddata.Lock;
  * {@link DataVerticle#retrieveData(DataQuery, DataMap, DataContext)} you should implement
  * {@link #requireDataForCaching(DataQuery, DataContext)} and
  * {@link #retrieveDataToCache(DataQuery, DataMap, DataContext)}.
+ *
+ * @param <T> the type of data this {@link CachingDataVerticle} caches &amp; handles
  */
 public abstract class CachingDataVerticle<T> extends DataVerticle<T> {
     /**

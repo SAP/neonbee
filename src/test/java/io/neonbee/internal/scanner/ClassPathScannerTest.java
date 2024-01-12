@@ -1,6 +1,7 @@
 package io.neonbee.internal.scanner;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.neonbee.test.helper.ReflectionHelper.getValueOfPrivateField;
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
@@ -8,18 +9,23 @@ import static java.lang.annotation.ElementType.TYPE;
 import java.beans.Transient;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.annotation.Nullable;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Opcodes;
 
 import com.google.common.collect.Streams;
 
@@ -34,6 +40,19 @@ import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
 class ClassPathScannerTest {
+    @Test
+    @DisplayName("Check latest ASM version")
+    void checkASMVersion() throws NoSuchFieldException, IllegalAccessException {
+        int setAsm = getValueOfPrivateField(ClassVisitor.class,
+                new AnnotationClassVisitor(Nullable.class, TYPE), "api");
+        int maxAsm = Opcodes.class.getField("ASM"
+                + Arrays.stream(Opcodes.class.getFields()).map(Field::getName).filter(name -> name.startsWith("ASM"))
+                        .map(name -> name.substring("ASM".length())).filter(name -> name.matches("\\d+"))
+                        .mapToInt(Integer::parseInt).max().getAsInt())
+                .getInt(null);
+        assertThat(setAsm).isEqualTo(maxAsm);
+    }
+
     @Test
     @DisplayName("Should find passed attribute in all Manifest files")
     void scanManifestFilesTest(Vertx vertx, VertxTestContext testContext) throws IOException {
@@ -55,7 +74,7 @@ class ClassPathScannerTest {
                         ClassLoader.getSystemClassLoader());
 
         List<String> expected = Streams.concat(manifest1Attribute1Values.stream(), manifest2Attribute1Values.stream())
-                .collect(Collectors.toList());
+                .toList();
 
         new ClassPathScanner(urlc).scanManifestFiles(vertx, attribute1Name)
                 .onComplete(testContext.succeeding(list -> testContext.verify(() -> {
@@ -70,7 +89,7 @@ class ClassPathScannerTest {
         List<String> expected =
                 Stream.of(ClassPathScanner.class, ClassPathScannerTest.class, CloseableClassPathScanner.class)
                         .map(Class::getName).map(name -> name.replace(".", File.separator) + ".class")
-                        .collect(Collectors.toList());
+                        .toList();
 
         new ClassPathScanner(ThreadHelper.getClassLoader()) // NOPMD
                 .scanWithPredicate(vertx,
@@ -160,6 +179,6 @@ class ClassPathScannerTest {
      * @return the filtered list of classes without any IDE specific classes
      */
     private static List<String> filterInjectedFilesForIdeCoverageRuns(List<String> list) {
-        return list.stream().filter(s -> !s.startsWith("org.jetbrains.coverage")).collect(Collectors.toList());
+        return list.stream().filter(s -> !s.startsWith("org.jetbrains.coverage")).toList();
     }
 }

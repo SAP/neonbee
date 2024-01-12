@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -455,12 +454,11 @@ public final class DataQuery { // NOPMD not a "god class"
 
     @Override
     public String toString() {
-        return new StringBuilder().append("DataQuery [action=").append(action).append(", uriPath=").append(uriPath)
-                .append(", query=").append(", parameters=").append(parameters).append(", headers=")
-                .append(headers.keySet().stream()
+        return "DataQuery [action=" + action + ", uriPath=" + uriPath + ", query=" + ", parameters=" + parameters
+                + ", headers=" + headers.keySet().stream()
                         .map(key -> key + "="
-                                + headers.get(key).stream().map(this::trimContent).collect(Collectors.toList()))
-                        .collect(joining(", ", "{", "}")))
-                .append(", body=").append(body).append(']').toString();
+                                + headers.get(key).stream().map(this::trimContent).toList())
+                        .collect(joining(", ", "{", "}"))
+                + ", body=" + body + ']';
     }
 }

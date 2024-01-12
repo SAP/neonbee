@@ -27,16 +27,16 @@ class AnnotationClassVisitor extends ClassVisitor {
 
     private final boolean includeTypes;
 
-    private MethodVisitor methodVisitor;
+    private FieldVisitor fieldVisitor; // NOPMD not final as optional in constructor
 
-    private FieldVisitor fieldVisitor;
+    private MethodVisitor methodVisitor; // NOPMD not final as optional in constructor
 
     private String className;
 
     private int access;
 
     AnnotationClassVisitor(Class<? extends Annotation> annotation, ElementType... elementTypes) {
-        super(Opcodes.ASM7);
+        super(Opcodes.ASM9);
 
         annotationClassDescriptor = "L" + annotation.getName().replace('.', '/') + ";";
 
@@ -88,7 +88,7 @@ class AnnotationClassVisitor extends ClassVisitor {
 
     class AnnotationMethodVisitor extends MethodVisitor {
         AnnotationMethodVisitor() {
-            super(Opcodes.ASM7);
+            super(Opcodes.ASM9);
         }
 
         @Override
@@ -102,7 +102,7 @@ class AnnotationClassVisitor extends ClassVisitor {
 
     class AnnotationFieldVisitor extends FieldVisitor {
         AnnotationFieldVisitor() {
-            super(Opcodes.ASM7);
+            super(Opcodes.ASM9);
         }
 
         @Override

@@ -122,6 +122,6 @@ class OtherExamples {
 }
 // @formatter:on
 
-/**
+/*
  * No tests needed here. The test of this file is whether the verticle used in the readme compile.
  */

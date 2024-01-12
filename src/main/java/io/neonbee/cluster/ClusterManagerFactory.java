@@ -27,7 +27,6 @@ public abstract class ClusterManagerFactory {
      * The ClusterManagerFactory for Hazelcast.
      */
     public static final ClusterManagerFactory HAZELCAST_FACTORY = new ClusterManagerFactory() {
-
         @Override
         protected String getDefaultConfig() {
             return "hazelcast-cf.xml";
@@ -90,6 +89,11 @@ public abstract class ClusterManagerFactory {
             }
         }
     };
+
+    /**
+     * Creates a new {@link ClusterManagerFactory}.
+     */
+    protected ClusterManagerFactory() {}
 
     /**
      * Returns the path of the effective configuration file for a ClusterManager. If no custom config path is set, the

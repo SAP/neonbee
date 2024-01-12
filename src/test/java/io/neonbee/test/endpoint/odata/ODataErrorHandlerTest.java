@@ -1,7 +1,6 @@
 package io.neonbee.test.endpoint.odata;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -75,10 +74,6 @@ class ODataErrorHandlerTest extends ODataEndpointTestBase {
                     .addProperty(new Property(null, "PropertyString", ValueType.PRIMITIVE, "a"));
 
             return Future.succeededFuture(new EntityWrapper(TEST_ENTITY_SET_FQN, List.of(entity1)));
-        }
-
-        public static Path getDeclaredEntityModel() {
-            return TEST_RESOURCES.resolveRelated("TestService1.csn");
         }
     }
 }

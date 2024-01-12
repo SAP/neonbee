@@ -25,6 +25,7 @@ import io.neonbee.config.metrics.MicrometerRegistryLoader;
 import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -38,7 +39,8 @@ import io.vertx.core.metrics.MetricsOptions;
  * {@link NeonBeeConfig} contains information which is mostly shared across different cluster nodes or you would like to
  * decide for and set before starting up NeonBee.
  */
-@DataObject(generateConverter = true, publicConverter = false)
+@DataObject
+@JsonGen(publicConverter = false)
 public class NeonBeeConfig {
     /**
      * The default timeout for an event bus request.

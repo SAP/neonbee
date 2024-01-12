@@ -93,7 +93,7 @@ public class ServerVerticle extends AbstractVerticle {
                 .compose(unused -> {
                     List<Future<Handler<RoutingContext>>> handlerFutures =
                             config.getHandlerFactoriesClassNames().stream()
-                                    .map(ServerVerticle::instantiateHandler).collect(Collectors.toList());
+                                    .map(ServerVerticle::instantiateHandler).toList();
                     return Future.all(handlerFutures);
                 }).compose(compositeFuture -> {
                     List<Handler<RoutingContext>> handlers = compositeFuture.list();
@@ -191,7 +191,7 @@ public class ServerVerticle extends AbstractVerticle {
 
         // iterate the endpoint configurations, as order is important here!
         List<Future<MountableEndpoint>> mountableEndpoints =
-                endpointConfigs.stream().map(ec -> MountableEndpoint.create(vertx, ec)).collect(Collectors.toList());
+                endpointConfigs.stream().map(ec -> MountableEndpoint.create(vertx, ec)).toList();
         return Future.all(mountableEndpoints).onSuccess(v -> {
             for (Future<MountableEndpoint> endpointFuture : mountableEndpoints) {
                 endpointFuture.result().mount(vertx, router, defaultAuthHandler);

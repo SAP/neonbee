@@ -13,8 +13,13 @@ import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 
-public class DeployableScanner {
+public final class DeployableScanner {
     private static final LoggingFacade LOGGER = LoggingFacade.create();
+
+    /**
+     * This class does not need to be instantiated.
+     */
+    private DeployableScanner() {}
 
     /**
      * Scan for classes that are potential NeonBeeDeployables on the class path of the current context class loader.
@@ -39,7 +44,7 @@ public class DeployableScanner {
                 .compose(compositeResult -> vertx.executeBlocking(() -> {
                     // Use distinct because the Deployables mentioned in the manifest could also exist as file.
                     List<String> deployableFQNs = Streams.concat(deployablesFromClassPath.result().stream(),
-                            deployablesFromManifest.result().stream()).distinct().collect(Collectors.toList());
+                            deployablesFromManifest.result().stream()).distinct().toList();
 
                     if (LOGGER.isInfoEnabled()) {
                         LOGGER.info("Found Deployables {}.", deployableFQNs.stream().collect(Collectors.joining(",")));

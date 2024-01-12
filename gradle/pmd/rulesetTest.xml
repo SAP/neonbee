@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 
 <!-- PMD Rules Java: https://pmd.github.io/latest/pmd_rules_java.html -->
-<ruleset name="NeonBee PMD Rules" xmlns="http://pmd.sourceforge.net/ruleset/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+<ruleset name="NeonBee PMD Rules" xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
     <description>NeonBee PMD Rules</description>
 
     <!-- Best Practices: https://pmd.github.io/latest/pmd_rules_java.html#best-practices -->
@@ -57,7 +59,8 @@
     <rule ref="category/java/codestyle.xml/FormalParameterNamingConventions" />
     <rule ref="category/java/codestyle.xml/GenericsNaming" />
     <rule ref="category/java/codestyle.xml/IdenticalCatchBranches" />
-    <!--<rule ref="category/java/codestyle.xml/LinguisticNaming">
+    <!--<rule
+    ref="category/java/codestyle.xml/LinguisticNaming">
         <properties>
             <property name="checkSetters" value="false" />
             <property name="ignoredAnnotations" value="java.lang.Override" />
@@ -68,11 +71,15 @@
     <rule ref="category/java/codestyle.xml/NoPackage" />
     <rule ref="category/java/codestyle.xml/PackageCase" />
     <rule ref="category/java/codestyle.xml/PrematureDeclaration" />
-    <rule ref="category/java/codestyle.xml/UnnecessaryConstructor" />
+    <!-- this rule is disabled because there is a checkstyle rule suggesting to add an empty
+    constructor w/ a JavaDoc in case the class has no constructor to be initialized -->
+    <!-- <rule ref="category/java/codestyle.xml/UnnecessaryConstructor" /> -->
     <rule ref="category/java/codestyle.xml/UnnecessaryFullyQualifiedName" />
     <rule ref="category/java/codestyle.xml/UnnecessaryLocalBeforeReturn" />
     <rule ref="category/java/codestyle.xml/UnnecessaryModifier" />
     <rule ref="category/java/codestyle.xml/UnnecessaryReturn" />
+    <rule ref="category/java/codestyle.xml/UnnecessarySemicolon" />
+    <rule ref="category/java/codestyle.xml/EmptyControlStatement" />
     <rule ref="category/java/codestyle.xml/UseDiamondOperator" />
     <rule ref="category/java/codestyle.xml/UselessQualifiedThis" />
     <rule ref="category/java/codestyle.xml/UseShortArrayInitializer" />
@@ -100,13 +107,11 @@
     </rule>
     <rule ref="category/java/design.xml/DoNotExtendJavaLangError" />
     <rule ref="category/java/design.xml/ExceptionAsFlowControl" />
-    <rule ref="category/java/design.xml/ExcessiveClassLength" />
     <rule ref="category/java/design.xml/ExcessiveImports">
         <properties>
             <property name="minimum" value="100.0" />
         </properties>
     </rule>
-    <!-- <rule ref="category/java/design.xml/ExcessiveMethodLength" /> -->
     <rule ref="category/java/design.xml/ExcessiveParameterList">
         <properties>
             <property name="minimum" value="30.0" />
@@ -211,15 +216,6 @@
         </properties>
     </rule>
     <rule ref="category/java/errorprone.xml/EmptyFinalizer" />
-    <rule ref="category/java/errorprone.xml/EmptyFinallyBlock" />
-    <rule ref="category/java/errorprone.xml/EmptyIfStmt" />
-    <rule ref="category/java/errorprone.xml/EmptyInitializer" />
-    <rule ref="category/java/errorprone.xml/EmptyStatementBlock" />
-    <rule ref="category/java/errorprone.xml/EmptyStatementNotInLoop" />
-    <rule ref="category/java/errorprone.xml/EmptySwitchStatements" />
-    <rule ref="category/java/errorprone.xml/EmptySynchronizedBlock" />
-    <rule ref="category/java/errorprone.xml/EmptyTryBlock" />
-    <rule ref="category/java/errorprone.xml/EmptyWhileStmt" />
     <rule ref="category/java/errorprone.xml/EqualsNull" />
     <rule ref="category/java/errorprone.xml/FinalizeDoesNotCallSuperFinalize" />
     <rule ref="category/java/errorprone.xml/FinalizeOnlyCallsSuperFinalize" />
@@ -262,7 +258,13 @@
     <rule ref="category/java/errorprone.xml/SuspiciousEqualsMethodName" />
     <rule ref="category/java/errorprone.xml/SuspiciousHashcodeMethodName" />
     <rule ref="category/java/errorprone.xml/SuspiciousOctalEscape" />
-    <rule ref="category/java/errorprone.xml/TestClassWithoutTestCases" />
+    <rule ref="category/java/errorprone.xml/TestClassWithoutTestCases">
+        <properties>
+            <!-- our tests are all named "SomeThingTest" and we have a lot of helper classes in the
+            tests called "TestThing", so we don't want to regognize them as test classes -->
+            <property name="testClassPattern" value="^(?:.*\.)?.*Tests?$" />
+        </properties>
+    </rule>
     <rule ref="category/java/errorprone.xml/UnconditionalIfStatement" />
     <rule ref="category/java/errorprone.xml/UnnecessaryBooleanAssertion" />
     <rule ref="category/java/errorprone.xml/UnnecessaryCaseChange" />
@@ -325,7 +327,8 @@
     <rule ref="category/java/performance.xml/UseIndexOfChar" />
     <rule ref="category/java/performance.xml/UselessStringValueOf" />
     <rule ref="category/java/performance.xml/UseStringBufferLength" />
-    <!-- TODO: re-add new implementation of category/java/performance.xml/UnnecessaryWrapperObjectCreation after PMD 7.0.0 -->
+    <!-- TODO: re-add new implementation of
+    category/java/performance.xml/UnnecessaryWrapperObjectCreation after PMD 7.0.0 -->
 
     <!-- Security: https://pmd.github.io/latest/pmd_rules_java.html#security -->
     <rule ref="category/java/security.xml/HardCodedCryptoKey" />

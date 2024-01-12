@@ -27,7 +27,6 @@ import io.vertx.core.spi.json.JsonCodec;
  * change the maximum allowed length of JSON strings.
  */
 public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
-
     /**
      * A singleton instance to the {@link ConfigurableJsonCodec}.
      */
@@ -47,6 +46,13 @@ public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
         CODEC = codec;
     }
 
+    /**
+     * Create a new {@link ConfigurableJsonFactory}.
+     */
+    public ConfigurableJsonFactory() {
+        super();
+    }
+
     @Override
     public JsonCodec codec() {
         return CODEC;
@@ -56,6 +62,13 @@ public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
      * A JSON codec, that can be used to on-the-fly, adapt the Jackson factory used.
      */
     public abstract static class ConfigurableJsonCodec implements JsonCodec {
+        /**
+         * Create a new {@link ConfigurableJsonCodec}.
+         */
+        protected ConfigurableJsonCodec() {
+            super();
+        }
+
         @Override
         public <T> T fromString(String json, Class<T> clazz) {
             if (JacksonFactory.CODEC instanceof DatabindCodec) {

@@ -8,12 +8,13 @@ import static io.vertx.core.Future.succeededFuture;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.google.common.collect.ImmutableList;
 
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeExtension;
@@ -60,7 +61,7 @@ class UnregisterEntitiesTest {
 
                     List<JsonObject> jsonObjectList = jsonArray.stream().map(JsonObject.class::cast).sorted(
                             (o1, o2) -> CharSequence.compare(o1.getString("entityName"), o2.getString("entityName")))
-                            .collect(Collectors.toList());
+                            .toList();
 
                     assertThat(jsonObjectList.get(0))
                             .isEqualTo(JsonObject.of("qualifiedName", entityVerticle.getQualifiedName(), "entityName",
@@ -72,10 +73,9 @@ class UnregisterEntitiesTest {
                 }))
                 .compose(unused -> EntityVerticle.getVerticlesForEntityType(vertx,
                         EntityVerticleUnregisterImpl.FQN_ERP_CUSTOMERS))
-                .compose(list -> EntityVerticle
+                .compose(list1 -> EntityVerticle
                         .getVerticlesForEntityType(vertx, EntityVerticleUnregisterImpl.FQN_SALES_ORDERS).map(list2 -> {
-                            list.addAll(list2);
-                            return list;
+                            return ImmutableList.<String>builder().addAll(list1).addAll(list2).build();
                         }))
                 .onSuccess(list -> testContext.verify(() -> {
                     assertThat(list).hasSize(2);
@@ -90,10 +90,9 @@ class UnregisterEntitiesTest {
                 }))
                 .compose(unused -> EntityVerticle.getVerticlesForEntityType(vertx,
                         EntityVerticleUnregisterImpl.FQN_ERP_CUSTOMERS))
-                .compose(list -> EntityVerticle
+                .compose(list1 -> EntityVerticle
                         .getVerticlesForEntityType(vertx, EntityVerticleUnregisterImpl.FQN_SALES_ORDERS).map(list2 -> {
-                            list.addAll(list2);
-                            return list;
+                            return ImmutableList.<String>builder().addAll(list1).addAll(list2).build();
                         }))
                 .onSuccess(list -> testContext.verify(() -> {
                     assertThat(list).isEmpty();

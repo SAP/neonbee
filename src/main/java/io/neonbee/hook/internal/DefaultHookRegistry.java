@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.neonbee.NeonBee;
@@ -66,7 +65,7 @@ public class DefaultHookRegistry implements HookRegistry {
         List<Future<Void>> hookExecutions = hookRegistry.getOrDefault(type, List.of()).stream()
                 .map(DefaultHookRegistration.class::cast).map(registration -> executeHook(NeonBee.get(vertx),
                         registration, DefaultHookContext.of(type, parameters)))
-                .collect(Collectors.toList());
+                .toList();
 
         return Future.all(hookExecutions);
     }
@@ -74,7 +73,7 @@ public class DefaultHookRegistry implements HookRegistry {
     @Override
     public Future<Collection<HookRegistration>> getHookRegistrations() {
         Collection<HookRegistration> registrations =
-                hookRegistry.values().stream().flatMap(List::stream).collect(Collectors.toList());
+                hookRegistry.values().stream().flatMap(List::stream).toList();
         return Future.succeededFuture(registrations);
     }
 
@@ -100,8 +99,7 @@ public class DefaultHookRegistry implements HookRegistry {
                                 HookContext.class.getName(), Promise.class.getName());
                         return false;
                     }
-                }).map(method -> buildHookRegistrations(method, hookObject)).flatMap(s -> s)
-                .collect(Collectors.toUnmodifiableList());
+                }).map(method -> buildHookRegistrations(method, hookObject)).flatMap(s -> s).toList();
     }
 
     private Stream<HookRegistration> buildHookRegistrations(Method method, Object hookObject) {

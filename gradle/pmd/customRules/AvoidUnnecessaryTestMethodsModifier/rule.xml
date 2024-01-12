@@ -1,14 +1,14 @@
 <rule name="AvoidUnnecessaryTestMethodsModifier"
-      language="java"
-      minimumLanguageVersion="11"
-      message="Avoid public, protected or private modifier for test methods"
-      class="net.sourceforge.pmd.lang.rule.XPathRule">
+    language="java"
+    minimumLanguageVersion="17"
+    message="Avoid public, protected or private modifier for test methods"
+    class="net.sourceforge.pmd.lang.rule.XPathRule">
     <description>
         Avoid public, protected or private modifier for test methods. There is no benefit.
     </description>
     <priority>1</priority>
     <properties>
-        <property name="version" value="2.0"/>
+        <property name="version" value="2.0" />
         <property name="xpath">
             <value>
                 <![CDATA[
@@ -20,4 +20,3 @@
         </property>
     </properties>
 </rule>
-

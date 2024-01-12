@@ -182,20 +182,6 @@ class OrderExpressionExecutorTest {
         List<Entity> entityList = new ArrayList<>(List.of(entity1, entity2, entity3));
         List<Entity> expectedEntityListAsc = new ArrayList<>(List.of(entity1, entity2, entity3));
 
-        EdmTypeImpl edmType = mock(EdmTypeImpl.class);
-        when(edmType.getKind()).thenReturn(EdmTypeKind.PRIMITIVE);
-        when(edmType.toString()).thenReturn("Edm.String");
-
-        EdmPropertyImpl edmProperty = mock(EdmPropertyImpl.class);
-        when(edmProperty.getType()).thenReturn(edmType);
-        when(edmProperty.getName()).thenReturn("testStringProperty");
-
-        UriResourcePrimitiveProperty uriResourcePrimitiveProperty = mock(UriResourcePrimitiveProperty.class);
-        when(uriResourcePrimitiveProperty.getProperty()).thenReturn(edmProperty);
-
-        UriInfoResource resourcePath = mock(UriInfoResource.class);
-        when(resourcePath.getUriResourceParts()).thenReturn(List.of(uriResourcePrimitiveProperty));
-
         TestExpression member = mock(TestExpression.class);
 
         OrderByItemImpl orderByItem = mock(OrderByItemImpl.class);
@@ -583,7 +569,7 @@ class OrderExpressionExecutorTest {
         assertThat(constructor.canAccess(null)).isFalse();
 
         // To get the full test coverage, set it to accessible and test it
-        constructor.setAccessible(true);
+        constructor.setAccessible(true); // NOPMD
         assertThat(constructor.newInstance().getClass()).isNotNull();
     }
 

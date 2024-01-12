@@ -49,12 +49,22 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
+import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.JsonObject;
 
+/**
+ * A specialization of a common {@link Verticle} handling data. Instead of manually registering a event-bus publish /
+ * subscriber, {@link DataVerticle DataVerticles} can communicate via the event bus using their
+ * {@link #getQualifiedName()} and via the {@link #requestData(DataRequest, DataContext)} and
+ * {@link #requireData(DataQuery, DataContext)} methods. Depending on the {@link ResolutionStrategy} requiring data from
+ * another {@link DataVerticle} will be optimized by the use of different data retrieval strategies.
+ *
+ * @param <T> the data type this {@link DataVerticle} handles.
+ */
 @SuppressWarnings("PMD.GodClass")
 public abstract class DataVerticle<T> extends AbstractVerticle implements DataAdapter<T> {
     /**
@@ -79,6 +89,13 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                     .map(NeonBeeDeployable::namespace).map(Strings::emptyToNull).map(String::toLowerCase).orElse(null);
 
     private DataVerticleMetrics dataVerticleMetrics;
+
+    /**
+     * Create a new {@link DataVerticle}.
+     */
+    protected DataVerticle() {
+        super();
+    }
 
     /**
      * Requesting data from other DataSources or Data/EntityVerticles.
@@ -209,14 +226,14 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
      */
     private static DeliveryOptions requestDeliveryOptions(Vertx vertx, DataRequest request, DataContext context,
             String address) {
-        if (context instanceof DataContextImpl) { // will also perform a null check!
+        if (context instanceof DataContextImpl contextImpl) { // will also perform a null check!
             // before encoding the context header, add the current qualified name of the verticle to the path stack
-            ((DataContextImpl) context).pushVerticleToPath(request.getQualifiedName());
+            contextImpl.pushVerticleToPath(request.getQualifiedName());
         }
         DeliveryOptions deliveryOptions = deliveryOptions(vertx, null, context);
-        if (context instanceof DataContextImpl) { // will also perform a null check!
+        if (context instanceof DataContextImpl contextImpl) { // will also perform a null check!
             // remove the verticle right after, as the same context (w/o copying) may be reused for multiple requests
-            ((DataContextImpl) context).popVerticleFromPath();
+            contextImpl.popVerticleFromPath();
         }
 
         // adapt further delivery options based on the request
@@ -257,8 +274,8 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
      * @return a DataException passing the failure code in case it is a ReplyException
      */
     private static DataException mapException(Throwable cause) {
-        if (cause instanceof DataException) {
-            return (DataException) cause;
+        if (cause instanceof DataException dataException) {
+            return dataException;
         }
 
         int failureCode = FAILURE_CODE_PROCESSING_FAILED;
@@ -578,7 +595,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                                 reportRequestDataMetrics(request, future);
                                 return future;
                             });
-                        }).map(asyncResult -> (Future<?>) asyncResult).collect(Collectors.toList())).otherwiseEmpty();
+                        }).map(asyncResult -> (Future<?>) asyncResult).toList()).otherwiseEmpty();
             }).compose(requiredCompositeOrNothing -> {
                 List<Tag> tags = retrieveDataTags();
                 try {

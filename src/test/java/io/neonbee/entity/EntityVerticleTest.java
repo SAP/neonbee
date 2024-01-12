@@ -165,7 +165,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
                             .collect(Collectors.toMap(SystemQueryOption::getName, SystemQueryOption::getText))
                             .get("$format")).isEqualTo("json");
                     assertThat(uriInfo.getUriResourceParts().stream().map(UriResource::getSegmentValue)
-                            .collect(Collectors.toList())).contains("AllPropertiesNullable");
+                            .toList()).contains("AllPropertiesNullable");
                     checkpoint.flag();
                 })));
 
@@ -184,7 +184,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
         EntityVerticle.parseUriInfo(vertx, query)
                 .onComplete(testContext.succeeding(uriInfo -> testContext.verify(() -> {
                     assertThat(uriInfo.getUriResourceParts().stream().map(UriResource::getSegmentValue)
-                            .collect(Collectors.toList())).contains("AllPropertiesNullable");
+                            .toList()).contains("AllPropertiesNullable");
                     checkpoint.flag();
                 })));
     }

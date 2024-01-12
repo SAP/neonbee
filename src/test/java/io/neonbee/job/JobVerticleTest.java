@@ -147,7 +147,7 @@ class JobVerticleTest extends NeonBeeTestBase {
             // that time
             verify(testJobVerticle.vertxMock).setTimer(eq(30000L), any());
 
-            /** PERIODIC JOBS **/
+            /* PERIODIC JOBS */
 
             testJobVerticle = new TestJobVerticle(
                     new JobSchedule(Instant.now().minus(30, SECONDS), Duration.ofMinutes(1)));

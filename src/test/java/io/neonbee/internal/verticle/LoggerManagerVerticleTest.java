@@ -6,7 +6,6 @@ import static io.neonbee.NeonBeeProfile.NO_WEB;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,7 +71,7 @@ class LoggerManagerVerticleTest extends DataVerticleTestBase {
                 new LoggerConfiguration("io.vertx.core.file", ERROR));
         DataRequest updateReq = new DataRequest(LoggerManagerVerticle.QUALIFIED_NAME,
                 new DataQuery().setAction(DataAction.UPDATE).setBody(
-                        new JsonArray(configList.stream().map(LoggerConfiguration::toJson).collect(Collectors.toList()))
+                        new JsonArray(configList.stream().map(LoggerConfiguration::toJson).toList())
                                 .toBuffer()));
 
         requestData(updateReq).compose(updateResponse -> {

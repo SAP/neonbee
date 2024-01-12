@@ -82,6 +82,16 @@ public class EntityModelManager {
         this.neonBee = neonBee;
     }
 
+    @Override
+    @SuppressWarnings({ "deprecation", "removal", "Finalize", "checkstyle:NoFinalizer" })
+    protected final void finalize() { // NOPMD prevent a finalizer attack
+        // note: this empty final finalize method is required, due to at least one of this classes constructors throw
+        // (an) exception(s) and are thus vulnerable to finalizer attacks, see [1] and [2]. as the use of finalize
+        // methods is discouraged anyways, we favour this solution, compared to making the whole class final
+        // [1]https://spotbugs.readthedocs.io/en/stable/bugDescriptions.html#ct-be-wary-of-letting-constructors-throw-exceptions-ct-constructor-throw
+        // [2]https://wiki.sei.cmu.edu/confluence/display/java/OBJ11-J.+Be+wary+of+letting+constructors+throw+exceptions
+    }
+
     /**
      * Get a buffered instance to OData.
      *

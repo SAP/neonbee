@@ -51,8 +51,6 @@ import org.apache.olingo.server.api.uri.queryoption.SkipOption;
 import org.apache.olingo.server.api.uri.queryoption.TopOption;
 import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitException;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import io.neonbee.endpoint.odatav4.internal.olingo.expression.FilterExpressionVisitor;
 import io.neonbee.endpoint.odatav4.internal.olingo.expression.OrderExpressionExecutor;
 import io.neonbee.entity.EntityWrapper;
@@ -70,9 +68,6 @@ import io.vertx.ext.web.RoutingContext;
         justification = "Common practice in Olingo to name the implementation of the processor same as the interface")
 public class CountEntityCollectionProcessor extends AsynchronousProcessor
         implements org.apache.olingo.server.api.processor.CountEntityCollectionProcessor {
-    @VisibleForTesting
-    static final UnsupportedOperationException TOO_MANY_PARTS_EXCEPTION =
-            new UnsupportedOperationException("Read requests with more than two resource parts are not supported.");
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
@@ -102,7 +97,8 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
             ContentType responseFormat) {
         List<UriResource> resourceParts = uriInfo.getUriResourceParts();
         if (resourceParts.size() > 2) {
-            throw TOO_MANY_PARTS_EXCEPTION;
+            throw new UnsupportedOperationException(
+                    "Read requests with more than two resource parts are not supported.");
         }
         Promise<Void> processPromise = getProcessPromise();
 

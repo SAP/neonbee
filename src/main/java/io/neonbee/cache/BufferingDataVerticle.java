@@ -13,6 +13,8 @@ import io.vertx.core.Future;
  * This class extends the in-memory caching possibilities of the {@link CachingDataVerticle} by an arbitrary second
  * stage buffering concept. E.g. storing data in a database or likewise. Caching being the most volatile form of storage
  * it is first checked if the data is cached already, before attempting to read it from the buffer.
+ *
+ * @param <T> the type of data this {@link BufferingDataVerticle} buffers / caches &amp; handles
  */
 public abstract class BufferingDataVerticle<T> extends CachingDataVerticle<T> {
     private static final LoggingFacade LOGGER = LoggingFacade.create();

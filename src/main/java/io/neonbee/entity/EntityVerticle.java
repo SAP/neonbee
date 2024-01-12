@@ -12,7 +12,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.server.api.uri.UriInfo;
@@ -201,7 +200,7 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
                         .onSuccess(asyncGet::complete).onFailure(asyncGet::fail))
                 .map(qualifiedNames -> ((List<?>) Optional.ofNullable((JsonArray) qualifiedNames)
                         .orElseGet(JsonArray::new).getList()).stream().map(Object::toString).distinct()
-                                .collect(Collectors.toList()));
+                                .toList());
     }
 
     /**
@@ -269,7 +268,7 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
                             entityTypeNames.stream().map(EntityVerticle::sharedEntityMapName).map(name -> {
                                 String qualifiedName = getQualifiedName();
                                 return getRegistry(vertx).register(name, qualifiedName);
-                            }).collect(Collectors.toList());
+                            }).toList();
                     return Future.all(announceFutures).mapEmpty();
                 });
     }

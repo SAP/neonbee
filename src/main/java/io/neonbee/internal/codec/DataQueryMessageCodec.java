@@ -6,6 +6,15 @@ import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.json.JsonObject;
 
 public class DataQueryMessageCodec implements MessageCodec<DataQuery, DataQuery> {
+    /**
+     * Create a new {@link DataQueryMessageCodec}.
+     */
+    public DataQueryMessageCodec() {
+        // no initialization needed, however:
+        // checkstyle suggests to create an empty constructor to explain the use of the class and
+        // sonarcube is complaining if the constructor is empty and suggests to add (this) comment ;)
+    }
+
     @Override
     public void encodeToWire(Buffer buffer, DataQuery query) {
         JsonObject.mapFrom(query).writeToBuffer(buffer);

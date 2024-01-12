@@ -3,7 +3,6 @@ package io.neonbee.endpoint.odatav4.internal.olingo.expression;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.edm.EdmProperty;
@@ -58,7 +57,7 @@ public final class OrderExpressionExecutor implements EntityComparison {
                         }
                     }
                     return null;
-                }).filter(Objects::nonNull).collect(Collectors.toList())));
+                }).filter(Objects::nonNull).toList()));
 
         return entityList;
     }

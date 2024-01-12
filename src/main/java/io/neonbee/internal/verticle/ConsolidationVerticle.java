@@ -7,7 +7,6 @@ import static io.vertx.core.Future.succeededFuture;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
@@ -34,6 +33,13 @@ public class ConsolidationVerticle extends DataVerticle<EntityWrapper> {
 
     public static final String QUALIFIED_NAME = DataVerticle.createQualifiedName(NEONBEE_NAMESPACE, NAME);
 
+    /**
+     * Create a new {@link ConsolidationVerticle}.
+     */
+    public ConsolidationVerticle() {
+        super();
+    }
+
     @Override
     public String getName() {
         return NAME;
@@ -44,7 +50,7 @@ public class ConsolidationVerticle extends DataVerticle<EntityWrapper> {
         return EntityVerticle
                 .getVerticlesForEntityType(vertx, new FullQualifiedName(query.getHeader(ENTITY_TYPE_NAME_HEADER)))
                 .map(qualifiedNames -> qualifiedNames.stream()
-                        .map(qualifiedName -> new DataRequest(qualifiedName, query)).collect(Collectors.toList()));
+                        .map(qualifiedName -> new DataRequest(qualifiedName, query)).toList());
     }
 
     @Override

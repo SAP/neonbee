@@ -105,7 +105,7 @@ class LocalPreferredClusterTest extends NeonBeeExtension.TestBase {
     private Future<Map<String, Long>> fireRequests(DataRequest request) {
         return Future.all(IntStream.rangeClosed(1, REPETITION.intValue())
                 .mapToObj(i -> DataVerticle.requestData(localNode.getVertx(), request, new DataContextImpl()))
-                .collect(Collectors.toList())).map(cpf -> mapResponses(cpf.list()));
+                .toList()).map(cpf -> mapResponses(cpf.list()));
     }
 
     private Map<String, Long> mapResponses(List<String> results) {

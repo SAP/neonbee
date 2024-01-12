@@ -7,10 +7,15 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 
-/**
- * Create A {@link BodyHandler} that disallows file uploads.
- */
 public class DisallowingFileUploadBodyHandlerFactory implements RoutingHandlerFactory {
+    /**
+     * Create a {@link BodyHandler} that disallows file uploads.
+     */
+    public DisallowingFileUploadBodyHandlerFactory() {
+        // no initialization needed, however:
+        // checkstyle suggests to create an empty constructor to explain the use of the class and
+        // sonarcube is complaining if the constructor is empty and suggests to add (this) comment ;)
+    }
 
     @Override
     public Future<Handler<RoutingContext>> createHandler() {

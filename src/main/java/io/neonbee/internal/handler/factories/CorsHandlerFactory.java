@@ -22,13 +22,21 @@ import io.vertx.ext.web.handler.TimeoutHandler;
  * Create the {@link TimeoutHandler}.
  */
 public class CorsHandlerFactory implements RoutingHandlerFactory {
-
     @VisibleForTesting
     static final class NoOpHandler implements SecurityPolicyHandler {
         @Override
         public void handle(RoutingContext routingContext) {
             routingContext.next();
         }
+    }
+
+    /**
+     * Create a new {@link CorsHandlerFactory}.
+     */
+    public CorsHandlerFactory() {
+        // no initialization needed, however:
+        // checkstyle suggests to create an empty constructor to explain the use of the class and
+        // sonarcube is complaining if the constructor is empty and suggests to add (this) comment ;)
     }
 
     @Override

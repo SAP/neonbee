@@ -5,7 +5,6 @@ import static java.util.Objects.requireNonNull;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.sap.cds.reflect.CdsModel;
 import com.sap.cds.reflect.CdsService;
@@ -99,6 +98,6 @@ public final class EntityModelDefinition {
             String qualifiedName = service.getQualifiedName();
             String edmxFileName = qualifiedName + EDMX;
             return csnPath.getParent().resolve(edmxFileName);
-        }).collect(Collectors.toList());
+        }).toList();
     }
 }

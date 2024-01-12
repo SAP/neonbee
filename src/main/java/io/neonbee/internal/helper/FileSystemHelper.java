@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,7 +50,7 @@ public final class FileSystemHelper {
      */
     public static Future<List<Path>> readDir(Vertx vertx, Path path) {
         return vertx.fileSystem().readDir(path.toString())
-                .map(files -> files.stream().map(Path::of).collect(Collectors.toList()));
+                .map(files -> files.stream().map(Path::of).toList());
     }
 
     /**
@@ -65,7 +64,7 @@ public final class FileSystemHelper {
      */
     public static Future<List<Path>> readDir(Vertx vertx, Path path, String filter) {
         return vertx.fileSystem().readDir(path.toString(), filter)
-                .map(files -> files.stream().map(Path::of).collect(Collectors.toList()));
+                .map(files -> files.stream().map(Path::of).toList());
     }
 
     /**
@@ -188,7 +187,7 @@ public final class FileSystemHelper {
      */
     public static Collection<Path> parsePaths(String... paths) {
         return Arrays.stream(paths).flatMap(Pattern.compile(File.pathSeparator)::splitAsStream).map(Path::of)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

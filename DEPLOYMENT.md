@@ -25,7 +25,7 @@ The command line parameters will be passed in the **manifest.yml**:
 ```
   env:
      JBP_CONFIG_JAVA_MAIN: '{ arguments: "-cl -clp 50050 -cc hazelcast-cf.xml -cp 55000" }'
-     JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 11.+}}'
+     JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 17.+}}'
 ```
 
 In this case, the cluster mode will be enabled with **-cl** switch. For CloudFoundry cluster configuration, a DNS name-based cluster discovery will be enabled, which is configured in the Hazelcast configuration file **hazelcast-cf.xml**.
