@@ -6,7 +6,6 @@ import static io.vertx.core.Future.succeededFuture;
 
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.base.Strings;
@@ -86,7 +85,7 @@ public class LoggerManagerVerticle extends DataVerticle<JsonArray> {
         }
 
         return succeededFuture(
-                new JsonArray(loggerConfigurationStream.map(LoggerConfiguration::toJson).collect(Collectors.toList())));
+                new JsonArray(loggerConfigurationStream.map(LoggerConfiguration::toJson).toList()));
     }
 
     @Override

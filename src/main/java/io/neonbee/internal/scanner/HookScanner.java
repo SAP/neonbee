@@ -61,7 +61,7 @@ public class HookScanner {
                 scanner.scanForAnnotation(vertx, List.of(Hook.class, Hooks.class), ElementType.METHOD);
         // add .class, because Hooks are only the FQN
         Future<List<String>> hooksFromManifest = scanner.scanManifestFiles(vertx, NEONBEE_HOOKS)
-                .map(names -> names.stream().map(name -> name + ".class").collect(Collectors.toList()));
+                .map(names -> names.stream().map(name -> name + ".class").toList());
 
         return Future.all(hookClassesWithAnnotations, hooksFromManifest)
                 .compose(compositeResult -> vertx.executeBlocking(() -> {

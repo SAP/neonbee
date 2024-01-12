@@ -9,6 +9,12 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.PlatformHandler;
 
 public class CacheControlHandler implements PlatformHandler {
+    /**
+     * Creates a new {@link CacheControlHandler}.
+     */
+    public CacheControlHandler() {
+        super();
+    }
 
     @Override
     public void handle(RoutingContext routingContext) {

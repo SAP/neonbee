@@ -104,29 +104,29 @@ public final class CollectionHelper {
     public static <T> T copyOf(T object) {
         if (Objects.isNull(object)) {
             return null;
-        } else if (object instanceof Buffer) {
-            return (T) ((Buffer) object).copy();
-        } else if (object instanceof List) {
-            return (T) mutableCopyOf((List<?>) object);
-        } else if (object instanceof Set) {
-            return (T) mutableCopyOf((Set<?>) object);
-        } else if (object instanceof Map) {
-            return (T) mutableCopyOf((Map<?, ?>) object);
+        } else if (object instanceof Buffer buffer) {
+            return (T) buffer.copy();
+        } else if (object instanceof List<?> list) {
+            return (T) mutableCopyOf(list);
+        } else if (object instanceof Set<?> set) {
+            return (T) mutableCopyOf(set);
+        } else if (object instanceof Map<?, ?> map) {
+            return (T) mutableCopyOf(map);
         } else if (object.getClass().isArray()) {
-            if (object instanceof byte[]) {
-                return (T) Arrays.copyOf((byte[]) object, ((byte[]) object).length);
-            } else if (object instanceof short[]) {
-                return (T) Arrays.copyOf((short[]) object, ((short[]) object).length);
-            } else if (object instanceof int[]) {
-                return (T) Arrays.copyOf((int[]) object, ((int[]) object).length);
-            } else if (object instanceof char[]) {
-                return (T) Arrays.copyOf((char[]) object, ((char[]) object).length);
-            } else if (object instanceof float[]) {
-                return (T) Arrays.copyOf((float[]) object, ((float[]) object).length);
-            } else if (object instanceof double[]) {
-                return (T) Arrays.copyOf((double[]) object, ((double[]) object).length);
-            } else if (object instanceof boolean[]) {
-                return (T) Arrays.copyOf((boolean[]) object, ((boolean[]) object).length);
+            if (object instanceof byte[] byteArr) {
+                return (T) Arrays.copyOf(byteArr, byteArr.length);
+            } else if (object instanceof short[] shortArr) {
+                return (T) Arrays.copyOf(shortArr, shortArr.length);
+            } else if (object instanceof int[] intArr) {
+                return (T) Arrays.copyOf(intArr, intArr.length);
+            } else if (object instanceof char[] charArr) {
+                return (T) Arrays.copyOf(charArr, charArr.length);
+            } else if (object instanceof float[] floatArr) {
+                return (T) Arrays.copyOf(floatArr, floatArr.length);
+            } else if (object instanceof double[] doubleArr) {
+                return (T) Arrays.copyOf(doubleArr, doubleArr.length);
+            } else if (object instanceof boolean[] booleanArr) {
+                return (T) Arrays.copyOf(booleanArr, booleanArr.length);
             } else {
                 Class<?> componentType = object.getClass().getComponentType();
                 Object[] array = (Object[]) Array.newInstance(componentType, ((Object[]) object).length);
@@ -166,7 +166,7 @@ public final class CollectionHelper {
         return multiMap.entries().stream()
                 .collect(Collectors.<Map.Entry<String, String>, String, List<String>>toMap(Map.Entry::getKey,
                         entry -> Collections.singletonList(entry.getValue()),
-                        (listA, listB) -> Stream.concat(listA.stream(), listB.stream()).collect(Collectors.toList())));
+                        (listA, listB) -> Stream.concat(listA.stream(), listB.stream()).toList()));
     }
 
     /**
@@ -212,6 +212,13 @@ public final class CollectionHelper {
     @SuppressWarnings("PMD.NullAssignment")
     public static class NullLiberalMergingHashMap<K, V> extends HashMap<K, V> {
         private static final long serialVersionUID = 1L;
+
+        /**
+         * Create a new {@link NullLiberalMergingHashMap}.
+         */
+        public NullLiberalMergingHashMap() {
+            super();
+        }
 
         @Override
         public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {

@@ -43,8 +43,6 @@ import org.apache.olingo.server.api.uri.UriParameter;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmHelper;
 import io.neonbee.endpoint.odatav4.internal.olingo.expression.EntityComparison;
 import io.neonbee.entity.EntityWrapper;
@@ -62,9 +60,6 @@ import io.vertx.ext.web.RoutingContext;
         justification = "Common practice in Olingo to name the implementation of the processor same as the interface")
 public class EntityProcessor extends AsynchronousProcessor
         implements org.apache.olingo.server.api.processor.EntityProcessor {
-    @VisibleForTesting
-    static final UnsupportedOperationException TOO_MANY_PARTS_EXCEPTION =
-            new UnsupportedOperationException("Read requests with more than two resource parts are not supported.");
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
@@ -111,8 +106,8 @@ public class EntityProcessor extends AsynchronousProcessor
         Set<String> keyPropertyNames = keyPredicates.keySet();
         List<Entity> foundEntities = entities.stream().filter(Objects::nonNull).filter(entity -> {
             // Get the names of all properties of the entity
-            List<String> propertyNames = entity.getProperties().stream().filter(Objects::nonNull).map(Property::getName)
-                    .collect(Collectors.toUnmodifiableList());
+            List<String> propertyNames =
+                    entity.getProperties().stream().filter(Objects::nonNull).map(Property::getName).toList();
 
             // Check if the entity contains all key properties
             return propertyNames.containsAll(keyPropertyNames) //
@@ -142,7 +137,7 @@ public class EntityProcessor extends AsynchronousProcessor
                         }
                         return false;
                     });
-        }).collect(Collectors.toUnmodifiableList());
+        }).toList();
         if (foundEntities.size() == 1) {
             return foundEntities.get(0);
         } else if (foundEntities.size() > 1) {
@@ -163,7 +158,8 @@ public class EntityProcessor extends AsynchronousProcessor
     @Override
     public void readEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat) {
         if (uriInfo.getUriResourceParts().size() > 2) {
-            throw TOO_MANY_PARTS_EXCEPTION;
+            throw new UnsupportedOperationException(
+                    "Read requests with more than two resource parts are not supported.");
         }
 
         Promise<Void> processPromise = getProcessPromise();

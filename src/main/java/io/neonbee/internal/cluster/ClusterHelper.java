@@ -13,7 +13,11 @@ import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
-public class ClusterHelper {
+public final class ClusterHelper {
+    /**
+     * Helper class does not require instantiation.
+     */
+    private ClusterHelper() {}
 
     /**
      * Returns the {@link ClusterManager} if NeonBee is started in clustering mode, otherwise it returns null.

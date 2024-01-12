@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.base.Strings;
@@ -41,6 +40,7 @@ import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.Nullable;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.CookieSameSite;
@@ -134,7 +134,8 @@ import io.vertx.ext.web.handler.ErrorHandler;
  * }
  * </code>
  */
-@DataObject(generateConverter = true, publicConverter = false)
+@DataObject
+@JsonGen(publicConverter = false)
 @SuppressWarnings({ "PMD.ExcessivePublicCount", "PMD.CyclomaticComplexity", "PMD.TooManyMethods", "PMD.GodClass" })
 public class ServerConfig extends HttpServerOptions {
 
@@ -247,7 +248,7 @@ public class ServerConfig extends HttpServerOptions {
     private static final List<EndpointConfig> DEFAULT_ENDPOINT_CONFIGS = Collections.unmodifiableList(Stream
             .of(RawEndpoint.class, ODataV4Endpoint.class, MetricsEndpoint.class, HealthEndpoint.class,
                     StatusEndpoint.class)
-            .map(endpointClass -> new EndpointConfig().setType(endpointClass.getName())).collect(Collectors.toList()));
+            .map(endpointClass -> new EndpointConfig().setType(endpointClass.getName())).toList());
 
     private static final ImmutableBiMap<String, String> REPHRASE_MAP = ImmutableBiMap.of("endpointConfigs", "endpoints",
             "authChainConfig", "authenticationChain", "errorHandlerClassName", "errorHandler", "errorHandlerTemplate",

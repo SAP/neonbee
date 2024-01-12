@@ -6,6 +6,15 @@ import io.neonbee.NeonBee;
 
 public abstract class Deployable {
     /**
+     * Create a new {@link Deployable}.
+     */
+    protected Deployable() {
+        // no initialization needed, however:
+        // checkstyle suggests to create an empty constructor to explain the use of the class and
+        // sonarcube is complaining if the constructor is empty and suggests to add (this) comment ;)
+    }
+
+    /**
      * The identifier of a deployable. In case of a single verticle, this might be the is the full qualified class name
      * of the verticle to deploy, in case of a module it contains the module name / version, in case of models, this
      * might be the name of the models to deploy.

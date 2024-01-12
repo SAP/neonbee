@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -52,7 +51,8 @@ class DeployableModuleTest {
 
         IllegalStateException exception =
                 assertThrows(IllegalStateException.class, () -> new DeployableModule("moduleC", null,
-                        List.of(new DeployableVerticle(DUMMY_VERTICLE, new DeploymentOptions()))));
+                        List.of(new DeployableVerticle(DUMMY_VERTICLE,
+                                new DeploymentOptions()))));
         assertThat(exception).hasMessageThat()
                 .isEqualTo("Missing module class loader for provided deployable verticle(s)");
     }
@@ -68,7 +68,8 @@ class DeployableModuleTest {
     @DisplayName("test getDeployables is unmodifiable (even if the original list was modifiable)")
     void testGetDeployablesIsUnmodifiable() {
         assertThrows(UnsupportedOperationException.class,
-                () -> new DeployableModule("module", null, new ArrayList<>()).getDeployables().add(null));
+                () -> new DeployableModule("module", null, new ArrayList<>()).getDeployables()
+                        .add(null));
     }
 
     @Test
@@ -100,20 +101,25 @@ class DeployableModuleTest {
         DeployableModule deployable = deployableFuture.result();
         assertThat(deployable.moduleName).isEqualTo("testmodule");
         assertThat(deployable.moduleClassLoader).isNotNull();
-        assertThat(deployable.moduleClassLoader.getURLs()).asList().containsExactly(moduleJarPath.toUri().toURL());
+        assertThat(deployable.moduleClassLoader.getURLs()).asList()
+                .containsExactly(moduleJarPath.toUri().toURL());
         assertThat(deployable.keepPartialDeployment).isFalse();
 
         List<Deployable> deployables = deployable.getDeployables();
-        List<DeployableModels> deployableModels = deployables.stream().filter(DeployableModels.class::isInstance)
-                .map(DeployableModels.class::cast).collect(Collectors.toList());
+        List<DeployableModels> deployableModels =
+                deployables.stream().filter(DeployableModels.class::isInstance)
+                        .map(DeployableModels.class::cast).toList();
         assertThat(deployableModels).hasSize(1);
         assertThat(deployableModels.get(0).modelDefinition.getCSNModelDefinitions())
-                .comparingValuesUsing(Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))
+                .comparingValuesUsing(
+                        Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))
                 .containsExactlyEntriesIn(NeonBeeModuleJar.DUMMY_MODELS);
         assertThat(deployableModels.get(0).modelDefinition.getAssociatedModelDefinitions())
-                .comparingValuesUsing(Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))
+                .comparingValuesUsing(
+                        Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))
                 .containsExactlyEntriesIn(NeonBeeModuleJar.DUMMY_EXTENSION_MODELS);
-        assertThat(deployables.stream().filter(DeployableVerticle.class::isInstance).map(DeployableVerticle.class::cast)
+        assertThat(deployables.stream().filter(DeployableVerticle.class::isInstance)
+                .map(DeployableVerticle.class::cast)
                 .map(deployableVerticle -> deployableVerticle.verticleClass).map(Class::getName))
                         .containsExactlyElementsIn(NeonBeeModuleJar.DUMMY_VERTICLES);
     }
@@ -137,14 +143,17 @@ class DeployableModuleTest {
         assertThat(deployable.keepPartialDeployment).isFalse();
 
         List<Deployable> deployables = deployable.getDeployables();
-        List<DeployableModels> deployableModels = deployables.stream().filter(DeployableModels.class::isInstance)
-                .map(DeployableModels.class::cast).collect(Collectors.toList());
+        List<DeployableModels> deployableModels =
+                deployables.stream().filter(DeployableModels.class::isInstance)
+                        .map(DeployableModels.class::cast).toList();
         assertThat(deployableModels).hasSize(1);
         assertThat(deployableModels.get(0).modelDefinition.getCSNModelDefinitions())
-                .comparingValuesUsing(Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))
+                .comparingValuesUsing(
+                        Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))
                 .containsExactlyEntriesIn(NeonBeeModuleJar.DUMMY_MODELS);
         assertThat(deployableModels.get(0).modelDefinition.getAssociatedModelDefinitions())
-                .comparingValuesUsing(Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))
+                .comparingValuesUsing(
+                        Correspondence.<byte[], byte[]>from(Arrays::equals, "is not equal to"))
                 .containsExactlyEntriesIn(NeonBeeModuleJar.DUMMY_EXTENSION_MODELS);
         assertThat(deployables.stream().filter(DeployableVerticle.class::isInstance)).isEmpty();
     }
@@ -161,7 +170,8 @@ class DeployableModuleTest {
         assertThat(noModuleAttributeException).isInstanceOf(NoStackTraceThrowable.class);
         assertThat(noModuleAttributeException).hasMessageThat().isEqualTo("No NeonBee-Module attribute found");
 
-        BasicJar brokenJar = new BasicJar(NeonBeeModuleJar.createManifest("testmodule", List.of("Hodor")), Map.of());
+        BasicJar brokenJar =
+                new BasicJar(NeonBeeModuleJar.createManifest("testmodule", List.of("Hodor")), Map.of());
         Throwable brokenJarException = DeployableModule.fromJar(vertxMock, brokenJar.writeToTempPath()).cause();
         assertThat(brokenJarException).isInstanceOf(ClassNotFoundException.class);
         assertThat(brokenJarException).hasMessageThat().isEqualTo("Hodor");

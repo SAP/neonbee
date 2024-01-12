@@ -272,8 +272,7 @@ public class ExpressionVisitorOperand implements EntityComparison {
 
     @Override
     public String toString() {
-        return new StringBuilder().append("ExpressionVisitorOperand [type=").append(type).append(", edmProperty=")
-                .append(edmProperty).append(']').toString();
+        return "ExpressionVisitorOperand [type=" + type + ", edmProperty=" + edmProperty + "]";
     }
 
     private Object cast(String value, EdmPrimitiveType type) throws EdmPrimitiveTypeException {

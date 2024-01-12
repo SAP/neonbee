@@ -149,8 +149,8 @@ public class RawEndpoint implements Endpoint {
                     new DataContextImpl(routingContext)).onComplete(asyncResult -> {
                         if (asyncResult.failed()) {
                             Throwable cause = asyncResult.cause();
-                            if (cause instanceof DataException) {
-                                switch (((DataException) cause).failureCode()) {
+                            if (cause instanceof DataException dataException) {
+                                switch (dataException.failureCode()) {
                                 case FAILURE_CODE_NO_HANDLERS:
                                     routingContext.fail(NOT_FOUND.code());
                                     return;

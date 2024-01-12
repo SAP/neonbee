@@ -34,6 +34,13 @@ public abstract class AbstractOpenAPIEndpoint implements Endpoint {
      */
     protected ResponseValidator responseValidator;
 
+    /**
+     * A new default {@link AbstractOpenAPIEndpoint}.
+     */
+    protected AbstractOpenAPIEndpoint() {
+        super();
+    }
+
     @Override
     public Future<Router> createEndpointRouter(Vertx vertx, String basePath, JsonObject config) {
         return getOpenAPIContract(vertx, config).compose(resolvedContract -> {

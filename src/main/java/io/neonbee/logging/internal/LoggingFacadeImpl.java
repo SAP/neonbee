@@ -9,14 +9,10 @@ import com.google.common.base.Strings;
 
 import io.neonbee.logging.LoggingFacade;
 
-@SuppressWarnings({ "PMD.ExcessivePublicCount", "PMD.CyclomaticComplexity", "PMD.TooManyMethods" })
+@SuppressWarnings({ "PMD.GodClass", "PMD.ExcessivePublicCount", "PMD.CyclomaticComplexity", "PMD.TooManyMethods" })
 public class LoggingFacadeImpl implements LoggingFacade {
     @VisibleForTesting
     static final Marker DEFAULT_MARKER = MarkerFactory.getDetachedMarker("noCorrelationIdAvailable");
-
-    @VisibleForTesting
-    static final UnsupportedOperationException UNSUPPORTED_OPERATION_EXCEPTION = new UnsupportedOperationException(
-            "Using masqueraded log messages on this facade supplying an own marker is not supported");
 
     private final Logger logger;
 
@@ -49,7 +45,7 @@ public class LoggingFacadeImpl implements LoggingFacade {
 
     @Override
     public boolean isTraceEnabled(Marker marker) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        return throwUnsupportedOperationException();
     }
 
     @Override
@@ -79,27 +75,28 @@ public class LoggingFacadeImpl implements LoggingFacade {
 
     @Override
     public void trace(Marker marker, String msg) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void trace(Marker marker, String format, Object arg) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
+    @SuppressWarnings("OverridingMethodInconsistentArgumentNamesChecker")
     public void trace(Marker marker, String format, Object arg1, Object arg2) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void trace(Marker marker, String format, Object... argArray) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void trace(Marker marker, String msg, Throwable t) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
@@ -109,7 +106,7 @@ public class LoggingFacadeImpl implements LoggingFacade {
 
     @Override
     public boolean isDebugEnabled(Marker marker) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        return throwUnsupportedOperationException();
     }
 
     @Override
@@ -139,27 +136,28 @@ public class LoggingFacadeImpl implements LoggingFacade {
 
     @Override
     public void debug(Marker marker, String msg) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void debug(Marker marker, String format, Object arg) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
+    @SuppressWarnings("OverridingMethodInconsistentArgumentNamesChecker")
     public void debug(Marker marker, String format, Object arg1, Object arg2) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void debug(Marker marker, String format, Object... arguments) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void debug(Marker marker, String msg, Throwable t) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
@@ -169,7 +167,7 @@ public class LoggingFacadeImpl implements LoggingFacade {
 
     @Override
     public boolean isInfoEnabled(Marker marker) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        return throwUnsupportedOperationException();
     }
 
     @Override
@@ -199,27 +197,28 @@ public class LoggingFacadeImpl implements LoggingFacade {
 
     @Override
     public void info(Marker marker, String msg) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void info(Marker marker, String format, Object arg) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
+    @SuppressWarnings("OverridingMethodInconsistentArgumentNamesChecker")
     public void info(Marker marker, String format, Object arg1, Object arg2) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void info(Marker marker, String format, Object... arguments) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void info(Marker marker, String msg, Throwable t) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
@@ -229,7 +228,7 @@ public class LoggingFacadeImpl implements LoggingFacade {
 
     @Override
     public boolean isWarnEnabled(Marker marker) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        return throwUnsupportedOperationException();
     }
 
     @Override
@@ -260,27 +259,28 @@ public class LoggingFacadeImpl implements LoggingFacade {
 
     @Override
     public void warn(Marker marker, String msg) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void warn(Marker marker, String format, Object arg) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
+    @SuppressWarnings("OverridingMethodInconsistentArgumentNamesChecker")
     public void warn(Marker marker, String format, Object arg1, Object arg2) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void warn(Marker marker, String format, Object... arguments) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void warn(Marker marker, String msg, Throwable t) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
@@ -290,7 +290,7 @@ public class LoggingFacadeImpl implements LoggingFacade {
 
     @Override
     public boolean isErrorEnabled(Marker marker) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        return throwUnsupportedOperationException();
     }
 
     @Override
@@ -320,26 +320,32 @@ public class LoggingFacadeImpl implements LoggingFacade {
 
     @Override
     public void error(Marker marker, String msg) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void error(Marker marker, String format, Object arg) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
+    @SuppressWarnings("OverridingMethodInconsistentArgumentNamesChecker")
     public void error(Marker marker, String format, Object arg1, Object arg2) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void error(Marker marker, String format, Object... arguments) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
     }
 
     @Override
     public void error(Marker marker, String msg, Throwable t) {
-        throw UNSUPPORTED_OPERATION_EXCEPTION;
+        throwUnsupportedOperationException();
+    }
+
+    private static <T> T throwUnsupportedOperationException() {
+        throw new UnsupportedOperationException(
+                "Using masqueraded log messages on this facade supplying an own marker is not supported");
     }
 }

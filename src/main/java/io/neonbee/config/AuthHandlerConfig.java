@@ -21,6 +21,7 @@ import io.neonbee.internal.json.ImmutableJsonObject;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.htdigest.HtdigestAuth;
@@ -33,7 +34,8 @@ import io.vertx.ext.web.handler.JWTAuthHandler;
 import io.vertx.ext.web.handler.OAuth2AuthHandler;
 import io.vertx.ext.web.handler.RedirectAuthHandler;
 
-@DataObject(generateConverter = true, publicConverter = false)
+@DataObject
+@JsonGen(publicConverter = false)
 public class AuthHandlerConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 

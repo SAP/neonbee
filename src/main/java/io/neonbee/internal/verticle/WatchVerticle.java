@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -232,7 +231,7 @@ public class WatchVerticle extends AbstractVerticle {
                         futuresToResolve.add(handleExistingFiles(path));
                     }
                     return Future.succeededFuture((Void) null);
-                })).collect(Collectors.toList()));
+                })).toList());
     }
 
     private Future<Void> handleWatchKeyEvents(Path watchKeyPath, WatchKey watchKey) {

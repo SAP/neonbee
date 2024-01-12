@@ -14,11 +14,9 @@ import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.test.base.NeonBeeTestBase.LONG_RUNNING_TEST;
 import static io.neonbee.test.helper.DeploymentHelper.getDeployedVerticles;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
-import static io.neonbee.test.helper.ReflectionHelper.setValueOfPrivateStaticField;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
-import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -52,7 +50,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
 
 import io.neonbee.NeonBeeInstanceConfiguration.ClusterManager;
 import io.neonbee.config.NeonBeeConfig;
@@ -84,12 +81,9 @@ import io.vertx.core.eventbus.DeliveryContext;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.http.ClientAuth;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.junit5.VertxTestContext;
-import io.vertx.junit5.VertxTestContext.ExecutionBlock;
 
 @Isolated("Some of the methods in this test class run clustered and use the FakeClusterManager for it. The FakeClusterManager uses a static state and can therefore not be run with other clustered tests.")
 @Tag(LONG_RUNNING_TEST)
@@ -266,7 +260,7 @@ class NeonBeeTest extends NeonBeeTestBase {
     @DisplayName("NeonBee should register all SPI-provided + default health checks")
     void testRegisterSpiAndDefaultHealthChecks(VertxTestContext testContext) {
         HealthCheckRegistry registry = getNeonBee().getHealthCheckRegistry();
-        for (String checkId : registry.getHealthChecks().keySet().stream().collect(toUnmodifiableList())) {
+        for (String checkId : registry.getHealthChecks().keySet().stream().toList()) {
             registry.unregister(checkId);
         }
 
@@ -398,25 +392,6 @@ class NeonBeeTest extends NeonBeeTestBase {
                             testContext.completeNow();
                         });
                     }));
-        }
-    }
-
-    @Test
-    @DisplayName("Test that WARN message is thrown when jsonMaxStringSize is set w/o ConfigurableJsonCodec")
-    void testSetMaxSizeButNoConfigurableJsonCodec() throws Throwable {
-        Logger mockedLogger = mock(Logger.class);
-        ExecutionBlock resetLogger = setValueOfPrivateStaticField(NeonBee.class, "LOGGER", mockedLogger);
-        ExecutionBlock resetCodec = setValueOfPrivateStaticField(Json.class, "CODEC", new DatabindCodec());
-        try {
-            getNeonBee().applyJsonCodecSettings();
-
-            ArgumentCaptor<String> logMsgCaptor = ArgumentCaptor.forClass(String.class);
-            verify(mockedLogger).warn(logMsgCaptor.capture());
-            assertThat(logMsgCaptor.getValue()).isEqualTo(
-                    "The used JSON codec is no instance of ConfigurableJsonCodec, therefore property \"jsonMaxStringSize\" will be ignored.");
-        } finally {
-            resetLogger.apply();
-            resetCodec.apply();
         }
     }
 

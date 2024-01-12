@@ -1,7 +1,6 @@
 package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.endpoint.odatav4.internal.olingo.processor.EntityProcessor.TOO_MANY_PARTS_EXCEPTION;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -24,6 +23,8 @@ class EntityProcessorTest {
         EntityProcessor processor = new EntityProcessor(null, null, null);
         UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
                 () -> processor.readEntity(null, null, mockedUriInfo, null));
-        assertThat(exception).isEqualTo(TOO_MANY_PARTS_EXCEPTION);
+        assertThat(exception).isInstanceOf(UnsupportedOperationException.class);
+        assertThat(exception).hasMessageThat()
+                .isEqualTo("Read requests with more than two resource parts are not supported.");
     }
 }

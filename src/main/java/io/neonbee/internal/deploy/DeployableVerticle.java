@@ -6,7 +6,6 @@ import static io.vertx.core.Future.succeededFuture;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -69,7 +68,7 @@ public class DeployableVerticle extends Deployable {
         return classPathScanner.scanManifestFiles(vertx, NEONBEE_DEPLOYABLES).compose(classNames -> {
             List<Future<DeployableVerticle>> deployables =
                     classNames.stream().map(className -> fromClassName(vertx, className, verticleClassLoader))
-                            .collect(Collectors.toList());
+                            .toList();
             return Future.all(deployables).map(CompositeFuture::list);
         });
     }

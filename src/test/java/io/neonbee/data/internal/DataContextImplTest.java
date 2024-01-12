@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -153,7 +152,7 @@ class DataContextImplTest {
         context.amendTopVerticleCoordinate("B-ID");
         assertEquals(2, contextPathSize(context));
 
-        List<DataVerticleCoordinate> paths = Streams.stream(context.path()).collect(Collectors.toList());
+        List<DataVerticleCoordinate> paths = Streams.stream(context.path()).toList();
         assertThat(paths).hasSize(2);
         assertThat(paths.get(0).getQualifiedName()).isEqualTo("A");
         assertThat(paths.get(1).getQualifiedName()).isEqualTo("B");
@@ -162,7 +161,7 @@ class DataContextImplTest {
         String contextString = DataContextImpl.encodeContextToString(context);
         DataContextImpl context2 = (DataContextImpl) DataContextImpl.decodeContextFromString(contextString);
         context2.amendTopVerticleCoordinate("C-ID");
-        paths = Streams.stream(context.path()).collect(Collectors.toList());
+        paths = Streams.stream(context.path()).toList();
         assertThat(paths).hasSize(3);
         assertThat(paths.get(0).getQualifiedName()).isEqualTo("A");
         assertThat(paths.get(1).getQualifiedName()).isEqualTo("B");

@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.ODataApplicationException;
@@ -42,7 +41,7 @@ public class BinaryOperator {
                 LOGGER.correlateWith(routingContext).error("Can't set type of operand", e);
             }
             return null;
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+        }).filter(Objects::nonNull).toList();
         this.leftOperand = leftOperand.setType();
     }
 
@@ -55,6 +54,16 @@ public class BinaryOperator {
             LOGGER.correlateWith(routingContext).trace("leftOperand: {}", leftOperand);
             LOGGER.correlateWith(routingContext).trace("rightOperand: {}", rightOperand);
         }
+    }
+
+    @Override
+    @SuppressWarnings({ "deprecation", "removal", "Finalize", "checkstyle:NoFinalizer" })
+    protected final void finalize() { // NOPMD prevent a finalizer attack
+        // note: this empty final finalize method is required, due to at least one of this classes constructors throw
+        // (an) exception(s) and are thus vulnerable to finalizer attacks, see [1] and [2]. as the use of finalize
+        // methods is discouraged anyways, we favour this solution, compared to making the whole class final
+        // [1]https://spotbugs.readthedocs.io/en/stable/bugDescriptions.html#ct-be-wary-of-letting-constructors-throw-exceptions-ct-constructor-throw
+        // [2]https://wiki.sei.cmu.edu/confluence/display/java/OBJ11-J.+Be+wary+of+letting+constructors+throw+exceptions
     }
 
     public ExpressionVisitorOperand andOperator() throws ODataApplicationException {

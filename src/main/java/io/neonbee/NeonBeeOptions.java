@@ -721,7 +721,7 @@ public interface NeonBeeOptions {
         @Description("A list of path(s) to module JARs to be loaded during startup")
         public Mutable setModuleJarPaths(String... moduleJarPaths) {
             return this.setModuleJarPaths(Arrays.stream(moduleJarPaths).map(FileSystemHelper::parsePaths)
-                    .flatMap(Collection::stream).collect(Collectors.toList()));
+                    .flatMap(Collection::stream).toList());
         }
 
         @Override

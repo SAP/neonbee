@@ -1,7 +1,6 @@
 package io.neonbee.internal.handler;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -32,7 +31,7 @@ public interface ChainAuthHandler extends AuthenticationHandler {
 
         io.vertx.ext.web.handler.ChainAuthHandler chainAuthHandler = io.vertx.ext.web.handler.ChainAuthHandler.any();
         List<AuthenticationHandler> authHandlers =
-                authChainConfig.stream().map(config -> config.createAuthHandler(vertx)).collect(Collectors.toList());
+                authChainConfig.stream().map(config -> config.createAuthHandler(vertx)).toList();
         authHandlers.forEach(chainAuthHandler::add);
 
         return new ChainAuthHandler() {

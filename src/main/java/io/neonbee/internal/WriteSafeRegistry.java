@@ -15,6 +15,8 @@ import io.vertx.core.shareddata.AsyncMap;
  * A registry to manage values in the {@link SharedDataAccessor} shared map.
  * <p>
  * The values under the key are stored in a JsonArray.
+ *
+ * @param <T> the type of data this registry stores
  */
 public class WriteSafeRegistry<T> implements Registry<T> {
 

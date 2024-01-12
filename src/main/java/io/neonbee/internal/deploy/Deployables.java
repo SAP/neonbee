@@ -141,7 +141,7 @@ public class Deployables extends Deployable {
                 // complete and then undeploy it. pending deployment was completed successfully, undeploy will undeploy
                 // it, or otherwise will do nothing because a failed deployment results in a successful undeploy
                 return pendingDeployment.transform(deployResult -> pendingDeployment.undeploy());
-            }).collect(Collectors.toList())).transform(undeployResult -> {
+            }).toList()).transform(undeployResult -> {
                 // call the afterUndeploy mapper function regardless of wether the undeployment succeeded or failed
                 // in case the undeployment succeeded, the future returned by afterUndeploy may succeed or fail the
                 // deployment. if the undeployment failed, the mapper still gets called, but the original failure gets

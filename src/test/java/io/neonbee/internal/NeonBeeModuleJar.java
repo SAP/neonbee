@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.Manifest;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 
 import io.neonbee.internal.deploy.DeployableModels;
@@ -93,7 +92,7 @@ public class NeonBeeModuleJar extends BasicJar {
     }
 
     private static List<String> extractIdentifiers(List<ClassTemplate> verticleTemplates) {
-        return verticleTemplates.stream().map(ClassTemplate::getClassName).collect(Collectors.toList());
+        return verticleTemplates.stream().map(ClassTemplate::getClassName).toList();
     }
 
     private static Map<ZipEntry, byte[]> transformToContentMap(List<ClassTemplate> verticleTemplates,

@@ -77,7 +77,7 @@ public class StaleThreadChecker implements TestExecutionListener {
 
     private static void checkForStaleThreads(String name, String namePrefix) {
         LOGGER.info("Checking for stale {} threads with '{}' prefix", name, namePrefix);
-        List<Thread> staleThreads = findStaleThreads(namePrefix).collect(Collectors.toList());
+        List<Thread> staleThreads = findStaleThreads(namePrefix).toList();
         if (!staleThreads.isEmpty() && LOGGER.isErrorEnabled()) {
             LOGGER.error("Stale {} thread(s) detected!! Not closing the thread {} "
                     + "could result in the test runner not signaling completion", name, staleThreads.get(0));

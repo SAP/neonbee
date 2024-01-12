@@ -7,10 +7,13 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
-/**
- * Create the {@link CacheControlHandler}.
- */
 public class CacheControlHandlerFactory implements RoutingHandlerFactory {
+    /**
+     * Creates a new {@link CacheControlHandlerFactory}.
+     */
+    public CacheControlHandlerFactory() {
+        super();
+    }
 
     @Override
     public Future<Handler<RoutingContext>> createHandler() {

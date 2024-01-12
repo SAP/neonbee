@@ -38,8 +38,8 @@ public class HooksHandler implements Handler<RoutingContext> {
                         Throwable cause = asyncResult.cause();
                         LOGGER.error("An error has occurred while executing the request hook of type {}", hookType,
                                 cause);
-                        if (cause instanceof DataException) {
-                            routingContext.fail(((DataException) cause).failureCode());
+                        if (cause instanceof DataException dataException) {
+                            routingContext.fail(dataException.failureCode());
                         } else {
                             routingContext.fail(cause);
                         }

@@ -5,6 +5,8 @@ import io.vertx.core.json.JsonArray;
 
 /**
  * Interface for an asynchronous registry implementation.
+ *
+ * @param <T> the type of data this registry stores
  */
 public interface Registry<T> {
 

@@ -11,20 +11,20 @@ plugins {
     // community plugins
     id 'com.diffplug.spotless' version '6.23.3'
     id 'net.ltgt.errorprone' version '3.1.0'
-    id 'com.github.spotbugs' version '5.2.4'
+    id 'com.github.spotbugs' version '6.0.6'
     id 'org.ajoberstar.grgit' version '5.2.1'
     id 'com.github.ksoichiro.console.reporter' version '0.6.3'
     id 'se.bjurr.violations.violations-gradle-plugin' version '1.52.7'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
     id 'org.sonarqube' version '4.4.1.3373'
-    id 'team.yi.semantic-gitlog' version '0.5.17'
+    id 'team.yi.semantic-gitlog' version '0.6.5'
 }
 
 group = 'io.neonbee'
 version = '0.31.1-SNAPSHOT'
 mainClassName = 'io.neonbee.Launcher'
 archivesBaseName = 'neonbee-core'
-sourceCompatibility = 11
+sourceCompatibility = 17
 
 project.ext {
     isReleaseVersion = !version.endsWith('-SNAPSHOT')
@@ -60,31 +60,31 @@ dependencies {
         exclude group: 'org.infinispan', module: 'infinispan-commons'
         exclude group: 'org.infinispan', module: 'infinispan-multimap'
     }
-    def infinispan_version = '14.0.19.Final'
+    def infinispan_version = '14.0.20.Final'
     implementation group: 'org.infinispan', name: 'infinispan-multimap-jakarta', version: infinispan_version
     implementation group: 'org.infinispan', name: 'infinispan-core-jakarta', version: infinispan_version
     implementation group: 'org.infinispan', name: 'infinispan-clustered-lock', version: infinispan_version
     implementation group: 'org.infinispan', name: 'infinispan-clustered-counter', version: infinispan_version
     implementation group: 'org.infinispan', name: 'infinispan-component-annotations', version: infinispan_version
 
-    def jackson_version = '2.16.0'
+    def jackson_version = '2.16.1'
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jackson_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jackson_version
 
-    def olingo_version = '4.10.0'
+    def olingo_version = '5.0.0'
     implementation(group: 'org.apache.olingo', name: 'odata-server-core', version: olingo_version) {
         exclude group: 'io.netty'
     }
     implementation group: 'org.apache.olingo', name: 'odata-server-core-ext', version: olingo_version
 
-    implementation group: 'com.sap.cds', name: 'cds4j-core', version: '1.38.1'
-    implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.12.1'
+    implementation group: 'com.sap.cds', name: 'cds4j-core', version: '2.5.0'
+    implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.12.2'
     implementation group: 'org.ow2.asm', name: 'asm', version: '9.6'
 
-    implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.10'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.11'
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.14'
-    def guava_version = '32.1.3-jre'
+    def guava_version = '33.0.0-jre'
     implementation group: 'com.google.guava', name: 'guava', version: guava_version
     implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.8.3'
 
@@ -98,17 +98,18 @@ dependencies {
     testImplementation group: 'io.vertx', name: 'vertx-core', classifier: 'tests', version: vertx_version
     testImplementation group: 'io.vertx', name: 'vertx-junit5', version: vertx_version
 
-    def truth_version = '1.1.3'
+    def truth_version = '1.2.0'
     testImplementation group: 'com.google.truth', name: 'truth', version: truth_version
     testImplementation group: 'com.google.truth.extensions', name: 'truth-java8-extension', version: truth_version
 
     testImplementation group: 'com.google.guava', name: 'guava-testlib', version: guava_version
 
-    def mockito_version = '5.1.1'
+    def mockito_version = '5.2.0'
     testImplementation group: 'org.mockito', name: 'mockito-inline', version: mockito_version
     testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: mockito_version
+    testImplementation group: 'net.bytebuddy', name: 'byte-buddy', version: '1.14.11'
 
-    def jupiter_version = '5.9.2'
+    def jupiter_version = '5.10.1'
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: jupiter_version
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: jupiter_version
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: jupiter_version
@@ -116,16 +117,23 @@ dependencies {
     testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: '1.5.1'
 
     // Required for Eclipse to run Unit tests.
-    def junit_platform_version = '1.9.2'
+    def junit_platform_version = '1.10.1'
     testImplementation group: 'org.junit.platform', name: 'junit-platform-commons', version: junit_platform_version
     testImplementation group: 'org.junit.platform', name: 'junit-platform-launcher', version: junit_platform_version
 
     // Gradle plugin dependencies
-    errorprone group: 'com.google.errorprone', name: 'error_prone_core', version: '2.10.0'
-    checkstyle group: 'com.puppycrawl.tools', name: 'checkstyle', version: '10.7.0'
+    errorprone group: 'com.google.errorprone', name: 'error_prone_core', version: '2.24.1'
+    checkstyle group: 'com.puppycrawl.tools', name: 'checkstyle', version: '10.12.7'
 
     // Without this the IDE can't find the test source files which are needed for debugging
     testCompileOnly group: 'io.vertx', name: 'vertx-core', classifier: 'test-sources', version: vertx_version
+}
+
+// fix checkstyle wrongfully using google collections instead of Guava
+configurations.checkstyle {
+  resolutionStrategy.capabilitiesResolution.withCapability('com.google.collections:google-collections') {
+    select('com.google.guava:guava:0')
+  }
 }
 
 // we need to define the generated source set first, because it is needed by staticCodeCheck
@@ -179,7 +187,7 @@ spotlessGeneratedExtension.removeUnusedImports()
 spotlessGeneratedExtension.endWithNewline()
 spotlessGeneratedExtension.setLineEndings(LineEnding.UNIX)
 spotlessGeneratedExtension.importOrderFile("${rootDir}/gradle/spotless/neonbee.importorder")
-spotlessGeneratedExtension.eclipse('4.17.0').configFile "${rootDir}/gradle/spotless/eclipse-formatter.xml"
+spotlessGeneratedExtension.eclipse('4.17').configFile "${rootDir}/gradle/spotless/eclipse-formatter.xml"
 spotlessGeneratedExtension.custom 'Lambda fix', { it.replace('} )', '})').replace('} ,', '},') }
 
 def spotlessApplyGenerated = spotlessGeneratedExtension.createIndependentApplyTask('spotlessApplyGenerated')
@@ -210,10 +218,31 @@ clean {
 
 //// ############ Test Phase
 tasks.withType(Test).configureEach {
-    // Is required for ReflectionsHelper
-    jvmArgs += ['--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED']
+    // Required list of packages that are accessed by the ReflectionHelper
+    // (Note: this list can be treated as "technical debt" because in tests we want to prevent setting / getting private fields as best as possible)
+    jvmArgs += [
+        // internal Java packages
+        'java.lang',
+        'java.lang.reflect',
+        'java.util',
+        // NeonBee (test) packages
+        'io.neonbee',
+        'io.neonbee.data',
+        'io.neonbee.entity',
+        'io.neonbee.internal.helper',
+        'io.neonbee.internal.json',
+        'io.neonbee.internal.scanner',
+        'io.neonbee.endpoint.odatav4.internal.olingo.expression',
+        'io.neonbee.test.helper',
+        // Vert.x packages
+        'io.vertx.test.fakecluster',
+        'io.vertx.micrometer.backends',
+        'io.vertx.core.json',
+        'io.vertx.core.json.jackson'
+    ].collect {
+        ['--add-opens', "java.base/${it}=ALL-UNNAMED"]
+    }.flatten()
 
-    systemProperty 'junit.jupiter.execution.timeout.mode', 'enabled'
     // run tests sequentially on the voter, as it is often slow and leads to failing tests
     if (!org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX() ||
         System.getenv('CI') == null) {
@@ -223,6 +252,8 @@ tasks.withType(Test).configureEach {
             'junit.jupiter.execution.parallel.mode.classes.default': 'concurrent'
         ]
     }
+
+    systemProperty 'junit.jupiter.execution.timeout.mode', 'enabled'
 
     environment 'vertx.parameter.filename', file('src/test/resources/vertx-parameters.json').absolutePath
 
@@ -292,6 +323,7 @@ sonarqube {
         property "sonar.host.url", "https://sonarcloud.io"
         property 'sonar.coverage.jacoco.xmlReportPaths', "${buildDir}/reports/jacoco/xml/jacoco.xml"
         property 'sonar.junit.reportPaths', "${buildDir}/reports/junit/xml"
+        property 'sonar.gradle.skipCompile', 'true'
     }
 }
 

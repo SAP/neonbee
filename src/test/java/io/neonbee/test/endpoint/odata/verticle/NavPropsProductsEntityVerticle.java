@@ -6,7 +6,6 @@ import static io.vertx.core.Future.succeededFuture;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.Property;
@@ -52,7 +51,7 @@ public class NavPropsProductsEntityVerticle extends EntityVerticle {
     @Override
     public Future<EntityWrapper> retrieveData(DataQuery query, DataMap require, DataContext context) {
         List<Entity> allEntities =
-                ALL_PRODUCTS.stream().map(NavPropsProductsEntityVerticle::createProduct).collect(Collectors.toList());
+                ALL_PRODUCTS.stream().map(NavPropsProductsEntityVerticle::createProduct).toList();
         return succeededFuture(new EntityWrapper(PRODUCTS_ENTITY_SET_FQN, allEntities));
     }
 
@@ -67,7 +66,8 @@ public class NavPropsProductsEntityVerticle extends EntityVerticle {
     }
 
     public static JsonObject createProduct(int id, String name, int categoryId) {
-        return new JsonObject().put(PROPERTY_NAME_ID, id).put(PROPERTY_NAME_NAME, name).put(PROPERTY_NAME_CATEGORY_ID,
+        return new JsonObject().put(PROPERTY_NAME_ID, id).put(PROPERTY_NAME_NAME, name).put(
+                PROPERTY_NAME_CATEGORY_ID,
                 categoryId);
     }
 

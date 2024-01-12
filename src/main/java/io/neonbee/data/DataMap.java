@@ -103,7 +103,7 @@ public class DataMap extends AbstractMap<DataRequest, AsyncResult<?>> implements
      * @return the list of results, or an empty list in case no data was required from this verticle
      */
     public <U> List<AsyncResult<U>> findAll(String qualifiedName) {
-        return this.<U>entryStream(qualifiedName).map(Entry::getValue).collect(Collectors.toList());
+        return this.<U>entryStream(qualifiedName).map(Entry::getValue).toList();
     }
 
     /**
@@ -115,7 +115,7 @@ public class DataMap extends AbstractMap<DataRequest, AsyncResult<?>> implements
      * @return the list of results, or an empty list in case no data was required from this verticle
      */
     public List<AsyncResult<EntityWrapper>> findAll(String entityTypeNamespace, String entityTypeName) {
-        return entryStream(entityTypeNamespace, entityTypeName).map(Entry::getValue).collect(Collectors.toList());
+        return entryStream(entityTypeNamespace, entityTypeName).map(Entry::getValue).toList();
     }
 
     /**
@@ -125,7 +125,7 @@ public class DataMap extends AbstractMap<DataRequest, AsyncResult<?>> implements
      * @return the list of results, or an empty list in case no data was required from this verticle
      */
     public List<AsyncResult<EntityWrapper>> findAll(FullQualifiedName entityTypeName) {
-        return entryStream(entityTypeName).map(Entry::getValue).collect(Collectors.toList());
+        return entryStream(entityTypeName).map(Entry::getValue).toList();
     }
 
     /**
@@ -290,7 +290,7 @@ public class DataMap extends AbstractMap<DataRequest, AsyncResult<?>> implements
      *         {@link #entrySet()} or the other {@link Map}-like methods
      */
     public List<?> results() {
-        return entryStream().map(Entry::getValue).map(AsyncResult::result).collect(Collectors.toList());
+        return entryStream().map(Entry::getValue).map(AsyncResult::result).toList();
     }
 
     /**
@@ -303,7 +303,7 @@ public class DataMap extends AbstractMap<DataRequest, AsyncResult<?>> implements
      */
     public <U> List<U> resultsFor(String qualifiedName) {
         return this.<U>entryStream(qualifiedName).map(Entry::getValue).map(AsyncResult::result)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -316,7 +316,7 @@ public class DataMap extends AbstractMap<DataRequest, AsyncResult<?>> implements
      */
     public List<EntityWrapper> resultsFor(String entityTypeNamespace, String entityTypeName) {
         return entryStream(entityTypeNamespace, entityTypeName).map(Entry::getValue).map(AsyncResult::result)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -327,7 +327,7 @@ public class DataMap extends AbstractMap<DataRequest, AsyncResult<?>> implements
      * @return A list of type {@link EntityWrapper} with the results
      */
     public List<EntityWrapper> resultsFor(FullQualifiedName entityTypeName) {
-        return entryStream(entityTypeName).map(Entry::getValue).map(AsyncResult::result).collect(Collectors.toList());
+        return entryStream(entityTypeName).map(Entry::getValue).map(AsyncResult::result).toList();
     }
 
     @Override

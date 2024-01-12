@@ -108,6 +108,7 @@ task testJavadoc(type: Javadoc) {
     classpath += sourceSets.test.compileClasspath
     classpath += sourceSets.main.compileClasspath
     source = sourceSets.test.allJava
+    options.addStringOption('Xdoclint:none', '-quiet')
 }
 
 /** Builds the test JavaDoc JAR */

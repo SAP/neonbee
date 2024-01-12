@@ -150,7 +150,7 @@ public class StaleVertxChecker extends StaleThreadChecker {
             // however if we are NOT in parallel execution, the first test which this log message appears leaks:
             if (!unassociatedVertxInstances.isEmpty()) {
                 logStaleVertxInstances(unassociatedVertxInstances);
-            } else if (vertxInstances.contains(null)) {
+            } else if (vertxInstances.contains(null)) { // NOPMD
                 // there are Vert.x threads, that we were unable to determine the Vert.x instance for, do not deal with
                 // this here, because we have the StaleThreadChecker backing us up in such cases
             }

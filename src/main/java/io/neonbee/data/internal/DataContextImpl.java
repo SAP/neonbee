@@ -211,10 +211,10 @@ public class DataContextImpl implements DataContext {
     @SuppressWarnings({ "unchecked", "rawtypes", "TypeParameterUnusedInFormals" })
     public <T> T get(String key) {
         Object value = data().get(key);
-        if (value instanceof Map) {
-            value = new JsonObject((Map) value);
-        } else if (value instanceof List) {
-            value = new JsonArray((List) value);
+        if (value instanceof Map map) {
+            value = new JsonObject(map);
+        } else if (value instanceof List list) {
+            value = new JsonArray(list);
         }
         return (T) value;
     }
@@ -223,10 +223,10 @@ public class DataContextImpl implements DataContext {
     @SuppressWarnings({ "unchecked", "rawtypes", "TypeParameterUnusedInFormals" })
     public <T> T remove(String key) {
         Object value = data().remove(key);
-        if (value instanceof Map) {
-            value = new JsonObject((Map) value);
-        } else if (value instanceof List) {
-            value = new JsonArray((List) value);
+        if (value instanceof Map map) {
+            value = new JsonObject(map);
+        } else if (value instanceof List list) {
+            value = new JsonArray(list);
         }
         return (T) value;
     }
@@ -275,7 +275,7 @@ public class DataContextImpl implements DataContext {
     public List<Map<String, Object>> findAllReceivedData(String qualifiedName) {
         return this.receivedData.entrySet().stream()
                 .filter(entry -> qualifiedName.equals(entry.getKey().getQualifiedName())).map(Map.Entry::getValue)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -302,7 +302,7 @@ public class DataContextImpl implements DataContext {
     }
 
     private static JsonArray pathToJson(Iterator<DataVerticleCoordinate> path) {
-        return new JsonArray(streamPath(path).map(JsonObject::mapFrom).collect(Collectors.toList()));
+        return new JsonArray(streamPath(path).map(JsonObject::mapFrom).toList());
     }
 
     /**

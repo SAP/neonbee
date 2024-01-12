@@ -13,10 +13,12 @@ import io.neonbee.endpoint.Endpoint;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.ChainAuthHandler;
 
-@DataObject(generateConverter = true, publicConverter = false)
+@DataObject
+@JsonGen(publicConverter = false)
 public class EndpointConfig {
     private static final ImmutableBiMap<String, String> REPHRASE_MAP =
             ImmutableBiMap.of("authChainConfig", "authenticationChain");

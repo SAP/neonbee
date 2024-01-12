@@ -7,59 +7,59 @@
     <description>NeonBee PMD Custom Rules</description>
 
     <rule name="AvoidFinalLocalVariables"
-          language="java"
-          minimumLanguageVersion="1.8"
-          message="Avoid final when declaring local variables"
-          class="net.sourceforge.pmd.lang.rule.XPathRule">
-       <description>
+        language="java"
+        minimumLanguageVersion="1.8"
+        message="Avoid final when declaring local variables"
+        class="net.sourceforge.pmd.lang.rule.XPathRule">
+        <description>
           Avoid final when declaring local variables. There is no benefit.
           See NeonBee community conventions.
        </description>
-       <priority>1</priority>
-       <properties>
-          <property name="version" value="2.0"/>
-          <property name="xpath">
-             <value>
+        <priority>1</priority>
+        <properties>
+            <property name="version" value="2.0" />
+            <property name="xpath">
+                <value>
                  <![CDATA[
                  //LocalVariableDeclaration[@Final = true()]
                  ]]>
              </value>
-          </property>
-       </properties>
+            </property>
+        </properties>
     </rule>
 
     <rule name="AvoidFinalInFormalParameter"
-      language="java"
-      minimumLanguageVersion="1.8"
-      message="Avoid final in formal Parameters"
-      class="net.sourceforge.pmd.lang.rule.XPathRule">
+        language="java"
+        minimumLanguageVersion="1.8"
+        message="Avoid final in formal Parameters"
+        class="net.sourceforge.pmd.lang.rule.XPathRule">
         <description>
             Avoid final in formal Parameters
         </description>
         <priority>1</priority>
         <properties>
-            <property name="version" value="2.0"/>
+            <property name="version" value="2.0" />
             <property name="xpath">
                 <value>
                     <![CDATA[
                     //FormalParameter//VariableDeclaratorId[@Final = true()]
                     ]]>
                 </value>
-             </property>
-         </properties>
+            </property>
+        </properties>
     </rule>
 
     <rule name="AvoidUnnecessaryTestMethodsModifier"
-      language="java"
-      minimumLanguageVersion="11"
-      message="Avoid public, protected or private modifier for test methods"
-      class="net.sourceforge.pmd.lang.rule.XPathRule">
+        language="java"
+        minimumLanguageVersion="17"
+        message="Avoid public, protected or private modifier for test methods"
+        class="net.sourceforge.pmd.lang.rule.XPathRule">
         <description>
             Avoid public, protected or private modifier for test methods. There is no benefit.
         </description>
         <priority>1</priority>
         <properties>
-            <property name="version" value="2.0"/>
+            <property name="version" value="2.0" />
             <property name="xpath">
                 <value>
                     <![CDATA[
@@ -73,16 +73,16 @@
     </rule>
 
     <rule name="AvoidUnnecessaryTestClassesModifier"
-      language="java"
-      minimumLanguageVersion="11"
-      message="Avoid public, protected or private modifier for test classes"
-      class="net.sourceforge.pmd.lang.rule.XPathRule">
+        language="java"
+        minimumLanguageVersion="17"
+        message="Avoid public, protected or private modifier for test classes"
+        class="net.sourceforge.pmd.lang.rule.XPathRule">
         <description>
             Avoid public, protected or private modifier for test classes. There is no benefit.
         </description>
         <priority>1</priority>
         <properties>
-            <property name="version" value="2.0"/>
+            <property name="version" value="2.0" />
             <property name="xpath">
                 <value>
                     <![CDATA[

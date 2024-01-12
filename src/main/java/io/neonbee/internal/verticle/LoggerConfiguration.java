@@ -3,7 +3,6 @@ package io.neonbee.internal.verticle;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +42,7 @@ public class LoggerConfiguration implements Comparable<LoggerConfiguration> {
      */
     public static List<LoggerConfiguration> getLoggerConfigurations() {
         return LOGGER_CONTEXT.getLoggerList().stream().map(LoggerConfiguration::getLoggerConfiguration).sorted()
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -223,11 +222,12 @@ public class LoggerConfiguration implements Comparable<LoggerConfiguration> {
         if (obj == null) {
             return false;
         }
-        if (obj instanceof LoggerConfiguration) {
-            LoggerConfiguration other = (LoggerConfiguration) obj;
-            return Objects.equals(this.name, other.name) && Objects.equals(this.configuredLevel, other.configuredLevel);
+        if (!(obj instanceof LoggerConfiguration)) {
+            return false;
         }
-        return super.equals(obj);
+
+        LoggerConfiguration other = (LoggerConfiguration) obj;
+        return Objects.equals(this.name, other.name) && Objects.equals(this.configuredLevel, other.configuredLevel);
     }
 
     @Override

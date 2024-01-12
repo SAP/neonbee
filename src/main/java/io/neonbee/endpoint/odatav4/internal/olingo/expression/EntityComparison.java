@@ -44,8 +44,8 @@ public interface EntityComparison {
      * @return the BigInteger instance
      */
     private BigInteger toBigInteger(Object object) {
-        if (object instanceof BigInteger) {
-            return (BigInteger) object;
+        if (object instanceof BigInteger bigInt) {
+            return bigInt;
         } else {
             return new BigInteger(String.valueOf(object));
         }
@@ -59,10 +59,10 @@ public interface EntityComparison {
      * @return The BigDecimal instance
      */
     private BigDecimal toBigDecimal(Object object) {
-        if (object instanceof BigDecimal) {
-            return (BigDecimal) object;
-        } else if (object instanceof BigInteger) {
-            return new BigDecimal((BigInteger) object);
+        if (object instanceof BigDecimal bigDec) {
+            return bigDec;
+        } else if (object instanceof BigInteger bigInt) {
+            return new BigDecimal(bigInt);
         } else {
             return new BigDecimal(String.valueOf(object));
         }
@@ -78,8 +78,8 @@ public interface EntityComparison {
      * @throws ODataApplicationException If conversion is not possible.
      */
     private Long dateTimeObjectToLong(RoutingContext routingContext, Object object) throws ODataApplicationException {
-        if (object instanceof Time) {
-            return ((Time) object).getTime();
+        if (object instanceof Time time) {
+            return time.getTime();
         } else {
             return dateTimeObjectToInstant(routingContext, object).toEpochMilli();
         }
@@ -99,20 +99,19 @@ public interface EntityComparison {
             throws ODataApplicationException {
         Instant instant;
         try {
-            if (object instanceof Date) {
-                instant = ((Date) object).toInstant().atZone(ZoneId.systemDefault()).toInstant();
-            } else if (object instanceof Instant) {
-                instant = ((Instant) object).atZone(ZoneId.systemDefault()).toInstant();
-            } else if (object instanceof Timestamp) {
-                instant = ((Timestamp) object).toInstant().atZone(ZoneId.systemDefault()).toInstant();
-            } else if (object instanceof Long) {
-                instant = Instant.ofEpochMilli((Long) object).atZone(ZoneId.systemDefault()).toInstant();
-            } else if (object instanceof LocalDate) {
-                instant = ((LocalDate) object).atStartOfDay(ZoneId.systemDefault()).toInstant();
-            } else if (object instanceof Calendar) {
-                instant = ((Calendar) object).toInstant().atZone(ZoneId.systemDefault()).toInstant();
-            } else if (object instanceof String) {
-                String stringValue = (String) object;
+            if (object instanceof Date date) {
+                instant = date.toInstant().atZone(ZoneId.systemDefault()).toInstant();
+            } else if (object instanceof Instant otherInstant) {
+                instant = otherInstant.atZone(ZoneId.systemDefault()).toInstant();
+            } else if (object instanceof Timestamp timestamp) {
+                instant = timestamp.toInstant().atZone(ZoneId.systemDefault()).toInstant();
+            } else if (object instanceof Long along) {
+                instant = Instant.ofEpochMilli(along).atZone(ZoneId.systemDefault()).toInstant();
+            } else if (object instanceof LocalDate localDate) {
+                instant = localDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
+            } else if (object instanceof Calendar calendar) {
+                instant = calendar.toInstant().atZone(ZoneId.systemDefault()).toInstant();
+            } else if (object instanceof String stringValue) {
                 if (EdmHelper.isLocalDate(stringValue)) {
                     instant = LocalDate.parse(stringValue).atStartOfDay(ZoneId.systemDefault()).toInstant();
                 } else if (EdmHelper.isLocalDateTime(stringValue)) {
@@ -126,7 +125,7 @@ public interface EntityComparison {
                 throw new ODataApplicationException(message, HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(),
                         Locale.ENGLISH);
             }
-        } catch (NullPointerException | IllegalArgumentException | DateTimeParseException e) {
+        } catch (IllegalArgumentException | DateTimeParseException e) {
             String message = "Converting object of type" + object.getClass() + " failed.";
             LOGGER.correlateWith(routingContext).error(message);
             throw new ODataApplicationException(message, HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(),
@@ -217,11 +216,7 @@ public interface EntityComparison {
             }
             throw createAndLogException(routingContext, EDM_BINARY_JAVA_TYPES, leadingPropertyValue1, propertyValue2,
                     propertyName);
-        case Int16:
-        case Int32:
-        case Int64:
-        case Byte:
-        case SByte:
+        case Int16, Int32, Int64, Byte, SByte:
             // Has to be one of: Short, Byte, Integer, Long, BigInteger
             if (instanceOfExpectedType(EDM_INT16_INT32_INT64_BYTE_SBYTE_JAVA_TYPES, leadingPropertyValue1)) {
                 try {
@@ -232,8 +227,7 @@ public interface EntityComparison {
             }
             throw createAndLogException(routingContext, EDM_INT16_INT32_INT64_BYTE_SBYTE_JAVA_TYPES,
                     leadingPropertyValue1, propertyValue2, propertyName);
-        case Decimal:
-        case Duration:
+        case Decimal, Duration:
             // Has to be one of: BigDecimal, BigInteger, Double, Float, Byte, Short, Integer, Long
             if (instanceOfExpectedType(EDM_DECIMAL_DURATION_JAVA_TYPES, leadingPropertyValue1)) {
                 try {
@@ -244,8 +238,7 @@ public interface EntityComparison {
             }
             throw createAndLogException(routingContext, EDM_DECIMAL_DURATION_JAVA_TYPES, leadingPropertyValue1,
                     propertyValue2, propertyName);
-        case Single:
-        case Double:
+        case Single, Double:
             // Has to be one of: Double, Float, BigDecimal, Byte, Short, Integer, Long
             if (instanceOfExpectedType(EDM_SINGLE_DOUBLE_JAVA_TYPES, leadingPropertyValue1)) {
                 try {
@@ -256,9 +249,7 @@ public interface EntityComparison {
             }
             throw createAndLogException(routingContext, EDM_SINGLE_DOUBLE_JAVA_TYPES, leadingPropertyValue1,
                     propertyValue2, propertyName);
-        case Date:
-        case TimeOfDay:
-        case DateTimeOffset:
+        case Date, TimeOfDay, DateTimeOffset:
             // Has to be one of: Calendar, Date, Timestamp, Time, Long, LocalDate, LocalDateTime, Instant
             if (instanceOfExpectedType(EDM_DATE_TIMEOFDAY_DATETIMEOFFSET_JAVA_TYPES, leadingPropertyValue1)) {
                 try {
@@ -298,10 +289,10 @@ public interface EntityComparison {
                 try {
                     // Example UUID: xxxxxxxx-xxxx-Bxxx-Axxx-xxxxxxxxxxxx
                     // The order is determined by 3 most significant bit of A
-                    if (propertyValue2 instanceof UUID) {
-                        return ((UUID) leadingPropertyValue1).compareTo((UUID) propertyValue2);
-                    } else if (propertyValue2 instanceof String) {
-                        return ((UUID) leadingPropertyValue1).compareTo(UUID.fromString((String) propertyValue2));
+                    if (propertyValue2 instanceof UUID propertyValue2Uuid) {
+                        return ((UUID) leadingPropertyValue1).compareTo(propertyValue2Uuid);
+                    } else if (propertyValue2 instanceof String propertyValue2String) {
+                        return ((UUID) leadingPropertyValue1).compareTo(UUID.fromString(propertyValue2String));
                     }
                     throw createAndLogException(routingContext, EDM_GUID_JAVA_TYPES, leadingPropertyValue1,
                             propertyValue2,

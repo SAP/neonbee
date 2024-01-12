@@ -439,7 +439,7 @@ public class NeonBee {
         return new HookScanner().scanForHooks(vertx)
                 .compose(hookClasses -> all(
                         hookClasses.stream().map(hookClass -> hookRegistry.registerHooks(hookClass, CORRELATION_ID))
-                                .collect(Collectors.toList())).mapEmpty());
+                                .toList()).mapEmpty());
     }
 
     /**
@@ -467,7 +467,8 @@ public class NeonBee {
             TrackingDataHandlingStrategy strategy;
 
             try {
-                strategy = (TrackingDataHandlingStrategy) Class.forName(config.getTrackingDataHandlingStrategy())
+                strategy = Class.forName(config.getTrackingDataHandlingStrategy())
+                        .asSubclass(TrackingDataHandlingStrategy.class)
                         .getConstructor().newInstance();
             } catch (Exception e) {
                 if (LOGGER.isWarnEnabled()) {
@@ -503,11 +504,11 @@ public class NeonBee {
      * @param className      the class name of the class to register the codec for
      * @param codecClassName the class name of the codec
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings("unchecked")
     private void registerCodec(String className, String codecClassName) {
         try {
             vertx.eventBus().registerDefaultCodec(Class.forName(className),
-                    (MessageCodec) Class.forName(codecClassName).getConstructor().newInstance());
+                    Class.forName(codecClassName).asSubclass(MessageCodec.class).getConstructor().newInstance());
         } catch (Exception e) {
             LOGGER.warn("Failed to register codec {} for class {}", codecClassName, className, e);
         }
@@ -520,7 +521,7 @@ public class NeonBee {
      */
     @VisibleForTesting
     Future<Void> createMicrometerRegistries() {
-        return all(config.createMicrometerRegistries(vertx).collect(Collectors.toList()))
+        return all(config.createMicrometerRegistries(vertx).toList())
                 .onSuccess(h -> h.<MeterRegistry>list().forEach(compositeMeterRegistry::add)).mapEmpty();
     }
 
@@ -578,7 +579,7 @@ public class NeonBee {
         return all(List.of(fromDeployables(requiredVerticles).compose(allTo(this)),
                 all(optionalVerticles).map(CompositeFuture::list).map(optionals -> {
                     return optionals.stream().map(Optional.class::cast).filter(Optional::isPresent).map(Optional::get)
-                            .map(Deployable.class::cast).collect(Collectors.toList());
+                            .map(Deployable.class::cast).toList();
                 }).map(Deployables::new).compose(anyTo(this)))).mapEmpty();
     }
 

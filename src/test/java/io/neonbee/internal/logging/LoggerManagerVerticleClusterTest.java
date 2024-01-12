@@ -6,7 +6,6 @@ import static io.neonbee.internal.verticle.LoggerManagerVerticle.QUERY_PARAMETER
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -35,7 +34,8 @@ class LoggerManagerVerticleClusterTest extends NeonBeeExtension.TestBase {
     private final DataContext dataContext = new DataContextImpl();
 
     @Test
-    void testSetLoggerLevelInCluster(@NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee node1,
+    void testSetLoggerLevelInCluster(
+            @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee node1,
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee node2,
             VertxTestContext testContext) {
         expectLogLevels(node1, "DEBUG", node2, "DEBUG", null, testContext);
@@ -56,45 +56,57 @@ class LoggerManagerVerticleClusterTest extends NeonBeeExtension.TestBase {
 
     private void expectLogLevels(NeonBee node1, String expectedLogLevel1, NeonBee node2, String expectedLogLevel2,
             Consumer<DataQuery> modifyQueryToNode1, VertxTestContext testContext) {
-        List<LoggerConfiguration> configList = List.of(new LoggerConfiguration("io.neonbee.internal", Level.DEBUG));
+        List<LoggerConfiguration> configList =
+                List.of(new LoggerConfiguration("io.neonbee.internal", Level.DEBUG));
 
         DataQuery updateQuery = new DataQuery().setAction(DataAction.UPDATE).setBody(
-                new JsonArray(configList.stream().map(LoggerConfiguration::toJson).collect(Collectors.toList()))
+                new JsonArray(configList.stream().map(LoggerConfiguration::toJson).toList())
                         .toBuffer());
         if (modifyQueryToNode1 != null) {
             modifyQueryToNode1.accept(updateQuery);
         }
-        DataRequest updateReq = new DataRequest(LoggerManagerVerticle.QUALIFIED_NAME, updateQuery).setLocalOnly(true);
+        DataRequest updateReq =
+                new DataRequest(LoggerManagerVerticle.QUALIFIED_NAME, updateQuery).setLocalOnly(true);
 
         DataRequest readReq = new DataRequest(LoggerManagerVerticle.QUALIFIED_NAME,
                 new DataQuery().setParameter("loggers", "io.neonbee.internal")).setLocalOnly(true);
 
         Future.all(DeploymentHelper.deployVerticle(node1.getVertx(), new LoggerManagerVerticle()),
                 DeploymentHelper.deployVerticle(node2.getVertx(), new LoggerManagerVerticle()))
-                .<JsonArray>compose(cf -> DataVerticle.requestData(node1.getVertx(), updateReq, dataContext))
+                .<JsonArray>compose(cf -> DataVerticle.requestData(node1.getVertx(), updateReq,
+                        dataContext))
                 .compose(it -> ConcurrentHelper.waitFor(node1.getVertx(), 150L))
                 .compose(
-                        up -> Future.all(DataVerticle.requestData(node1.getVertx(), readReq, dataContext),
-                                DataVerticle.requestData(node2.getVertx(), readReq, dataContext)))
+                        up -> Future.all(
+                                DataVerticle.requestData(node1.getVertx(), readReq,
+                                        dataContext),
+                                DataVerticle.requestData(node2.getVertx(), readReq,
+                                        dataContext)))
                 .compose(cf -> {
                     List<LoggerConfiguration> node1Response =
                             cf.<JsonArray>resultAt(0).stream().map(JsonObject.class::cast)
-                                    .map(LoggerConfiguration::fromJson).collect(Collectors.toList());
+                                    .map(LoggerConfiguration::fromJson).toList();
                     List<LoggerConfiguration> node2Response =
                             cf.<JsonArray>resultAt(1).stream().map(JsonObject.class::cast)
-                                    .map(LoggerConfiguration::fromJson).collect(Collectors.toList());
+                                    .map(LoggerConfiguration::fromJson).toList();
 
                     testContext.verify(() -> {
                         assertThat(node1Response).isNotEmpty();
                         Optional<String> level = node1Response.stream()
-                                .filter(config -> "io.neonbee.internal".equals(config.getName())).findFirst()
-                                .map(LoggerConfiguration::getConfiguredLevel).map(theLevel -> theLevel.levelStr);
+                                .filter(config -> "io.neonbee.internal"
+                                        .equals(config.getName()))
+                                .findFirst()
+                                .map(LoggerConfiguration::getConfiguredLevel)
+                                .map(theLevel -> theLevel.levelStr);
                         assertThat(level.isPresent()).isTrue();
                         assertThat(level.get()).isEqualTo(expectedLogLevel1);
 
                         assertThat(node2Response).isNotEmpty();
-                        level = node2Response.stream().filter(config -> "io.neonbee.internal".equals(config.getName()))
-                                .findFirst().map(LoggerConfiguration::getConfiguredLevel)
+                        level = node2Response.stream()
+                                .filter(config -> "io.neonbee.internal"
+                                        .equals(config.getName()))
+                                .findFirst()
+                                .map(LoggerConfiguration::getConfiguredLevel)
                                 .map(theLevel -> theLevel.levelStr);
                         assertThat(level.isPresent()).isTrue();
                         assertThat(level.get()).isEqualTo(expectedLogLevel2);

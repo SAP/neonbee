@@ -28,6 +28,8 @@ import io.vertx.ext.web.client.WebClientOptions;
 
 /**
  * Abstract base class for OData requests.
+ *
+ * @param <T> the type of OData request to wrap
  */
 public abstract class AbstractODataRequest<T extends AbstractODataRequest<T>> {
     protected final FullQualifiedName entity;
@@ -96,12 +98,16 @@ public abstract class AbstractODataRequest<T extends AbstractODataRequest<T>> {
     }
 
     /**
+     * Get the URI of the OData request.
+     *
      * @return request URI path addressing the desired OData service endpoint. This path segment gets merged with the
      *         OData endpoint's base path before being dispatched via {@link #send(NeonBee)}.
      */
     protected abstract String getUri();
 
     /**
+     * Get the namespace part of the URI of the OData request.
+     *
      * @return {@link FullQualifiedName#getNamespace()} of this request's {@link #entity} followed by a forward slash
      *         (/) or an empty string if the entity's namespace is {@code null} or empty.
      */

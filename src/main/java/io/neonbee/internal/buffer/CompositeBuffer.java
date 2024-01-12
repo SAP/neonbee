@@ -10,6 +10,11 @@ import io.vertx.core.buffer.Buffer;
 
 public final class CompositeBuffer {
     /**
+     * This class does not need to be instantiated.
+     */
+    private CompositeBuffer() {}
+
+    /**
      * Wrap the given {@link Buffer}(s) in an unmodifiable {@link Buffer}. If more than one {@link Buffer} is supplied,
      * the resulting composite {@link Buffer} represents a concatenation of all supplied buffers. If any of the
      * underlying buffers is modified, also the returned composite buffer is.
