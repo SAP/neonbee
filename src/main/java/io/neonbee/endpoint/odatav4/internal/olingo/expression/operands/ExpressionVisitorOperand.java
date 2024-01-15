@@ -126,6 +126,8 @@ public class ExpressionVisitorOperand implements EntityComparison {
         } else if ((type instanceof EdmPrimitiveType) && !(value instanceof Collection)) {
             return value.getClass() == getDefaultType((EdmPrimitiveType) type) ? this
                     : setType((EdmPrimitiveType) type);
+        } else if (type == null) {
+            return new ExpressionVisitorOperand(routingContext, value, PRIMITIVE_NULL);
         } else {
             String message =
                     "A single primitive-type instance is expected. A collection of primitive-types is currently not supported.";
