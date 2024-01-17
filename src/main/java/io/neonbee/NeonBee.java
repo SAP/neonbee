@@ -47,6 +47,7 @@ import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.config.ServerConfig;
 import io.neonbee.data.DataException;
 import io.neonbee.data.DataQuery;
+import io.neonbee.endpoint.raw.RawResponse;
 import io.neonbee.entity.EntityModelManager;
 import io.neonbee.entity.EntityVerticle;
 import io.neonbee.entity.EntityWrapper;
@@ -73,6 +74,7 @@ import io.neonbee.internal.codec.EntityWrapperMessageCodec;
 import io.neonbee.internal.codec.ImmutableBufferMessageCodec;
 import io.neonbee.internal.codec.ImmutableJsonArrayMessageCodec;
 import io.neonbee.internal.codec.ImmutableJsonObjectMessageCodec;
+import io.neonbee.internal.codec.RawResponseCodec;
 import io.neonbee.internal.deploy.Deployable;
 import io.neonbee.internal.deploy.Deployables;
 import io.neonbee.internal.helper.ConfigHelper;
@@ -489,7 +491,8 @@ public class NeonBee {
                     .registerDefaultCodec(ImmutableBuffer.class, new ImmutableBufferMessageCodec())
                     .registerDefaultCodec(ImmutableJsonArray.class, new ImmutableJsonArrayMessageCodec())
                     .registerDefaultCodec(ImmutableJsonObject.class, new ImmutableJsonObjectMessageCodec())
-                    .registerDefaultCodec(DataException.class, new DataExceptionMessageCodec());
+                    .registerDefaultCodec(DataException.class, new DataExceptionMessageCodec())
+                    .registerDefaultCodec(RawResponse.class, new RawResponseCodec());
 
             // add any additional default codecs configured in NeonBeeConfig
             config.getEventBusCodecs().forEach(this::registerCodec);

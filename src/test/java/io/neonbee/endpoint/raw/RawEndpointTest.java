@@ -20,6 +20,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import io.neonbee.NeonBeeDeployable;
 import io.neonbee.data.DataAdapter;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataException;
@@ -30,6 +31,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.HttpResponse;
@@ -135,5 +137,37 @@ class RawEndpointTest extends DataVerticleTestBase {
     private Future<HttpResponse<Buffer>> sendRequest(String verticleName, String path, String query) {
         String uriPath = String.format("/raw/%s/%s/%s?%s", NEONBEE_NAMESPACE, verticleName, path, query);
         return createRequest(HttpMethod.GET, uriPath).send();
+    }
+
+    @Test
+    @DisplayName("RawDataEndpointHandler must set uriPath and query correct")
+    void test(VertxTestContext testContext) {
+        deployVerticle(new RawResponseVerticle())
+                .compose(s -> sendRequest("Test", "", ""))
+                .onComplete(testContext.succeeding(resp -> testContext.verify(() -> {
+                    assertThat(resp.statusCode()).isEqualTo(418);
+                    assertThat(resp.statusMessage()).isEqualTo("I'm a teapot");
+                    assertThat(resp.getHeader("TEA_STATUS")).isEqualTo("The tea still needs to steep");
+                    assertThat(resp.bodyAsString()).isEqualTo("White Tea");
+                    testContext.completeNow();
+                })));
+    }
+
+    @NeonBeeDeployable(namespace = NEONBEE_NAMESPACE, autoDeploy = false)
+    public static class RawResponseVerticle extends DataVerticle<RawResponse> {
+
+        @Override
+        public Future<RawResponse> retrieveData(DataQuery query, DataContext context) {
+            return Future.succeededFuture(new RawResponse(
+                    418,
+                    "I'm a teapot",
+                    new HeadersMultiMap().add("TEA_STATUS", "The tea still needs to steep"),
+                    Buffer.buffer("White Tea")));
+        }
+
+        @Override
+        public String getName() {
+            return "Test";
+        }
     }
 }

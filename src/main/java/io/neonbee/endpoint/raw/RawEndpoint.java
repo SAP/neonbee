@@ -183,6 +183,13 @@ public class RawEndpoint implements Endpoint {
                             result = ((JsonObject) result).toBuffer();
                         } else if (result instanceof JsonArray) {
                             result = ((JsonArray) result).toBuffer();
+                        } else if (result instanceof RawResponse nbResponse) {
+                            response.setStatusCode(nbResponse.getStatusCode());
+                            response.setStatusMessage(nbResponse.getReasonPhrase());
+                            if (nbResponse.getHeaders() != null) {
+                                response.headers().addAll(nbResponse.getHeaders());
+                            }
+                            result = nbResponse.getBody();
                         } else if (!(result instanceof Buffer)) {
                             // TODO add logic here, what kind of data is returned by the data verticle and what kind of
                             // data is ACCEPTed by the client. For now just support JSON and always return
