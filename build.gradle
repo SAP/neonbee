@@ -9,7 +9,7 @@ plugins {
     id 'checkstyle'
 
     // community plugins
-    id 'com.diffplug.spotless' version '6.23.3'
+    id 'com.diffplug.spotless' version '6.24.0'
     id 'net.ltgt.errorprone' version '3.1.0'
     id 'com.github.spotbugs' version '6.0.6'
     id 'org.ajoberstar.grgit' version '5.2.1'
