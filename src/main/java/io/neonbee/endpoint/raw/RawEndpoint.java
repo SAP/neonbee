@@ -86,6 +86,8 @@ public class RawEndpoint implements Endpoint {
 
     @VisibleForTesting
     static class RawHandler implements Handler<RoutingContext> {
+        private static final String CONTENT_TYPE = "Content-Type";
+
         private final boolean exposeHiddenVerticles;
 
         private final RegexBlockList exposedVerticles;
@@ -175,10 +177,11 @@ public class RawEndpoint implements Endpoint {
                             return;
                         }
 
-                        HttpServerResponse response = routingContext.response()
-                                .putHeader("Content-Type",
-                                        Optional.ofNullable(context.responseData().get("Content-Type"))
-                                                .map(String.class::cast).orElse("application/json"));
+                        HttpServerResponse response = routingContext.response();
+                        response.putHeader(CONTENT_TYPE,
+                                Optional.ofNullable(context.responseData().get(CONTENT_TYPE))
+                                        .map(String.class::cast).orElse("application/json"));
+
                         if (result instanceof JsonObject) {
                             result = ((JsonObject) result).toBuffer();
                         } else if (result instanceof JsonArray) {
@@ -189,9 +192,11 @@ public class RawEndpoint implements Endpoint {
                             // application/json.
                             result = Json.encodeToBuffer(asyncResult.result());
                         } else {
-                            // fallback to text/plain, so that the browser tries to display it, instead of downloading
-                            // it
-                            response.putHeader("Content-Type", "text/plain");
+                            // fallback to text/plain if the Content-Type isn't set, so that the browser tries to
+                            // display it, instead of downloading it
+                            response.putHeader(CONTENT_TYPE,
+                                    Optional.ofNullable(context.responseData().get(CONTENT_TYPE))
+                                            .map(String.class::cast).orElse("text/plain"));
                         }
 
                         response.end((Buffer) result);
