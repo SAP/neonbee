@@ -95,17 +95,22 @@ starting NeonBee.
 The NeonBee config must be located in a `config` folder of the working directory. The file must be either in yaml or
 json and the name of the file is the fully qualified name of NeonBee (`io.neonbee.NeonBee.yaml`).
 
-| Property                                        |  Type   | Required | Description                                                                                                             |
-| :---------------------------------------------- | :-----: |:--------:|:------------------------------------------------------------------------------------------------------------------------|
-| `eventBusCodecs`                                | integer |    No    | Sets the event bus codecs to be loaded with NeonBee.                                                                    |
-| `eventBusTimeout`                               | integer |    No    | Sets the event bus timeout in seconds. Default is 30 seconds.                                                           |
-| [`health`](#health)                             | object  |    No    | Sets health config.                                                                                                     |
-| [`metrics`](#metrics)                           | object  |    No    | Sets metrics config.                                                                                                    |
-| [`micrometerRegistries`](#micrometerregistries) | object  |    No    | Sets the list of Micrometer registries for metrics forwarding.                                                          |
-| [`platformClasses`](#platformclasses)           | object  |    No    | Sets classes available by the platform.                                                                                 |
-| `trackingDataHandlingStrategy`                  | string  |    No    | The class to load for tracking data handling. Default: `io.neonbee.internal.tracking.TrackingDataLoggingStrategy`       |
-| `timeZone`                                      | string  |    No    | Sets the timezone used in NeonBee. Default is `UTC`.                                                                    |
-| `jsonMaxStringSize`                             | string  |    No    | Set the maximum string length (in chars or bytes, depending on input context) to parse JSON input strings or buffers.   |
+| Property                                        |  Type   | Required | Description                                                                                                                   |
+| :---------------------------------------------- | :-----: |:--------:|:------------------------------------------------------------------------------------------------------------------------------|
+| `eventBusCodecs`                                | integer |    No    | Sets the event bus codecs to be loaded with NeonBee.                                                                          |
+| `eventBusTimeout`                               | integer |    No    | Sets the event bus timeout in seconds. Default is 30 seconds.                                                                 |
+| `deploymentTimeout`                             | integer |    No    | Sets a timeout in seconds when pending deployments will fail. Default is 30 seconds, negative values disable the timeout.     |
+| `modelsDeploymentTimeout`                       | integer |    No    | Overrides the default deployment timeout for model deployments.                                                               |
+| `moduleDeploymentTimeout`                       | integer |    No    | Overrides the default deployment timeout for module deployments.                                                              |
+| `verticleDeploymentTimeout`                     | integer |    No    | Overrides the default deployment timeout for verticle deployments.                                                            |
+| `defaultThreadingModel`                         | string  |    No    | Sets the default [threading model](https://vertx.io/docs/apidocs/io/vertx/core/ThreadingModel.html) used to deploy verticles. |
+| [`health`](#health)                             | object  |    No    | Sets health config.                                                                                                           |
+| [`metrics`](#metrics)                           | object  |    No    | Sets metrics config.                                                                                                          |
+| [`micrometerRegistries`](#micrometerregistries) | object  |    No    | Sets the list of Micrometer registries for metrics forwarding.                                                                |
+| [`platformClasses`](#platformclasses)           | object  |    No    | Sets classes available by the platform.                                                                                       |
+| `trackingDataHandlingStrategy`                  | string  |    No    | The class to load for tracking data handling. Default: `io.neonbee.internal.tracking.TrackingDataLoggingStrategy`             |
+| `timeZone`                                      | string  |    No    | Sets the timezone used in NeonBee. Default is `UTC`.                                                                          |
+| `jsonMaxStringSize`                             | string  |    No    | Set the maximum string length (in chars or bytes, depending on input context) to parse JSON input strings or buffers.         |
 
 ### `health`
 
