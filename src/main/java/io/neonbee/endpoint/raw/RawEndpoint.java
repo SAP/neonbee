@@ -145,8 +145,8 @@ public class RawEndpoint implements Endpoint {
                             .addHeader("X-HTTP-Method", request.method().name());
 
             DataContextImpl context = new DataContextImpl(routingContext);
-            requestData(routingContext.vertx(), new DataRequest(qualifiedName, query),
-                    new DataContextImpl(routingContext)).onComplete(asyncResult -> {
+            requestData(routingContext.vertx(), new DataRequest(qualifiedName, query), context)
+                    .onComplete(asyncResult -> {
                         if (asyncResult.failed()) {
                             Throwable cause = asyncResult.cause();
                             if (cause instanceof DataException dataException) {
@@ -175,7 +175,7 @@ public class RawEndpoint implements Endpoint {
                             return;
                         }
 
-                        HttpServerResponse response = routingContext.response()//
+                        HttpServerResponse response = routingContext.response()
                                 .putHeader("Content-Type",
                                         Optional.ofNullable(context.responseData().get("Content-Type"))
                                                 .map(String.class::cast).orElse("application/json"));
