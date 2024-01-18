@@ -38,6 +38,9 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.VertxTestContext;
 
 class RawEndpointTest extends DataVerticleTestBase {
+
+    public static final String CONTENT_TYPE = "Content-Type";
+
     private static RoutingContext mockRoutingContext(String routingPath) {
         RoutingContext routingContextMock = mock(RoutingContext.class);
         Route routeMock = mock(Route.class);
@@ -134,25 +137,47 @@ class RawEndpointTest extends DataVerticleTestBase {
                 .onComplete(testContext.succeedingThenComplete());
     }
 
-    @Test
+    static Stream<Arguments> testSettingContentTypeParameter() {
+        return Stream.of(
+                Arguments.of(new JsonResponseVerticle()),
+                Arguments.of(new BufferResponseVerticle()));
+    }
+
+    @ParameterizedTest(name = "{index}: with verticle name {0}./")
+    @MethodSource("testSettingContentTypeParameter")
     @DisplayName("RawDataEndpointHandler must set the Content-Type header correct")
-    void test(VertxTestContext testContext) {
-        deployVerticle(new RawResponseVerticle())
+    void testSettingContentType(DataVerticle<?> dataVerticle, VertxTestContext testContext) {
+        deployVerticle(dataVerticle)
                 .compose(s -> sendRequest("Test", "", ""))
                 .onComplete(testContext.succeeding(resp -> testContext.verify(() -> {
-                    assertThat(resp.getHeader("Content-Type")).isEqualTo("image/gif");
+                    assertThat(resp.getHeader(CONTENT_TYPE)).isEqualTo("image/gif");
                     assertThat(resp.bodyAsJsonObject()).isEqualTo(JsonObject.of("foo", "bar"));
                     testContext.completeNow();
                 })));
     }
 
     @NeonBeeDeployable(namespace = NEONBEE_NAMESPACE, autoDeploy = false)
-    public static class RawResponseVerticle extends DataVerticle<JsonObject> {
+    public static class JsonResponseVerticle extends DataVerticle<JsonObject> {
 
         @Override
         public Future<JsonObject> retrieveData(DataQuery query, DataContext context) {
-            context.responseData().put("Content-Type", "image/gif");
+            context.responseData().put(CONTENT_TYPE, "image/gif");
             return Future.succeededFuture(JsonObject.of("foo", "bar"));
+        }
+
+        @Override
+        public String getName() {
+            return "Test";
+        }
+    }
+
+    @NeonBeeDeployable(namespace = NEONBEE_NAMESPACE, autoDeploy = false)
+    public static class BufferResponseVerticle extends DataVerticle<Buffer> {
+
+        @Override
+        public Future<Buffer> retrieveData(DataQuery query, DataContext context) {
+            context.responseData().put(CONTENT_TYPE, "image/gif");
+            return Future.succeededFuture(JsonObject.of("foo", "bar").toBuffer());
         }
 
         @Override
