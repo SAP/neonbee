@@ -20,6 +20,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import io.neonbee.NeonBeeDeployable;
 import io.neonbee.data.DataAdapter;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataException;
@@ -30,6 +31,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.HttpResponse;
@@ -130,6 +132,33 @@ class RawEndpointTest extends DataVerticleTestBase {
 
         deployVerticle(dummy).compose(s -> sendRequest(verticleName, expectedUriPath, expectedQuery))
                 .onComplete(testContext.succeedingThenComplete());
+    }
+
+    @Test
+    @DisplayName("RawDataEndpointHandler must set the Content-Type header correct")
+    void test(VertxTestContext testContext) {
+        deployVerticle(new RawResponseVerticle())
+                .compose(s -> sendRequest("Test", "", ""))
+                .onComplete(testContext.succeeding(resp -> testContext.verify(() -> {
+                    assertThat(resp.getHeader("Content-Type")).isEqualTo("image/gif");
+                    assertThat(resp.bodyAsJsonObject()).isEqualTo(JsonObject.of("foo", "bar"));
+                    testContext.completeNow();
+                })));
+    }
+
+    @NeonBeeDeployable(namespace = NEONBEE_NAMESPACE, autoDeploy = false)
+    public static class RawResponseVerticle extends DataVerticle<JsonObject> {
+
+        @Override
+        public Future<JsonObject> retrieveData(DataQuery query, DataContext context) {
+            context.responseData().put("Content-Type", "image/gif");
+            return Future.succeededFuture(JsonObject.of("foo", "bar"));
+        }
+
+        @Override
+        public String getName() {
+            return "Test";
+        }
     }
 
     private Future<HttpResponse<Buffer>> sendRequest(String verticleName, String path, String query) {
