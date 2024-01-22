@@ -1,4 +1,4 @@
-FROM gradle:7.2-jdk11 AS builder
+FROM gradle:8.5-jdk17 AS builder
 
 RUN mkdir app
 WORKDIR /app
@@ -14,7 +14,7 @@ RUN gradle -x test -x spotlessJava \
     -x javadoc -x javadocJar -x testJavadoc -x testJavadocJar \
     --no-daemon clean build
 
-FROM sapmachine:17.0.9
+FROM sapmachine:17.0.10
 
 # Creates app working directory and a system user (r) with
 # no password, no home directory, no shell.
