@@ -152,10 +152,6 @@ apply from: 'gradle/release.gradle'
 apply from: 'gradle/staticCodeCheck.gradle'
 apply from: 'gradle/changelog.gradle'
 
-task initWrapper(type: Wrapper) {
-    gradleVersion = '7.2'
-}
-
 // ############ Annotation Processing
 
 task annotationProcessing(type: JavaCompile, group: 'build') {
