@@ -82,6 +82,18 @@ class PetStoreTest extends NeonBeeTestBase {
                 })));
     }
 
+    @Test
+    @DisplayName("should return 404 if endpoint doesn't exist")
+    void testNotFound(VertxTestContext testContext) {
+        super.createRequest(HttpMethod.GET, "/any404").send()
+                .onComplete(testContext.succeeding(resp -> testContext.verify(() -> {
+                    assertThat(resp.statusCode()).isEqualTo(404);
+                    assertThat(resp.statusMessage()).isEqualTo("Not Found");
+                    assertThat(resp.bodyAsString()).startsWith("Error 404: Not Found (Correlation ID:");
+                    testContext.completeNow();
+                })));
+    }
+
     @Override
     public HttpRequest<Buffer> createRequest(HttpMethod method, String path) {
         return super.createRequest(method, PetStoreEndpoint.DEFAULT_BASE_PATH + path);
