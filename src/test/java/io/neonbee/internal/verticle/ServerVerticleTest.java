@@ -171,5 +171,4 @@ class ServerVerticleTest extends NeonBeeTestBase {
             throw new IllegalStateException(EXCEPTION_MESSAGE);
         }
     }
-
 }
