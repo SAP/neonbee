@@ -27,7 +27,7 @@
 
     ```console
     git fetch
-    git push origin <nextVersion>:/refs/heads/0.x
+    git push origin <nextVersion>:refs/heads/0.x
     ```
 
     where `0.x` refers to the related major version
