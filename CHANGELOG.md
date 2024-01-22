@@ -1,5 +1,57 @@
 # Changelog
 
+## 0.32.0 (2024-01-22)
+
+### BREAKING CHANGES
+
+- set Automatic-Module-Name ([9e381e81](https://github.com/SAP/neonbee/commit/9e381e8163459a373a912ca1172023fcb28855ab))
+
+
+### Bug Fixes
+
+- findFirst throws NPE if the selected element is null ([35452cce](https://github.com/SAP/neonbee/commit/35452cce80ff8dfc914155bea90f417103c662f9))
+- complete promise in all cases ([d7ad4ce6](https://github.com/SAP/neonbee/commit/d7ad4ce643bc9af70b8d0127dc7cbe5fb6d98ca7))
+- handle unexpected exceptions ([be23b814](https://github.com/SAP/neonbee/commit/be23b81481c7a36b237d25b18b548fd2c3575e04))
+- setting the response Content-Type ([1b04954d](https://github.com/SAP/neonbee/commit/1b04954d74f715bc4154d054e20eff40fe2af441)), closes [#365](https://github.com/SAP/neonbee/issues/365)
+
+
+### Features
+
+- use always the provided Content-Type ([176da325](https://github.com/SAP/neonbee/commit/176da325e29f898dbdd7bef2d21e095971c32881))
+- add configuration to set default threading model for verticles ([ad71c543](https://github.com/SAP/neonbee/commit/ad71c54382f07cfb0b85bd884ec9e2c8102911ea))
+
+
+### Chores
+
+- upgrade to Vert.x 4.5.1, fix deprecations ([af4ff536](https://github.com/SAP/neonbee/commit/af4ff53650c92236ef40093b0b9a32625eaadeff))
+- deprecate Java 11, introduce Java 21, fix deprecations & PMD ([a413e333](https://github.com/SAP/neonbee/commit/a413e3335b7ea9ad0a9e4215daa73a43fef68dc0))
+
+
+### Documentation
+
+- add documentation for new config options ([892d7a94](https://github.com/SAP/neonbee/commit/892d7a94fd0bb1c28a3fa4909db3263d5431b2ab))
+
+
+### Build System
+
+- **deps**: bump com.github.spotbugs from 5.2.3 to 5.2.4 ([ffcecf49](https://github.com/SAP/neonbee/commit/ffcecf49cbac14581f4d188a1df271c7606c6dc0))
+- **deps**: bump com.diffplug.spotless from 6.22.0 to 6.23.0 ([8cb2851c](https://github.com/SAP/neonbee/commit/8cb2851ced019d2a7f51232b831eda2567886387))
+- **deps**: bump io.micrometer:micrometer-registry-prometheus ([e8b5aac5](https://github.com/SAP/neonbee/commit/e8b5aac50f57480f1740f7c84692c9c9fee8d8de))
+- **deps**: bump com.diffplug.spotless from 6.23.0 to 6.23.3 ([8de3fe6b](https://github.com/SAP/neonbee/commit/8de3fe6b52e2195d4f59ddf83d5e75c1c312f0cf))
+- **deps**: bump com.github.spotbugs:spotbugs-annotations ([db80d88b](https://github.com/SAP/neonbee/commit/db80d88bcd79ff32ea4c7af94e8145717d4e7a16))
+- **deps**: bump ch.qos.logback:logback-classic from 1.4.11 to 1.4.14 ([9f4bcb98](https://github.com/SAP/neonbee/commit/9f4bcb987f5e822d53d77c75a58a630959b72eed))
+- **deps**: bump com.github.spotbugs:spotbugs-annotations ([8ec575a5](https://github.com/SAP/neonbee/commit/8ec575a5fb8ca9ba98a10a8a182e45efaafb20c5))
+- **deps**: bump org.slf4j:slf4j-api from 2.0.9 to 2.0.10 ([4df2ea30](https://github.com/SAP/neonbee/commit/4df2ea300362cf75d4970abe2ab7ce6e93910e7a))
+- **deps**: bump com.diffplug.spotless from 6.23.3 to 6.24.0 ([be07896b](https://github.com/SAP/neonbee/commit/be07896bf0f6f59a53c255590bbf1de8319da4a1))
+
+
+### Continuous Integration
+
+- fix deprecated task sonarqube ([51edba01](https://github.com/SAP/neonbee/commit/51edba012dd897a3859425b38f13bbacf836a3ac))
+- update docker build ([f32b2295](https://github.com/SAP/neonbee/commit/f32b229592d44b90f58045f137b4e78d6232bc60))
+- update jacoco ([51a97750](https://github.com/SAP/neonbee/commit/51a97750763dcaae776c8cfbeebafdaa3adf0ceb))
+
+
 ## 0.31.0 (2023-11-20)
 
 ### Features
