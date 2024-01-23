@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.31.1 (2024-01-23)
+
+### Bug Fixes
+
+- findFirst throws NPE if the selected element is null ([b68fab71](https://github.com/SAP/neonbee/commit/b68fab714e6499877b9b178af480de49441d4e44))
+- complete promise in all cases ([a1c64609](https://github.com/SAP/neonbee/commit/a1c646090a80e9124a5c7efb0d559f41b7ad592e))
+- handle unexpected exceptions ([65385bc2](https://github.com/SAP/neonbee/commit/65385bc248d85554ef4e6f3b70a089c5ce7d8580))
+- setting the response Content-Type ([d8f31ba9](https://github.com/SAP/neonbee/commit/d8f31ba95c9b283eaf27c42ca3f7bf773e0f0fb2)), closes [#365](https://github.com/SAP/neonbee/issues/365)
+
+
+### Features
+
+- use always the provided Content-Type ([3f03c246](https://github.com/SAP/neonbee/commit/3f03c246d63ea7afd49523eff893fad4cce97ddc))
+
+
 ## 0.31.0 (2023-11-20)
 
 ### Features
