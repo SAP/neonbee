@@ -14,7 +14,7 @@ plugins {
     id 'com.github.spotbugs' version '6.0.6'
     id 'org.ajoberstar.grgit' version '5.2.1'
     id 'com.github.ksoichiro.console.reporter' version '0.6.3'
-    id 'se.bjurr.violations.violations-gradle-plugin' version '1.52.7'
+    id 'se.bjurr.violations.violations-gradle-plugin' version '2.0.0'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
     id 'org.sonarqube' version '4.4.1.3373'
     id 'team.yi.semantic-gitlog' version '0.6.5'
