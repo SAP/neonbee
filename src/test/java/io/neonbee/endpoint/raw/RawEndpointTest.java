@@ -11,6 +11,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -39,7 +40,9 @@ import io.vertx.junit5.VertxTestContext;
 
 class RawEndpointTest extends DataVerticleTestBase {
 
-    public static final String CONTENT_TYPE = "Content-Type";
+    private static final String CONTENT_TYPE = "Content-Type";
+
+    private static final String RESPONSE_HEADERS = "RESPONSE_HEADERS";
 
     private static RoutingContext mockRoutingContext(String routingPath) {
         RoutingContext routingContextMock = mock(RoutingContext.class);
@@ -156,12 +159,27 @@ class RawEndpointTest extends DataVerticleTestBase {
                 })));
     }
 
+    @Test
+    @DisplayName("RawDataEndpointHandler must set the additional response headers correct")
+    void testSettingAdditionalHeaders(VertxTestContext testContext) {
+        deployVerticle(new BufferResponseVerticle())
+                .compose(s -> sendRequest("Test", "", ""))
+                .onComplete(testContext.succeeding(resp -> testContext.verify(() -> {
+                    assertThat(resp.getHeader(CONTENT_TYPE)).isEqualTo("image/gif");
+                    assertThat(resp.getHeader("foo")).isEqualTo("bar");
+                    assertThat(resp.getHeader("hodor")).isEqualTo("hodor");
+                    assertThat(resp.bodyAsJsonObject()).isEqualTo(JsonObject.of("foo", "bar"));
+                    testContext.completeNow();
+                })));
+    }
+
     @NeonBeeDeployable(namespace = NEONBEE_NAMESPACE, autoDeploy = false)
     public static class JsonResponseVerticle extends DataVerticle<JsonObject> {
 
         @Override
         public Future<JsonObject> retrieveData(DataQuery query, DataContext context) {
             context.responseData().put(CONTENT_TYPE, "image/gif");
+
             return Future.succeededFuture(JsonObject.of("foo", "bar"));
         }
 
@@ -177,6 +195,12 @@ class RawEndpointTest extends DataVerticleTestBase {
         @Override
         public Future<Buffer> retrieveData(DataQuery query, DataContext context) {
             context.responseData().put(CONTENT_TYPE, "image/gif");
+            context.responseData().put(
+                    RESPONSE_HEADERS,
+                    Map.of(
+                            "foo", "bar",
+                            "hodor", "hodor"));
+
             return Future.succeededFuture(JsonObject.of("foo", "bar").toBuffer());
         }
 
