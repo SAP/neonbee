@@ -86,7 +86,6 @@ public class RawEndpoint implements Endpoint {
 
     @VisibleForTesting
     static class RawHandler implements Handler<RoutingContext> {
-        private static final String CONTENT_TYPE = "Content-Type";
 
         private final boolean exposeHiddenVerticles;
 
@@ -178,8 +177,15 @@ public class RawEndpoint implements Endpoint {
                         }
 
                         HttpServerResponse response = routingContext.response();
-                        response.putHeader(CONTENT_TYPE,
-                                Optional.ofNullable(context.responseData().get(CONTENT_TYPE))
+
+                        Optional.ofNullable(context.responseData())
+                                .map(map -> map.get(RESPONSE_HEADERS_HINT))
+                                .filter(Map.class::isInstance)
+                                .map(Map.class::cast)
+                                .ifPresent(response.headers()::addAll);
+
+                        response.putHeader(CONTENT_TYPE_HINT,
+                                Optional.ofNullable(context.responseData().get(CONTENT_TYPE_HINT))
                                         .map(String.class::cast).orElse("application/json"));
 
                         if (result instanceof JsonObject) {
@@ -194,8 +200,8 @@ public class RawEndpoint implements Endpoint {
                         } else {
                             // fallback to text/plain if the Content-Type isn't set, so that the browser tries to
                             // display it, instead of downloading it
-                            response.putHeader(CONTENT_TYPE,
-                                    Optional.ofNullable(context.responseData().get(CONTENT_TYPE))
+                            response.putHeader(CONTENT_TYPE_HINT,
+                                    Optional.ofNullable(context.responseData().get(CONTENT_TYPE_HINT))
                                             .map(String.class::cast).orElse("text/plain"));
                         }
 
