@@ -1,18 +1,19 @@
 # Changelog
 
-## 0.31.1 (2024-01-23)
+## 0.31.2 (2024-02-09)
 
 ### Bug Fixes
 
-- findFirst throws NPE if the selected element is null ([b68fab71](https://github.com/SAP/neonbee/commit/b68fab714e6499877b9b178af480de49441d4e44))
-- complete promise in all cases ([a1c64609](https://github.com/SAP/neonbee/commit/a1c646090a80e9124a5c7efb0d559f41b7ad592e))
-- handle unexpected exceptions ([65385bc2](https://github.com/SAP/neonbee/commit/65385bc248d85554ef4e6f3b70a089c5ce7d8580))
-- setting the response Content-Type ([d8f31ba9](https://github.com/SAP/neonbee/commit/d8f31ba95c9b283eaf27c42ca3f7bf773e0f0fb2)), closes [#365](https://github.com/SAP/neonbee/issues/365)
+- findFirst throws NPE if the selected element is null ([e3049a6d](https://github.com/SAP/neonbee/commit/e3049a6d8eebabb606eec945e3cf9707dd90c648))
+- complete promise in all cases ([c9730d15](https://github.com/SAP/neonbee/commit/c9730d151d32375f478cce6a4ca2f2136695a935))
+- setting the response Content-Type ([316d29b4](https://github.com/SAP/neonbee/commit/316d29b4a5d22db5e4a5fbaaf401d06f41330fa6)), closes [#365](https://github.com/SAP/neonbee/issues/365)
+- handle unexpected exceptions ([189a23c4](https://github.com/SAP/neonbee/commit/189a23c45b50687ed90128c50cf78e0305d7bbb4))
 
 
 ### Features
 
-- use always the provided Content-Type ([3f03c246](https://github.com/SAP/neonbee/commit/3f03c246d63ea7afd49523eff893fad4cce97ddc))
+- use always the provided Content-Type ([15660812](https://github.com/SAP/neonbee/commit/15660812cdfd2f79981489d45d08f6460f721d06))
+- allow to set HTTP response values ([ed4b6605](https://github.com/SAP/neonbee/commit/ed4b66058d000788db3bb70bc325a5c68baec3c4))
 
 
 ## 0.31.0 (2023-11-20)
