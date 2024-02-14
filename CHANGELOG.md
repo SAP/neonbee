@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.33.0 (2024-02-14)
+
+### Features
+
+- allow to set HTTP response values ([ef25c432](https://github.com/SAP/neonbee/commit/ef25c4324ad5cc7936a79c318dbc7262ff8f3e53))
+
+
+### Documentation
+
+- fix release doc ([8abf1f1c](https://github.com/SAP/neonbee/commit/8abf1f1cc4213f821fbedd4292e41f8522e56660))
+
+
+### Build System
+
+- **deps**: bump se.bjurr.violations.violations-gradle-plugin ([7fbe7acd](https://github.com/SAP/neonbee/commit/7fbe7acd59f357ece7d01f793bdbae3a949e5f44))
+- **deps**: bump com.sap.cds:cds4j-core from 2.5.0 to 2.6.1 ([34c7c86b](https://github.com/SAP/neonbee/commit/34c7c86b9327001093f85ada01e6fd7290384224))
+- **deps**: bump com.diffplug.spotless from 6.24.0 to 6.25.0 ([c1d08a16](https://github.com/SAP/neonbee/commit/c1d08a168309d5ce9efce50c51edb891cbb27a58))
+- **deps**: bump com.github.spotbugs from 6.0.6 to 6.0.7 ([bc0a46f7](https://github.com/SAP/neonbee/commit/bc0a46f7f6b6a99da206d04e1d42aaec6baa5cc2))
+- **deps**: bump team.yi.semantic-gitlog from 0.6.5 to 0.6.12 ([94fcc409](https://github.com/SAP/neonbee/commit/94fcc4096f9ebe59ebfe65d4a1ec0bfbc6d3ce87))
+- **deps**: bump org.slf4j:slf4j-api from 2.0.11 to 2.0.12 ([e3e967fd](https://github.com/SAP/neonbee/commit/e3e967fd6657d66447732204eb794b0a0134b37e))
+- **deps**: upgrade `vertx` to 4.5.3 ([4294c8f5](https://github.com/SAP/neonbee/commit/4294c8f55586832364af2c59caabacd84cc3bfb4))
+- **deps**: bump io.micrometer:micrometer-registry-prometheus ([d0b8202f](https://github.com/SAP/neonbee/commit/d0b8202ffc0501510a16088b69561596770024e8))
+
+
 ## 0.32.0 (2024-01-22)
 
 ### BREAKING CHANGES
