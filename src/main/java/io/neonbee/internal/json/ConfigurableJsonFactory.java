@@ -115,7 +115,6 @@ public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
         public ConfigurableJsonCodec registerSerializationModule(Module module) {
             if (JacksonFactory.CODEC instanceof DatabindCodec) {
                 DatabindCodec.mapper().registerModule(module);
-                DatabindCodec.prettyMapper().registerModule(module);
             } else {
                 LOGGER.warn(
                         "JsonCodec is no instance of DatabindCodec, registerSerializationModule will be ignored.");
