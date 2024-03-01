@@ -11,6 +11,9 @@ import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -21,6 +24,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import com.aayushatharva.brotli4j.decoder.BrotliInputStream;
+
+import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeDeployable;
 import io.neonbee.data.DataAdapter;
 import io.neonbee.data.DataContext;
@@ -35,7 +41,10 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.junit5.VertxTestContext;
 
 class RawEndpointTest extends DataVerticleTestBase {
@@ -173,6 +182,42 @@ class RawEndpointTest extends DataVerticleTestBase {
                 })));
     }
 
+    @Test
+    @DisplayName("RawDataEndpointHandler must set the additional response headers correct")
+    void brotliTest(VertxTestContext testContext) {
+
+        String uriPath = String.format("/raw/%s/%s/%s?%s", NEONBEE_NAMESPACE, "Test", "", "");
+        createRequest(HttpMethod.GET, uriPath).send();
+
+        NeonBee neonBee = getNeonBee();
+        WebClientOptions opts = new WebClientOptions().setDefaultHost("localhost")
+                .setDefaultPort(neonBee.getOptions().getServerPort());
+//                .setDefaultPort(neonBee.getServerConfig().getPort());
+
+        HttpRequest<Buffer> request = WebClient.create(neonBee.getVertx(), opts)
+                .request(HttpMethod.GET, "")
+                .putHeader("Accept-Encoding", "br");
+//        return isDummyServerVerticleDeployed ? request.bearerTokenAuthentication("dummy") : request;
+
+        deployVerticle(new BufferResponseVerticle())
+//                .compose(s -> sendRequest("Test", "", ""))
+                .compose(s -> request.send())
+                .onComplete(testContext.succeeding(response -> testContext.verify(() -> {
+
+                    assertThat(response.getHeader("Content-Encoding")).isEqualTo("br");
+
+                    byte[] encodedContent = response.body().getBytes();
+                    try (InputStream brotliInputStream =
+                            new BrotliInputStream(new ByteArrayInputStream(encodedContent))) {
+                        assertThat(brotliInputStream.read()).isNotEqualTo(-1);
+                        testContext.completeNow();
+                    } catch (IOException e) {
+                        testContext.failNow(e);
+                    }
+                    testContext.completeNow();
+                })));
+    }
+
     @NeonBeeDeployable(namespace = NEONBEE_NAMESPACE, autoDeploy = false)
     public static class JsonResponseVerticle extends DataVerticle<JsonObject> {
 
@@ -199,7 +244,8 @@ class RawEndpointTest extends DataVerticleTestBase {
                     RESPONSE_HEADERS,
                     Map.of(
                             "foo", "bar",
-                            "hodor", "hodor"));
+                            "hodor", "hodor",
+                            "Content-Encoding", "br"));
 
             return Future.succeededFuture(JsonObject.of("foo", "bar").toBuffer());
         }

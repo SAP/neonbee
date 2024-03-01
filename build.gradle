@@ -20,6 +20,9 @@ plugins {
     id 'team.yi.semantic-gitlog' version '0.6.12'
 }
 
+import org.gradle.nativeplatform.platform.internal.Architectures
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+
 group = 'io.neonbee'
 version = '0.33.1-SNAPSHOT'
 mainClassName = 'io.neonbee.Launcher'
@@ -93,6 +96,33 @@ dependencies {
 
     // Annotation processors
     annotationProcessor group: 'io.vertx', name: 'vertx-codegen', classifier: 'processor', version: vertx_version
+
+    def brotli4j_version = '1.16.0'     // https://mvnrepository.com/artifact/com.aayushatharva.brotli4j/brotli4j
+    def brotli4j_architecture = """${
+        def operatingSystem = DefaultNativePlatform.getCurrentOperatingSystem()
+        def currentArchitecture = DefaultNativePlatform.getCurrentArchitecture()
+        if (operatingSystem.isWindows())
+            if (currentArchitecture.isX86_64()) "windows-x86_64"
+            else if (currentArchitecture.isArm()) "windows-aarch64"
+            else
+                throw new IllegalStateException("Unsupported architecture: ${currentArchitecture.getName()}");
+        else if (operatingSystem.isMacOsX())
+            if (currentArchitecture.isArm()) "osx-aarch64"
+            else "osx-x86_64"
+        else if (operatingSystem.isLinux())
+            if (currentArchitecture.isAARCH64()) "linux-aarch64"
+            else if (currentArchitecture.isX86_64()) "linux-x86_64"
+            else if (currentArchitecture.isARM_V7()) "linux-armv7"
+            else if (currentArchitecture.isPPC64LE()) "linux-ppc64le"
+            else if (currentArchitecture.isS390X()) "linux-s390x"
+            else if (currentArchitecture.isRISCV64()) "linux-riscv64"
+            else
+                throw new IllegalStateException("Unsupported architecture: ${currentArchitecture.getName()}");
+        else
+            throw new IllegalStateException("Unsupported operating system: $operatingSystem");
+    }"""
+    implementation group: 'com.aayushatharva.brotli4j', name: 'brotli4j', version: brotli4j_version
+    runtimeOnly group: 'com.aayushatharva.brotli4j', name: 'native-' + brotli4j_architecture, version: brotli4j_version
 
     // Framework test dependencies
     testImplementation group: 'io.vertx', name: 'vertx-core', classifier: 'tests', version: vertx_version
