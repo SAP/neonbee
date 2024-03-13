@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.34.0 (2024-03-11)
+
+### Features
+
+- add test that non-existing endpoint returns 404 ([7af2b72b](https://github.com/SAP/neonbee/commit/7af2b72b9d7508ed1c4dda6fc944e840669a4a3f))
+
+
+### Build System
+
+- **deps**: bump net.bytebuddy:byte-buddy from 1.14.11 to 1.14.12 ([0e9ab97a](https://github.com/SAP/neonbee/commit/0e9ab97a1937c9438756021ebe6dff5606805eef))
+- **deps**: bump ch.qos.logback:logback-classic from 1.4.14 to 1.5.0 ([321d5859](https://github.com/SAP/neonbee/commit/321d58599765686658343ba7985f2119b1540127))
+- **deps**: bump org.ajoberstar.grgit from 5.2.1 to 5.2.2 ([dfedbe24](https://github.com/SAP/neonbee/commit/dfedbe24595a23827eda748d6b2c2c47126599d8))
+- **deps**: upgrade `vertx` to 4.5.4 ([2a603aa6](https://github.com/SAP/neonbee/commit/2a603aa6e0622ba3c0ce59430ca8a2bc99dcca12))
+- **deps**: bump ch.qos.logback:logback-classic from 1.5.0 to 1.5.3 ([2e5a6f0e](https://github.com/SAP/neonbee/commit/2e5a6f0eb014b85d1f00e7cec71be31c2b9d00ef))
+- **deps**: bump com.github.spotbugs from 6.0.7 to 6.0.8 ([91a9c73e](https://github.com/SAP/neonbee/commit/91a9c73e6918d704ac1116dae1fb012da7b89fa3))
+- **deps**: bump com.sap.cds:cds4j-core from 2.6.1 to 2.7.0 ([92faea69](https://github.com/SAP/neonbee/commit/92faea698c7fe29a099fbca7b6e307981f2b8ac7))
+
+
 ## 0.33.0 (2024-02-14)
 
 ### Features
