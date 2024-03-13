@@ -21,7 +21,7 @@ plugins {
 }
 
 group = 'io.neonbee'
-version = '0.34.0'
+version = '0.34.1-SNAPSHOT'
 mainClassName = 'io.neonbee.Launcher'
 archivesBaseName = 'neonbee-core'
 sourceCompatibility = 17
