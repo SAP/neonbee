@@ -173,6 +173,11 @@ public abstract class PendingDeployment extends Deployment implements FutureInte
     }
 
     @Override
+    public void removeListener(Listener<Deployment> listener) {
+        ((FutureInternal<Deployment>) mapDeployment()).removeListener(listener);
+    }
+
+    @Override
     public Future<Deployment> timeout(long delay, TimeUnit unit) {
         return mapDeployment().timeout(delay, unit);
     }
