@@ -78,7 +78,7 @@ dependencies {
     }
     implementation group: 'org.apache.olingo', name: 'odata-server-core-ext', version: olingo_version
 
-    implementation group: 'com.sap.cds', name: 'cds4j-core', version: '2.7.1'
+    implementation group: 'com.sap.cds', name: 'cds4j-core', version: '2.8.0'
     implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.12.4'
     implementation group: 'org.ow2.asm', name: 'asm', version: '9.7'
 
