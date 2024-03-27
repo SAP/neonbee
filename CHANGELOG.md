@@ -1,6 +1,19 @@
 # Changelog
 
-## 0.34.0 (2024-03-11)
+## 0.35.0 (2024-03-27)
+
+### Build System
+
+- **deps**: bump io.micrometer:micrometer-registry-prometheus ([7378d30c](https://github.com/SAP/neonbee/commit/7378d30c4d458c90533635dfea31cdac7011bfa6))
+- **deps**: upgrade `vertx` to 4.5.5 ([acac9cf1](https://github.com/SAP/neonbee/commit/acac9cf129c098bff04c4645cfa8c4092d2e5928))
+- **deps**: bump com.sap.cds:cds4j-core from 2.7.0 to 2.7.1 ([91689c03](https://github.com/SAP/neonbee/commit/91689c03f809100f3ce346553407f479b828b38b))
+- **deps**: bump org.ow2.asm:asm from 9.6 to 9.7 ([a3f2e010](https://github.com/SAP/neonbee/commit/a3f2e0106744607e9bb83606d7496d50e7f6c9ef))
+- **deps**: bump com.github.spotbugs from 6.0.8 to 6.0.9 ([f71426ba](https://github.com/SAP/neonbee/commit/f71426bac85327a5131d4c5a357a9a28c8911bf2))
+- **deps**: bump com.sap.cds:cds4j-core from 2.7.1 to 2.8.0 ([0e99e855](https://github.com/SAP/neonbee/commit/0e99e855f62a4cf82554c0da07db0714c0112fb0))
+- **deps**: upgrade `vertx` to 4.5.6 ([f54f8a38](https://github.com/SAP/neonbee/commit/f54f8a389efdad4acf235f63f2fd120b79d292fc))
+
+
+## 0.34.0 (2024-03-13)
 
 ### Features
 
