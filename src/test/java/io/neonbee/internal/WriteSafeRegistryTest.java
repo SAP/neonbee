@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
@@ -23,7 +22,7 @@ class WriteSafeRegistryTest {
         String key = "key";
         String value = "value";
         registry.register(key, value).compose(unused -> registry.get(key)).onSuccess(mapValue -> context.verify(() -> {
-            assertThat(mapValue).isEqualTo(new JsonArray().add(value));
+            assertThat(mapValue).containsExactly(value);
             context.completeNow();
         })).onFailure(context::failNow);
     }
@@ -37,10 +36,10 @@ class WriteSafeRegistryTest {
 
         registry.register(key, value).compose(unused -> registry.unregister(key, "value2"))
                 .compose(unused -> registry.get(key)).onSuccess(mapValue -> context.verify(() -> {
-                    assertThat(mapValue).isEqualTo(new JsonArray().add(value));
+                    assertThat(mapValue).containsExactly(value);
                 })).compose(unused -> registry.unregister(key, value)).compose(unused -> registry.get(key))
                 .onSuccess(mapValue -> context.verify(() -> {
-                    assertThat(mapValue).isEqualTo(new JsonArray());
+                    assertThat(mapValue).isEmpty();
                     context.completeNow();
                 })).onFailure(context::failNow);
     }
@@ -52,9 +51,9 @@ class WriteSafeRegistryTest {
         String value = "value";
 
         WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, REGISTRY_NAME);
-        registry.register(key, value).compose(unused -> registry.get(key)).onSuccess(jsonArray -> context.verify(() -> {
-            assertThat(jsonArray).isNotNull();
-            assertThat(jsonArray.contains(value)).isTrue();
+        registry.register(key, value).compose(unused -> registry.get(key)).onSuccess(values -> context.verify(() -> {
+            assertThat(values).isNotNull();
+            assertThat(values).containsExactly(value);
             context.completeNow();
         })).onFailure(context::failNow);
     }

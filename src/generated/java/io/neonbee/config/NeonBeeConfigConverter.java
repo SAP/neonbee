@@ -29,6 +29,11 @@ public class NeonBeeConfigConverter {
                     obj.setDeploymentTimeout(((Number) member.getValue()).intValue());
                 }
                 break;
+            case "entityVericleRegistryClassName":
+                if (member.getValue() instanceof String) {
+                    obj.setEntityVericleRegistryClassName((String) member.getValue());
+                }
+                break;
             case "eventBusCodecs":
                 if (member.getValue() instanceof JsonObject) {
                     java.util.Map<String, java.lang.String> map = new java.util.LinkedHashMap<>();
@@ -120,6 +125,9 @@ public class NeonBeeConfigConverter {
             json.put("defaultThreadingModel", obj.getDefaultThreadingModel().name());
         }
         json.put("deploymentTimeout", obj.getDeploymentTimeout());
+        if (obj.getEntityVericleRegistryClassName() != null) {
+            json.put("entityVericleRegistryClassName", obj.getEntityVericleRegistryClassName());
+        }
         if (obj.getEventBusCodecs() != null) {
             JsonObject map = new JsonObject();
             obj.getEventBusCodecs().forEach((key, value) -> map.put(key, value));

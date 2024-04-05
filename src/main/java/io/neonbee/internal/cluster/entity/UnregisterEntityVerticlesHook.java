@@ -7,11 +7,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.neonbee.NeonBee;
+import io.neonbee.cluster.ClusterRegistry;
 import io.neonbee.hook.Hook;
 import io.neonbee.hook.HookContext;
 import io.neonbee.hook.HookType;
-import io.neonbee.internal.Registry;
 import io.neonbee.internal.cluster.ClusterHelper;
+import io.neonbee.registry.Registry;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -53,12 +54,12 @@ public class UnregisterEntityVerticlesHook {
         }
 
         Registry<String> registry = neonBee.getEntityRegistry();
-        if (!(registry instanceof ClusterEntityRegistry)) {
-            LOGGER.warn("Running in clustered mode but not using the ClusterEntityRegistry.");
+        if (!(registry instanceof ClusterRegistry<String>)) {
+            LOGGER.warn("Running in clustered mode but not using a ClusterRegistry.");
             return succeededFuture();
         }
 
-        ClusterEntityRegistry clusterEntityRegistry = (ClusterEntityRegistry) registry;
+        ClusterRegistry<String> clusterEntityRegistry = (ClusterRegistry) registry;
 
         LOGGER.info("Unregistering entity verticle models for node ID {} ...", clusterNodeId);
         Future<Void> unregisterFuture = clusterEntityRegistry.unregisterNode(clusterNodeId);

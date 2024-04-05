@@ -80,7 +80,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
         registry.get(sharedEntityMapName(new FullQualifiedName("ERP.Customers")))
                 .onComplete(testContext.succeeding(result -> {
                     testContext.verify(() -> {
-                        assertThat((JsonArray) result).containsExactly(entityVerticleImpl1.getQualifiedName(),
+                        assertThat((List) result).containsExactly(entityVerticleImpl1.getQualifiedName(),
                                 entityVerticleImpl2.getQualifiedName());
                     });
                     checkpoint.flag();
@@ -88,7 +88,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
         registry.get(sharedEntityMapName(new FullQualifiedName("Sales.Orders")))
                 .onComplete(testContext.succeeding(result -> {
                     testContext.verify(() -> {
-                        assertThat((JsonArray) result).containsExactly(entityVerticleImpl1.getQualifiedName());
+                        assertThat((List) result).containsExactly(entityVerticleImpl1.getQualifiedName());
                     });
                     checkpoint.flag();
                 }));

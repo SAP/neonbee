@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -26,7 +25,7 @@ class ClusterEntityRegistryTest {
     void register(Vertx vertx, VertxTestContext context) {
         ClusterEntityRegistry registry = new TestClusterEntityRegistry(vertx, REGISTRY_NAME);
         registry.register(KEY, VALUE).compose(unused -> registry.get(KEY)).onSuccess(mapValue -> context.verify(() -> {
-            assertThat(mapValue).isEqualTo(new JsonArray().add(VALUE));
+            assertThat(mapValue).containsExactly(VALUE);
             context.completeNow();
         })).onFailure(context::failNow);
     }
@@ -37,10 +36,10 @@ class ClusterEntityRegistryTest {
         ClusterEntityRegistry registry = new TestClusterEntityRegistry(vertx, REGISTRY_NAME);
         registry.register(KEY, VALUE).compose(unused -> registry.unregister(KEY, "value2"))
                 .compose(unused -> registry.get(KEY)).onSuccess(mapValue -> context.verify(() -> {
-                    assertThat(mapValue).isEqualTo(new JsonArray().add(VALUE));
+                    assertThat(mapValue).containsExactly(VALUE);
                 })).compose(unused -> registry.unregister(KEY, VALUE)).compose(unused -> registry.get(KEY))
                 .onSuccess(mapValue -> context.verify(() -> {
-                    assertThat(mapValue).isEqualTo(new JsonArray());
+                    assertThat(mapValue).isEmpty();
                     context.completeNow();
                 })).onFailure(context::failNow);
     }
@@ -63,8 +62,8 @@ class ClusterEntityRegistryTest {
         registry.register(KEY, VALUE)
                 .compose(unused -> registry.getClusteringInformation(TestClusterEntityRegistry.CLUSTER_NODE_ID))
                 .onSuccess(mapValue -> context.verify(() -> {
-                    assertThat(mapValue)
-                            .isEqualTo(JsonArray.of(ClusterEntityRegistry.clusterRegistrationInformation(KEY, VALUE)));
+                    assertThat(mapValue).containsExactly(
+                            ClusterEntityRegistry.clusterRegistrationInformation(KEY, VALUE));
                     context.completeNow();
                 })).onFailure(context::failNow);
     }
@@ -91,11 +90,10 @@ class ClusterEntityRegistryTest {
     void unregisterNode1(Vertx vertx, VertxTestContext context) {
         ClusterEntityRegistry registry = new TestClusterEntityRegistry(vertx, REGISTRY_NAME);
         registry.register(KEY, VALUE)
-                .compose(unused -> registry.getClusteringInformation(TestClusterEntityRegistry.CLUSTER_NODE_ID))
                 .compose(unused -> registry.unregisterNode(TestClusterEntityRegistry.CLUSTER_NODE_ID))
                 .compose(unused -> registry.getClusteringInformation(TestClusterEntityRegistry.CLUSTER_NODE_ID))
                 .onSuccess(mapValue -> context.verify(() -> {
-                    assertThat(mapValue).isNull();
+                    assertThat(mapValue).isEmpty();
                     context.completeNow();
                 })).onFailure(context::failNow);
     }
@@ -109,25 +107,37 @@ class ClusterEntityRegistryTest {
         ClusterEntityRegistry registry1 = new TestClusterEntityRegistry(vertx, REGISTRY_NAME, clusterIdNode1);
         ClusterEntityRegistry registry2 = new TestClusterEntityRegistry(vertx, REGISTRY_NAME, clusterIdNode2);
 
-        registry1.register(KEY, VALUE).compose(unused -> registry2.register(KEY, VALUE))
-                .compose(unused -> registry1.get(KEY)).onSuccess(ja -> context.verify(() -> {
-                    assertThat(ja).containsExactly(VALUE);
-                    checkpoint.flag();
-                })).compose(unused -> registry1.getClusteringInformation(clusterIdNode1))
-                .compose(unused -> registry1.unregisterNode(clusterIdNode1)).compose(unused -> registry2.get(KEY))
+        registry1.register(KEY, VALUE)
+                .compose(unused -> registry2.register(KEY, VALUE))
+                .compose(unused -> registry1.get(KEY))
                 .onSuccess(ja -> context.verify(() -> {
                     assertThat(ja).containsExactly(VALUE);
                     checkpoint.flag();
-                })).compose(unused -> registry2.getClusteringInformation(clusterIdNode1))
-                .onSuccess(mapValue -> context.verify(() -> {
-                    assertThat(mapValue).isNull();
+                }))
+                .compose(unused -> registry1.getClusteringInformation(clusterIdNode1))
+                .onSuccess(jsonObjects -> context.verify(() -> {
+                    assertThat(jsonObjects).containsExactly(
+                            ClusterEntityRegistry.clusterRegistrationInformation("key", VALUE));
+                }))
+                .compose(unused -> registry1.unregisterNode(clusterIdNode1))
+                .compose(unused -> registry2.get(KEY))
+                .onSuccess(ja -> context.verify(() -> {
+                    assertThat(ja).containsExactly(VALUE);
                     checkpoint.flag();
-                })).compose(unused -> registry2.getClusteringInformation(clusterIdNode2))
+                }))
+                .compose(unused -> registry2.getClusteringInformation(clusterIdNode1))
                 .onSuccess(mapValue -> context.verify(() -> {
-                    assertThat(mapValue)
-                            .containsExactly(ClusterEntityRegistry.clusterRegistrationInformation("key", VALUE));
+                    assertThat(mapValue).isEmpty();
                     checkpoint.flag();
-                })).compose(unused -> registry2.unregisterNode(clusterIdNode2)).compose(unused -> registry2.get(KEY))
+                }))
+                .compose(unused -> registry2.getClusteringInformation(clusterIdNode2))
+                .onSuccess(mapValue -> context.verify(() -> {
+                    assertThat(mapValue).containsExactly(
+                            ClusterEntityRegistry.clusterRegistrationInformation("key", VALUE));
+                    checkpoint.flag();
+                }))
+                .compose(unused -> registry2.unregisterNode(clusterIdNode2))
+                .compose(unused -> registry2.get(KEY))
                 .onSuccess(ja -> context.verify(() -> {
                     assertThat(ja).isEmpty();
                     checkpoint.flag();

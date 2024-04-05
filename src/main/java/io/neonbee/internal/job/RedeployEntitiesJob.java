@@ -20,7 +20,6 @@ import io.neonbee.NeonBeeDeployable;
 import io.neonbee.NeonBeeProfile;
 import io.neonbee.data.DataContext;
 import io.neonbee.entity.EntityVerticle;
-import io.neonbee.internal.Registry;
 import io.neonbee.internal.cluster.ClusterHelper;
 import io.neonbee.internal.cluster.entity.ClusterEntityRegistry;
 import io.neonbee.internal.deploy.Deployable;
@@ -28,10 +27,10 @@ import io.neonbee.internal.deploy.Deployables;
 import io.neonbee.job.JobSchedule;
 import io.neonbee.job.JobVerticle;
 import io.neonbee.logging.LoggingFacade;
+import io.neonbee.registry.Registry;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -96,7 +95,7 @@ public class RedeployEntitiesJob extends JobVerticle {
             LOGGER.correlateWith(context).debug("Getting registered entities from cluster");
 
             ClusterEntityRegistry clusterEntityRegistry = ((ClusterEntityRegistry) entityRegistry);
-            Future<JsonArray> clusteringInformation = clusterEntityRegistry
+            Future<List<JsonObject>> clusteringInformation = clusterEntityRegistry
                     .getClusteringInformation(ClusterHelper.getClusterNodeId(vertx))
                     .onSuccess(event -> LOGGER.correlateWith(context).debug("Got registered entities from cluster"))
                     .onFailure(error -> LOGGER.correlateWith(context)
@@ -134,14 +133,14 @@ public class RedeployEntitiesJob extends JobVerticle {
     private Map<String, Class<? extends EntityVerticle>> findMissingEntityVerticles(
             DataContext context,
             Map<String, Class<? extends EntityVerticle>> classPathEntitiesMap,
-            JsonArray clusteringInformation) {
+            List<JsonObject> clusteringInformation) {
         Set<String> deployedEntitiesSet = qualifiedNamesSet(context, clusteringInformation);
         Map<String, Class<? extends EntityVerticle>> difference = new HashMap<>(classPathEntitiesMap);
         difference.keySet().removeAll(deployedEntitiesSet);
         return difference;
     }
 
-    private Set<String> qualifiedNamesSet(DataContext context, JsonArray clusteringInformation) {
+    private Set<String> qualifiedNamesSet(DataContext context, List<JsonObject> clusteringInformation) {
         Set<String> deployedEntitiesSet;
         if (clusteringInformation == null) {
             LOGGER.correlateWith(context).debug("No entities registered in cluster");
@@ -149,7 +148,6 @@ public class RedeployEntitiesJob extends JobVerticle {
         } else {
             deployedEntitiesSet = clusteringInformation
                     .stream()
-                    .map(jo -> (JsonObject) jo)
                     .map(jo -> jo.getString(ClusterEntityRegistry.QUALIFIED_NAME_KEY))
                     .collect(Collectors.toSet());
         }

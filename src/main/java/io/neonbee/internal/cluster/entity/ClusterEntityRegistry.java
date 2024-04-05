@@ -6,8 +6,8 @@ import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import io.neonbee.cluster.ClusterRegistry;
 import io.neonbee.entity.EntityVerticle;
-import io.neonbee.internal.Registry;
 import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.cluster.ClusterHelper;
 import io.vertx.core.Future;
@@ -29,7 +29,7 @@ import io.vertx.core.shareddata.AsyncMap;
  * }
  * </pre>
  */
-public class ClusterEntityRegistry implements Registry<String> {
+public class ClusterEntityRegistry implements ClusterRegistry<String> {
 
     /**
      * The key for the qualified name.
@@ -46,7 +46,7 @@ public class ClusterEntityRegistry implements Registry<String> {
 
     private final Vertx vertx;
 
-    private final WriteSafeRegistry<Object> entityRegistry;
+    private final WriteSafeRegistry<String> entityRegistry;
 
     /**
      * Create a new instance of {@link ClusterEntityRegistry}.
@@ -92,7 +92,7 @@ public class ClusterEntityRegistry implements Registry<String> {
     }
 
     @Override
-    public Future<JsonArray> get(String sharedMapKey) {
+    public Future<List<String>> get(String sharedMapKey) {
         return entityRegistry.get(sharedMapKey);
     }
 
@@ -102,7 +102,7 @@ public class ClusterEntityRegistry implements Registry<String> {
      * @param clusterNodeId the ID of the cluster node
      * @return the future
      */
-    public Future<JsonArray> getClusteringInformation(String clusterNodeId) {
+    public Future<List<JsonObject>> getClusteringInformation(String clusterNodeId) {
         return clusteringInformation.get(clusterNodeId);
     }
 
@@ -122,9 +122,10 @@ public class ClusterEntityRegistry implements Registry<String> {
      * @param clusterNodeId the ID of the cluster node
      * @return the future
      */
+    @Override
     public Future<Void> unregisterNode(String clusterNodeId) {
         return clusteringInformation.getSharedMap().compose(AsyncMap::entries).compose(map -> {
-            JsonArray registeredEntities = ((JsonArray) map.remove(clusterNodeId)).copy();
+            JsonArray registeredEntities = map.remove(clusterNodeId).copy();
             List<Future<?>> futureList = new ArrayList<>(registeredEntities.size());
             for (Object o : registeredEntities) {
                 if (remove(map, o)) {
@@ -138,9 +139,9 @@ public class ClusterEntityRegistry implements Registry<String> {
         }).compose(cf -> removeClusteringInformation(clusterNodeId));
     }
 
-    private boolean remove(Map<String, Object> map, Object o) {
-        for (Map.Entry<String, Object> node : map.entrySet()) {
-            JsonArray ja = (JsonArray) node.getValue();
+    private boolean remove(Map<String, JsonArray> map, Object o) {
+        for (Map.Entry<String, JsonArray> node : map.entrySet()) {
+            JsonArray ja = node.getValue();
             if (ja.contains(o)) {
                 return false;
             }

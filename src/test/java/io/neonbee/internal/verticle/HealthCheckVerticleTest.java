@@ -3,6 +3,8 @@ package io.neonbee.internal.verticle;
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.verticle.HealthCheckVerticle.SHARED_MAP_KEY;
 
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -50,7 +52,7 @@ class HealthCheckVerticleTest extends DataVerticleTestBase {
         registry.get(SHARED_MAP_KEY)
                 .onComplete(testContext.succeeding(qualifiedNamesOrNull -> testContext.verify(() -> {
                     String expectedName = HealthCheckVerticle.QUALIFIED_NAME;
-                    assertThat((JsonArray) qualifiedNamesOrNull).containsExactly(expectedName);
+                    assertThat((List) qualifiedNamesOrNull).containsExactly(expectedName);
                     testContext.completeNow();
                 })));
     }

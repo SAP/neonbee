@@ -23,6 +23,7 @@ import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.config.metrics.MicrometerRegistryLoader;
 import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
+import io.neonbee.registry.Registry;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.json.annotations.JsonGen;
@@ -99,6 +100,8 @@ public class NeonBeeConfig {
     private MetricsConfig metricsConfig = new MetricsConfig();
 
     private int jsonMaxStringSize;
+
+    private String entityVericleRegistryClassName;
 
     /**
      * Are the metrics enabled?
@@ -195,26 +198,80 @@ public class NeonBeeConfig {
         return this.micrometerRegistries.stream()
                 .filter(micrometerRegistryConfig -> micrometerRegistryConfig.getClassName() != null)
                 .filter(micrometerRegistryConfig -> !micrometerRegistryConfig.getClassName().isBlank())
-                .map(micrometerRegistryConfig -> instantiateLoader(micrometerRegistryConfig.getClassName()).compose(
-                        micrometerRegistryLoader -> Future.<MeterRegistry>future(promise -> micrometerRegistryLoader
-                                .load(vertx, micrometerRegistryConfig.getConfig(), promise))));
+                .map(micrometerRegistryConfig -> instantiateClass(micrometerRegistryConfig.getClassName(),
+                        MicrometerRegistryLoader.class)
+                                .compose(micrometerRegistryLoader -> future(promise -> micrometerRegistryLoader
+                                        .load(vertx, micrometerRegistryConfig.getConfig(), promise))));
     }
 
     /**
-     * Load and instantiate the {@link MicrometerRegistryLoader}.
+     * Adds the passed list of {@link String}s containing the full qualified name of classes which implement the
+     * {@link MicrometerRegistryLoader}.
+     *
+     * @param entityVericleRegistry Name of the class which implement the{@link Registry}
+     * @return a reference to this, so the API can be used fluently
+     */
+    @Fluent
+    public NeonBeeConfig setEntityVericleRegistryClassName(String entityVericleRegistry) {
+        this.entityVericleRegistryClassName = entityVericleRegistry;
+        return this;
+    }
+
+    /**
+     * Get the {@link MetricsOptions}.
+     *
+     * @return the {@link MetricsOptions}
+     */
+    public String getEntityVericleRegistryClassName() {
+        return this.entityVericleRegistryClassName;
+    }
+
+    /**
+     * Try to load the custom entity registry implementation.
+     *
+     * @param vertx the Vertx instance
+     * @return MicrometerMetricsOptions which contains the loaded registries
+     */
+    public Future<Registry<String>> createEntityRegistry(Vertx vertx) {
+        return instantiateClass(
+                getEntityVericleRegistryClassName(),
+                Registry.class,
+                new Class[] { Vertx.class },
+                new Object[] { vertx })
+                        .map(registry -> ((Registry<String>) registry));
+    }
+
+    /**
+     * Load and instantiate a class from type T.
      *
      * @param className the name of the class to load
+     * @param clazz     class object
      * @return future with the {@link MicrometerRegistryLoader}
      */
-    private Future<MicrometerRegistryLoader> instantiateLoader(String className) {
+    private <T> Future<T> instantiateClass(String className, Class<T> clazz) {
+        return instantiateClass(className, clazz, null, null);
+    }
+
+    /**
+     * Load and instantiate a class from type T.
+     *
+     * @param className      the name of the class to load
+     * @param clazz          class object
+     * @param parameterTypes the parameter array
+     * @param initargs       array of objects to be passed as arguments to the constructor call
+     * @return future with the {@link MicrometerRegistryLoader}
+     */
+    @SuppressWarnings("PMD.UseVarargs")
+    private <T> Future<T> instantiateClass(String className, Class<T> clazz, Class<?>[] parameterTypes,
+            Object[] initargs) {
         return future(promise -> {
             try {
                 Class<?> classObject = Class.forName(className);
-                if (!MicrometerRegistryLoader.class.isAssignableFrom(classObject)) {
+                if (!clazz.isAssignableFrom(classObject)) {
                     promise.fail(new IllegalArgumentException(
-                            classObject.getName() + " must implement " + MicrometerRegistryLoader.class.getName()));
+                            classObject.getName() + " must implement " + clazz.getName()));
                 }
-                promise.complete((MicrometerRegistryLoader) classObject.getConstructor().newInstance());
+                promise.complete(clazz.cast(classObject.getConstructor(parameterTypes).newInstance(initargs)));
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
                     | InvocationTargetException | NoSuchMethodException e) {
                 promise.fail(e);

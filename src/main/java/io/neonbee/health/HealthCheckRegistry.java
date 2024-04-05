@@ -204,7 +204,6 @@ public class HealthCheckRegistry {
     private Future<List<JsonObject>> getClusteredHealthCheckResults(DataContext dataContext) {
         WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, REGISTRY_NAME);
         return registry.get(SHARED_MAP_KEY)
-                .map(qualifiedNames -> qualifiedNames == null ? new JsonArray() : qualifiedNames)
                 .compose(qualifiedNames -> {
                     List<Future<JsonArray>> asyncCheckResults = sendDataRequests(qualifiedNames, dataContext);
 
@@ -218,8 +217,8 @@ public class HealthCheckRegistry {
                 });
     }
 
-    private List<Future<JsonArray>> sendDataRequests(JsonArray qualifiedNames, DataContext dataContext) {
-        return qualifiedNames.stream().map(Object::toString).map(DataRequest::new)
+    private List<Future<JsonArray>> sendDataRequests(List<String> qualifiedNames, DataContext dataContext) {
+        return qualifiedNames.stream().map(DataRequest::new)
                 .map(dr -> DataVerticle.<JsonArray>requestData(vertx, dr, dataContext).onSuccess(data -> {
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.correlateWith(dataContext).debug("Retrieved health check of verticle {}",

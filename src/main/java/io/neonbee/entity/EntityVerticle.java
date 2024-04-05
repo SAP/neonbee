@@ -8,7 +8,6 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,14 +23,13 @@ import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
-import io.neonbee.internal.Registry;
 import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.logging.LoggingFacade;
+import io.neonbee.registry.Registry;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 
 public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
 
@@ -195,12 +193,9 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
      * @return A list of all (entity) verticle names as qualified names
      */
     public static Future<List<String>> getVerticlesForEntityType(Vertx vertx, FullQualifiedName entityTypeName) {
-        return Future
-                .future(asyncGet -> getRegistry(vertx).get(sharedEntityMapName(entityTypeName))
-                        .onSuccess(asyncGet::complete).onFailure(asyncGet::fail))
-                .map(qualifiedNames -> ((List<?>) Optional.ofNullable((JsonArray) qualifiedNames)
-                        .orElseGet(JsonArray::new).getList()).stream().map(Object::toString).distinct()
-                                .toList());
+        return getRegistry(vertx)
+                .get(sharedEntityMapName(entityTypeName))
+                .map(qualifiedNames -> qualifiedNames.stream().distinct().toList());
     }
 
     /**

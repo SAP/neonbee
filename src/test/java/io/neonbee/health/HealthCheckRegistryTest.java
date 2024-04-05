@@ -353,7 +353,7 @@ class HealthCheckRegistryTest {
                         neonBee.getHealthCheckRegistry().register(new DummyHealthCheck(neonBee))))
                 .compose(v -> neonBee.getHealthCheckRegistry().collectHealthCheckResults())
                 .onSuccess(result -> testContext.verify(() -> assertThat(result.getString("status")).isEqualTo("UP")))
-                .compose(result -> registry.get(SHARED_MAP_KEY)).map(JsonArray.class::cast)
+                .compose(result -> registry.get(SHARED_MAP_KEY))
                 .onSuccess(registeredVerticles -> testContext.verify(() -> {
                     assertThat(registeredVerticles).hasSize(2);
                     assertThat(registeredVerticles).contains(verticleName);

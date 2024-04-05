@@ -20,6 +20,10 @@ import org.mockito.stubbing.Answer;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.NeonBeeInstanceConfiguration.ClusterManager;
 import io.neonbee.config.NeonBeeConfig;
+import io.neonbee.entity.EntityVerticle;
+import io.neonbee.internal.WriteSafeRegistry;
+import io.neonbee.internal.cluster.entity.ClusterEntityRegistry;
+import io.neonbee.registry.Registry;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Closeable;
 import io.vertx.core.DeploymentOptions;
@@ -258,6 +262,12 @@ public final class NeonBeeMockHelper {
      */
     @SuppressWarnings("PMD.EmptyCatchBlock")
     public static NeonBee registerNeonBeeMock(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config) {
-        return new NeonBee(vertx, options, config, new CompositeMeterRegistry());
+        Registry<String> entityRegistry;
+        if (vertx.isClustered()) {
+            entityRegistry = new ClusterEntityRegistry(vertx, EntityVerticle.REGISTRY_NAME);
+        } else {
+            entityRegistry = new WriteSafeRegistry<>(vertx, EntityVerticle.REGISTRY_NAME);
+        }
+        return new NeonBee(vertx, options, config, new CompositeMeterRegistry(), entityRegistry);
     }
 }

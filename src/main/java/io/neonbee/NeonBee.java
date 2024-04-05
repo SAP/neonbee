@@ -60,7 +60,6 @@ import io.neonbee.health.internal.HealthCheck;
 import io.neonbee.hook.HookRegistry;
 import io.neonbee.hook.HookType;
 import io.neonbee.hook.internal.DefaultHookRegistry;
-import io.neonbee.internal.Registry;
 import io.neonbee.internal.ReplyInboundInterceptor;
 import io.neonbee.internal.SharedDataAccessor;
 import io.neonbee.internal.WriteSafeRegistry;
@@ -92,6 +91,7 @@ import io.neonbee.internal.verticle.HealthCheckVerticle;
 import io.neonbee.internal.verticle.LoggerManagerVerticle;
 import io.neonbee.internal.verticle.ModelRefreshVerticle;
 import io.neonbee.internal.verticle.ServerVerticle;
+import io.neonbee.registry.Registry;
 import io.vertx.core.Closeable;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
@@ -314,9 +314,10 @@ public class NeonBee {
                         }
 
                         // create a NeonBee instance, hook registry and close handler
-                        Future<NeonBee> neonBeeFuture = configFuture.map(loadedConfig -> {
-                            return new NeonBee(vertx, options, loadedConfig, compositeMeterRegistry);
-                        });
+                        Future<NeonBee> neonBeeFuture = configFuture
+                                .compose(loadedConfig -> createRegistry(vertx, loadedConfig)
+                                        .map(entityRegistry -> new NeonBee(vertx, options, loadedConfig,
+                                                compositeMeterRegistry, entityRegistry)));
 
                         // boot NeonBee, on failure close Vert.x
                         return neonBeeFuture.compose(NeonBee::boot).recover(closeVertx)
@@ -326,6 +327,18 @@ public class NeonBee {
                         return closeVertx.apply(t).mapEmpty();
                     }
                 });
+    }
+
+    private static Future<Registry<String>> createRegistry(Vertx vertx, NeonBeeConfig loadedConfig) {
+        if (loadedConfig.getEntityVericleRegistryClassName() == null) {
+            if (vertx.isClustered()) {
+                return succeededFuture(new ClusterEntityRegistry(vertx, EntityVerticle.REGISTRY_NAME));
+            } else {
+                return succeededFuture(new WriteSafeRegistry<>(vertx, EntityVerticle.REGISTRY_NAME));
+            }
+        } else {
+            return loadedConfig.createEntityRegistry(vertx);
+        }
     }
 
     @VisibleForTesting
@@ -669,18 +682,15 @@ public class NeonBee {
     }
 
     @VisibleForTesting
-    NeonBee(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config, CompositeMeterRegistry compositeMeterRegistry) {
+    NeonBee(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config, CompositeMeterRegistry compositeMeterRegistry,
+            Registry<String> entityRegistry) {
         this.vertx = vertx;
         this.options = options;
         this.config = config;
 
         this.healthRegistry = new HealthCheckRegistry(vertx);
         this.modelManager = new EntityModelManager(this);
-        if (vertx.isClustered()) {
-            this.entityRegistry = new ClusterEntityRegistry(vertx, EntityVerticle.REGISTRY_NAME);
-        } else {
-            this.entityRegistry = new WriteSafeRegistry<>(vertx, EntityVerticle.REGISTRY_NAME);
-        }
+        this.entityRegistry = entityRegistry;
 
         this.compositeMeterRegistry = compositeMeterRegistry;
 

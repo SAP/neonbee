@@ -198,6 +198,37 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
         isEqualToDummyConfig(DUMMY_NEONBEE_CONFIG);
     }
 
+    @Test
+    @DisplayName("test set and get entityVericleRegistryClassName methods")
+    void entityVericleRegistryClassName() {
+        NeonBeeConfig nbc = new NeonBeeConfig();
+        String testClassName = "io.neonbee.Foo";
+        assertThat(nbc.getEntityVericleRegistryClassName()).isNull();
+        assertThat(nbc.setEntityVericleRegistryClassName(testClassName)).isEqualTo(nbc);
+        assertThat(nbc.getEntityVericleRegistryClassName()).isEqualTo(testClassName);
+    }
+
+    @Test
+    @DisplayName("test loading Registry implementation")
+    void createRegistry(Vertx vertx, VertxTestContext testContext) {
+        NeonBeeConfig nbc = new NeonBeeConfig();
+        nbc.setEntityVericleRegistryClassName(RegistryTestImpl.class.getName());
+        nbc.createEntityRegistry(vertx)
+                .onComplete(testContext.succeeding(entityRegistry -> {
+                    assertThat(entityRegistry).isNotNull();
+                    assertThat(entityRegistry).isInstanceOf(RegistryTestImpl.class);
+                    testContext.completeNow();
+                }));
+    }
+
+    @Test
+    @DisplayName("should read the entityVericleRegistryClassName correctly")
+    void readentityVericleRegistryClassName() {
+        JsonObject jsonConfig = JsonObject.of("entityVericleRegistryClassName", RegistryTestImpl.class.getName());
+        NeonBeeConfig nbc = new NeonBeeConfig(jsonConfig);
+        assertThat(nbc.getEntityVericleRegistryClassName()).isEqualTo(RegistryTestImpl.class.getName());
+    }
+
     private void isEqualToDummyConfig(NeonBeeConfig nbc) {
         assertThat(nbc.getEventBusTimeout()).isEqualTo(DUMMY_EVENT_BUS_TIMEOUT);
         assertThat(nbc.getTrackingDataHandlingStrategy()).isEqualTo(DUMMY_TRACKING_DATA_HANDLING_STRATEGY);

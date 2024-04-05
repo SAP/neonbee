@@ -23,7 +23,6 @@ import io.neonbee.entity.EntityVerticle;
 import io.neonbee.internal.cluster.ClusterHelper;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
 
@@ -81,11 +80,11 @@ class UnregisterEntitiesTest {
                     assertThat(list).hasSize(2);
                 })).compose(unused -> UnregisterEntityVerticlesHook.unregister(web, clusterNodeId))
                 .compose(unused -> registry.get(sharedEntityMapName(EntityVerticleUnregisterImpl.FQN_ERP_CUSTOMERS)))
-                .onSuccess(jsonArray -> testContext.verify(() -> {
-                    assertThat(jsonArray).isEqualTo(new JsonArray());
+                .onSuccess(entityRegistryValues -> testContext.verify(() -> {
+                    assertThat(entityRegistryValues).isEmpty();
                 })).compose(unused -> registry.clusteringInformation.get(clusterNodeId))
-                .onSuccess(object -> testContext.verify(() -> {
-                    assertThat(object).isNull();
+                .onSuccess(clusteringInformationValues -> testContext.verify(() -> {
+                    assertThat(clusteringInformationValues).isEmpty();
                     testContext.completeNow();
                 }))
                 .compose(unused -> EntityVerticle.getVerticlesForEntityType(vertx,
