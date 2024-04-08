@@ -337,7 +337,11 @@ public class NeonBee {
                 return succeededFuture(new WriteSafeRegistry<>(vertx, EntityVerticle.REGISTRY_NAME));
             }
         } else {
-            return loadedConfig.createEntityRegistry(vertx);
+            LOGGER.info("Loading " + loadedConfig.getEntityVericleRegistryClassName());
+            return loadedConfig.createEntityRegistry(vertx)
+                    .onSuccess(registry -> LOGGER.info("Successfully loaded {}", registry.getClass().getName()))
+                    .onFailure(cause -> LOGGER.error("Failed to load registry {}",
+                            loadedConfig.getEntityVericleRegistryClassName(), cause));
         }
     }
 
