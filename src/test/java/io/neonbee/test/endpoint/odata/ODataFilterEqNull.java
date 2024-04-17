@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.Property;
@@ -27,6 +28,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
 
 class ODataFilterEqNull extends ODataEndpointTestBase {
+
+    private static final String UUID_STRING = "d2498e12-cb9d-4caf-81d5-48fc24479957";
+
     private ODataRequest oDataRequest;
 
     @Override
@@ -77,6 +81,24 @@ class ODataFilterEqNull extends ODataEndpointTestBase {
                 }));
     }
 
+    @Test
+    @DisplayName("Test that filter eq UUID is handled correctly")
+    void testFilterEqUUID(VertxTestContext testContext) {
+        // we query the PropertyString100 property, but that is not added in the
+        // ODataErrorHandlerTest.TestService1EntityVerticle.retrieveData method. That will cause a NoSuchFileException.
+
+        Map<String, String> filter = filterOf("PropertyUuid eq " + UUID_STRING);
+        oDataRequest.setQuery(filter);
+        requestOData(oDataRequest)
+                .onFailure(testContext::failNow)
+                .onSuccess(event -> testContext.verify(() -> {
+                    assertThat(event.statusCode()).isEqualTo(200);
+                    JsonObject entity = event.bodyAsJsonObject().getJsonArray("value").getJsonObject(0);
+                    assertThat(entity.getString("PropertyUuid")).isEqualTo(UUID_STRING);
+                    testContext.completeNow();
+                }));
+    }
+
     private static class TestEntityVerticle extends EntityVerticle {
         public static final FullQualifiedName TEST_ENTITY_SET_FQN =
                 new FullQualifiedName("io.neonbee.test.TestService1", "AllPropertiesNullable");
@@ -90,7 +112,9 @@ class ODataFilterEqNull extends ODataEndpointTestBase {
         public Future<EntityWrapper> retrieveData(DataQuery query, DataContext context) {
             Entity entity1 = new Entity()
                     .addProperty(new Property(null, "KeyPropertyString", ValueType.PRIMITIVE, "id-0"))
-                    .addProperty(new Property(null, "PropertyString", ValueType.PRIMITIVE, null));
+                    .addProperty(new Property(null, "PropertyString", ValueType.PRIMITIVE, null))
+                    .addProperty(new Property(null, "PropertyUuid", ValueType.PRIMITIVE,
+                            UUID.fromString(UUID_STRING)));
 
             return Future.succeededFuture(new EntityWrapper(TEST_ENTITY_SET_FQN, List.of(entity1)));
         }
