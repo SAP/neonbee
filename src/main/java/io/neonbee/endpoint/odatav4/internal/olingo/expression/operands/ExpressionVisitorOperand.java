@@ -19,12 +19,14 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Locale;
+import java.util.UUID;
 
 import org.apache.olingo.commons.api.edm.EdmPrimitiveType;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeException;
 import org.apache.olingo.commons.api.edm.EdmProperty;
 import org.apache.olingo.commons.api.edm.EdmType;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
+import org.apache.olingo.commons.core.edm.primitivetype.EdmGuid;
 import org.apache.olingo.server.api.ODataApplicationException;
 
 import io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmConstants;
@@ -177,6 +179,8 @@ public class ExpressionVisitorOperand implements EntityComparison {
             }
         } else if (PRIMITIVE_DATE.equals(type) || PRIMITIVE_DATE_TIME_OFFSET.equals(type)) {
             newValue = dateTimeObjectToInstant(routingContext, value);
+        } else if (type instanceof EdmGuid) { // I use instanceof because EdmGuid has a public constructor
+            newValue = UUID.fromString(value.toString());
         } else {
             // Use type conversion of EdmPrimitive types
             try {
