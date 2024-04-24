@@ -3,7 +3,7 @@ package io.neonbee.health;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.hazelcast.memory.MemorySize;
+import com.hazelcast.memory.Capacity;
 
 import io.neonbee.NeonBee;
 import io.neonbee.health.internal.MemoryStats;
@@ -59,7 +59,7 @@ public class MemoryHealthCheck extends AbstractHealthCheck {
                     DEFAULT_CRITICAL_THRESHOLD_PERCENTAGE);
 
             healthCheckPromise.complete(new Status().setOk(!critical).setData(
-                    new JsonObject().put("freeHeapMemory", MemorySize.toPrettyString(memoryStats.getFreeHeap()))
+                    new JsonObject().put("freeHeapMemory", Capacity.toPrettyString(memoryStats.getFreeHeap()))
                             .put("memoryUsedOfTotalPercentage", printPercentage(memoryUsedOfTotalPercentage))
                             .put("memoryUsedOfMaxPercentage", printPercentage(memoryUsedOfMaxPercentage))));
         };
