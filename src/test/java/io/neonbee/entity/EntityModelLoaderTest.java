@@ -133,10 +133,9 @@ class EntityModelLoaderTest extends NeonBeeTestBase {
     @Test
     @DisplayName("loading models doesn't fail for non-existing working directories")
     void dontFailModelLoadingOnNonExistingWorkingDir(Vertx vertx, VertxTestContext testContext) {
-        new EntityModelLoader(vertx).scanDir(Path.of("non-existing")).onComplete(testContext.succeeding(models -> {
-            assertThat(models).isNull();
-            testContext.completeNow();
-        }));
+        new EntityModelLoader(vertx)
+                .scanDir(Path.of("non-existing"))
+                .onComplete(testContext.succeedingThenComplete());
     }
 
     @Test

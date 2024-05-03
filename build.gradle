@@ -55,7 +55,7 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-hazelcast', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-health-check', version: vertx_version
 
-    def hazelcast_version = '5.3.5'
+    def hazelcast_version = '5.3.7'
     implementation group: 'com.hazelcast', name: 'hazelcast', version: hazelcast_version
 
     implementation (group: 'io.vertx', name: 'vertx-infinispan', version: vertx_version) {
@@ -63,14 +63,14 @@ dependencies {
         exclude group: 'org.infinispan', module: 'infinispan-commons'
         exclude group: 'org.infinispan', module: 'infinispan-multimap'
     }
-    def infinispan_version = '14.0.20.Final'
+    def infinispan_version = '14.0.28.Final'
     implementation group: 'org.infinispan', name: 'infinispan-multimap-jakarta', version: infinispan_version
     implementation group: 'org.infinispan', name: 'infinispan-core-jakarta', version: infinispan_version
     implementation group: 'org.infinispan', name: 'infinispan-clustered-lock', version: infinispan_version
     implementation group: 'org.infinispan', name: 'infinispan-clustered-counter', version: infinispan_version
     implementation group: 'org.infinispan', name: 'infinispan-component-annotations', version: infinispan_version
 
-    def jackson_version = '2.16.1'
+    def jackson_version = '2.17.0'
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jackson_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jackson_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jackson_version
@@ -87,7 +87,7 @@ dependencies {
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.13'
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.5.6'
-    def guava_version = '33.0.0-jre'
+    def guava_version = '33.1.0-jre'
     implementation group: 'com.google.guava', name: 'guava', version: guava_version
     implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.8.4'
 
@@ -112,7 +112,7 @@ dependencies {
     testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: mockito_version
     testImplementation group: 'net.bytebuddy', name: 'byte-buddy', version: '1.14.14'
 
-    def jupiter_version = '5.10.1'
+    def jupiter_version = '5.10.2'
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: jupiter_version
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: jupiter_version
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: jupiter_version
@@ -125,8 +125,8 @@ dependencies {
     testImplementation group: 'org.junit.platform', name: 'junit-platform-launcher', version: junit_platform_version
 
     // Gradle plugin dependencies
-    errorprone group: 'com.google.errorprone', name: 'error_prone_core', version: '2.24.1'
-    checkstyle group: 'com.puppycrawl.tools', name: 'checkstyle', version: '10.12.7'
+    errorprone group: 'com.google.errorprone', name: 'error_prone_core', version: '2.27.1'
+    checkstyle group: 'com.puppycrawl.tools', name: 'checkstyle', version: '10.16.0'
 
     // Without this the IDE can't find the test source files which are needed for debugging
     testCompileOnly group: 'io.vertx', name: 'vertx-core', classifier: 'test-sources', version: vertx_version
