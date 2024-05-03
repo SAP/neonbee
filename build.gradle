@@ -24,7 +24,7 @@ import org.gradle.nativeplatform.platform.internal.Architectures
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 group = 'io.neonbee'
-version = '0.35.1-SNAPSHOT'
+version = '0.36.0'
 mainClassName = 'io.neonbee.Launcher'
 archivesBaseName = 'neonbee-core'
 sourceCompatibility = 17
