@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.36.0 (2024-05-03)
+
+### Bug Fixes
+
+- filter eq null ([f5fd6ec6](https://github.com/SAP/neonbee/commit/f5fd6ec6a5f708b10e99f49c3850036cfc562b76))
+- odata guid type casting issue ([6defc410](https://github.com/SAP/neonbee/commit/6defc4109de588e499848b9e1e9a4171c78df2a3))
+- improve tests ([b8bdf36b](https://github.com/SAP/neonbee/commit/b8bdf36b31abe3226de0f6b9d3dc0047e221df1a))
+
+
+### Features
+
+- `EntityVerticle` registry RFC ([08d63729](https://github.com/SAP/neonbee/commit/08d63729191919ecfa66d2319bc52191c8d8ac68))
+- update hazelcast to version 5.3.5 ([a8e909f5](https://github.com/SAP/neonbee/commit/a8e909f54c8148ce18415e2e4bc9ba042aa7988a))
+- update dependency versions ([01d5b563](https://github.com/SAP/neonbee/commit/01d5b56350eaa82d6619b09ebdbecc0b3fa98420))
+
+
+### Build System
+
+- **deps**: bump net.bytebuddy:byte-buddy from 1.14.12 to 1.14.13 ([6ce21fed](https://github.com/SAP/neonbee/commit/6ce21fedf7665b0afbc8abf2e2e22020793ef39b))
+- **deps**: bump com.sap.cds:cds4j-core from 2.8.0 to 2.8.1 ([4b7bb05e](https://github.com/SAP/neonbee/commit/4b7bb05ea564fa60ad89fc67d835d8d40ca30267))
+- **deps**: bump se.bjurr.violations.violations-gradle-plugin ([b6034393](https://github.com/SAP/neonbee/commit/b6034393eeb04512e5b01bc3c54879eb5b839819))
+- **deps**: bump sapmachine from 17.0.10 to 17.0.11 ([50216ba0](https://github.com/SAP/neonbee/commit/50216ba0910ebe68d87780406b4ca5721262d19d))
+- **deps**: bump com.github.spotbugs from 6.0.9 to 6.0.12 ([f64d8b2f](https://github.com/SAP/neonbee/commit/f64d8b2fa99d13bf4d10fb69b6942ecd93665d12))
+- **deps**: bump org.slf4j:slf4j-api from 2.0.12 to 2.0.13 ([f90cc3a7](https://github.com/SAP/neonbee/commit/f90cc3a77fadf859f7caf8c7955d647cea18bde0))
+- **deps**: bump com.sap.cds:cds4j-core from 2.8.1 to 2.8.2 ([e4b3438a](https://github.com/SAP/neonbee/commit/e4b3438a90dcdbc32e98e424d767bdf2c25c48e2))
+- **deps**: bump com.github.spotbugs:spotbugs-annotations ([a4ace463](https://github.com/SAP/neonbee/commit/a4ace463db12440671d083d8664862d565552189))
+- **deps**: upgrade `vertx` to 4.5.7 ([045417b4](https://github.com/SAP/neonbee/commit/045417b4cd5662439315f6ff653d3e850cbb1443))
+- **deps**: bump org.sonarqube from 4.4.1.3373 to 5.0.0.4638 ([f6e37c44](https://github.com/SAP/neonbee/commit/f6e37c4454e10367782ba80a775e5030022e3b09))
+- **deps**: bump io.micrometer:micrometer-registry-prometheus ([5c44c659](https://github.com/SAP/neonbee/commit/5c44c6590187b894c23223fa5dda5583ac8f213e))
+- **deps**: bump ch.qos.logback:logback-classic from 1.5.3 to 1.5.6 ([bc575485](https://github.com/SAP/neonbee/commit/bc575485ab8dfc458770f1bce07d1941c31b1c4a))
+- **deps**: bump net.bytebuddy:byte-buddy from 1.14.13 to 1.14.14 ([b374e286](https://github.com/SAP/neonbee/commit/b374e286feacdd9b6766aad60507f2156afa92e9))
+- **deps**: bump com.sap.cds:cds4j-core from 2.8.2 to 2.9.0 ([fa9854e9](https://github.com/SAP/neonbee/commit/fa9854e905322f369a730f07e39883402065ab4a))
+
+
 ## 0.35.0 (2024-03-27)
 
 ### Build System
