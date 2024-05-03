@@ -80,7 +80,7 @@ class ClusterEntityRegistryTest {
                     assertThat(mapValue).isNotEmpty();
                     checkpoint.flag();
                 })).compose(unused -> registry.removeClusteringInformation(TestClusterEntityRegistry.CLUSTER_NODE_ID))
-                .onSuccess(v -> context.verify(checkpoint::flag))
+                .onSuccess(v -> checkpoint.flag())
                 .onFailure(context::failNow);
     }
 
@@ -138,8 +138,7 @@ class ClusterEntityRegistryTest {
         ClusterEntityRegistry registry = new TestClusterEntityRegistry(vertx, REGISTRY_NAME);
         registry.register(KEY, VALUE)
                 .compose(unused -> registry.removeClusteringInformation(KEY))
-                .onSuccess(v -> context.verify(context::completeNow))
-                .onFailure(context::failNow);
+                .onComplete(context.succeedingThenComplete());
     }
 
     static class TestClusterEntityRegistry extends ClusterEntityRegistry {
