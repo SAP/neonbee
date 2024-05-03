@@ -80,10 +80,8 @@ class ClusterEntityRegistryTest {
                     assertThat(mapValue).isNotEmpty();
                     checkpoint.flag();
                 })).compose(unused -> registry.removeClusteringInformation(TestClusterEntityRegistry.CLUSTER_NODE_ID))
-                .onSuccess(mapValue -> context.verify(() -> {
-                    assertThat(mapValue).isNull();
-                    checkpoint.flag();
-                })).onFailure(context::failNow);
+                .onSuccess(v -> context.verify(checkpoint::flag))
+                .onFailure(context::failNow);
     }
 
     @Test
@@ -138,11 +136,10 @@ class ClusterEntityRegistryTest {
     @DisplayName("remove key from registry")
     void remove(Vertx vertx, VertxTestContext context) {
         ClusterEntityRegistry registry = new TestClusterEntityRegistry(vertx, REGISTRY_NAME);
-        registry.register(KEY, VALUE).compose(unused -> registry.removeClusteringInformation(KEY))
-                .onSuccess(jsonArray -> context.verify(() -> {
-                    assertThat(jsonArray).isNull();
-                    context.completeNow();
-                })).onFailure(context::failNow);
+        registry.register(KEY, VALUE)
+                .compose(unused -> registry.removeClusteringInformation(KEY))
+                .onSuccess(v -> context.verify(context::completeNow))
+                .onFailure(context::failNow);
     }
 
     static class TestClusterEntityRegistry extends ClusterEntityRegistry {
