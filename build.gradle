@@ -92,7 +92,7 @@ dependencies {
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.5.6'
     def guava_version = '33.1.0-jre'
     implementation group: 'com.google.guava', name: 'guava', version: guava_version
-    implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.8.4'
+    implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.8.5'
 
     // Compile only
     compileOnly group: 'io.vertx', name: 'vertx-codegen', version: vertx_version
