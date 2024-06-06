@@ -29,16 +29,16 @@ public interface ChainAuthHandler extends AuthenticationHandler {
             return NOOP_AUTHENTICATION_HANDLER;
         }
 
-        io.vertx.ext.web.handler.ChainAuthHandler chainAuthHandler = io.vertx.ext.web.handler.ChainAuthHandler.any();
-        List<AuthenticationHandler> authHandlers =
-                authChainConfig.stream().map(config -> config.createAuthHandler(vertx)).toList();
-        authHandlers.forEach(chainAuthHandler::add);
+        List<AuthenticationHandler> authHandlers = authChainConfig.stream()
+                .map(config -> config.createAuthHandler(vertx)).toList();
 
-        return new ChainAuthHandler() {
-            @Override
-            public void handle(RoutingContext event) {
-                chainAuthHandler.handle(event);
-            }
-        };
+        if (authHandlers.size() == 1) {
+            AuthenticationHandler authenticationHandler = authHandlers.get(0);
+            return authenticationHandler::handle;
+        }
+
+        io.vertx.ext.web.handler.ChainAuthHandler chainAuthHandler = io.vertx.ext.web.handler.ChainAuthHandler.any();
+        authHandlers.forEach(chainAuthHandler::add);
+        return chainAuthHandler::handle;
     }
 }
