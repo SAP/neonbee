@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.36.1 (2024-06-06)
+
+### Bug Fixes
+
+- mitigate problem with ChainAuthHandler ([bab36af3](https://github.com/SAP/neonbee/commit/bab36af36708cab984731dc04a4d678e303c2585))
+
+
+### Build System
+
+- **deps**: bump io.micrometer:micrometer-registry-prometheus ([03966063](https://github.com/SAP/neonbee/commit/039660637b906248f729be440daff74a3c9a1ee1))
+- **deps**: bump com.sap.cds:cds4j-core from 2.9.0 to 2.9.2 ([f24ad0e2](https://github.com/SAP/neonbee/commit/f24ad0e28e30a87459a78c2918ae1aa227faea43))
+- **deps**: bump com.github.spotbugs:spotbugs-annotations ([49de5816](https://github.com/SAP/neonbee/commit/49de5816dbad2ac3e98c071526ef36e39f405a2c))
+- **deps**: bump com.github.spotbugs from 6.0.12 to 6.0.14 ([04f217d3](https://github.com/SAP/neonbee/commit/04f217d347d6714433328e7f1f434545b9c89c10))
+- **deps**: bump net.bytebuddy:byte-buddy from 1.14.14 to 1.14.15 ([3685bd55](https://github.com/SAP/neonbee/commit/3685bd554a72cadff4a79ed952b7d13c55b2b100))
+
+
 ## 0.36.0 (2024-05-03)
 
 ### Bug Fixes
