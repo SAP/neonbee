@@ -24,12 +24,14 @@ import static io.vertx.core.http.HttpMethod.PUT;
 import static io.vertx.ext.web.impl.Utils.pathOffset;
 import static java.lang.Character.isUpperCase;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import com.aayushatharva.brotli4j.decoder.Decoder;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 
@@ -184,28 +186,44 @@ public class RawEndpoint implements Endpoint {
                                 .map(Map.class::cast)
                                 .ifPresent(response.headers()::addAll);
 
-                        response.putHeader(CONTENT_TYPE_HINT,
-                                Optional.ofNullable(context.responseData().get(CONTENT_TYPE_HINT))
-                                        .map(String.class::cast).orElse("application/json"));
+                        String contentType = context.responseData().get(CONTENT_TYPE_HINT).toString();
 
-                        if (result instanceof JsonObject) {
-                            result = ((JsonObject) result).toBuffer();
-                        } else if (result instanceof JsonArray) {
-                            result = ((JsonArray) result).toBuffer();
-                        } else if (!(result instanceof Buffer)) {
-                            // TODO add logic here, what kind of data is returned by the data verticle and what kind of
-                            // data is ACCEPTed by the client. For now just support JSON and always return
-                            // application/json.
-                            result = Json.encodeToBuffer(asyncResult.result());
-                        } else {
-                            // fallback to text/plain if the Content-Type isn't set, so that the browser tries to
-                            // display it, instead of downloading it
+                        if (!contentType.equals("application/x-br")) {
                             response.putHeader(CONTENT_TYPE_HINT,
                                     Optional.ofNullable(context.responseData().get(CONTENT_TYPE_HINT))
-                                            .map(String.class::cast).orElse("text/plain"));
-                        }
+                                            .map(String.class::cast).orElse("application/json"));
 
-                        response.end((Buffer) result);
+                            if (result instanceof JsonObject) {
+                                result = ((JsonObject) result).toBuffer();
+                            } else if (result instanceof JsonArray) {
+                                result = ((JsonArray) result).toBuffer();
+                            } else if (!(result instanceof Buffer)) {
+                                // TODO add logic here, what kind of data is returned by the data verticle and what kind
+                                // of
+                                // data is ACCEPTed by the client. For now just support JSON and always return
+                                // application/json.
+                                result = Json.encodeToBuffer(asyncResult.result());
+                            } else {
+                                // fallback to text/plain if the Content-Type isn't set, so that the browser tries to
+                                // display it, instead of downloading it
+                                response.putHeader(CONTENT_TYPE_HINT,
+                                        Optional.ofNullable(context.responseData().get(CONTENT_TYPE_HINT))
+                                                .map(String.class::cast).orElse("text/plain"));
+                            }
+                            response.end((Buffer) result);
+                        } else {
+                            if (contentType.equals("application/x-br")) {
+                                if (result instanceof Buffer) {
+                                    byte[] encodedContent = ((Buffer) result).getBytes();
+                                    try {
+                                        byte[] result2 = Decoder.decompress(encodedContent).getDecompressedData();
+                                        response.end(Buffer.buffer(result2));
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+                            }
+                        }
                     });
         }
 
