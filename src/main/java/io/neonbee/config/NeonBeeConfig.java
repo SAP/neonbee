@@ -1,5 +1,6 @@
 package io.neonbee.config;
 
+import static io.neonbee.config.NeonBeeConfig.BootDeploymentHandling.FAIL_ON_ERROR;
 import static io.neonbee.internal.helper.ConfigHelper.notFound;
 import static io.neonbee.internal.helper.ConfigHelper.readConfig;
 import static io.neonbee.internal.helper.ConfigHelper.rephraseConfigNames;
@@ -45,6 +46,31 @@ import io.vertx.core.metrics.MetricsOptions;
 @JsonGen(publicConverter = false)
 public class NeonBeeConfig {
     /**
+     * How (non-system related) deployments like verticles and modules are handled during booting up {@link NeonBee}.
+     */
+    public enum BootDeploymentHandling {
+        /**
+         * Abort the {@link NeonBee} boot, if any (non-system related) verticle / module deployment fails to be
+         * deployed.
+         */
+        FAIL_ON_ERROR,
+
+        /**
+         * Log any failure of a (non-system related) verticle / module deployments, but continue booting up
+         * {@link NeonBee} otherwise, while discarding / undeploying any partial deployments (i.e. if a module fails to
+         * deploy, all deployables related to that module will be undeployed again).
+         */
+        UNDEPLOY_FAILING,
+
+        /**
+         * Log any failure of a (non-system related) verticle / module deployments, but continue booting up
+         * {@link NeonBee} otherwise, while keeping partial deployments (i.e. if a module fails to deploy, some
+         * verticles might still stay deployed).
+         */
+        KEEP_PARTIAL
+    }
+
+    /**
      * The default timeout for an event bus request.
      */
     public static final int DEFAULT_EVENT_BUS_TIMEOUT = 30;
@@ -73,6 +99,8 @@ public class NeonBeeConfig {
             ImmutableBiMap.of("healthConfig", "health", "metricsConfig", "metrics");
 
     private int eventBusTimeout = DEFAULT_EVENT_BUS_TIMEOUT;
+
+    private BootDeploymentHandling bootDeploymentHandling = FAIL_ON_ERROR;
 
     private int deploymentTimeout = DEFAULT_DEPLOYMENT_TIMEOUT;
 
@@ -255,6 +283,26 @@ public class NeonBeeConfig {
     @Fluent
     public NeonBeeConfig setEventBusTimeout(int eventBusTimeout) {
         this.eventBusTimeout = eventBusTimeout;
+        return this;
+    }
+
+    /**
+     * Gets how {@link NeonBee} handles failures deploying verticles / modules during boot.
+     *
+     * @return the selected boot deployment handling method
+     */
+    public BootDeploymentHandling getBootDeploymentHandling() {
+        return bootDeploymentHandling;
+    }
+
+    /**
+     * Sets how {@link NeonBee} should handle failures deploying verticles / modules during boot.
+     *
+     * @param bootDeploymentHandling the selected boot deployment handling method
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    public NeonBeeConfig setBootDeploymentHandling(BootDeploymentHandling bootDeploymentHandling) {
+        this.bootDeploymentHandling = bootDeploymentHandling;
         return this;
     }
 
