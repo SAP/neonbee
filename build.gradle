@@ -117,7 +117,7 @@ dependencies {
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: jupiter_version
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: jupiter_version
 
-    testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: '1.5.1'
+    testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: '1.5.3'
 
     // Required for Eclipse to run Unit tests.
     def junit_platform_version = '1.10.1'
