@@ -84,6 +84,7 @@ public final class EntityExpander {
     private void linkEntities(Entity entity, EdmNavigationProperty navigationProperty, List<Entity> entitiesToLink) {
         Link link = new Link();
         link.setTitle(navigationProperty.getName());
+        link.setRel("http://docs.oasis-open.org/odata/ns/related/" + navigationProperty.getName());
         // Reveal if navigation property is Collection or Entity
         if (navigationProperty.isCollection()) {
             EntityCollection expandCollection = new EntityCollection();
