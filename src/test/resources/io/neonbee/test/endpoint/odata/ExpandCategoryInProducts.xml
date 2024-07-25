@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<a:feed xmlns:a="http://www.w3.org/2005/Atom" xmlns:m="http://docs.oasis-open.org/odata/ns/metadata"
+        xmlns:d="http://docs.oasis-open.org/odata/ns/data" m:context="$metadata#Products(category())/$entity"
+        m:metadata-etag="&quot;a2a17a3177dad1d2f109a143dc0855df&quot;">
+    <a:id>io.neonbee.test.NavProbs/Products?%24expand=category&amp;%24format=xml</a:id>
+    <a:entry>
+        <a:id>Products(1)</a:id>
+        <a:title></a:title>
+        <a:summary></a:summary>
+        <a:updated>2024-07-26T09:26:58Z</a:updated>
+        <a:author>
+            <a:name></a:name>
+        </a:author>
+        <a:link rel="edit" href="Products(1)"></a:link>
+        <a:link rel="http://docs.oasis-open.org/odata/ns/related/category" title="category">
+            <m:inline>
+                <a:entry>
+                    <a:title></a:title>
+                    <a:summary></a:summary>
+                    <a:updated>2024-07-26T09:26:58Z</a:updated>
+                    <a:author>
+                        <a:name></a:name>
+                    </a:author>
+                    <a:link rel="http://docs.oasis-open.org/odata/ns/related/products"
+                            type="application/atom+xml;type=feed" title="products"></a:link>
+                    <a:category scheme="http://docs.oasis-open.org/odata/ns/scheme"
+                                term="#io.neonbee.test.NavProbs.Categories"></a:category>
+                    <a:content type="application/xml">
+                        <m:properties>
+                            <d:ID m:type="Int32">1</d:ID>
+                            <d:name>Food</d:name>
+                        </m:properties>
+                    </a:content>
+                </a:entry>
+            </m:inline>
+        </a:link>
+        <a:category scheme="http://docs.oasis-open.org/odata/ns/scheme"
+                    term="#io.neonbee.test.NavProbs.Products"></a:category>
+        <a:content type="application/xml">
+            <m:properties>
+                <d:ID m:type="Int32">1</d:ID>
+                <d:name>Steak</d:name>
+                <d:category_ID m:type="Int32">1</d:category_ID>
+            </m:properties>
+        </a:content>
+    </a:entry>
+    <a:entry>
+        <a:id>Products(2)</a:id>
+        <a:title></a:title>
+        <a:summary></a:summary>
+        <a:updated>2024-07-26T09:26:58Z</a:updated>
+        <a:author>
+            <a:name></a:name>
+        </a:author>
+        <a:link rel="edit" href="Products(2)"></a:link>
+        <a:link rel="http://docs.oasis-open.org/odata/ns/related/category" title="category">
+            <m:inline>
+                <a:entry>
+                    <a:id>Products(1)</a:id>
+                    <a:title></a:title>
+                    <a:summary></a:summary>
+                    <a:updated>2024-07-26T09:26:58Z</a:updated>
+                    <a:author>
+                        <a:name></a:name>
+                    </a:author>
+                    <a:link rel="edit" href="Products(1)"></a:link>
+                    <a:link rel="http://docs.oasis-open.org/odata/ns/related/products"
+                            type="application/atom+xml;type=feed" title="products" href="Products(1)/products"></a:link>
+                    <a:category scheme="http://docs.oasis-open.org/odata/ns/scheme"
+                                term="#io.neonbee.test.NavProbs.Categories"></a:category>
+                    <a:content type="application/xml">
+                        <m:properties>
+                            <d:ID m:type="Int32">1</d:ID>
+                            <d:name>Food</d:name>
+                        </m:properties>
+                    </a:content>
+                </a:entry>
+            </m:inline>
+        </a:link>
+        <a:category scheme="http://docs.oasis-open.org/odata/ns/scheme"
+                    term="#io.neonbee.test.NavProbs.Products"></a:category>
+        <a:content type="application/xml">
+            <m:properties>
+                <d:ID m:type="Int32">2</d:ID>
+                <d:name>Cheese</d:name>
+                <d:category_ID m:type="Int32">1</d:category_ID>
+            </m:properties>
+        </a:content>
+    </a:entry>
+    <a:entry>
+        <a:id>Products(21)</a:id>
+        <a:title></a:title>
+        <a:summary></a:summary>
+        <a:updated>2024-07-26T09:26:58Z</a:updated>
+        <a:author>
+            <a:name></a:name>
+        </a:author>
+        <a:link rel="edit" href="Products(21)"></a:link>
+        <a:link rel="http://docs.oasis-open.org/odata/ns/related/category" title="category">
+            <m:inline>
+                <a:entry>
+                    <a:title></a:title>
+                    <a:summary></a:summary>
+                    <a:updated>2024-07-26T09:26:58Z</a:updated>
+                    <a:author>
+                        <a:name></a:name>
+                    </a:author>
+                    <a:link rel="http://docs.oasis-open.org/odata/ns/related/products"
+                            type="application/atom+xml;type=feed" title="products"></a:link>
+                    <a:category scheme="http://docs.oasis-open.org/odata/ns/scheme"
+                                term="#io.neonbee.test.NavProbs.Categories"></a:category>
+                    <a:content type="application/xml">
+                        <m:properties>
+                            <d:ID m:type="Int32">2</d:ID>
+                            <d:name>Motorcycles</d:name>
+                        </m:properties>
+                    </a:content>
+                </a:entry>
+            </m:inline>
+        </a:link>
+        <a:category scheme="http://docs.oasis-open.org/odata/ns/scheme"
+                    term="#io.neonbee.test.NavProbs.Products"></a:category>
+        <a:content type="application/xml">
+            <m:properties>
+                <d:ID m:type="Int32">21</d:ID>
+                <d:name>S 1000 RR</d:name>
+                <d:category_ID m:type="Int32">2</d:category_ID>
+            </m:properties>
+        </a:content>
+    </a:entry>
+    <a:entry>
+        <a:id>Products(22)</a:id>
+        <a:title></a:title>
+        <a:summary></a:summary>
+        <a:updated>2024-07-26T09:26:58Z</a:updated>
+        <a:author>
+            <a:name></a:name>
+        </a:author>
+        <a:link rel="edit" href="Products(22)"></a:link>
+        <a:link rel="http://docs.oasis-open.org/odata/ns/related/category" title="category">
+            <m:inline>
+                <a:entry>
+                    <a:id>Products(2)</a:id>
+                    <a:title></a:title>
+                    <a:summary></a:summary>
+                    <a:updated>2024-07-26T09:26:58Z</a:updated>
+                    <a:author>
+                        <a:name></a:name>
+                    </a:author>
+                    <a:link rel="edit" href="Products(2)"></a:link>
+                    <a:link rel="http://docs.oasis-open.org/odata/ns/related/products"
+                            type="application/atom+xml;type=feed" title="products" href="Products(2)/products"></a:link>
+                    <a:category scheme="http://docs.oasis-open.org/odata/ns/scheme"
+                                term="#io.neonbee.test.NavProbs.Categories"></a:category>
+                    <a:content type="application/xml">
+                        <m:properties>
+                            <d:ID m:type="Int32">2</d:ID>
+                            <d:name>Motorcycles</d:name>
+                        </m:properties>
+                    </a:content>
+                </a:entry>
+            </m:inline>
+        </a:link>
+        <a:category scheme="http://docs.oasis-open.org/odata/ns/scheme"
+                    term="#io.neonbee.test.NavProbs.Products"></a:category>
+        <a:content type="application/xml">
+            <m:properties>
+                <d:ID m:type="Int32">22</d:ID>
+                <d:name>Street Glide Special</d:name>
+                <d:category_ID m:type="Int32">2</d:category_ID>
+            </m:properties>
+        </a:content>
+    </a:entry>
+</a:feed>

@@ -1,5 +1,6 @@
 package io.neonbee.test.endpoint.odata;
 
+import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.test.endpoint.odata.verticle.NavPropsCategoriesEntityVerticle.ALL_CATEGORIES;
 import static io.neonbee.test.endpoint.odata.verticle.NavPropsCategoriesEntityVerticle.CATEGORIES_ENTITY_SET_FQN;
 import static io.neonbee.test.endpoint.odata.verticle.NavPropsCategoriesEntityVerticle.FOOD_CATEGORY;
@@ -16,8 +17,10 @@ import static io.neonbee.test.endpoint.odata.verticle.NavPropsProductsEntityVert
 import static io.neonbee.test.endpoint.odata.verticle.NavPropsProductsEntityVerticle.addCategoryToProduct;
 import static io.neonbee.test.endpoint.odata.verticle.NavPropsProductsEntityVerticle.getDeclaredEntityModel;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +30,7 @@ import io.neonbee.test.base.ODataEndpointTestBase;
 import io.neonbee.test.base.ODataRequest;
 import io.neonbee.test.endpoint.odata.verticle.NavPropsCategoriesEntityVerticle;
 import io.neonbee.test.endpoint.odata.verticle.NavPropsProductsEntityVerticle;
+import io.neonbee.test.helper.ResourceHelper;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
@@ -50,6 +54,34 @@ class ODataExpandEntityCollectionTest extends ODataEndpointTestBase {
         Future.all(deployVerticle(new NavPropsProductsEntityVerticle()),
                 deployVerticle(new NavPropsCategoriesEntityVerticle()))
                 .onComplete(testContext.succeedingThenComplete());
+    }
+
+    @Test
+    @DisplayName("Expand property 'category' in Products in xml format")
+    void testExpandCategoryInProductsXmlFormat(VertxTestContext testContext) throws IOException {
+        ODataRequest oDataRequest = new ODataRequest(PRODUCTS_ENTITY_SET_FQN)
+                .setQuery(Map.of("$format", "xml"))
+                .setExpandQuery(PROPERTY_NAME_CATEGORY);
+
+        String expected = normalizeXml(ResourceHelper.TEST_RESOURCES.getRelated("ExpandCategoryInProducts.xml")
+                .toString());
+
+        requestOData(oDataRequest)
+                .onSuccess(response -> {
+                    testContext.verify(() -> {
+                        String s = normalizeXml(response.bodyAsString());
+                        assertThat(s).isEqualTo(expected);
+                        testContext.completeNow();
+                    });
+                })
+                .onFailure(testContext::failNow);
+    }
+
+    private String normalizeXml(String xml) {
+        // Remove all whitespace and line breaks
+        String newXml = xml.replaceAll("\\s+", "");
+        // Remove the specific <a:updated> tags with date-time values
+        return newXml.replaceAll("<a:updated>.*?</a:updated>", "");
     }
 
     @Test
