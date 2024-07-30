@@ -75,10 +75,15 @@ public class DefaultErrorHandler implements ErrorHandler {
     @Override
     public void handle(RoutingContext routingContext) {
         Throwable failure = routingContext.failure();
+        String errorMessage = null;
         if (failure != null) {
+            if (failure.getMessage() != null) {
+                errorMessage = failure.getMessage();
+            }
+
             LOGGER.correlateWith(routingContext).error(failure.getMessage(), failure);
         }
-        String errorMessage = null;
+
         int errorCode = routingContext.statusCode();
         if (errorCode == -1 && failure instanceof DataException dataException) {
             errorCode = dataException.failureCode();
