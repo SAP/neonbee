@@ -19,6 +19,7 @@ import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.entity.EntityWrapper;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.impl.HttpServerRequestInternal;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.impl.RouterImpl;
 import io.vertx.ext.web.impl.RoutingContextImpl;
@@ -30,6 +31,7 @@ class ProcessorHelperTest {
     void transferResponseHint() {
         HttpServerRequest request = Mockito.mock(HttpServerRequestInternal.class);
         Mockito.when(request.path()).thenReturn("/path");
+        Mockito.when(request.authority()).thenReturn(Mockito.mock(HostAndPort.class));
         RouterImpl router = Mockito.mock(RouterImpl.class);
         Mockito.when(router.getAllowForward()).thenReturn(null);
         RoutingContext routingContext = new RoutingContextImpl(null, router, request, Set.of());

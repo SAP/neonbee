@@ -71,7 +71,7 @@ class PetStoreTest extends NeonBeeTestBase {
     @DisplayName("should fail when passed parameters are invalid")
     void validationTest(VertxTestContext testContext) {
         String expectedErrorMsg =
-                "Error 400: The value of the request / response body is invalid. Reason: Instance does not have "
+                "Error 400: The value of the request body is invalid. Reason: Instance does not have "
                         + "required property \"name\"";
         createPet(new JsonObject().put("invalidParam", PET1_NAME))
                 .onComplete(testContext.succeeding(resp -> testContext.verify(() -> {
