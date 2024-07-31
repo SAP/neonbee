@@ -4,7 +4,7 @@ import static io.neonbee.endpoint.Endpoint.createRouter;
 import static io.vertx.core.Future.succeededFuture;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.neonbee.NeonBee;
 import io.neonbee.config.EndpointConfig;
 import io.neonbee.endpoint.Endpoint;
