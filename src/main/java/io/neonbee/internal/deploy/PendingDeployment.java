@@ -10,11 +10,13 @@ import java.util.function.Supplier;
 import io.neonbee.NeonBee;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Expectation;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.future.Expect;
 import io.vertx.core.impl.future.FutureInternal;
 import io.vertx.core.impl.future.Listener;
 
@@ -56,6 +58,13 @@ public abstract class PendingDeployment extends Deployment implements FutureInte
     }
 
     @Override
+    public Future<Deployment> expecting(Expectation<? super Deployment> expectation) {
+        Expect<Deployment> expect = new Expect(context(), expectation);
+        this.addListener(expect);
+        return expect;
+    }
+
+    @Override
     public final Future<Void> undeploy() {
         Deployable deployable = getDeployable();
         if (!deployFuture.isComplete()) {
@@ -84,6 +93,10 @@ public abstract class PendingDeployment extends Deployment implements FutureInte
      * @return a future to signal when the undeployment was completed
      */
     protected abstract Future<Void> undeploy(String deploymentId);
+
+    private Future<Deployment> mapDeployment() {
+        return deployFuture.map((Deployment) this);
+    }
 
     @Override
     public String getDeploymentId() {
@@ -180,9 +193,5 @@ public abstract class PendingDeployment extends Deployment implements FutureInte
     @Override
     public Future<Deployment> timeout(long delay, TimeUnit unit) {
         return mapDeployment().timeout(delay, unit);
-    }
-
-    private Future<Deployment> mapDeployment() {
-        return deployFuture.map((Deployment) this);
     }
 }
