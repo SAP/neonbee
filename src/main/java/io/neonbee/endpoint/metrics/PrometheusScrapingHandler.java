@@ -2,10 +2,9 @@ package io.neonbee.endpoint.metrics;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.neonbee.logging.LoggingFacade;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.prometheus.client.exporter.common.TextFormat;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.micrometer.backends.BackendRegistries;
@@ -46,7 +45,9 @@ public class PrometheusScrapingHandler extends PrometheusScrapingHandlerImpl {
     }
 
     private static void handleWithPrometheusMeterRegistry(RoutingContext rc, PrometheusMeterRegistry pmr) {
-        rc.response().putHeader(HttpHeaders.CONTENT_TYPE, TextFormat.CONTENT_TYPE_004).end(pmr.scrape());
+        rc.response()
+                .putHeader(HttpHeaders.CONTENT_TYPE, "text/plain; version=0.0.4; charset=utf-8")
+                .end(pmr.scrape());
     }
 
     @Override
