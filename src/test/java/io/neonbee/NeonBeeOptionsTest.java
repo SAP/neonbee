@@ -19,8 +19,6 @@ import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.google.common.truth.Truth8;
-
 import io.neonbee.NeonBeeOptions.Mutable;
 import io.neonbee.test.helper.FileSystemHelper;
 import io.vertx.core.VertxOptions;
@@ -176,11 +174,11 @@ class NeonBeeOptionsTest {
     @DisplayName("Test clusterTruststore getter and setter")
     void testClusterTruststore() {
         Mutable mutable = new NeonBeeOptions.Mutable();
-        Truth8.assertThat(mutable.getClusterTruststore()).isNull();
+        assertThat(mutable.getClusterTruststore()).isNull();
 
         Path path = Path.of("/my/truststore/path");
         mutable.setClusterTruststore(path);
-        Truth8.assertThat(mutable.getClusterTruststore()).isEqualTo(path);
+        assertThat(mutable.getClusterTruststore()).isEqualTo(path);
     }
 
     @Test
@@ -198,11 +196,11 @@ class NeonBeeOptionsTest {
     @DisplayName("Test clusterKeystore getter and setter")
     void testClusterKeystore() {
         Mutable mutable = new NeonBeeOptions.Mutable();
-        Truth8.assertThat(mutable.getClusterKeystore()).isNull();
+        assertThat(mutable.getClusterKeystore()).isNull();
 
         Path path = Path.of("/my/keystore/path");
         mutable.setClusterKeystore(path);
-        Truth8.assertThat(mutable.getClusterKeystore()).isEqualTo(path);
+        assertThat(mutable.getClusterKeystore()).isEqualTo(path);
     }
 
     @Test

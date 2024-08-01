@@ -1,7 +1,6 @@
 package io.neonbee.internal.deploy;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
 import static io.neonbee.internal.deploy.DeploymentTest.newNeonBeeMockForDeployment;
 import static io.neonbee.test.helper.DummyVerticleHelper.DUMMY_VERTICLE;
 import static io.neonbee.test.helper.FileSystemHelper.createTempDirectory;
