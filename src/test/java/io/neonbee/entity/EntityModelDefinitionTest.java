@@ -82,6 +82,6 @@ class EntityModelDefinitionTest {
         List<Path> edmxPaths = EntityModelDefinition.resolveEdmxPaths(csnPath, cdsModel);
         Stream<Path> edmxFileNames = edmxPaths.stream().map(Path::getFileName);
 
-        com.google.common.truth.Truth8.assertThat(edmxFileNames).containsExactlyElementsIn(expectedEdmxFileNames);
+        assertThat(edmxFileNames).containsExactlyElementsIn(expectedEdmxFileNames);
     }
 }

@@ -17,8 +17,6 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.Isolated;
 
-import com.google.common.truth.Truth8;
-
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeMockHelper;
 import io.vertx.core.Context;
@@ -69,7 +67,7 @@ class EventLoopHealthCheckTest {
                     JsonObject data = result.getData().getJsonObject("blockedEventLoops");
                     assertThat(data.size()).isEqualTo(1);
                     Optional<String> firstEntry = data.getMap().keySet().stream().findFirst();
-                    Truth8.assertThat(firstEntry).isPresent();
+                    assertThat(firstEntry).isPresent();
                     assertThat(firstEntry.get()).startsWith("vert.x-eventloop-thread-");
                     testContext.completeNow();
                 }))));
