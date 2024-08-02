@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.37.0 (2024-08-02)
+
+### Features
+
+- odata set rel for expand ([be526b5f](https://github.com/SAP/neonbee/commit/be526b5f95831c4ed4d8b0d7e1f76221b0c63e38))
+
+
+### Build System
+
+- **deps**: bump net.ltgt.errorprone from 3.1.0 to 4.0.1 ([77dc8519](https://github.com/SAP/neonbee/commit/77dc85193e8f73bd5d9f5854e0c369959a115e6c))
+- **deps**: bump com.github.spotbugs:spotbugs-annotations ([9df74714](https://github.com/SAP/neonbee/commit/9df74714d139b885622093f0424192c63906c4af))
+- **deps**: bump org.skyscreamer:jsonassert from 1.5.1 to 1.5.3 ([cfd7f01e](https://github.com/SAP/neonbee/commit/cfd7f01e31dc0edfbfce254e8b196da0c98153f7))
+- **deps**: bump org.sonarqube from 5.0.0.4638 to 5.1.0.4882 ([f9c250e1](https://github.com/SAP/neonbee/commit/f9c250e124cfa69f2234b73fd2dc4d3b2382c494))
+- **deps**: bump net.bytebuddy:byte-buddy from 1.14.15 to 1.14.18 ([cb92a191](https://github.com/SAP/neonbee/commit/cb92a1915de0462bb66b7310418704553362a726))
+- **deps**: bump sapmachine from 17.0.11 to 17.0.12 ([b0ecef50](https://github.com/SAP/neonbee/commit/b0ecef5060a0986eaa40669dfdffcdb3ae965ec3))
+- **deps**: bump com.github.spotbugs from 6.0.14 to 6.0.19 ([57eea93a](https://github.com/SAP/neonbee/commit/57eea93abdce5c3a562905b0cb951a91be1336c6))
+- **deps**: bump com.sap.cds:cds4j-core from 2.9.2 to 3.0.0 ([779001c6](https://github.com/SAP/neonbee/commit/779001c6b3953d419eea312c5454287a2b05bca4))
+- **deps**: upgrade `vertx` to 4.5.9 ([87d21324](https://github.com/SAP/neonbee/commit/87d21324289d1bcbe4961ba30e6d7e595307cd61))
+- **deps**: update dependencies ([ad54b5fd](https://github.com/SAP/neonbee/commit/ad54b5fd5eec1cb2c90ba8dafdbe3cdabc13478a))
+
+
 ## 0.36.1 (2024-06-06)
 
 ### Bug Fixes
