@@ -99,6 +99,14 @@ class ClusterEntityRegistryTest {
     }
 
     @Test
+    @DisplayName("unregister non-existing node")
+    void unregisterEmptyNode(Vertx vertx, VertxTestContext context) {
+        ClusterEntityRegistry registry = new TestClusterEntityRegistry(vertx, REGISTRY_NAME);
+        registry.unregisterNode("TestClusterEntityRegistry.CLUSTER_NODE_ID")
+                .onSuccess(mapValue -> context.completeNow()).onFailure(context::failNow);
+    }
+
+    @Test
     @DisplayName("unregister node with two nodes with same entities")
     void unregisterNode2(Vertx vertx, VertxTestContext context) {
         Checkpoint checkpoint = context.checkpoint(5);
