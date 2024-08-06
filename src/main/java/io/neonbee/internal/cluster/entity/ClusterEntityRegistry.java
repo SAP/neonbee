@@ -77,7 +77,7 @@ public class ClusterEntityRegistry implements Registry<String> {
     @Override
     public Future<Void> unregister(String sharedMapKey, String value) {
         return Future.all(entityRegistry.unregister(sharedMapKey, value), clusteringInformation
-                .unregister(getClusterNodeId(), clusterRegistrationInformation(sharedMapKey, value)))
+                        .unregister(getClusterNodeId(), clusterRegistrationInformation(sharedMapKey, value)))
                 .mapEmpty();
     }
 
@@ -124,7 +124,13 @@ public class ClusterEntityRegistry implements Registry<String> {
      */
     public Future<Void> unregisterNode(String clusterNodeId) {
         return clusteringInformation.getSharedMap().compose(AsyncMap::entries).compose(map -> {
-            JsonArray registeredEntities = ((JsonArray) map.remove(clusterNodeId)).copy();
+            JsonArray registeredEntities = (JsonArray) map.remove(clusterNodeId);
+
+            if (registeredEntities == null) {
+                // If no entities are registered, return a completed future
+                return Future.succeededFuture();
+            }
+            registeredEntities = registeredEntities.copy();
             List<Future<?>> futureList = new ArrayList<>(registeredEntities.size());
             for (Object o : registeredEntities) {
                 if (remove(map, o)) {
