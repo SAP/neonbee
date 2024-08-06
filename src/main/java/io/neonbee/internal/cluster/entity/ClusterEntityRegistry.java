@@ -77,7 +77,7 @@ public class ClusterEntityRegistry implements Registry<String> {
     @Override
     public Future<Void> unregister(String sharedMapKey, String value) {
         return Future.all(entityRegistry.unregister(sharedMapKey, value), clusteringInformation
-                        .unregister(getClusterNodeId(), clusterRegistrationInformation(sharedMapKey, value)))
+                .unregister(getClusterNodeId(), clusterRegistrationInformation(sharedMapKey, value)))
                 .mapEmpty();
     }
 
