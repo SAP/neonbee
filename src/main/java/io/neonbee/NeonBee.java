@@ -1,5 +1,7 @@
 package io.neonbee;
 
+import static io.neonbee.config.NeonBeeConfig.BootDeploymentHandling.FAIL_ON_ERROR;
+import static io.neonbee.config.NeonBeeConfig.BootDeploymentHandling.KEEP_PARTIAL;
 import static io.neonbee.internal.deploy.DeployableModule.fromJar;
 import static io.neonbee.internal.deploy.DeployableVerticle.fromClass;
 import static io.neonbee.internal.deploy.DeployableVerticle.fromVerticle;
@@ -44,6 +46,7 @@ import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.cluster.ClusterManagerFactory;
 import io.neonbee.config.HealthConfig;
 import io.neonbee.config.NeonBeeConfig;
+import io.neonbee.config.NeonBeeConfig.BootDeploymentHandling;
 import io.neonbee.config.ServerConfig;
 import io.neonbee.data.DataException;
 import io.neonbee.data.DataQuery;
@@ -102,6 +105,7 @@ import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.impl.ConcurrentHashSet;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.PfxOptions;
@@ -566,21 +570,25 @@ public class NeonBee {
         List<Future<? extends Deployable>> requiredVerticles = new ArrayList<>();
         requiredVerticles.add(fromClass(vertx, ConsolidationVerticle.class, new JsonObject().put("instances", 1)));
         requiredVerticles.add(fromClass(vertx, LoggerManagerVerticle.class));
-
-        List<Future<Optional<? extends Deployable>>> optionalVerticles = new ArrayList<>();
         if (Optional.ofNullable(config.getHealthConfig()).map(HealthConfig::isEnabled).orElse(true)) {
             requiredVerticles.add(fromClass(vertx, HealthCheckVerticle.class));
         }
+
+        List<Future<Optional<? extends Deployable>>> optionalVerticles = new ArrayList<>();
         optionalVerticles.add(deployableWatchVerticle(options.getModelsDirectory(), ModelRefreshVerticle::new));
         optionalVerticles.add(deployableWatchVerticle(options.getModulesDirectory(), DeployerVerticle::new));
         optionalVerticles.add(deployableRedeployEntitiesJobVerticle(options));
 
         LOGGER.info("Deploying system verticles ...");
-        return all(List.of(fromDeployables(requiredVerticles).compose(allTo(this)),
-                all(optionalVerticles).map(CompositeFuture::list).map(optionals -> {
-                    return optionals.stream().map(Optional.class::cast).filter(Optional::isPresent).map(Optional::get)
-                            .map(Deployable.class::cast).toList();
-                }).map(Deployables::new).compose(anyTo(this)))).mapEmpty();
+        return all(fromDeployables(requiredVerticles).compose(allTo(this)).onFailure(throwable -> {
+            LOGGER.error("Failed to deploy (some / all) required system verticle(s)", throwable);
+        }), all(optionalVerticles).map(CompositeFuture::list).map(optionals -> {
+            return optionals.stream().map(Optional.class::cast).filter(Optional::isPresent).map(Optional::get)
+                    .map(Deployable.class::cast).toList();
+        }).map(Deployables::new).compose(anyTo(this)).onFailure(throwable -> {
+            LOGGER.error("Failed to deploy (some / all) optional system verticle(s), bootstrap will continue",
+                    throwable);
+        }).otherwiseEmpty()).mapEmpty();
     }
 
     private Future<Optional<? extends Deployable>> deployableWatchVerticle(
@@ -621,7 +629,9 @@ public class NeonBee {
     private Future<Void> deployServerVerticle() {
         LOGGER.info("Deploying server verticle ...");
         return fromClass(vertx, ServerVerticle.class, new JsonObject().put("instances", NUMBER_DEFAULT_INSTANCES))
-                .compose(deployable -> deployable.deploy(this)).mapEmpty();
+                .compose(deployable -> deployable.deploy(this)).onFailure(throwable -> {
+                    LOGGER.error("Failed to deploy server verticle", throwable);
+                }).mapEmpty();
     }
 
     /**
@@ -638,11 +648,7 @@ public class NeonBee {
         return scanForDeployableClasses(vertx).compose(deployableClasses -> fromDeployables(deployableClasses.stream()
                 .filter(verticleClass -> filterByAutoDeployAndProfiles(verticleClass, options.getActiveProfiles()))
                 .map(verticleClass -> fromClass(vertx, verticleClass)).collect(Collectors.toList())))
-                .onSuccess(deployables -> {
-                    if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info("Deploy class path verticle(s) {}.", deployables.getIdentifier());
-                    }
-                }).compose(allTo(this)).mapEmpty();
+                .compose(handleBootDeployment("class path verticle(s)"));
     }
 
     @VisibleForTesting
@@ -665,7 +671,39 @@ public class NeonBee {
 
         LOGGER.info("Deploying module(s) ...");
         return fromDeployables(moduleJarPaths.stream().map(moduleJarPath -> fromJar(vertx, moduleJarPath))
-                .collect(Collectors.toList())).compose(allTo(this)).mapEmpty();
+                .collect(Collectors.toList())).compose(handleBootDeployment("module(s)"));
+    }
+
+    private Function<Deployables, Future<Void>> handleBootDeployment(String deploymentType) {
+        BootDeploymentHandling handling = config.getBootDeploymentHandling();
+        return deployables -> {
+            // in case we should keep partial deployments, for every deployable that we are about to deploy
+            // set the keep partial deployment flag, so that in case there is an error we don't undeploy
+            if (handling == KEEP_PARTIAL) {
+                for (Deployable deployable : deployables.getDeployables()) {
+                    if (deployable instanceof Deployables) {
+                        ((Deployables) deployable).keepPartialDeployment();
+                    }
+                }
+            }
+
+            return (handling == FAIL_ON_ERROR ? allTo(this) : anyTo(this)).apply(deployables)
+                    .onSuccess(deployments -> {
+                        if (LOGGER.isInfoEnabled()) {
+                            LOGGER.info("Successfully deployed all {} {}",
+                                    deploymentType, deployments.getDeploymentId());
+                        }
+                    }).recover(throwable -> {
+                        if (LOGGER.isErrorEnabled()) {
+                            LOGGER.error("Failed to deploy (some / all) {}{}",
+                                    deploymentType, handling == FAIL_ON_ERROR ? "" : ", bootstrap will continue",
+                                    throwable);
+                        }
+
+                        // abort the boot process if any class path verticle failed to deploy
+                        return handling == FAIL_ON_ERROR ? failedFuture(throwable) : succeededFuture();
+                    }).mapEmpty();
+        };
     }
 
     @VisibleForTesting
@@ -721,7 +759,7 @@ public class NeonBee {
         try {
             // unfortunately the addCloseHook method is public, but hidden in VertxImpl. As we need to know when the
             // instance shuts down, register a close hook using reflections (might fail due to a SecurityManager)
-            vertx.getClass().getMethod("addCloseHook", Closeable.class).invoke(vertx, (Closeable) completion -> {
+            VertxInternal.class.getMethod("addCloseHook", Closeable.class).invoke(vertx, (Closeable) completion -> {
                 /*
                  * Called when Vert.x instance is closed, perform shut-down operations here
                  */
