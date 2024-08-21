@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.37.0 (2024-08-02)
+## 0.37.1 (2024-08-07)
+
+### Bug Fixes
+
+- null check ([4e762cf3](https://github.com/SAP/neonbee/commit/4e762cf33c34516369a51f43d7ea0f5def8c4101))
+- formatting ([2c03ee90](https://github.com/SAP/neonbee/commit/2c03ee907757e15ade2520d1f53d1014db6c684a))
+
+
+## 0.37.0 (2024-08-05)
 
 ### Features
 
