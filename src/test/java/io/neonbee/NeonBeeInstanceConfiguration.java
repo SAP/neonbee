@@ -56,6 +56,13 @@ public @interface NeonBeeInstanceConfiguration {
 
     String metricsRegistryName() default "";
 
+    /**
+     * You can change the configuration for the NeonBee instance by providing a JSON string.
+     *
+     * @return the configuration for the NeonBee instance
+     */
+    String neonBeeConfig() default "";
+
     enum ClusterManager {
         FAKE {
             @Override

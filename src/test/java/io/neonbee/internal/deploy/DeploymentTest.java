@@ -22,6 +22,7 @@ import io.vertx.junit5.VertxExtension;
 
 @ExtendWith(VertxExtension.class)
 class DeploymentTest {
+
     @Test
     @DisplayName("should return the deployable")
     void getDeployableTest() {

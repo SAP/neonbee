@@ -51,13 +51,29 @@ public class ClusterEntityRegistry implements Registry<String> {
     /**
      * Create a new instance of {@link ClusterEntityRegistry}.
      *
+     * @param vertx                 the {@link Vertx} instance
+     * @param entityRegistry        the entity registry
+     * @param clusteringInformation the clustering information registry
+     */
+    protected ClusterEntityRegistry(
+            Vertx vertx,
+            WriteSafeRegistry<Object> entityRegistry,
+            WriteSafeRegistry<JsonObject> clusteringInformation) {
+        this.entityRegistry = entityRegistry;
+        this.clusteringInformation = clusteringInformation;
+        this.vertx = vertx;
+    }
+
+    /**
+     * Create a new instance of {@link ClusterEntityRegistry}.
+     *
      * @param vertx        the {@link Vertx} instance
      * @param registryName the name of the map registry
      */
     public ClusterEntityRegistry(Vertx vertx, String registryName) {
-        this.entityRegistry = new WriteSafeRegistry<>(vertx, registryName);
-        this.clusteringInformation = new WriteSafeRegistry<>(vertx, registryName + "#ClusteringInformation");
-        this.vertx = vertx;
+        this(vertx,
+                new WriteSafeRegistry<>(vertx, registryName),
+                new WriteSafeRegistry<>(vertx, registryName + "#ClusteringInformation"));
     }
 
     @VisibleForTesting

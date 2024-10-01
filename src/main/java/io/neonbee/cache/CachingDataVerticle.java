@@ -28,6 +28,7 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.internal.SharedDataAccessor;
+import io.neonbee.internal.SharedDataAccessorFactory;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -147,7 +148,8 @@ public abstract class CachingDataVerticle<T> extends DataVerticle<T> {
 
         // we will only need to retrieve locks if we coalesce requests
         if (coalescingTimeout > 0) {
-            sharedDataAccessor = new SharedDataAccessor(vertx, getClass());
+            sharedDataAccessor = new SharedDataAccessorFactory(vertx)
+                    .getSharedDataAccessor(getClass());
         }
     }
 

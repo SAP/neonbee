@@ -16,7 +16,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Functions;
 
 import io.neonbee.NeonBee;
-import io.neonbee.internal.SharedDataAccessor;
+import io.neonbee.internal.SharedDataAccessorFactory;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -147,7 +147,10 @@ public class EntityModelManager {
         }
 
         // if not try to reload the models and return the loaded data model
-        return new SharedDataAccessor(neonBee.getVertx(), EntityModelManager.class).getLocalLock()
+
+        return new SharedDataAccessorFactory(neonBee)
+                .getSharedDataAccessor(EntityModelManager.class)
+                .getLocalLock()
                 .transform(asyncLocalLock -> {
                     Map<String, EntityModel> retryModels = getBufferedModels();
                     if (retryModels != null) {
