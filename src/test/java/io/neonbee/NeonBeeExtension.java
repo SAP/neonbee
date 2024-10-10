@@ -36,15 +36,18 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.jupiter.api.parallel.Isolated;
+import org.junit.platform.commons.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hazelcast.core.LifecycleService;
 
 import io.neonbee.NeonBeeOptions.Mutable;
+import io.neonbee.config.NeonBeeConfig;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.impl.VertxImpl;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
 import io.vertx.junit5.Timeout;
@@ -173,6 +176,7 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
             return unpack(store(extensionContext).getOrComputeIfAbsent(options.getInstanceName(),
                     key -> new ScopedObject<>(
                             createNeonBee(options,
+                                    neonBeeInstanceConfiguration.map(this::config).orElse(null),
                                     neonBeeInstanceConfiguration.map(NeonBeeInstanceConfiguration::clusterManager)
                                             .orElse(NeonBeeInstanceConfiguration.ClusterManager.FAKE)),
                             closeNeonBee())));
@@ -181,6 +185,15 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
             return newTestContext(extensionContext);
         }
         throw new IllegalStateException("Looks like the ParameterResolver needs a fix...");
+    }
+
+    private NeonBeeConfig config(NeonBeeInstanceConfiguration neonBeeInstanceConfiguration) {
+        String configString = neonBeeInstanceConfiguration.neonBeeConfig();
+        if (StringUtils.isBlank(configString)) {
+            return null;
+        }
+
+        return new NeonBeeConfig(new JsonObject(configString));
     }
 
     private Object unpack(Object object) {
@@ -312,7 +325,10 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         }
     }
 
-    private NeonBee createNeonBee(NeonBeeOptions options, NeonBeeInstanceConfiguration.ClusterManager clusterManager) {
+    private NeonBee createNeonBee(
+            NeonBeeOptions options,
+            NeonBeeConfig config,
+            NeonBeeInstanceConfiguration.ClusterManager clusterManager) {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<NeonBee> neonBeeBox = new AtomicReference<>();
         AtomicReference<Throwable> errorBox = new AtomicReference<>();
@@ -320,7 +336,7 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         NeonBee.create(
                 (NeonBee.OwnVertxFactory) (vertxOptions, clusterManagerInstance) -> NeonBee.newVertx(vertxOptions,
                         clusterManagerInstance, options),
-                clusterManager.factory(), options, null).onComplete(ar -> {
+                clusterManager.factory(), options, config).onComplete(ar -> {
                     if (ar.succeeded()) {
                         neonBeeBox.set(ar.result());
                     } else {

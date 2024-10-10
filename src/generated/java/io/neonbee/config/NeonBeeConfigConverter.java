@@ -102,6 +102,11 @@ public class NeonBeeConfigConverter {
                     obj.setTrackingDataHandlingStrategy((String) member.getValue());
                 }
                 break;
+            case "useReplicatedMaps":
+                if (member.getValue() instanceof Boolean) {
+                    obj.setUseReplicatedMaps((Boolean) member.getValue());
+                }
+                break;
             case "verticleDeploymentTimeout":
                 if (member.getValue() instanceof Number) {
                     obj.setVerticleDeploymentTimeout(((Number) member.getValue()).intValue());
@@ -155,6 +160,7 @@ public class NeonBeeConfigConverter {
         if (obj.getTrackingDataHandlingStrategy() != null) {
             json.put("trackingDataHandlingStrategy", obj.getTrackingDataHandlingStrategy());
         }
+        json.put("useReplicatedMaps", obj.isUseReplicatedMaps());
         if (obj.getVerticleDeploymentTimeout() != null) {
             json.put("verticleDeploymentTimeout", obj.getVerticleDeploymentTimeout());
         }

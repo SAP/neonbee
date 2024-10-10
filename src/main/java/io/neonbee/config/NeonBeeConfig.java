@@ -35,7 +35,7 @@ import io.vertx.core.metrics.MetricsOptions;
 
 /**
  * In contrast to the {@link NeonBeeOptions} the {@link NeonBeeConfig} is persistent configuration in a file.
- *
+ * <p>
  * Whilst the {@link NeonBeeOptions} contain information which is to specify when NeonBee starts, such as the port of
  * the server to start on and the cluster to connect to, which potentially could be different across cluster nodes, the
  * {@link NeonBeeConfig} contains information which is mostly shared across different cluster nodes or you would like to
@@ -99,6 +99,8 @@ public class NeonBeeConfig {
     private MetricsConfig metricsConfig = new MetricsConfig();
 
     private int jsonMaxStringSize;
+
+    private boolean useReplicatedMaps;
 
     /**
      * Are the metrics enabled?
@@ -534,5 +536,39 @@ public class NeonBeeConfig {
      */
     public int getJsonMaxStringSize() {
         return jsonMaxStringSize;
+    }
+
+    /**
+     * Set the value to enable, disable replicated maps.
+     * <p>
+     * <b>Currently this feature is only supported for a Hazelcast-Cluster</b>
+     * <p>
+     * Replicated maps are a distributed data structure that provides a way to replicate data across multiple nodes in a
+     * cluster. Replicated maps are useful when you need to replicate data across multiple nodes in a cluster, and you
+     * don't need to partition the data.
+     * <p>
+     *
+     * @return true if the replicated maps should be used, false otherwise
+     */
+    public boolean isUseReplicatedMaps() {
+        return useReplicatedMaps;
+    }
+
+    /**
+     * Set the value to enable, disable replicated maps.
+     * <p>
+     * <b>Currently this feature is only supported for a Hazelcast-Cluster</b>
+     * <p>
+     * Replicated maps are a distributed data structure that provides a way to replicate data across multiple nodes in a
+     * cluster. Replicated maps are useful when you need to replicate data across multiple nodes in a cluster, and you
+     * don't need to partition the data.
+     * <p>
+     *
+     * @param useReplicatedMaps true if the replicated maps should be enabled, false otherwise
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    public NeonBeeConfig setUseReplicatedMaps(boolean useReplicatedMaps) {
+        this.useReplicatedMaps = useReplicatedMaps;
+        return this;
     }
 }

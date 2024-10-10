@@ -29,12 +29,22 @@ public class WriteSafeRegistry<T> implements Registry<T> {
     /**
      * Create a new {@link WriteSafeRegistry}.
      *
+     * @param registryName       the name of the map registry
+     * @param sharedDataAccessor the shared data accessor
+     */
+    protected WriteSafeRegistry(String registryName, SharedDataAccessor sharedDataAccessor) {
+        this.registryName = registryName;
+        this.sharedDataAccessor = sharedDataAccessor;
+    }
+
+    /**
+     * Create a new {@link WriteSafeRegistry}.
+     *
      * @param vertx        the {@link Vertx} instance
      * @param registryName the name of the map registry
      */
     public WriteSafeRegistry(Vertx vertx, String registryName) {
-        this.registryName = registryName;
-        this.sharedDataAccessor = new SharedDataAccessor(vertx, this.getClass());
+        this(registryName, new SharedDataAccessor(vertx, WriteSafeRegistry.class));
     }
 
     /**

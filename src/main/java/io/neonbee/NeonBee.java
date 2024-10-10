@@ -63,6 +63,7 @@ import io.neonbee.hook.internal.DefaultHookRegistry;
 import io.neonbee.internal.Registry;
 import io.neonbee.internal.ReplyInboundInterceptor;
 import io.neonbee.internal.SharedDataAccessor;
+import io.neonbee.internal.SharedDataAccessorFactory;
 import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.buffer.ImmutableBuffer;
 import io.neonbee.internal.cluster.ClusterHelper;
@@ -75,6 +76,7 @@ import io.neonbee.internal.codec.ImmutableJsonArrayMessageCodec;
 import io.neonbee.internal.codec.ImmutableJsonObjectMessageCodec;
 import io.neonbee.internal.deploy.Deployable;
 import io.neonbee.internal.deploy.Deployables;
+import io.neonbee.internal.hazelcast.ReplicatedClusterEntityRegistry;
 import io.neonbee.internal.helper.ConfigHelper;
 import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.job.RedeployEntitiesJob;
@@ -449,7 +451,8 @@ public class NeonBee {
      */
     @VisibleForTesting
     Future<Void> initializeSharedMaps() {
-        SharedDataAccessor sharedData = new SharedDataAccessor(vertx, NeonBee.class);
+        SharedDataAccessor sharedData = new SharedDataAccessorFactory(this)
+                .getSharedDataAccessor(NeonBee.class);
         sharedLocalMap = sharedData.getLocalMap(SHARED_MAP_NAME);
         return sharedData.<String, Object>getAsyncMap(SHARED_MAP_NAME).onSuccess(asyncMap -> sharedAsyncMap = asyncMap)
                 .mapEmpty();
@@ -677,7 +680,12 @@ public class NeonBee {
         this.healthRegistry = new HealthCheckRegistry(vertx);
         this.modelManager = new EntityModelManager(this);
         if (vertx.isClustered()) {
-            this.entityRegistry = new ClusterEntityRegistry(vertx, EntityVerticle.REGISTRY_NAME);
+            if (config.isUseReplicatedMaps() && ClusterHelper.getHazelcastClusterManager(vertx).isPresent()) {
+                this.entityRegistry =
+                        new ReplicatedClusterEntityRegistry(vertx, EntityVerticle.REGISTRY_NAME);
+            } else {
+                this.entityRegistry = new ClusterEntityRegistry(vertx, EntityVerticle.REGISTRY_NAME);
+            }
         } else {
             this.entityRegistry = new WriteSafeRegistry<>(vertx, EntityVerticle.REGISTRY_NAME);
         }

@@ -29,7 +29,7 @@ import io.neonbee.endpoint.Endpoint;
 import io.neonbee.endpoint.odatav4.internal.olingo.OlingoEndpointHandler;
 import io.neonbee.entity.EntityModel;
 import io.neonbee.internal.RegexBlockList;
-import io.neonbee.internal.SharedDataAccessor;
+import io.neonbee.internal.SharedDataAccessorFactory;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -201,27 +201,35 @@ public class ODataV4Endpoint implements Endpoint {
         // when NeonBee is started and / or in case the endpoint is not used.
         Route initialRoute = router.route();
         initialRoute.handler(
-                routingContext -> new SharedDataAccessor(vertx, ODataV4Endpoint.class).getLocalLock(asyncLock ->
-                // immediately initialize the router, this will also "arm" the event bus listener
-                (!initialized.getAndSet(true)
-                        ? refreshRouter(vertx, router, basePath, uriConversion, exposedEntities, models)
-                        : succeededFuture()).onComplete(handler -> {
-                            // wait for the refresh to finish (the result doesn't matter), remove the initial route, as
-                            // this will redirect all requests to the registered service endpoint handlers (if non have
-                            // been registered, e.g. due to a failure in model loading, it'll result in an 404). Could
-                            // have been removed already by refreshRouter, we don't care!
-                            initialRoute.remove();
-                            if (asyncLock.succeeded()) {
-                                // releasing the lock will cause other requests unblock and not call the initial route
-                                asyncLock.result().release();
-                            }
+                routingContext -> new SharedDataAccessorFactory(vertx)
+                        .getSharedDataAccessor(ODataV4Endpoint.class)
+                        .getLocalLock(asyncLock ->
+                        // immediately initialize the router, this will also "arm" the event bus listener
+                        (!initialized.getAndSet(true)
+                                ? refreshRouter(vertx, router, basePath, uriConversion, exposedEntities, models)
+                                : succeededFuture()).onComplete(handler -> {
+                                    // wait for the refresh to finish (the result doesn't matter), remove the initial
+                                    // route, as
+                                    // this will redirect all requests to the registered service endpoint handlers (if
+                                    // non have
+                                    // been registered, e.g. due to a failure in model loading, it'll result in an 404).
+                                    // Could
+                                    // have been removed already by refreshRouter, we don't care!
+                                    initialRoute.remove();
+                                    if (asyncLock.succeeded()) {
+                                        // releasing the lock will cause other requests unblock and not call the initial
+                                        // route
+                                        asyncLock.result().release();
+                                    }
 
-                            // let the router again handle the context again, now with either all service endpoints
-                            // registered, or none in case there have been a failure while loading the models.
-                            // NOTE: Re-route is the only elegant way I found to restart the current router to take
-                            // the new routes! Might consider checking again with the Vert.x 4.0 release.
-                            routingContext.reroute(routingContext.request().uri());
-                        })));
+                                    // let the router again handle the context again, now with either all service
+                                    // endpoints
+                                    // registered, or none in case there have been a failure while loading the models.
+                                    // NOTE: Re-route is the only elegant way I found to restart the current router to
+                                    // take
+                                    // the new routes! Might consider checking again with the Vert.x 4.0 release.
+                                    routingContext.reroute(routingContext.request().uri());
+                                })));
 
         return succeededFuture(router);
     }
