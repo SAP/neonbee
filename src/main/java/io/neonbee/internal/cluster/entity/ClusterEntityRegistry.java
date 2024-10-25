@@ -44,9 +44,9 @@ public class ClusterEntityRegistry implements Registry<String> {
     @VisibleForTesting
     final WriteSafeRegistry<JsonObject> clusteringInformation;
 
-    private final Vertx vertx;
+    final WriteSafeRegistry<Object> entityRegistry;
 
-    private final WriteSafeRegistry<Object> entityRegistry;
+    private final Vertx vertx;
 
     /**
      * Create a new instance of {@link ClusterEntityRegistry}.
@@ -76,8 +76,11 @@ public class ClusterEntityRegistry implements Registry<String> {
 
     @Override
     public Future<Void> unregister(String sharedMapKey, String value) {
-        return Future.all(entityRegistry.unregister(sharedMapKey, value), clusteringInformation
-                .unregister(getClusterNodeId(), clusterRegistrationInformation(sharedMapKey, value)))
+        return Future.all(
+                entityRegistry.unregister(sharedMapKey, value),
+                clusteringInformation.unregister(
+                        getClusterNodeId(),
+                        clusterRegistrationInformation(sharedMapKey, value)))
                 .mapEmpty();
     }
 
@@ -123,32 +126,47 @@ public class ClusterEntityRegistry implements Registry<String> {
      * @return the future
      */
     public Future<Void> unregisterNode(String clusterNodeId) {
-        return clusteringInformation.getSharedMap().compose(AsyncMap::entries).compose(map -> {
-            JsonArray registeredEntities = (JsonArray) map.remove(clusterNodeId);
+        return clusteringInformation.getSharedMap()
+                .compose(AsyncMap::entries)
+                .compose(map -> {
+                    JsonArray registeredEntities = (JsonArray) map.remove(clusterNodeId);
 
-            if (registeredEntities == null) {
-                // If no entities are registered, return a completed future
-                return Future.succeededFuture();
-            }
-            registeredEntities = registeredEntities.copy();
-            List<Future<?>> futureList = new ArrayList<>(registeredEntities.size());
-            for (Object o : registeredEntities) {
-                if (remove(map, o)) {
-                    JsonObject jo = (JsonObject) o;
-                    String entityName = jo.getString(ENTITY_NAME_KEY);
-                    String qualifiedName = jo.getString(QUALIFIED_NAME_KEY);
-                    futureList.add(unregister(entityName, qualifiedName));
-                }
-            }
-            return Future.join(futureList).mapEmpty();
-        }).compose(cf -> removeClusteringInformation(clusterNodeId));
+                    if (registeredEntities == null) {
+                        // If no entities are registered, return a completed future
+                        return Future.succeededFuture();
+                    }
+                    registeredEntities = registeredEntities.copy();
+                    List<Future<?>> futureList = new ArrayList<>(registeredEntities.size());
+                    for (Object o : registeredEntities) {
+                        if (shouldRemove(map, o)) {
+                            JsonObject jo = (JsonObject) o;
+                            String entityName = jo.getString(ENTITY_NAME_KEY);
+                            String qualifiedName = jo.getString(QUALIFIED_NAME_KEY);
+                            futureList.add(entityRegistry.unregister(entityName, qualifiedName));
+                        }
+                    }
+                    return Future.join(futureList).mapEmpty();
+                }).compose(cf -> removeClusteringInformation(clusterNodeId));
     }
 
-    private boolean remove(Map<String, Object> map, Object o) {
+    /**
+     * Check if the provided object should be removed from the map.
+     *
+     * @param map the map
+     * @param o   the object
+     * @return true if the object should be removed
+     */
+    private boolean shouldRemove(Map<String, Object> map, Object o) {
         for (Map.Entry<String, Object> node : map.entrySet()) {
             JsonArray ja = (JsonArray) node.getValue();
-            if (ja.contains(o)) {
-                return false;
+            // Iterate over the JsonArray to determine if it contains the specified object.
+            // JsonArray#contains cannot be used directly because the types of objects in the JsonArray may differ from
+            // those returned by the iterator. This discrepancy occurs because JsonArray.Iter#next automatically wraps
+            // standard Java types into their corresponding Json types.
+            for (Object object : ja) {
+                if (object.equals(o)) {
+                    return false;
+                }
             }
         }
         return true;
