@@ -116,10 +116,10 @@ class RedeployEntitiesJobTest {
                             return clusterEntityRegistry
                                     .getClusteringInformation(ClusterHelper.getClusterNodeId(vertx));
                         })
-                        .onSuccess(event -> testContext.verify(() -> {
-                            assertThat(event).isNotNull();
-                            assertThat(event.size()).isEqualTo(6);
-                            Set<String> deployedSet = event.stream()
+                        .onSuccess(clusteringInformation -> testContext.verify(() -> {
+                            assertThat(clusteringInformation).isNotNull();
+                            assertThat(clusteringInformation.size()).isEqualTo(6);
+                            Set<String> deployedSet = clusteringInformation.stream()
                                     .map(o -> (JsonObject) o)
                                     .map(jo -> jo.getString(ClusterEntityRegistry.QUALIFIED_NAME_KEY))
                                     .map(s -> s.replaceAll("-\\d*", ""))
@@ -136,7 +136,11 @@ class RedeployEntitiesJobTest {
             @Override
             boolean filterByAutoDeployAndProfiles(Class<? extends Verticle> verticleClass,
                     Collection<NeonBeeProfile> activeProfiles) {
-                return true;
+                return Set.of(
+                        TestEntityVerticle1.class,
+                        TestEntityVerticle2.class,
+                        TestEntityVerticle3.class)
+                        .contains(verticleClass);
             }
         }
 
