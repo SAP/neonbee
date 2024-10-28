@@ -63,14 +63,15 @@ public class WriteSafeRegistry<T> implements Registry<T> {
      * @param futureSupplier supplier for the future to be secured by the lock
      * @return the futureSupplier
      */
-    private Future<Void> lock(String sharedMapKey, Supplier<Future<Void>> futureSupplier) {
+    protected Future<Void> lock(String sharedMapKey, Supplier<Future<Void>> futureSupplier) {
         logger.debug("Get lock for {}", sharedMapKey);
         return sharedDataAccessor.getLock(sharedMapKey).onFailure(throwable -> {
             logger.error("Error acquiring lock for {}", sharedMapKey, throwable);
-        }).compose(lock -> futureSupplier.get().onComplete(anyResult -> {
-            logger.debug("Releasing lock for {}", sharedMapKey);
-            lock.release();
-        }));
+        }).compose(lock -> Future.<Void>future(event -> futureSupplier.get().onComplete(event))
+                .onComplete(anyResult -> {
+                    logger.debug("Releasing lock for {}", sharedMapKey);
+                    lock.release();
+                }));
     }
 
     private Future<Void> addValue(String sharedMapKey, Object value) {
