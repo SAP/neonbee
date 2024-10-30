@@ -1,7 +1,5 @@
 package io.neonbee.internal;
 
-import static io.vertx.core.Future.succeededFuture;
-
 import java.util.function.Supplier;
 
 import io.neonbee.NeonBee;
@@ -10,6 +8,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.shareddata.AsyncMap;
+import io.vertx.core.shareddata.SharedData;
 
 /**
  * A registry to manage values in the {@link SharedDataAccessor} shared map.
@@ -22,7 +21,9 @@ public class WriteSafeRegistry<T> implements Registry<T> {
 
     private final LoggingFacade logger = LoggingFacade.create();
 
-    private final SharedDataAccessor sharedDataAccessor;
+    private final SharedData sharedData;
+
+    private final Registry<T> sharedRegistry;
 
     private final String registryName;
 
@@ -33,8 +34,30 @@ public class WriteSafeRegistry<T> implements Registry<T> {
      * @param registryName the name of the map registry
      */
     public WriteSafeRegistry(Vertx vertx, String registryName) {
+        this(registryName, new SharedDataAccessor(vertx, WriteSafeRegistry.class));
+    }
+
+    /**
+     * Create a new {@link WriteSafeRegistry}.
+     *
+     * @param registryName the name of the map registry
+     * @param sharedData   the shared data
+     */
+    public WriteSafeRegistry(String registryName, SharedData sharedData) {
+        this(registryName, sharedData, new SharedRegistry<>(registryName, sharedData));
+    }
+
+    /**
+     * Create a new {@link WriteSafeRegistry}.
+     *
+     * @param registryName the name of the map registry
+     * @param sharedData   the shared data
+     * @param registry     the shared registry
+     */
+    WriteSafeRegistry(String registryName, SharedData sharedData, Registry<T> registry) {
         this.registryName = registryName;
-        this.sharedDataAccessor = new SharedDataAccessor(vertx, this.getClass());
+        this.sharedData = sharedData;
+        this.sharedRegistry = registry;
     }
 
     /**
@@ -48,48 +71,12 @@ public class WriteSafeRegistry<T> implements Registry<T> {
     public Future<Void> register(String sharedMapKey, T value) {
         logger.info("register value: \"{}\" in shared map: \"{}\"", sharedMapKey, value);
 
-        return lock(sharedMapKey, () -> addValue(sharedMapKey, value));
+        return lock(sharedMapKey, () -> sharedRegistry.register(sharedMapKey, value));
     }
 
     @Override
     public Future<JsonArray> get(String sharedMapKey) {
-        return getSharedMap().compose(map -> map.get(sharedMapKey)).map(o -> (JsonArray) o);
-    }
-
-    /**
-     * Method that acquires a lock for the sharedMapKey and released the lock after the futureSupplier is executed.
-     *
-     * @param sharedMapKey   the shared map key
-     * @param futureSupplier supplier for the future to be secured by the lock
-     * @return the futureSupplier
-     */
-    protected Future<Void> lock(String sharedMapKey, Supplier<Future<Void>> futureSupplier) {
-        logger.debug("Get lock for {}", sharedMapKey);
-        return sharedDataAccessor.getLock(sharedMapKey).onFailure(throwable -> {
-            logger.error("Error acquiring lock for {}", sharedMapKey, throwable);
-        }).compose(lock -> Future.<Void>future(event -> futureSupplier.get().onComplete(event))
-                .onComplete(anyResult -> {
-                    logger.debug("Releasing lock for {}", sharedMapKey);
-                    lock.release();
-                }));
-    }
-
-    private Future<Void> addValue(String sharedMapKey, Object value) {
-        Future<AsyncMap<String, Object>> sharedMap = getSharedMap();
-
-        return sharedMap.compose(map -> map.get(sharedMapKey))
-                .map(valueOrNull -> valueOrNull != null ? (JsonArray) valueOrNull : new JsonArray())
-                .compose(valueArray -> {
-                    if (!valueArray.contains(value)) {
-                        valueArray.add(value);
-                    }
-
-                    if (logger.isInfoEnabled()) {
-                        logger.info("Registered verticle {} in shared map.", value);
-                    }
-
-                    return sharedMap.compose(map -> map.put(sharedMapKey, valueArray));
-                });
+        return sharedRegistry.get(sharedMapKey);
     }
 
     /**
@@ -103,33 +90,36 @@ public class WriteSafeRegistry<T> implements Registry<T> {
     public Future<Void> unregister(String sharedMapKey, T value) {
         logger.debug("unregister value: \"{}\" from shared map: \"{}\"", sharedMapKey, value);
 
-        return lock(sharedMapKey, () -> removeValue(sharedMapKey, value));
+        return lock(sharedMapKey, () -> sharedRegistry.unregister(sharedMapKey, value));
     }
 
-    private Future<Void> removeValue(String sharedMapKey, Object value) {
-        Future<AsyncMap<String, Object>> sharedMap = getSharedMap();
-
-        return sharedMap.compose(map -> map.get(sharedMapKey)).map(jsonArray -> (JsonArray) jsonArray)
-                .compose(values -> {
-                    if (values == null) {
-                        return succeededFuture();
-                    }
-
-                    if (logger.isInfoEnabled()) {
-                        logger.info("Unregistered verticle {} in shared map.", value);
-                    }
-
-                    values.remove(value);
-                    return sharedMap.compose(map -> map.put(sharedMapKey, values));
-                });
+    /**
+     * Method that acquires a lock for the sharedMapKey and released the lock after the futureSupplier is executed.
+     *
+     * @param sharedMapKey   the shared map key
+     * @param futureSupplier supplier for the future to be secured by the lock
+     * @return the futureSupplier
+     */
+    protected Future<Void> lock(String sharedMapKey, Supplier<Future<Void>> futureSupplier) {
+        logger.debug("Get lock for {}", sharedMapKey);
+        return sharedData.getLock(sharedMapKey).onFailure(throwable -> {
+            logger.error("Error acquiring lock for {}", sharedMapKey, throwable);
+        }).compose(lock -> Future.<Void>future(event -> futureSupplier.get().onComplete(event))
+                .onComplete(anyResult -> {
+                    logger.debug("Releasing lock for {}", sharedMapKey);
+                    lock.release();
+                }));
     }
 
     /**
      * Shared map that is used as registry.
+     * <p>
+     * It is not safe to write to the shared map directly. Use the {@link WriteSafeRegistry#register(String, Object)}
+     * and {@link WriteSafeRegistry#unregister(String, Object)} methods.
      *
      * @return Future to the shared map
      */
     public Future<AsyncMap<String, Object>> getSharedMap() {
-        return sharedDataAccessor.getAsyncMap(registryName);
+        return sharedData.getAsyncMap(registryName);
     }
 }
