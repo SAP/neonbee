@@ -41,6 +41,25 @@ public class UnregisterEntityVerticlesHook {
     }
 
     /**
+     * This method is called when a NeonBee node has left the cluster.
+     *
+     * @param neonBee     the {@link NeonBee} instance
+     * @param hookContext the {@link HookContext}
+     * @param promise     {@link Promise} to completed the function.
+     */
+    @Hook(HookType.NODE_LEFT)
+    public void cleanup(NeonBee neonBee, HookContext hookContext, Promise<Void> promise) {
+        String clusterNodeId = hookContext.get(CLUSTER_NODE_ID);
+        LOGGER.info("Cleanup qualified names for node {}", clusterNodeId);
+        if (ClusterHelper.isLeader(neonBee.getVertx())) {
+            LOGGER.info("Cleaning registered qualified names ...");
+            unregister(neonBee, clusterNodeId).onComplete(promise)
+                    .onSuccess(unused -> LOGGER.info("Qualified names successfully cleaned up"))
+                    .onFailure(ignoredCause -> LOGGER.error("Failed to cleanup qualified names"));
+        }
+    }
+
+    /**
      * Unregister the entity qualified names for the node by ID.
      *
      * @param neonBee       the {@link NeonBee} instance
@@ -69,24 +88,4 @@ public class UnregisterEntityVerticlesHook {
                 .onFailure(cause -> LOGGER.error("Failed to unregistered entity verticle models for node ID {} ...",
                         clusterNodeId, cause));
     }
-
-    /**
-     * This method is called when a NeonBee node has left the cluster.
-     *
-     * @param neonBee     the {@link NeonBee} instance
-     * @param hookContext the {@link HookContext}
-     * @param promise     {@link Promise} to completed the function.
-     */
-    @Hook(HookType.NODE_LEFT)
-    public void cleanup(NeonBee neonBee, HookContext hookContext, Promise<Void> promise) {
-        String clusterNodeId = hookContext.get(CLUSTER_NODE_ID);
-        LOGGER.info("Cleanup qualified names for node {}", clusterNodeId);
-        if (ClusterHelper.isLeader(neonBee.getVertx())) {
-            LOGGER.info("Cleaning registered qualified names ...");
-            unregister(neonBee, clusterNodeId).onComplete(promise)
-                    .onSuccess(unused -> LOGGER.info("Qualified names successfully cleaned up"))
-                    .onFailure(ignoredCause -> LOGGER.error("Failed to cleanup qualified names"));
-        }
-    }
-
 }

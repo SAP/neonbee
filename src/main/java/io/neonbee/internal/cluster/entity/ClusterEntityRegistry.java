@@ -1,15 +1,18 @@
 package io.neonbee.internal.cluster.entity;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 
 import io.neonbee.entity.EntityVerticle;
 import io.neonbee.internal.Registry;
+import io.neonbee.internal.WriteLockRegistry;
 import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.cluster.ClusterHelper;
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
@@ -44,7 +47,7 @@ public class ClusterEntityRegistry implements Registry<String> {
     @VisibleForTesting
     final WriteSafeRegistry<JsonObject> clusteringInformation;
 
-    final WriteSafeRegistry<Object> entityRegistry;
+    final WriteLockRegistry<Object> entityRegistry;
 
     private final Vertx vertx;
 
@@ -55,7 +58,7 @@ public class ClusterEntityRegistry implements Registry<String> {
      * @param registryName the name of the map registry
      */
     public ClusterEntityRegistry(Vertx vertx, String registryName) {
-        this.entityRegistry = new WriteSafeRegistry<>(vertx, registryName);
+        this.entityRegistry = new WriteLockRegistry<>(vertx, registryName);
         this.clusteringInformation = new WriteSafeRegistry<>(vertx, registryName + "#ClusteringInformation");
         this.vertx = vertx;
     }
@@ -135,40 +138,77 @@ public class ClusterEntityRegistry implements Registry<String> {
                         // If no entities are registered, return a completed future
                         return Future.succeededFuture();
                     }
-                    registeredEntities = registeredEntities.copy();
-                    List<Future<?>> futureList = new ArrayList<>(registeredEntities.size());
-                    for (Object o : registeredEntities) {
-                        if (shouldRemove(map, o)) {
-                            JsonObject jo = (JsonObject) o;
-                            String entityName = jo.getString(ENTITY_NAME_KEY);
-                            String qualifiedName = jo.getString(QUALIFIED_NAME_KEY);
-                            futureList.add(entityRegistry.unregister(entityName, qualifiedName));
-                        }
-                    }
-                    return Future.join(futureList).mapEmpty();
-                }).compose(cf -> removeClusteringInformation(clusterNodeId));
+
+                    // The clustering information map should look like this:
+                    //
+                    // 6dbe2f47-8e2a-4b41-b019-007b16157f87 ->
+                    // [{
+                    // "qualifiedName":"unregisterentitiestest/_ErpSalesEntityVerticle-644622197",
+                    // "entityName":"entityVerticles[Sales.Orders]"
+                    // },{
+                    // "qualifiedName":"unregisterentitiestest/_ErpSalesEntityVerticle-644622197",
+                    // "entityName":"entityVerticles[ERP.Customers]"
+                    // },{
+                    // "qualifiedName":"unregisterentitiestest/_MarketSalesEntityVerticle-133064210",
+                    // "entityName":"entityVerticles[Sales.Orders]"
+                    // },{
+                    // "qualifiedName":"unregisterentitiestest/_MarketSalesEntityVerticle-133064210",
+                    // "entityName":"entityVerticles[Market.Products]"
+                    // }]
+                    //
+                    // d4f78582-14d4-493f-8a74-03d0e49c566b ->
+                    // [{
+                    // "qualifiedName":"unregisterentitiestest/_ErpSalesEntityVerticle-644622197",
+                    // "entityName":"entityVerticles[Sales.Orders]"
+                    // },{
+                    // "qualifiedName":"unregisterentitiestest/_ErpSalesEntityVerticle-644622197",
+                    // "entityName":"entityVerticles[ERP.Customers]"
+                    // }]
+
+                    // The entity registry map should look like this:
+                    //
+                    // entityVerticles[Sales.Orders] ->
+                    // [
+                    // "unregisterentitiestest/_ErpSalesEntityVerticle-644622197",
+                    // "unregisterentitiestest/_MarketSalesEntityVerticle-133064210"
+                    // ]
+                    //
+                    // entityVerticles[Market.Products] ->
+                    // [
+                    // "unregisterentitiestest/_MarketSalesEntityVerticle-133064210"
+                    // ]
+                    // entityVerticles[ERP.Customers] ->
+                    // [
+                    // "unregisterentitiestest/_ErpSalesEntityVerticle-644622197"
+                    // ]
+                    return buildEntryMap(map)
+                            .compose(entryMap -> entityRegistry.lock()
+                                    .compose(lock -> lock.execute(() -> createEntityMap(entryMap))))
+                            .compose(cf -> removeClusteringInformation(clusterNodeId));
+                });
     }
 
-    /**
-     * Check if the provided object should be removed from the map.
-     *
-     * @param map the map
-     * @param o   the object
-     * @return true if the object should be removed
-     */
-    private boolean shouldRemove(Map<String, Object> map, Object o) {
-        for (Map.Entry<String, Object> node : map.entrySet()) {
-            JsonArray ja = (JsonArray) node.getValue();
-            // Iterate over the JsonArray to determine if it contains the specified object.
-            // JsonArray#contains cannot be used directly because the types of objects in the JsonArray may differ from
-            // those returned by the iterator. This discrepancy occurs because JsonArray.Iter#next automatically wraps
-            // standard Java types into their corresponding Json types.
-            for (Object object : ja) {
-                if (object.equals(o)) {
-                    return false;
-                }
-            }
-        }
-        return true;
+    private Future<Void> createEntityMap(Map<String, List<String>> entryMap) {
+        return entityRegistry.getSharedMap()
+                .compose(asyncMap -> asyncMap.clear()
+                        .map(v -> entryMap.entrySet()
+                                .stream()
+                                .map(entry -> asyncMap
+                                        .put(entry.getKey(), new JsonArray(entry.getValue())))
+                                .collect(Collectors.toList()))
+                        .map(Future::all)
+                        .mapEmpty());
+    }
+
+    private Future<@Nullable Map<String, List<String>>> buildEntryMap(Map<String, Object> map) {
+        return vertx.executeBlocking(() -> map.values()
+                .stream()
+                .map(JsonArray.class::cast)
+                .flatMap(JsonArray::stream)
+                .map(JsonObject.class::cast)
+                .collect(Collectors.toMap(
+                        jo -> jo.getString(ENTITY_NAME_KEY),
+                        jo -> List.of(jo.getString(QUALIFIED_NAME_KEY)),
+                        (l1, l2) -> Stream.of(l1, l2).flatMap(List::stream).toList())));
     }
 }

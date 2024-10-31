@@ -74,8 +74,15 @@ class RedeployEntitiesJobTest {
 
     @NeonBeeDeployable(namespace = NeonBeeDeployable.NEONBEE_NAMESPACE, autoDeploy = false)
     public static class TestEntityVerticle1 extends EntityVerticle {
+
+        /**
+         * The fully qualified name of the entity type "ERP.Customers".
+         */
         static final FullQualifiedName FQN_ERP_CUSTOMERS = new FullQualifiedName("ERP", "Customers");
 
+        /**
+         * The fully qualified name of the entity type "Sales.Orders".
+         */
         static final FullQualifiedName FQN_SALES_ORDERS = new FullQualifiedName("Sales.Orders");
 
         @Override
