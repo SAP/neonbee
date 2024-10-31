@@ -1,6 +1,18 @@
 # Changelog
 
-## 0.37.1 (2024-08-07)
+## 0.37.2 (2024-10-29)
+
+### Bug Fixes
+
+- entity unregister node ([2a548529](https://github.com/SAP/neonbee/commit/2a548529956825d53565207033f05afffaeb37fe))
+
+
+### Features
+
+- add contribution guideline for genAI ([64d2ac45](https://github.com/SAP/neonbee/commit/64d2ac455efb853f537c944f20ead35c810cab8d))
+
+
+## 0.37.1 (2024-08-21)
 
 ### Bug Fixes
 

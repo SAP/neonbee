@@ -2,7 +2,7 @@
   "nextVersion" : {
     "major" : 0,
     "minor" : 37,
-    "patch" : 2,
+    "patch" : 3,
     "preReleaseParts" : [ ],
     "buildMetaDataParts" : [ ],
     "preRelease" : "",
@@ -13,7 +13,7 @@
   "lastVersion" : {
     "major" : 0,
     "minor" : 37,
-    "patch" : 1,
+    "patch" : 2,
     "preReleaseParts" : [ ],
     "buildMetaDataParts" : [ ],
     "preRelease" : "",
@@ -25,6 +25,114 @@
     "version" : {
       "major" : 0,
       "minor" : 37,
+      "patch" : 2,
+      "preReleaseParts" : [ ],
+      "buildMetaDataParts" : [ ],
+      "preRelease" : "",
+      "stable" : true,
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
+    },
+    "releaseDate" : "2024-10-29 09:02:22.000 +0100",
+    "sections" : [ {
+      "title" : "Bug Fixes",
+      "commits" : [ {
+        "hashFull" : "2a548529956825d53565207033f05afffaeb37fe",
+        "hash" : "2a548529956825d",
+        "hash7" : "2a54852",
+        "hash8" : "2a548529",
+        "commitTime" : "2024-10-29 09:02:22.000 +0100",
+        "commitTimeLong" : 1730188942,
+        "message" : "fix: entity unregister node\n\nWhen the `unregisterNode` method is called for another NeonBee node,\nand the executing node has an `EntityVerticle` that was also registered\nby the other node, the `EntityVerticle` was incorrectly unregistered\nfor the executing node. This fix ensures that the `EntityVerticle`\nremains registered for the executing node.\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2024-10-25 12:19:05.000 +0200",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2024-10-29 09:02:22.000 +0100",
+          "name" : "halber",
+          "email" : "michael.halberstadt@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/2a548529956825d53565207033f05afffaeb37fe",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "entity unregister node",
+        "commitBody" : "When the `unregisterNode` method is called for another NeonBee node,\nand the executing node has an `EntityVerticle` that was also registered\nby the other node, the `EntityVerticle` was incorrectly unregistered\nfor the executing node. This fix ensures that the `EntityVerticle`\nremains registered for the executing node.",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "entity unregister node",
+        "messageBody" : "When the `unregisterNode` method is called for another NeonBee node,\nand the executing node has an `EntityVerticle` that was also registered\nby the other node, the `EntityVerticle` was incorrectly unregistered\nfor the executing node. This fix ensures that the `EntityVerticle`\nremains registered for the executing node.",
+        "messageTitle" : "fix: entity unregister node"
+      } ]
+    }, {
+      "title" : "Features",
+      "commits" : [ {
+        "hashFull" : "64d2ac455efb853f537c944f20ead35c810cab8d",
+        "hash" : "64d2ac455efb853",
+        "hash7" : "64d2ac4",
+        "hash8" : "64d2ac45",
+        "commitTime" : "2024-10-08 11:34:58.000 +0200",
+        "commitTimeLong" : 1728380098,
+        "message" : "feat: add contribution guideline for genAI\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2024-09-26 13:27:34.000 +0200",
+          "name" : "Pascal Krause",
+          "email" : "pascal.krause@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2024-10-08 11:34:58.000 +0200",
+          "name" : "Pascal",
+          "email" : "23715608+pk-work@users.noreply.github.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/64d2ac455efb853f537c944f20ead35c810cab8d",
+        "commitType" : "feat",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "add contribution guideline for genAI",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "rawCommitType" : "feat",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "add contribution guideline for genAI",
+        "messageBody" : "",
+        "messageTitle" : "feat: add contribution guideline for genAI"
+      } ]
+    } ]
+  }, {
+    "version" : {
+      "major" : 0,
+      "minor" : 37,
       "patch" : 1,
       "preReleaseParts" : [ ],
       "buildMetaDataParts" : [ ],
@@ -33,7 +141,7 @@
       "initialDevelopment" : true,
       "buildMetaData" : ""
     },
-    "releaseDate" : "2024-08-07 12:12:46.000 +0200",
+    "releaseDate" : "2024-08-21 14:18:38.000 +0200",
     "sections" : [ {
       "title" : "Bug Fixes",
       "commits" : [ {
