@@ -2,7 +2,7 @@ package io.neonbee.logging;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.handler.CorrelationIdHandler.CORRELATION_ID;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;

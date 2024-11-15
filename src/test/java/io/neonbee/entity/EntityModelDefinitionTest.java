@@ -2,7 +2,7 @@ package io.neonbee.entity;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.nio.file.Files;

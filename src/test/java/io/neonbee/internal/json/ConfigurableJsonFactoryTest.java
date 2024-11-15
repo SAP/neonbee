@@ -3,8 +3,8 @@ package io.neonbee.internal.json;
 import static com.fasterxml.jackson.core.StreamReadConstraints.DEFAULT_MAX_STRING_LEN;
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
-import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.lang.reflect.Method;
 import java.util.function.Supplier;

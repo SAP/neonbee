@@ -4,8 +4,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.deploy.DeploymentTest.newNeonBeeMockForDeployment;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
-import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import java.util.stream.Collectors;

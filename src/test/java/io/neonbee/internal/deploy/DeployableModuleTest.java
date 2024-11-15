@@ -5,7 +5,7 @@ import static io.neonbee.internal.deploy.DeploymentTest.newNeonBeeMockForDeploym
 import static io.neonbee.test.helper.DummyVerticleHelper.DUMMY_VERTICLE;
 import static io.neonbee.test.helper.FileSystemHelper.createTempDirectory;
 import static io.vertx.core.Future.succeededFuture;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;

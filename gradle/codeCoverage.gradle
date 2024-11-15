@@ -107,3 +107,6 @@ jacocoTestReport {
     // Display the code coverage every time after the jacocoTestReport run
     finalizedBy project.tasks.reportCoverage
 }
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}

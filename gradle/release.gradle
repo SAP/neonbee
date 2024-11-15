@@ -50,3 +50,6 @@ task finishRelease {
         grgit.close()
     }
 }
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}

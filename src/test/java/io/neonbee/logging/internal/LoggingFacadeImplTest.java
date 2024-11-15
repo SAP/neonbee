@@ -2,7 +2,7 @@ package io.neonbee.logging.internal;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.logging.internal.LoggingFacadeImpl.DEFAULT_MARKER;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
