@@ -46,6 +46,7 @@ public class BatchProcessor extends AsynchronousProcessor
 
     @Override
     public void init(OData odata, ServiceMetadata serviceMetadata) {
+        super.init(odata, serviceMetadata);
         this.odata = odata;
     }
 

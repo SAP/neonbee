@@ -8,6 +8,8 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.olingo.server.api.OData;
+import org.apache.olingo.server.api.ServiceMetadata;
 import org.apache.olingo.server.api.processor.Processor;
 
 import io.vertx.core.Context;
@@ -89,5 +91,11 @@ public abstract class AsynchronousProcessor implements Processor {
             context.put(PROCESSING_STACK, processingStack = new ArrayDeque<>());
         }
         return processingStack;
+    }
+
+    @Override
+    public void init(OData odata, ServiceMetadata serviceMetadata) {
+        // reset subpromise
+        subProcessPromise = null;
     }
 }
