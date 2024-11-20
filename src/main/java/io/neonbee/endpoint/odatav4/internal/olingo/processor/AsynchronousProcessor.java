@@ -20,6 +20,7 @@ import io.vertx.ext.web.RoutingContext;
 
 public abstract class AsynchronousProcessor implements Processor {
     private static final String PROCESSING_STACK = "processingStack";
+
     private static final Promise<Void> INITIAL_STATE = null;
 
     protected Vertx vertx;
