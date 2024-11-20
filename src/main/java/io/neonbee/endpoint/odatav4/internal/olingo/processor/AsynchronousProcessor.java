@@ -96,9 +96,9 @@ public abstract class AsynchronousProcessor implements Processor {
     /**
      * Resets the {@code subProcessPromise} to {@code null}.
      * <p>
-     * This method is used to release any references held by the {@code subProcessPromise},
-     * ensuring that the processor starts with a clean state. It is intentionally set to
-     * {@code null} as part of the processor's lifecycle management.
+     * This method is used to release any references held by the {@code subProcessPromise}, ensuring that the processor
+     * starts with a clean state. It is intentionally set to {@code null} as part of the processor's lifecycle
+     * management.
      */
     private void resetSubProcessPromise() {
         subProcessPromise = null; // Intentional reset to null
@@ -107,11 +107,10 @@ public abstract class AsynchronousProcessor implements Processor {
     /**
      * Initializes the processor by resetting its internal state.
      * <p>
-     * This method is called during the processor's initialization phase. It uses
-     * {@link #resetSubProcessPromise()} to ensure the {@code subProcessPromise} is cleared,
-     * preparing the processor for a new lifecycle.
+     * This method is called during the processor's initialization phase. It uses {@link #resetSubProcessPromise()} to
+     * ensure the {@code subProcessPromise} is cleared, preparing the processor for a new lifecycle.
      *
-     * @param odata          the OData instance for this processor
+     * @param odata           the OData instance for this processor
      * @param serviceMetadata the metadata for the OData service
      */
     @Override
