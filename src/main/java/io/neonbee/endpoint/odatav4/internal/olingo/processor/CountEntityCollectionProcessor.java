@@ -88,6 +88,7 @@ public class CountEntityCollectionProcessor extends AsynchronousProcessor
 
     @Override
     public void init(OData odata, ServiceMetadata serviceMetadata) {
+        super.init(odata, serviceMetadata);
         this.odata = odata;
         this.serviceMetadata = serviceMetadata;
     }
