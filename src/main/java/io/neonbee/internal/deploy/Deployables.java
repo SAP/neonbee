@@ -167,10 +167,9 @@ public class Deployables extends Deployable {
 
         getDeployables().stream().map(deployable -> deployable.deploy(neonBee)).forEach(pendingDeployments::add);
         // when we should keep partial deployments use a joinComposite, so we wait for all deployments to finish
-        // independent if a single one fails or not. in case we should not keep partial deployments (default) use
-        // allComposite here, which will fail, when one deployment fails, and thus we can start undeploying all
-        // succeeded
-        // (or to be succeeded pending deployments) as unfortunately there is no way to cancel active deployments
+        // independent if a single one fails. in case we should not keep partial deployments (default) use allComposite
+        // here, which will fail, when one deployment fails, and thus we can start undeploying all succeeded (or to be
+        // succeeded pending deployments) as unfortunately there is no way to cancel active deployments
         (keepPartialDeployment ? Future.join(pendingDeployments) : Future.all(pendingDeployments))
                 .onComplete(deployPromise);
 
