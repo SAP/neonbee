@@ -135,7 +135,7 @@ class ClusterEntityRegistryTest {
                     checkpoint.flag();
                 })).compose(unused -> registry2.unregisterNode(clusterIdNode2)).compose(unused -> registry2.get(KEY))
                 .onSuccess(ja -> context.verify(() -> {
-                    assertThat(ja).isEmpty();
+                    assertThat(ja).isNull();
                     checkpoint.flag();
                 })).onFailure(context::failNow);
     }

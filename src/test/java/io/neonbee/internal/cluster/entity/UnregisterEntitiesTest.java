@@ -114,7 +114,7 @@ class UnregisterEntitiesTest {
                 })).compose(unused -> UnregisterEntityVerticlesHook.unregister(web, clusterNodeId))
                 .compose(unused -> registry.get(sharedEntityMapName(ErpSalesEntityVerticle.FQN_ERP_CUSTOMERS)))
                 .onSuccess(jsonArray -> testContext.verify(() -> {
-                    assertThat(jsonArray).isEqualTo(new JsonArray());
+                    assertThat(jsonArray).isNull();
                     checkpoint.flag();
                 })).compose(unused -> registry.clusteringInformation.get(clusterNodeId))
                 .onSuccess(object -> testContext.verify(() -> {
