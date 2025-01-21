@@ -55,12 +55,49 @@ publishing {
 
             pom.withXml {
                 def dependenciesNode = asNode().appendNode('dependencies')
-                // Iterate over the implementation dependencies and add them to the pom.xml
-                configurations.implementation.allDependencies.each {
+
+                // Log the start of dependency processing
+                def dependencyExclusions = [:]
+
+                // Create a map of dependencies and their exclusion rules
+                configurations.implementation.allDependencies
+                        .findAll { dep -> !dep.excludeRules?.isEmpty() }
+                        .forEach { dep ->
+                            def rules = dep.excludeRules.collect { rule ->
+                                [groupId: rule.group, artifactId: rule.module]
+                            }
+                            // Use group:name as the key
+                            dependencyExclusions.put(String.valueOf("${dep.group}:${dep.name}"), rules)
+                        }
+
+                // Iterate over implementation dependencies
+                configurations.implementation.allDependencies.each { dependency ->
+                    def dependencyKey = "${dependency.group}:${dependency.name}"
+                    logger.lifecycle("Dependency key class map: ${dependencyKey.getClass()}")
+
+                    def exclusions = dependencyExclusions[dependencyKey]
+                    logger.lifecycle("Looking for exclusion: ${dependencyKey}")
+
+                    // Add the dependency to the POM
                     def dependencyNode = dependenciesNode.appendNode('dependency')
-                    dependencyNode.appendNode('groupId', it.group)
-                    dependencyNode.appendNode('artifactId', it.name)
-                    dependencyNode.appendNode('version', it.version)
+                    dependencyNode.appendNode('groupId', dependency.group ?: 'unknown-group')
+                    dependencyNode.appendNode('artifactId', dependency.name ?: 'unknown-artifact')
+                    dependencyNode.appendNode('version', dependency.version ?: 'unspecified-version')
+
+                    if (exclusions) {
+                        // Add exclusions to the current dependency if applicable
+                        def exclusionsNode = dependencyNode.appendNode('exclusions')
+                        exclusions.each { exclusion ->
+                            def exclusionNode = exclusionsNode.appendNode('exclusion')
+                            exclusionNode.appendNode('groupId', exclusion.groupId)
+                            exclusionNode.appendNode('artifactId', exclusion.artifactId)
+                        }
+
+                        // Log the added exclusions
+                        logger.lifecycle("Added exclusions for dependency: group='${dependency.group}', name='${dependency.name}', exclusions=${exclusions}")
+                    } else {
+                        logger.lifecycle("No exclusions for dependency: group='${dependency.group}', name='${dependency.name}'")
+                    }
                 }
             }
         }
