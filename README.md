@@ -6,6 +6,7 @@
 
 NeonBee is an open source reactive dataflow engine, a data stream processing framework using [Vert.x](https://github.com/eclipse/vert.x).
 
+
 * [Description](#description)
   * [NeonBee vs. Vert.x](#neonbee-vs-vertx)
   * [Core Components](#core-components)
