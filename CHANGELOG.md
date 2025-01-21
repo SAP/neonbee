@@ -1,6 +1,25 @@
 # Changelog
 
-## 0.37.2 (2024-10-29)
+## 0.37.3 (2025-01-21)
+
+### Bug Fixes
+
+- #565 PMD ([a6f11be5](https://github.com/SAP/neonbee/commit/a6f11be58341abb8bdb78e82faaea8c73ae7385c))
+- #565 test ([9dee408d](https://github.com/SAP/neonbee/commit/9dee408d5603580d486a476180f30112f8fddf58))
+- #565 fix PMD ([97191168](https://github.com/SAP/neonbee/commit/971911686fbb07752a9a1a52ce75588a0d81d3b9))
+- #565 PMD ([8d6f522a](https://github.com/SAP/neonbee/commit/8d6f522a3a374e826e7ffe42ab49a03a87d5c23b))
+- #565 formatting ([88888ea1](https://github.com/SAP/neonbee/commit/88888ea1a2c9e948c67924076dd8dc27726fa861))
+- #565 batch requests issue ([534d25d9](https://github.com/SAP/neonbee/commit/534d25d95be45803748852d354d677c544285027))
+- improve WriteSafeRegistry lock method ([f151d96b](https://github.com/SAP/neonbee/commit/f151d96bb7100a9beedccc8c153f3598e150551a))
+- publishing issue ([e8d84fed](https://github.com/SAP/neonbee/commit/e8d84fed9fa33099f2f510985803341538251217))
+
+
+### Code Refactoring
+
+- extract SharedRegistry class ([e654f47f](https://github.com/SAP/neonbee/commit/e654f47fbf3ff11988e253267c63553039a7d10f))
+
+
+## 0.37.2 (2024-10-31)
 
 ### Bug Fixes
 
