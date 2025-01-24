@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.37.5 (2025-01-24)
+
+### Bug Fixes
+
+- revert publications ([88013554](https://github.com/SAP/neonbee/commit/880135548a186c4a91e8d4e12d97dde4b3c017a2))
+- rework dependencies for infinispan ([178816c8](https://github.com/SAP/neonbee/commit/178816c893bf2f21cd8bf4a3b7fbcdcaa6368263))
+
+
 ## 0.37.4 (2025-01-24)
 
 ### Bug Fixes
