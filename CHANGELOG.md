@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.37.4 (2025-01-24)
+
+### Bug Fixes
+
+- exclude deps all ([db29cbdf](https://github.com/SAP/neonbee/commit/db29cbdf5696913aa930a935c7a33480a366f7d3))
+- exclude deps ([c7065709](https://github.com/SAP/neonbee/commit/c7065709bba1386bf57314c7788084215a2c3950))
+
+
 ## 0.37.3 (2025-01-21)
 
 ### Bug Fixes
