@@ -37,10 +37,6 @@ repositories {
     mavenCentral()
 }
 
-configurations.all {
-    exclude group: 'org.infinispan', module: 'infinispan-core'
-}
-
 dependencies {
     // Framework dependencies
     def vertx_version = '4.5.9'
@@ -62,15 +58,20 @@ dependencies {
     def hazelcast_version = '5.3.8'
     implementation group: 'com.hazelcast', name: 'hazelcast', version: hazelcast_version
 
-    implementation (group: 'io.vertx', name: 'vertx-infinispan', version: vertx_version) {
+    implementation(group: 'io.vertx', name: 'vertx-infinispan', version: vertx_version) {
+        exclude group: 'org.infinispan', module: 'infinispan-core'
         exclude group: 'org.infinispan', module: 'infinispan-commons'
         exclude group: 'org.infinispan', module: 'infinispan-multimap'
     }
     def infinispan_version = '14.0.29.Final'
     implementation group: 'org.infinispan', name: 'infinispan-multimap-jakarta', version: infinispan_version
     implementation group: 'org.infinispan', name: 'infinispan-core-jakarta', version: infinispan_version
-    implementation group: 'org.infinispan', name: 'infinispan-clustered-lock', version: infinispan_version
-    implementation group: 'org.infinispan', name: 'infinispan-clustered-counter', version: infinispan_version
+    implementation(group: 'org.infinispan', name: 'infinispan-clustered-lock', version: infinispan_version) {
+        exclude group: 'org.infinispan', module: 'infinispan-core'
+    }
+    implementation(group: 'org.infinispan', name: 'infinispan-clustered-counter', version: infinispan_version) {
+        exclude group: 'org.infinispan', module: 'infinispan-core'
+    }
     implementation group: 'org.infinispan', name: 'infinispan-component-annotations', version: infinispan_version
 
     def jackson_version = '2.17.2'
