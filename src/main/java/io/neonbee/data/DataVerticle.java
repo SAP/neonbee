@@ -111,7 +111,11 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
         DataSource<?> dataSource = request.getDataSource();
 
         if (dataSource != null) {
-            return dataSource.retrieveData(request.getQuery(), context).map(FunctionalHelper::uncheckedMapper);
+            return dataSource
+                    .retrieveData(request.getQuery(), context)
+                    .onFailure(throwable -> LOGGER.correlateWith(context)
+                            .error("Failed to retrieve data from data source from {}", request.getQualifiedName()))
+                    .map(FunctionalHelper::uncheckedMapper);
         }
 
         DataSink<?> dataSink = request.getDataSink();
@@ -603,7 +607,9 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                             .map(entry -> Map.entry(entry.getKey(), entry.getValue().responseData()))
                             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                     context.setReceivedData(receivedData);
-                    Future<T> future = retrieveData(query, new DataMap(requestResults), context);
+                    Future<T> future = retrieveData(query, new DataMap(requestResults), context)
+                            .onFailure(throwable -> LOGGER.correlateWith(context)
+                                    .error("Failed to retrieve data from data source from {}", getQualifiedName()));
                     reportRetrieveDataMetrics(tags, future);
                     return future;
                 } catch (Exception e) {
