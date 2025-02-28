@@ -732,6 +732,7 @@ public class NeonBee {
                     }
 
                     NEONBEE_INSTANCES.remove(vertx);
+                    modelManager.close();
                 }).<Void>mapEmpty().onComplete(completion);
             });
         } catch (Exception e) {
