@@ -3,6 +3,7 @@ package io.neonbee.entity;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
+import java.io.Closeable;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.Map;
@@ -28,7 +29,7 @@ import io.vertx.core.eventbus.DeliveryOptions;
  * class path / the NeonBee models folder and which might be extended by external {@link EntityModelDefinition
  * EntityModelDefinitions}.
  */
-public class EntityModelManager {
+public class EntityModelManager implements Closeable {
     /**
      * Every time new models are loaded a message will be published to this event bus address.
      */
@@ -226,5 +227,10 @@ public class EntityModelManager {
      */
     public Future<Map<String, EntityModel>> unregisterModels(EntityModelDefinition modelDefinition) {
         return externalModelDefinitions.remove(modelDefinition) ? reloadModels() : getSharedModels();
+    }
+
+    @Override
+    public void close() {
+        THREAD_LOCAL_ODATA.remove();
     }
 }
