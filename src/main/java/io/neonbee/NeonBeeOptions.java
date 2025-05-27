@@ -3,6 +3,7 @@ package io.neonbee;
 import static io.neonbee.NeonBeeProfile.parseProfiles;
 import static io.neonbee.cluster.ClusterManagerFactory.HAZELCAST_FACTORY;
 import static io.neonbee.cluster.ClusterManagerFactory.INFINISPAN_FACTORY;
+import static io.neonbee.cluster.ClusterManagerFactory.REDIS_FACTORY;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.vertx.core.eventbus.EventBusOptions.DEFAULT_CLUSTER_PORT;
 import static java.util.Objects.requireNonNull;
@@ -753,12 +754,16 @@ public interface NeonBeeOptions {
     }
 
     class ClusterManagerFactoryConverter implements Converter<ClusterManagerFactory> {
+        private static final ClusterManagerFactory REDIS = REDIS_FACTORY;
+
         @Override
         public ClusterManagerFactory fromString(String s) {
             if ("hazelcast".equalsIgnoreCase(s)) {
                 return HAZELCAST_FACTORY;
             } else if ("infinispan".equalsIgnoreCase(s)) {
                 return INFINISPAN_FACTORY;
+            } else if ("redis".equalsIgnoreCase(s)) {
+                return REDIS;
             } else {
                 throw new IllegalArgumentException(
                         "Value for cluster-manager MUST be \"hazelcast\" or \"infinispan\".");

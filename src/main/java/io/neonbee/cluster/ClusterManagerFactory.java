@@ -15,6 +15,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.FileSystemXmlConfig;
+import com.retailsvc.vertx.spi.cluster.redis.RedisClusterManager;
 
 import io.neonbee.NeonBeeOptions;
 import io.vertx.core.Future;
@@ -87,6 +88,21 @@ public abstract class ClusterManagerFactory {
             } catch (IOException e) {
                 return failedFuture(e);
             }
+        }
+    };
+
+    /**
+     * The ClusterManagerFactory for Infinispan.
+     */
+    public static final ClusterManagerFactory REDIS_FACTORY = new ClusterManagerFactory() {
+        @Override
+        protected String getDefaultConfig() {
+            return "redis-config.xml";
+        }
+
+        @Override
+        public Future<ClusterManager> create(NeonBeeOptions neonBeeOptions) {
+            return succeededFuture(new RedisClusterManager());
         }
     };
 
