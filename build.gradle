@@ -25,7 +25,6 @@ version = '0.37.6-SNAPSHOT'
 mainClassName = 'io.neonbee.Launcher'
 archivesBaseName = 'neonbee-core'
 sourceCompatibility = 17
-targetCompatibility = 17
 
 project.ext {
     isReleaseVersion = !version.endsWith('-SNAPSHOT')
@@ -409,14 +408,4 @@ task release(type: Exec) {
             commandLine 'sh', '-c', "./gradle/release.sh ${nextVersion}"
         }
     }
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.release = 17
 }
