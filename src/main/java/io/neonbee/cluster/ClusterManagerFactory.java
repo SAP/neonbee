@@ -92,7 +92,7 @@ public abstract class ClusterManagerFactory {
     };
 
     /**
-     * The ClusterManagerFactory for Infinispan.
+     * The ClusterManagerFactory for Redis.
      */
     public static final ClusterManagerFactory REDIS_FACTORY = new ClusterManagerFactory() {
         @Override
