@@ -30,8 +30,6 @@ import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 public abstract class ClusterManagerFactory {
 
-    private static final Map<String, ClusterManagerFactory> PROVIDERS = new HashMap<>();
-
     /**
      * The ClusterManagerFactory for Hazelcast.
      */
@@ -99,6 +97,8 @@ public abstract class ClusterManagerFactory {
         }
     };
 
+    private static final Map<String, ClusterManagerFactory> PROVIDERS = new HashMap<>();
+
     static {
         PROVIDERS.put("hazelcast", HAZELCAST_FACTORY);
         PROVIDERS.put("infinispan", INFINISPAN_FACTORY);
@@ -134,9 +134,8 @@ public abstract class ClusterManagerFactory {
         if (factory == null) {
             throw new IllegalArgumentException(
                     "No cluster manager factory provider found for type: "
-                            + type +
-                            ". Available types: " +
-                            String.join(", ", PROVIDERS.keySet()));
+                            + type
+                            + String.join(", ", PROVIDERS.keySet()));
         }
         return factory;
     }
