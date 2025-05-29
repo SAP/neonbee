@@ -8,6 +8,11 @@ import static java.lang.ClassLoader.getSystemClassLoader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.Set;
 
 import org.infinispan.manager.DefaultCacheManager;
 
@@ -15,15 +20,18 @@ import com.google.common.annotations.VisibleForTesting;
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.FileSystemXmlConfig;
-import com.retailsvc.vertx.spi.cluster.redis.RedisClusterManager;
 
 import io.neonbee.NeonBeeOptions;
+import io.neonbee.cluster.spi.ClusterManagerProvider;
 import io.vertx.core.Future;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 public abstract class ClusterManagerFactory {
+
+    private static final Map<String, ClusterManagerFactory> providers = new HashMap<>();
+
     /**
      * The ClusterManagerFactory for Hazelcast.
      */
@@ -57,7 +65,7 @@ public abstract class ClusterManagerFactory {
          * check if the file exists on the classpath.
          *
          * @param effectiveConfigFileName the file name
-         * @return true if the file exists on the classpath, otherwise flase
+         * @return true if the file exists on the classpath, otherwise false
          */
         private boolean exitsInClasspath(String effectiveConfigFileName) {
             try (InputStream inputStream = getSystemClassLoader().getResourceAsStream(effectiveConfigFileName)) {
@@ -91,20 +99,56 @@ public abstract class ClusterManagerFactory {
         }
     };
 
-    /**
-     * The ClusterManagerFactory for Redis.
-     */
-    public static final ClusterManagerFactory REDIS_FACTORY = new ClusterManagerFactory() {
-        @Override
-        protected String getDefaultConfig() {
-            return "redis-config.xml";
-        }
+    static {
+        providers.put("hazelcast", HAZELCAST_FACTORY);
+        providers.put("infinispan", INFINISPAN_FACTORY);
 
-        @Override
-        public Future<ClusterManager> create(NeonBeeOptions neonBeeOptions) {
-            return succeededFuture(new RedisClusterManager());
+        ServiceLoader<ClusterManagerProvider> loader = ServiceLoader.load(
+                ClusterManagerProvider.class);
+
+        // add available providers
+        for (ClusterManagerProvider provider : loader) {
+            providers.put(provider.getType(), new ClusterManagerFactory() {
+                @Override
+                protected String getDefaultConfig() {
+                    return provider.getType();
+                }
+
+                @Override
+                public Future<ClusterManager> create(NeonBeeOptions options) {
+                    return provider.create(options);
+                }
+            });
         }
-    };
+    }
+
+    /**
+     * Get a cluster manager factory for the specified type.
+     *
+     * @param type the type of cluster manager factory to get
+     * @return the cluster manager factory
+     * @throws IllegalArgumentException if no provider is found for the specified type
+     */
+    public static ClusterManagerFactory getFactory(String type) {
+        ClusterManagerFactory factory = providers.get(type);
+        if (factory == null) {
+            throw new IllegalArgumentException(
+                    "No cluster manager factory provider found for type: " +
+                            type +
+                            ". Available types: " +
+                            String.join(", ", providers.keySet()));
+        }
+        return factory;
+    }
+
+    /**
+     * Get all available cluster manager factory types.
+     *
+     * @return a set of available cluster manager factory types
+     */
+    public static Set<String> getAvailableTypes() {
+        return new HashSet<>(providers.keySet());
+    }
 
     /**
      * Creates a new {@link ClusterManagerFactory}.
@@ -147,10 +191,10 @@ public abstract class ClusterManagerFactory {
         private Object clusterViewListener;
 
         /**
-         * @see DefaultCacheManager#DefaultCacheManager(String, boolean)
          * @param configurationFile name of configuration file to use as a template for all caches created
          * @param start             if true, the cache manager is started
          * @throws java.io.IOException if there is a problem with the configuration file.
+         * @see DefaultCacheManager#DefaultCacheManager(String, boolean)
          */
         SelfStoppingDefaultCacheManager(String configurationFile, boolean start) throws IOException {
             super(configurationFile, start);

@@ -2,8 +2,6 @@ package io.neonbee;
 
 import static io.neonbee.NeonBeeProfile.parseProfiles;
 import static io.neonbee.cluster.ClusterManagerFactory.HAZELCAST_FACTORY;
-import static io.neonbee.cluster.ClusterManagerFactory.INFINISPAN_FACTORY;
-import static io.neonbee.cluster.ClusterManagerFactory.REDIS_FACTORY;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.vertx.core.eventbus.EventBusOptions.DEFAULT_CLUSTER_PORT;
 import static java.util.Objects.requireNonNull;
@@ -227,12 +225,14 @@ public interface NeonBeeOptions {
     @Name("neonbee")
     @Summary("A command line interface for starting and configuring a NeonBee and its associated Vert.x instance")
     class Mutable implements NeonBeeOptions {
+
         /**
          * The default active profiles.
          */
         public static final String DEFAULT_ACTIVE_PROFILES = "ALL";
 
-        private int eventLoopPoolSize = VertxOptions.DEFAULT_EVENT_LOOP_POOL_SIZE;
+        private int eventLoopPoolSize =
+                VertxOptions.DEFAULT_EVENT_LOOP_POOL_SIZE;
 
         private int workerPoolSize = VertxOptions.DEFAULT_WORKER_POOL_SIZE;
 
@@ -266,11 +266,13 @@ public interface NeonBeeOptions {
 
         private Integer serverPort;
 
-        private Set<NeonBeeProfile> activeProfiles = parseProfiles(DEFAULT_ACTIVE_PROFILES);
+        private Set<NeonBeeProfile> activeProfiles = parseProfiles(
+                DEFAULT_ACTIVE_PROFILES);
 
         private List<Path> moduleJarPaths = Collections.emptyList();
 
-        private String metricsRegistryName = MicrometerMetricsOptions.DEFAULT_REGISTRY_NAME;
+        private String metricsRegistryName =
+                MicrometerMetricsOptions.DEFAULT_REGISTRY_NAME;
 
         /**
          * Instantiates a mutable {@link NeonBeeOptions} instance.
@@ -317,7 +319,8 @@ public interface NeonBeeOptions {
         @Description("Set the number of threads for the worker pool")
         public Mutable setWorkerPoolSize(int workerPoolSize) {
             if (workerPoolSize < 1) {
-                throw new IllegalArgumentException("workerPoolSize must be > 0");
+                throw new IllegalArgumentException(
+                        "workerPoolSize must be > 0");
             }
             this.workerPoolSize = workerPoolSize;
             return this;
@@ -341,7 +344,8 @@ public interface NeonBeeOptions {
             if (Objects.isNull(instanceName)) {
                 this.instanceName = generateName();
             } else if (instanceName.isEmpty()) {
-                throw new IllegalArgumentException("instanceName must not be empty");
+                throw new IllegalArgumentException(
+                        "instanceName must not be empty");
             } else {
                 this.instanceName = instanceName;
             }
@@ -365,8 +369,11 @@ public interface NeonBeeOptions {
         @DefaultValue("./working_dir/")
         @ConvertedBy(PathConverter.class)
         public Mutable setWorkingDirectory(Path workingDirectory) {
-            requireNonNull(workingDirectory, "workingDirectory must not be null");
-            this.workingDirectoryPath = workingDirectory.toAbsolutePath().normalize();
+            requireNonNull(
+                    workingDirectory,
+                    "workingDirectory must not be null");
+            this.workingDirectoryPath =
+                    workingDirectory.toAbsolutePath().normalize();
             return this;
         }
 
@@ -381,7 +388,10 @@ public interface NeonBeeOptions {
          * @param ignoreClassPath flag true/false
          * @return a reference to this, so the API can be used fluently
          */
-        @Option(longName = "ignore-class-path", shortName = "no-cp", flag = true)
+        @Option(
+                longName = "ignore-class-path",
+                shortName = "no-cp",
+                flag = true)
         @Description("Set whether to ignore verticle and models on the class path or not")
         public Mutable setIgnoreClassPath(boolean ignoreClassPath) {
             this.ignoreClassPath = ignoreClassPath;
@@ -399,7 +409,10 @@ public interface NeonBeeOptions {
          * @param disableJobScheduling flag true/false
          * @return a reference to this, so the API can be used fluently
          */
-        @Option(longName = "disable-job-scheduling", shortName = "no-jobs", flag = true)
+        @Option(
+                longName = "disable-job-scheduling",
+                shortName = "no-jobs",
+                flag = true)
         @Description("Set whether to schedule any job verticles or not")
         public Mutable setDisableJobScheduling(boolean disableJobScheduling) {
             this.disableJobScheduling = disableJobScheduling;
@@ -417,7 +430,10 @@ public interface NeonBeeOptions {
          * @param doNotWatchFiles flag true/false
          * @return a reference to this, so the API can be used fluently
          */
-        @Option(longName = "do-not-watch-files", shortName = "no-watchers", flag = true)
+        @Option(
+                longName = "do-not-watch-files",
+                shortName = "no-watchers",
+                flag = true)
         @Description("Set whether to watch any files")
         public Mutable setDoNotWatchFiles(boolean doNotWatchFiles) {
             this.doNotWatchFiles = doNotWatchFiles;
@@ -435,9 +451,13 @@ public interface NeonBeeOptions {
          * @param shouldRedeployEntities flag true/false
          * @return a reference to this, so the API can be used fluently
          */
-        @Option(longName = "should-redeploy-entities", shortName = "redeploy-entities", flag = false)
+        @Option(
+                longName = "should-redeploy-entities",
+                shortName = "redeploy-entities",
+                flag = false)
         @Description("Set whether to redeploy entity verticles that are not deployed")
-        public Mutable setShouldRedeployEntities(boolean shouldRedeployEntities) {
+        public Mutable setShouldRedeployEntities(
+                boolean shouldRedeployEntities) {
             this.shouldRedeployEntities = shouldRedeployEntities;
             return this;
         }
@@ -591,7 +611,8 @@ public interface NeonBeeOptions {
         @Description("Set the cluster manager \"infinispan\" or \"hazelcast\" (default)")
         @DefaultValue("hazelcast")
         @ConvertedBy(ClusterManagerFactoryConverter.class)
-        public Mutable setClusterManager(ClusterManagerFactory clusterManagerFactory) {
+        public Mutable setClusterManager(
+                ClusterManagerFactory clusterManagerFactory) {
             this.clusterManagerFactory = clusterManagerFactory;
             return this;
         }
@@ -636,12 +657,19 @@ public interface NeonBeeOptions {
          * @param activeProfiles the profiles
          * @return this instance for chaining
          */
-        @Option(longName = "active-profiles", shortName = "ap", acceptMultipleValues = true)
+        @Option(
+                longName = "active-profiles",
+                shortName = "ap",
+                acceptMultipleValues = true)
         @DefaultValue(DEFAULT_ACTIVE_PROFILES)
         @Description("Set the active deployment profiles")
         public Mutable setActiveProfiles(String... activeProfiles) {
-            return setActiveProfiles(Arrays.stream(activeProfiles).map(NeonBeeProfile::parseProfiles)
-                    .flatMap(Collection::stream).collect(Collectors.toSet()));
+            return setActiveProfiles(
+                    Arrays
+                            .stream(activeProfiles)
+                            .map(NeonBeeProfile::parseProfiles)
+                            .flatMap(Collection::stream)
+                            .collect(Collectors.toSet()));
         }
 
         /**
@@ -661,7 +689,8 @@ public interface NeonBeeOptions {
          * @return this instance for chaining
          */
         public Mutable addActiveProfiles(NeonBeeProfile... profiles) {
-            this.activeProfiles = Sets.union(this.activeProfiles, Set.of(profiles));
+            this.activeProfiles =
+                    Sets.union(this.activeProfiles, Set.of(profiles));
             return this;
         }
 
@@ -682,7 +711,8 @@ public interface NeonBeeOptions {
          * @return this instance for chaining
          */
         public Mutable removeActiveProfiles(NeonBeeProfile... profiles) {
-            this.activeProfiles = Sets.difference(this.activeProfiles, Set.of(profiles));
+            this.activeProfiles =
+                    Sets.difference(this.activeProfiles, Set.of(profiles));
             return this;
         }
 
@@ -708,7 +738,8 @@ public interface NeonBeeOptions {
          * @return this instance for chaining
          */
         public Mutable setModuleJarPaths(List<Path> moduleJarPaths) {
-            this.moduleJarPaths = ImmutableList.copyOf(requireNonNull(moduleJarPaths));
+            this.moduleJarPaths =
+                    ImmutableList.copyOf(requireNonNull(moduleJarPaths));
             return this;
         }
 
@@ -721,8 +752,12 @@ public interface NeonBeeOptions {
         @Option(longName = "module-jar-paths", shortName = "mjp")
         @Description("A list of path(s) to module JARs to be loaded during startup")
         public Mutable setModuleJarPaths(String... moduleJarPaths) {
-            return this.setModuleJarPaths(Arrays.stream(moduleJarPaths).map(FileSystemHelper::parsePaths)
-                    .flatMap(Collection::stream).toList());
+            return this.setModuleJarPaths(
+                    Arrays
+                            .stream(moduleJarPaths)
+                            .map(FileSystemHelper::parsePaths)
+                            .flatMap(Collection::stream)
+                            .toList());
         }
 
         @Override
@@ -754,20 +789,9 @@ public interface NeonBeeOptions {
     }
 
     class ClusterManagerFactoryConverter implements Converter<ClusterManagerFactory> {
-        private static final ClusterManagerFactory REDIS = REDIS_FACTORY;
-
         @Override
         public ClusterManagerFactory fromString(String s) {
-            if ("hazelcast".equalsIgnoreCase(s)) {
-                return HAZELCAST_FACTORY;
-            } else if ("infinispan".equalsIgnoreCase(s)) {
-                return INFINISPAN_FACTORY;
-            } else if ("redis".equalsIgnoreCase(s)) {
-                return REDIS;
-            } else {
-                throw new IllegalArgumentException(
-                        "Value for cluster-manager MUST be \"hazelcast\" or \"infinispan\".");
-            }
+            return ClusterManagerFactory.getFactory(s);
         }
     }
 }
