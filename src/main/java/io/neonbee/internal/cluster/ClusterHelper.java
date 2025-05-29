@@ -6,7 +6,6 @@ import java.util.Set;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 import com.hazelcast.cluster.Member;
-import com.retailsvc.vertx.spi.cluster.redis.RedisClusterManager;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.VertxInternal;
@@ -54,17 +53,6 @@ public final class ClusterHelper {
      */
     public static Optional<InfinispanClusterManager> getInfinispanClusterManager(Vertx vertx) {
         return getSpecificClusterManager(vertx, InfinispanClusterManager.class);
-    }
-
-    /**
-     * Returns an optinal with {@link RedisClusterManager} if NeonBee was started in cluster mode and
-     * {@link RedisClusterManager} is used as {@link ClusterManager}, otherwise it returns an empty Optional.
-     *
-     * @param vertx {@link Vertx} instance
-     * @return null or the {@link RedisClusterManager} instance
-     */
-    public static Optional<RedisClusterManager> getRedisClusterManager(Vertx vertx) {
-        return getSpecificClusterManager(vertx, RedisClusterManager.class);
     }
 
     /**

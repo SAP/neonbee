@@ -56,7 +56,6 @@ import io.neonbee.health.HealthCheckProvider;
 import io.neonbee.health.HealthCheckRegistry;
 import io.neonbee.health.MemoryHealthCheck;
 import io.neonbee.health.NeonBeeStartHealthCheck;
-import io.neonbee.health.RedisClusterHealthCheck;
 import io.neonbee.health.internal.HealthCheck;
 import io.neonbee.hook.HookRegistry;
 import io.neonbee.hook.HookType;
@@ -417,9 +416,6 @@ public class NeonBee {
 
             ClusterHelper.getHazelcastClusterManager(vertx).ifPresent(
                     hcm -> healthChecks.add(healthRegistry.register(new HazelcastClusterHealthCheck(this, hcm))));
-
-            ClusterHelper.getRedisClusterManager(vertx).ifPresent(
-                    hcm -> healthChecks.add(healthRegistry.register(new RedisClusterHealthCheck(this))));
 
             ServiceLoader.load(HealthCheckProvider.class).forEach(provider -> provider.get(vertx).forEach(check -> {
                 if (!healthRegistry.getHealthChecks().containsKey(check.getId())) {
