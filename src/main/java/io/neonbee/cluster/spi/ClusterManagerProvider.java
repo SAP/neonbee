@@ -10,7 +10,7 @@ import io.vertx.core.spi.cluster.ClusterManager;
  */
 public interface ClusterManagerProvider {
     /**
-     * Get the type identifier for this cluster manager
+     * Get the type identifier for this cluster manager.
      *
      * @return the type identifier
      */
@@ -19,8 +19,8 @@ public interface ClusterManagerProvider {
     /**
      * Create a new cluster manager instance
      *
-     * @param options The NeonBee options
-     * @return a Future holding the created ClusterManager
+     * @param options The NeonBee options.
+     * @return a Future holding the created ClusterManager.
      */
     Future<ClusterManager> create(NeonBeeOptions options);
 }
