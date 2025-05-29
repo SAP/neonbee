@@ -1,8 +1,25 @@
 package io.neonbee;
 
+import static io.neonbee.NeonBeeProfile.parseProfiles;
+import static io.neonbee.cluster.ClusterManagerFactory.HAZELCAST_FACTORY;
+import static io.neonbee.internal.helper.StringHelper.EMPTY;
+import static io.vertx.core.eventbus.EventBusOptions.DEFAULT_CLUSTER_PORT;
+import static java.util.Objects.requireNonNull;
+
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+
 import io.neonbee.cluster.ClusterManagerFactory;
 import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.verticle.WatchVerticle;
@@ -16,22 +33,6 @@ import io.vertx.core.cli.annotations.Option;
 import io.vertx.core.cli.annotations.Summary;
 import io.vertx.core.cli.converters.Converter;
 import io.vertx.micrometer.MicrometerMetricsOptions;
-
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static io.neonbee.NeonBeeProfile.parseProfiles;
-import static io.neonbee.cluster.ClusterManagerFactory.HAZELCAST_FACTORY;
-import static io.neonbee.internal.helper.StringHelper.EMPTY;
-import static io.vertx.core.eventbus.EventBusOptions.DEFAULT_CLUSTER_PORT;
-import static java.util.Objects.requireNonNull;
 
 @SuppressWarnings("PMD.ExcessivePublicCount")
 public interface NeonBeeOptions {
@@ -639,8 +640,8 @@ public interface NeonBeeOptions {
         @Description("Set the active deployment profiles")
         public Mutable setActiveProfiles(String... activeProfiles) {
             return setActiveProfiles(
-                Arrays.stream(activeProfiles).map(NeonBeeProfile::parseProfiles).flatMap(Collection::stream)
-                    .collect(Collectors.toSet()));
+                    Arrays.stream(activeProfiles).map(NeonBeeProfile::parseProfiles).flatMap(Collection::stream)
+                            .collect(Collectors.toSet()));
         }
 
         /**
@@ -721,7 +722,8 @@ public interface NeonBeeOptions {
         @Description("A list of path(s) to module JARs to be loaded during startup")
         public Mutable setModuleJarPaths(String... moduleJarPaths) {
             return this.setModuleJarPaths(
-                Arrays.stream(moduleJarPaths).map(FileSystemHelper::parsePaths).flatMap(Collection::stream).toList());
+                    Arrays.stream(moduleJarPaths).map(FileSystemHelper::parsePaths).flatMap(Collection::stream)
+                            .toList());
         }
 
         @Override

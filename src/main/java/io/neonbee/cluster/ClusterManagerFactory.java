@@ -1,16 +1,9 @@
 package io.neonbee.cluster;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.hazelcast.config.ClasspathXmlConfig;
-import com.hazelcast.config.Config;
-import com.hazelcast.config.FileSystemXmlConfig;
-import io.neonbee.NeonBeeOptions;
-import io.neonbee.cluster.spi.ClusterManagerProvider;
-import io.vertx.core.Future;
-import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
-import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
-import org.infinispan.manager.DefaultCacheManager;
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.vertx.core.Future.failedFuture;
+import static io.vertx.core.Future.succeededFuture;
+import static java.lang.ClassLoader.getSystemClassLoader;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -21,10 +14,19 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.vertx.core.Future.failedFuture;
-import static io.vertx.core.Future.succeededFuture;
-import static java.lang.ClassLoader.getSystemClassLoader;
+import org.infinispan.manager.DefaultCacheManager;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.hazelcast.config.ClasspathXmlConfig;
+import com.hazelcast.config.Config;
+import com.hazelcast.config.FileSystemXmlConfig;
+
+import io.neonbee.NeonBeeOptions;
+import io.neonbee.cluster.spi.ClusterManagerProvider;
+import io.vertx.core.Future;
+import io.vertx.core.spi.cluster.ClusterManager;
+import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
+import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 public abstract class ClusterManagerFactory {
 
@@ -90,7 +92,7 @@ public abstract class ClusterManagerFactory {
             try {
                 Thread.currentThread().setContextClassLoader(getSystemClassLoader());
                 return succeededFuture(
-                    new InfinispanClusterManager(new SelfStoppingDefaultCacheManager(effectiveConfig, true)));
+                        new InfinispanClusterManager(new SelfStoppingDefaultCacheManager(effectiveConfig, true)));
             } catch (IOException e) {
                 return failedFuture(e);
             }
@@ -102,7 +104,7 @@ public abstract class ClusterManagerFactory {
         PROVIDERS.put("infinispan", INFINISPAN_FACTORY);
 
         ServiceLoader<ClusterManagerProvider> loader = ServiceLoader.load(
-            ClusterManagerProvider.class);
+                ClusterManagerProvider.class);
 
         // add available providers
         for (ClusterManagerProvider provider : loader) {
@@ -131,10 +133,10 @@ public abstract class ClusterManagerFactory {
         ClusterManagerFactory factory = PROVIDERS.get(type);
         if (factory == null) {
             throw new IllegalArgumentException(
-                "No cluster manager factory provider found for type: "
-                    + type +
-                    ". Available types: " +
-                    String.join(", ", PROVIDERS.keySet()));
+                    "No cluster manager factory provider found for type: "
+                            + type +
+                            ". Available types: " +
+                            String.join(", ", PROVIDERS.keySet()));
         }
         return factory;
     }
@@ -205,7 +207,7 @@ public abstract class ClusterManagerFactory {
             // we utilize that in the InfinispanClusterManager implementation the clusterViewListener is removed just
             // before the cache manager should be stopped, so we can do the same in reverse in the removeListener method
             if (clusterViewListener == null
-                && InfinispanClusterManager.class.equals(listener.getClass().getEnclosingClass())) {
+                    && InfinispanClusterManager.class.equals(listener.getClass().getEnclosingClass())) {
                 clusterViewListener = listener;
             }
 
