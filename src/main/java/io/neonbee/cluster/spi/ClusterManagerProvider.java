@@ -12,12 +12,12 @@ public interface ClusterManagerProvider {
     /**
      * Get the type identifier for this cluster manager.
      *
-     * @return the type identifier
+     * @return the type identifier.
      */
     String getType();
 
     /**
-     * Create a new cluster manager instance
+     * Create a new cluster manager instance.
      *
      * @param options The NeonBee options.
      * @return a Future holding the created ClusterManager.
