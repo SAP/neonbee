@@ -11,16 +11,20 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.Set;
 
 import org.infinispan.manager.DefaultCacheManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.FileSystemXmlConfig;
 
+import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.cluster.spi.ClusterManagerProvider;
 import io.vertx.core.Future;
@@ -29,6 +33,8 @@ import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 public abstract class ClusterManagerFactory {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterManagerFactory.class);
 
     /**
      * The ClusterManagerFactory for Hazelcast.
@@ -103,22 +109,34 @@ public abstract class ClusterManagerFactory {
         PROVIDERS.put("hazelcast", HAZELCAST_FACTORY);
         PROVIDERS.put("infinispan", INFINISPAN_FACTORY);
 
-        ServiceLoader<ClusterManagerProvider> loader = ServiceLoader.load(
-                ClusterManagerProvider.class);
+        try {
+            ServiceLoader<ClusterManagerProvider> loader = ServiceLoader.load(
+                    ClusterManagerProvider.class);
+            // add available providers
+            for (ClusterManagerProvider provider : loader) {
+                String type = provider.getType();
 
-        // add available providers
-        for (ClusterManagerProvider provider : loader) {
-            PROVIDERS.put(provider.getType(), new ClusterManagerFactory() {
-                @Override
-                protected String getDefaultConfig() {
-                    return provider.getType();
+                if (PROVIDERS.containsKey(type)) {
+                    LOGGER.warn("ClusterManagerProvider for type '{}' is already registered. Skipping: {}", type,
+                            provider.getClass().getName());
+                    continue;
                 }
 
-                @Override
-                public Future<ClusterManager> create(NeonBeeOptions options) {
-                    return provider.create(options);
-                }
-            });
+                PROVIDERS.put(type, new ClusterManagerFactory() {
+                    @Override
+                    protected String getDefaultConfig() {
+                        return provider.getType();
+                    }
+
+                    @Override
+                    public Future<ClusterManager> create(NeonBeeOptions options) {
+                        return provider.create(options);
+                    }
+                });
+                LOGGER.info("Registered ClusterManagerProvider for type '{}': {}", type, provider.getClass().getName());
+            }
+        } catch (ServiceConfigurationError err) {
+            LOGGER.error("Failed to load ClusterManagerProviders via ServiceLoader", err);
         }
     }
 
