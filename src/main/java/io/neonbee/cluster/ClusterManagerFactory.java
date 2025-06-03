@@ -24,7 +24,6 @@ import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.FileSystemXmlConfig;
 
-import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.cluster.spi.ClusterManagerProvider;
 import io.vertx.core.Future;
