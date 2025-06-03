@@ -134,10 +134,16 @@ public abstract class ClusterManagerFactory {
                         return provider.create(options);
                     }
                 });
-                LOGGER.info("Registered ClusterManagerProvider for type '{}': {}", type, provider.getClass().getName());
+
+                if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info("Registered ClusterManagerProvider for type '{}': {}", type,
+                            provider.getClass().getName());
+                }
             }
         } catch (ServiceConfigurationError err) {
-            LOGGER.error("Failed to load ClusterManagerProviders via ServiceLoader", err);
+            if (LOGGER.isErrorEnabled()) {
+                LOGGER.error("Failed to load ClusterManagerProviders via ServiceLoader", err);
+            }
         }
     }
 
