@@ -33,8 +33,6 @@ import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 public abstract class ClusterManagerFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterManagerFactory.class);
-
     /**
      * The ClusterManagerFactory for Hazelcast.
      */
@@ -102,6 +100,8 @@ public abstract class ClusterManagerFactory {
         }
     };
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterManagerFactory.class);
+
     private static final Map<String, ClusterManagerFactory> PROVIDERS = new HashMap<>();
 
     static {
@@ -116,8 +116,10 @@ public abstract class ClusterManagerFactory {
                 String type = provider.getType();
 
                 if (PROVIDERS.containsKey(type)) {
-                    LOGGER.warn("ClusterManagerProvider for type '{}' is already registered. Skipping: {}", type,
-                            provider.getClass().getName());
+                    if (LOGGER.isWarnEnabled()) {
+                        LOGGER.warn("ClusterManagerProvider for type '{}' is already registered. Skipping: {}", type,
+                                provider.getClass().getName());
+                    }
                     continue;
                 }
 
