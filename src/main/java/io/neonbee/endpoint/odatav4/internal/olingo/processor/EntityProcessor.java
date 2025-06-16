@@ -265,10 +265,16 @@ public class EntityProcessor extends AsynchronousProcessor
                     Promise<Entity> responsePromise = Promise.promise();
 
                     if (resourceParts.size() == 1) {
-                        EntityExpander.create(vertx, uriInfo.getExpandOption(), routingContext).map(expander -> {
-                            expander.expand(foundEntity);
-                            return foundEntity;
-                        }).onComplete(responsePromise);
+                        if (foundEntity.getNavigationLinks().isEmpty()) {
+                            // Only create expander and expand if we don't have navigation links
+                            EntityExpander.create(vertx, uriInfo.getExpandOption(), routingContext).map(expander -> {
+                                expander.expand(foundEntity);
+                                return foundEntity;
+                            }).onComplete(responsePromise);
+                        } else {
+                            // If we already have navigation links, just return the entity
+                            responsePromise.complete(foundEntity);
+                        }
                     } else {
                         fetchNavigationTargetEntity(resourceParts.get(1), foundEntity, vertx, routingContext)
                                 .onComplete(responsePromise);
