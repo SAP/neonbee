@@ -47,6 +47,7 @@ import io.neonbee.endpoint.odatav4.internal.olingo.edm.EdmHelper;
 import io.neonbee.endpoint.odatav4.internal.olingo.expression.EntityComparison;
 import io.neonbee.entity.EntityWrapper;
 import io.neonbee.logging.LoggingFacade;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -256,55 +257,74 @@ public class EntityProcessor extends AsynchronousProcessor
             try {
                 UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0);
                 Entity foundEntity = findEntityByKeyPredicates(routingContext, uriResourceEntitySet, ew.getEntities());
-                // Return the OData response
-                if (foundEntity == null) { // No entity with provided key predicates found
+
+                if (foundEntity == null) {
                     response.setStatusCode(NOT_FOUND.getStatusCode());
                     processPromise.complete();
-                } else {
-                    List<UriResource> resourceParts = uriInfo.getUriResourceParts();
-                    Promise<Entity> responsePromise = Promise.promise();
-
-                    if (resourceParts.size() == 1) {
-                        if (foundEntity.getNavigationLinks().isEmpty()) {
-                            // Only create expander and expand if we don't have navigation links
-                            EntityExpander.create(vertx, uriInfo.getExpandOption(), routingContext).map(expander -> {
-                                expander.expand(foundEntity);
-                                return foundEntity;
-                            }).onComplete(responsePromise);
-                        } else {
-                            // If we already have navigation links, just return the entity
-                            responsePromise.complete(foundEntity);
-                        }
-                    } else {
-                        fetchNavigationTargetEntity(resourceParts.get(1), foundEntity, vertx, routingContext)
-                                .onComplete(responsePromise);
-                    }
-
-                    responsePromise.future().onSuccess(entityToReturn -> {
-                        try {
-                            EdmEntitySet edmEntitySet =
-                                    chooseEntitySet(resourceParts, uriResourceEntitySet.getEntitySet(), routingContext);
-                            String selectList = odata.createUriHelper().buildContextURLSelectList(
-                                    edmEntitySet.getEntityType(), uriInfo.getExpandOption(), uriInfo.getSelectOption());
-                            ContextURL contextUrl =
-                                    ContextURL.with().entitySet(edmEntitySet).selectList(selectList).build();
-                            EntitySerializerOptions opts = EntitySerializerOptions.with().contextURL(contextUrl)
-                                    .select(uriInfo.getSelectOption()).expand(uriInfo.getExpandOption()).build();
-
-                            response.setContent(odata.createSerializer(responseFormat)
-                                    .entity(serviceMetadata, edmEntitySet.getEntityType(), entityToReturn, opts)
-                                    .getContent());
-                            response.setStatusCode(OK.getStatusCode());
-                            response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
-                            processPromise.complete();
-                        } catch (SerializerException | ODataApplicationException e) {
-                            processPromise.fail(e);
-                        }
-                    }).onFailure(processPromise::fail);
+                    return;
                 }
+
+                expandOrNavigateEntity(uriInfo, foundEntity).onSuccess(entityToReturn -> {
+                    try {
+                        writeEntityResponse(uriInfo, uriResourceEntitySet, responseFormat, response, entityToReturn);
+                        processPromise.complete();
+                    } catch (Exception e) {
+                        processPromise.fail(e);
+                    }
+                }).onFailure(processPromise::fail);
+
             } catch (ODataApplicationException e) {
                 processPromise.fail(e);
             }
         };
     }
+
+    private Future<Entity> expandOrNavigateEntity(UriInfo uriInfo, Entity foundEntity) {
+        List<UriResource> resourceParts = uriInfo.getUriResourceParts();
+
+        if (resourceParts.size() > 1) {
+            return fetchNavigationTargetEntity(resourceParts.get(1), foundEntity, vertx, routingContext);
+        }
+
+        if (foundEntity.getNavigationLinks().isEmpty()) {
+            return EntityExpander.create(vertx, uriInfo.getExpandOption(), routingContext)
+                    .map(expander -> {
+                        expander.expand(foundEntity);
+                        return foundEntity;
+                    });
+        }
+
+        return Future.succeededFuture(foundEntity);
+    }
+
+    private void writeEntityResponse(UriInfo uriInfo, UriResourceEntitySet uriResourceEntitySet,
+            ContentType responseFormat, ODataResponse response, Entity entityToReturn)
+            throws SerializerException, ODataApplicationException {
+
+        List<UriResource> resourceParts = uriInfo.getUriResourceParts();
+        EdmEntitySet edmEntitySet = chooseEntitySet(resourceParts, uriResourceEntitySet.getEntitySet(), routingContext);
+
+        String selectList = odata.createUriHelper().buildContextURLSelectList(
+                edmEntitySet.getEntityType(), uriInfo.getExpandOption(), uriInfo.getSelectOption());
+
+        ContextURL contextUrl = ContextURL.with()
+                .entitySet(edmEntitySet)
+                .selectList(selectList)
+                .build();
+
+        EntitySerializerOptions options = EntitySerializerOptions.with()
+                .contextURL(contextUrl)
+                .select(uriInfo.getSelectOption())
+                .expand(uriInfo.getExpandOption())
+                .build();
+
+        response.setContent(
+                odata.createSerializer(responseFormat)
+                        .entity(serviceMetadata, edmEntitySet.getEntityType(), entityToReturn, options)
+                        .getContent());
+
+        response.setStatusCode(OK.getStatusCode());
+        response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+    }
+
 }
