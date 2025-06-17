@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.37.6 (2025-06-16)
+
+### Bug Fixes
+
+- **ci**: update actions/cache to v4 to prevent deprecation issues ([ff466608](https://github.com/SAP/neonbee/commit/ff466608e6a42c83f709f23a44013afb98f1ad1b))
+- prevent potential memory leak ([b588d42a](https://github.com/SAP/neonbee/commit/b588d42adaef7fd59112b3d08a02a0139fe1899b))
+- actions/setup-java version ([06e3320f](https://github.com/SAP/neonbee/commit/06e3320fd73b7eac837607a64a9b307cb337e1ca))
+- skip expand in case we have navigation links ([aab141fe](https://github.com/SAP/neonbee/commit/aab141fe30a1dda80b66aea06c38cafcc7af7585))
+- skip expand in case we have navigation links ([6f8657fa](https://github.com/SAP/neonbee/commit/6f8657fa852f455a7946dbdce5a8b92d9f4886f1))
+
+
+### Features
+
+- add logging for data retrieval failures ([ff4e4557](https://github.com/SAP/neonbee/commit/ff4e4557544c539d81b8f9df753c0f618425d518))
+- cluster manager spi ([fbccc8dc](https://github.com/SAP/neonbee/commit/fbccc8dc68d406026a6f6e437908a21a58a46467))
+- redis CM ([eb7c8b20](https://github.com/SAP/neonbee/commit/eb7c8b207780c559511470a14005a5ef892e8555))
+- redis CM ([d5f38c43](https://github.com/SAP/neonbee/commit/d5f38c43b02fc8051994acf46dff11cb713cdd75))
+- cluster manager spi ([caff148a](https://github.com/SAP/neonbee/commit/caff148ac5931b624443da7efa855de495d7f2cc))
+- redis CM ([c1269049](https://github.com/SAP/neonbee/commit/c1269049782dfbe1933bc560646788bbe4cd9fce))
+- redis CM ([b6c79a15](https://github.com/SAP/neonbee/commit/b6c79a1581ba6f4634a4974088a8f2ef1ec08dea))
+- pmd ([a5bfda4c](https://github.com/SAP/neonbee/commit/a5bfda4c8736a01bc7d26d08e254c40e8ec723cc))
+- cluster manager error handling ([9ac6cd1c](https://github.com/SAP/neonbee/commit/9ac6cd1ce7d8964a715e1f0fd731eaa2a9cdb7cd))
+- cluster manager spi ([91ab07e1](https://github.com/SAP/neonbee/commit/91ab07e1d7155df3981825133189a8a853026df1))
+- redis CM ([8d6ad00e](https://github.com/SAP/neonbee/commit/8d6ad00eb137cabb6e1f336266dbb6445e576f46))
+- pmd ([7690b7a1](https://github.com/SAP/neonbee/commit/7690b7a19242f89082a739a5a8bdc09a2bf35c04))
+- cluster manager spi ([664fdd17](https://github.com/SAP/neonbee/commit/664fdd17edd7d86ba6981051c34fe79a0959988c))
+- unused import ([45970ac0](https://github.com/SAP/neonbee/commit/45970ac09a8d96ae35f604b801245d3b121d3a9b))
+- redis CM ([37164901](https://github.com/SAP/neonbee/commit/37164901f21f6f4b6f412763d1e1fb44fa71d5b0))
+- redis CM ([001d02dd](https://github.com/SAP/neonbee/commit/001d02dd8faaa654809861211b65ba15c8c86c40))
+
+
+### Chores
+
+- **codeql**: update CodeQL Action to v3 ([2538ae2b](https://github.com/SAP/neonbee/commit/2538ae2b32f1c6bf37eb27feacf3a11ebf40df65))
+
+
 ## 0.37.5 (2025-01-24)
 
 ### Bug Fixes
