@@ -16,8 +16,6 @@ import java.util.ServiceLoader;
 import java.util.Set;
 
 import org.infinispan.manager.DefaultCacheManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.hazelcast.config.ClasspathXmlConfig;
@@ -100,8 +98,6 @@ public abstract class ClusterManagerFactory {
         }
     };
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterManagerFactory.class);
-
     private static final Map<String, ClusterManagerFactory> PROVIDERS = new HashMap<>();
 
     static {
@@ -116,10 +112,9 @@ public abstract class ClusterManagerFactory {
                 String type = provider.getType();
 
                 if (PROVIDERS.containsKey(type)) {
-                    if (LOGGER.isWarnEnabled()) {
-                        LOGGER.warn("ClusterManagerProvider for type '{}' is already registered. Skipping: {}", type,
-                                provider.getClass().getName());
-                    }
+                    System.err.println(
+                            "WARN: ClusterManagerProvider for type '" + type + "' is already registered. Skipping: "
+                                    + provider.getClass().getName());
                     continue;
                 }
 
@@ -134,16 +129,10 @@ public abstract class ClusterManagerFactory {
                         return provider.create(options);
                     }
                 });
-
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Registered ClusterManagerProvider for type '{}': {}", type,
-                            provider.getClass().getName());
-                }
             }
         } catch (ServiceConfigurationError err) {
-            if (LOGGER.isErrorEnabled()) {
-                LOGGER.error("Failed to load ClusterManagerProviders via ServiceLoader", err);
-            }
+            System.err.println("ERROR: Failed to load ClusterManagerProviders via ServiceLoader");
+            err.printStackTrace(System.err);
         }
     }
 
