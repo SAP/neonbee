@@ -112,7 +112,7 @@ public abstract class ClusterManagerFactory {
                 String type = provider.getType();
 
                 if (PROVIDERS.containsKey(type)) {
-                    System.err.println(
+                    logErr(
                             "WARN: ClusterManagerProvider for type '" + type + "' is already registered. Skipping: "
                                     + provider.getClass().getName());
                     continue;
@@ -131,8 +131,7 @@ public abstract class ClusterManagerFactory {
                 });
             }
         } catch (ServiceConfigurationError err) {
-            System.err.println("ERROR: Failed to load ClusterManagerProviders via ServiceLoader");
-            err.printStackTrace(System.err);
+            logErr("ERROR: Failed to load ClusterManagerProviders via ServiceLoader");
         }
     }
 
@@ -236,5 +235,10 @@ public abstract class ClusterManagerFactory {
                 stop();
             }
         }
+    }
+
+    @SuppressWarnings("java:S106")
+    private static void logErr(String msg) {
+        System.err.println(msg);
     }
 }
