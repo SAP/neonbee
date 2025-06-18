@@ -239,6 +239,6 @@ public abstract class ClusterManagerFactory {
 
     @SuppressWarnings("java:S106")
     private static void logErr(String msg) {
-        System.err.println(msg);
+        System.err.println(msg); // NOPMD - intentional use before logger initialization
     }
 }
