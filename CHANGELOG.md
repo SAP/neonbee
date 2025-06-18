@@ -1,6 +1,15 @@
 # Changelog
 
-## 0.37.6 (2025-06-16)
+## 0.37.7 (2025-06-18)
+
+### Bug Fixes
+
+- use System.err as temporary output before logger is initialized ([f9e6c18f](https://github.com/SAP/neonbee/commit/f9e6c18faddcedfbbe1f59e6428c0e945a358c87))
+- use System.err as temporary output before logger is initialized ([dc90d45f](https://github.com/SAP/neonbee/commit/dc90d45fa84ce54e65aa105fc6522436e2919a3e))
+- use System.err as temporary output before logger is initialized ([1f4c542c](https://github.com/SAP/neonbee/commit/1f4c542c0e7260270b51d187cb53cac7c8630be0))
+
+
+## 0.37.6 (2025-06-17)
 
 ### Bug Fixes
 
