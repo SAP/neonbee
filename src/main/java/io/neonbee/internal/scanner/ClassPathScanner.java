@@ -232,7 +232,7 @@ public class ClassPathScanner {
                         reader.accept(visitor, 0);
                     }
                 }
-            } catch (IOException e) { // NOPMD Optionally log or collect failed paths for debugging
+            } catch (IOException e) { // NOPMD - EmptyCatchBlock
             }
         }
     }
