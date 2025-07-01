@@ -222,6 +222,7 @@ public class ClassPathScanner {
         }));
     }
 
+    @SuppressWarnings("PMD.EmptyCatchBlock")
     private void processClasses(List<String> classNames, List<AnnotationClassVisitor> classVisitors) {
         for (String name : classNames) {
             String resourcePath = name.replace('.', '/').replaceFirst("/class$", ".class");
