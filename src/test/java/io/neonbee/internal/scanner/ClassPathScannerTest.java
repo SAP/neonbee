@@ -126,6 +126,9 @@ class ClassPathScannerTest {
     void scanForAnnotation(Vertx vertx, VertxTestContext testContext) throws IOException {
         BasicJar jarWithTypeAnnotatedClass =
                 new AnnotatedClassTemplate("Hodor", "type").setTypeAnnotation("@Deprecated").asJar();
+        BasicJar jarWithAbstractTypeAnnotatedClass =
+                new AnnotatedClassTemplate("public abstract", "AbstractHodor", "type").setTypeAnnotation("@Deprecated")
+                        .asJar();
         BasicJar jarWithFieldAnnotatedClass =
                 new AnnotatedClassTemplate("Hodor", "field").setFieldAnnotation("@Deprecated").asJar();
         BasicJar jarWithMethodAnnotatedClass =
@@ -135,8 +138,11 @@ class ClassPathScannerTest {
                 .setMethodAnnotation("@Transient").setImports(List.of("java.beans.Transient")).asJar();
 
         URL[] urlc = Stream
-                .of(jarWithTypeAnnotatedClass.writeToTempURL(), jarWithFieldAnnotatedClass.writeToTempURL(),
-                        jarWithMethodAnnotatedClass.writeToTempURL(), jarWithMethodAnnotatedClass2.writeToTempURL())
+                .of(jarWithTypeAnnotatedClass.writeToTempURL(),
+                        jarWithAbstractTypeAnnotatedClass.writeToTempURL(),
+                        jarWithFieldAnnotatedClass.writeToTempURL(),
+                        jarWithMethodAnnotatedClass.writeToTempURL(),
+                        jarWithMethodAnnotatedClass2.writeToTempURL())
                 .flatMap(Stream::of).toArray(URL[]::new);
         ClassPathScanner cps = new ClassPathScanner(new URLClassLoader(urlc, null));
 
@@ -144,7 +150,6 @@ class ClassPathScannerTest {
 
         futureContainsExactly(testContext, annotationsScanned, cps.scanForAnnotation(vertx, Deprecated.class, TYPE),
                 "type.Hodor");
-
         futureContainsExactly(testContext, annotationsScanned, cps.scanForAnnotation(vertx, Deprecated.class, FIELD),
                 "field.Hodor");
         futureContainsExactly(testContext, annotationsScanned, cps.scanForAnnotation(vertx, Deprecated.class, METHOD),
