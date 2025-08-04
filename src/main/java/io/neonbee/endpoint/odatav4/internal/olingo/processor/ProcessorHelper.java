@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
+import io.vertx.core.http.HttpMethod;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
 import org.apache.olingo.server.api.ODataRequest;
@@ -57,6 +59,8 @@ public final class ProcessorHelper {
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
+    private static final Set<HttpMethod> METHODS_WITH_BODY = Set.of(HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH);
+
     private ProcessorHelper() {}
 
     private static DataQuery odataRequestToQuery(ODataRequest request, DataAction action, Buffer body) {
@@ -105,27 +109,21 @@ public final class ProcessorHelper {
                 .map(e -> new EntityWrapper(entityType.getFullQualifiedName(), e).toBuffer(vertx)).orElse(null);
         DataQuery query = odataRequestToQuery(request, action, body);
         DataContext dataContext = new DataContextImpl(routingContext);
-        enhanceDataContextWithRawBody(request, dataContext);
+        enhanceDataContextWithRawBody(routingContext, dataContext);
         return requestEntity(vertx, new DataRequest(entityType.getFullQualifiedName(), query), dataContext)
                 .map(result -> transferResponseHint(dataContext, routingContext, result))
                 .onFailure(processPromise::fail);
     }
 
     /**
-     * Add an new entry into data context with the raw body of the OData request under the key rawBody.
+     * Add a new entry into data context with the raw body of the OData request under the key rawBody.
      *
-     * @param request     odata request
+     * @param routingContext     routing context request
      * @param dataContext data context
      */
-    @VisibleForTesting
-    static void enhanceDataContextWithRawBody(ODataRequest request, DataContext dataContext) {
-        if (request.getBody() != null) {
-            try {
-                dataContext.put(DataContext.RAW_BODY_KEY, BufferHelper.inputStreamToBuffer(request.getBody()));
-            } catch (IOException e) {
-                LOGGER.error("Error while converting request body into buffer.", e);
-                throw new RuntimeException(e);
-            }
+    static void enhanceDataContextWithRawBody(RoutingContext routingContext, DataContext dataContext) {
+        if (METHODS_WITH_BODY.contains(routingContext.request().method()) && routingContext.body().length() > 0) {
+            dataContext.put(DataContext.RAW_BODY_KEY, routingContext.body().buffer());
         }
     }
 
