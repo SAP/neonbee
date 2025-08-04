@@ -2,7 +2,6 @@ package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
 import static io.neonbee.entity.EntityVerticle.requestEntity;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,12 +20,11 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.entity.EntityWrapper;
-import io.neonbee.internal.helper.BufferHelper;
-import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 
 public final class ProcessorHelper {
@@ -55,17 +53,27 @@ public final class ProcessorHelper {
     /** OData count size key. */
     public static final String ODATA_COUNT_SIZE_KEY = "OData.count.size";
 
-    private static final LoggingFacade LOGGER = LoggingFacade.create();
-
     private ProcessorHelper() {}
 
-    private static DataQuery odataRequestToQuery(ODataRequest request, DataAction action, Buffer body) {
+    private static DataQuery odataRequestToQuery(
+            ODataRequest request,
+            DataAction action,
+            Buffer body) {
         // the uriPath without /odata root path and without query path
-        String uriPath = "/" + request.getRawServiceResolutionUri() + request.getRawODataPath();
+        String uriPath =
+                "/" +
+                        request.getRawServiceResolutionUri() +
+                        request.getRawODataPath();
         // the raw query path
-        Map<String, List<String>> stringListMap = DataQuery.parseEncodedQueryString(request.getRawQueryPath());
-        return new DataQuery(action, uriPath, stringListMap, request.getAllHeaders(), body).addHeader("X-HTTP-Method",
-                request.getMethod().name());
+        Map<String, List<String>> stringListMap = DataQuery.parseEncodedQueryString(
+                request.getRawQueryPath());
+        return new DataQuery(
+                action,
+                uriPath,
+                stringListMap,
+                request.getAllHeaders(),
+                body)
+                        .addHeader("X-HTTP-Method", request.getMethod().name());
     }
 
     /**
@@ -79,9 +87,21 @@ public final class ProcessorHelper {
      * @param processPromise the processPromise of the current request
      * @return a Future of EntityWrapper holding the result of the entity request.
      */
-    public static Future<EntityWrapper> forwardRequest(ODataRequest request, DataAction action, UriInfo uriInfo,
-            Vertx vertx, RoutingContext routingContext, Promise<Void> processPromise) {
-        return forwardRequest(request, action, null, uriInfo, vertx, routingContext, processPromise);
+    public static Future<EntityWrapper> forwardRequest(
+            ODataRequest request,
+            DataAction action,
+            UriInfo uriInfo,
+            Vertx vertx,
+            RoutingContext routingContext,
+            Promise<Void> processPromise) {
+        return forwardRequest(
+                request,
+                action,
+                null,
+                uriInfo,
+                vertx,
+                routingContext,
+                processPromise);
     }
 
     /**
@@ -97,18 +117,34 @@ public final class ProcessorHelper {
      * @param processPromise the processPromise of the current request
      * @return a Future of EntityWrapper holding the result of the entity request.
      */
-    public static Future<EntityWrapper> forwardRequest(ODataRequest request, DataAction action, Entity entity,
-            UriInfo uriInfo, Vertx vertx, RoutingContext routingContext, Promise<Void> processPromise) {
-        UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0);
-        EdmEntityType entityType = uriResourceEntitySet.getEntitySet().getEntityType();
-        Buffer body = Optional.ofNullable(entity)
-                .map(e -> new EntityWrapper(entityType.getFullQualifiedName(), e).toBuffer(vertx)).orElse(null);
+    public static Future<EntityWrapper> forwardRequest(
+            ODataRequest request,
+            DataAction action,
+            Entity entity,
+            UriInfo uriInfo,
+            Vertx vertx,
+            RoutingContext routingContext,
+            Promise<Void> processPromise) {
+        UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo
+                .getUriResourceParts()
+                .get(0);
+        EdmEntityType entityType = uriResourceEntitySet
+                .getEntitySet()
+                .getEntityType();
+        Buffer body = Optional
+                .ofNullable(entity)
+                .map(e -> new EntityWrapper(entityType.getFullQualifiedName(), e)
+                        .toBuffer(vertx))
+                .orElse(null);
         DataQuery query = odataRequestToQuery(request, action, body);
         DataContext dataContext = new DataContextImpl(routingContext);
-        enhanceDataContextWithRawBody(request, dataContext);
-        return requestEntity(vertx, new DataRequest(entityType.getFullQualifiedName(), query), dataContext)
-                .map(result -> transferResponseHint(dataContext, routingContext, result))
-                .onFailure(processPromise::fail);
+        enhanceDataContextWithRawBody(routingContext.body(), dataContext);
+        return requestEntity(
+                vertx,
+                new DataRequest(entityType.getFullQualifiedName(), query),
+                dataContext)
+                        .map(result -> transferResponseHint(dataContext, routingContext, result))
+                        .onFailure(processPromise::fail);
     }
 
     /**
@@ -118,14 +154,13 @@ public final class ProcessorHelper {
      * @param dataContext data context
      */
     @VisibleForTesting
-    static void enhanceDataContextWithRawBody(ODataRequest request, DataContext dataContext) {
-        if (request.getBody() != null) {
-            try {
-                dataContext.put(DataContext.RAW_BODY_KEY, BufferHelper.inputStreamToBuffer(request.getBody()));
-            } catch (IOException e) {
-                LOGGER.error("Error while converting request body into buffer.", e);
-                throw new RuntimeException(e);
-            }
+    static void enhanceDataContextWithRawBody(
+            RequestBody request,
+            DataContext dataContext) {
+        if (request != null) {
+            dataContext.put(
+                    DataContext.RAW_BODY_KEY,
+                    request.buffer());
         }
     }
 
@@ -138,9 +173,13 @@ public final class ProcessorHelper {
      * @return the entity wrapper result
      */
     @VisibleForTesting
-    static EntityWrapper transferResponseHint(DataContext dataContext, RoutingContext routingContext,
+    static EntityWrapper transferResponseHint(
+            DataContext dataContext,
+            RoutingContext routingContext,
             EntityWrapper result) {
-        dataContext.responseData().forEach((key, value) -> routingContext.put(RESPONSE_HEADER_PREFIX + key, value));
+        dataContext
+                .responseData()
+                .forEach((key, value) -> routingContext.put(RESPONSE_HEADER_PREFIX + key, value));
         return result;
     }
 }

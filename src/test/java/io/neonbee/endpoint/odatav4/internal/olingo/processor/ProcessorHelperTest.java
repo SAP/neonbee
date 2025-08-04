@@ -8,11 +8,8 @@ import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHel
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_TOP_KEY;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.RESPONSE_HEADER_PREFIX;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.Charset;
 import java.util.Set;
 
-import org.apache.olingo.server.api.ODataRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -20,9 +17,11 @@ import org.mockito.Mockito;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.entity.EntityWrapper;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.impl.HttpServerRequestInternal;
 import io.vertx.core.net.HostAndPort;
+import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.impl.RouterImpl;
 import io.vertx.ext.web.impl.RoutingContextImpl;
@@ -54,11 +53,22 @@ class ProcessorHelperTest {
 
     @Test
     void enhanceDataContextWithRawBody() {
-        ODataRequest request = Mockito.mock(ODataRequest.class);
-        Mockito.when(request.getBody())
-                .thenReturn(new ByteArrayInputStream("Hello World".getBytes(Charset.defaultCharset())));
+        // Create a mock RequestBody
+        RequestBody requestBody = Mockito.mock(RequestBody.class);
+        Buffer expectedBuffer = Buffer.buffer("Hello World");
+        Mockito.when(requestBody.buffer()).thenReturn(expectedBuffer);
+
         DataContext dataContext = new DataContextImpl();
-        ProcessorHelper.enhanceDataContextWithRawBody(request, dataContext);
-        assertThat(dataContext.get(DataContext.RAW_BODY_KEY).toString()).isEqualTo("Hello World");
+        ProcessorHelper.enhanceDataContextWithRawBody(requestBody, dataContext);
+        assertThat(dataContext.get(DataContext.RAW_BODY_KEY).toString()).isEqualTo(expectedBuffer.toString());
+    }
+
+    @Test
+    void enhanceDataContextWithRawBodyNull() {
+        DataContext dataContext = new DataContextImpl();
+        ProcessorHelper.enhanceDataContextWithRawBody(null, dataContext);
+        Buffer o = dataContext.get(DataContext.RAW_BODY_KEY);
+
+        assertThat(o).isNull();
     }
 }
