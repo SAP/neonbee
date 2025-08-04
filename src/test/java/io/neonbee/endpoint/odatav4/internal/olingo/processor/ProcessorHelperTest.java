@@ -8,8 +8,11 @@ import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHel
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_TOP_KEY;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.RESPONSE_HEADER_PREFIX;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.Charset;
 import java.util.Set;
 
+import org.apache.olingo.server.api.ODataRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -47,5 +50,15 @@ class ProcessorHelperTest {
         assertThat(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_TOP_KEY)).isNull();
         assertThat(routingContext.<Integer>get(RESPONSE_HEADER_PREFIX + ODATA_COUNT_SIZE_KEY)).isEqualTo(42);
         assertThat(result).isSameInstanceAs(entityWrapper);
+    }
+
+    @Test
+    void enhanceDataContextWithRawBody() {
+        ODataRequest request = Mockito.mock(ODataRequest.class);
+        Mockito.when(request.getBody())
+                .thenReturn(new ByteArrayInputStream("Hello World".getBytes(Charset.defaultCharset())));
+        DataContext dataContext = new DataContextImpl();
+        ProcessorHelper.enhanceDataContextWithRawBody(request, dataContext);
+        assertThat(dataContext.get(DataContext.RAW_BODY_KEY).toString()).isEqualTo("Hello World");
     }
 }
