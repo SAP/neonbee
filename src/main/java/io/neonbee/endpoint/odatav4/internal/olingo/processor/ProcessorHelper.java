@@ -2,6 +2,7 @@ package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
 import static io.neonbee.entity.EntityVerticle.requestEntity;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -20,6 +21,8 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.entity.EntityWrapper;
+import io.neonbee.internal.helper.BufferHelper;
+import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -51,6 +54,8 @@ public final class ProcessorHelper {
 
     /** OData count size key. */
     public static final String ODATA_COUNT_SIZE_KEY = "OData.count.size";
+
+    private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     private ProcessorHelper() {}
 
@@ -100,9 +105,28 @@ public final class ProcessorHelper {
                 .map(e -> new EntityWrapper(entityType.getFullQualifiedName(), e).toBuffer(vertx)).orElse(null);
         DataQuery query = odataRequestToQuery(request, action, body);
         DataContext dataContext = new DataContextImpl(routingContext);
+        enhanceDataContextWithRawBody(request, dataContext);
         return requestEntity(vertx, new DataRequest(entityType.getFullQualifiedName(), query), dataContext)
                 .map(result -> transferResponseHint(dataContext, routingContext, result))
                 .onFailure(processPromise::fail);
+    }
+
+    /**
+     * Add an new entry into data context with the raw body of the OData request under the key rawBody.
+     *
+     * @param request     odata request
+     * @param dataContext data context
+     */
+    @VisibleForTesting
+    static void enhanceDataContextWithRawBody(ODataRequest request, DataContext dataContext) {
+        if (request.getBody() != null) {
+            try {
+                dataContext.put(DataContext.RAW_BODY_KEY, BufferHelper.inputStreamToBuffer(request.getBody()));
+            } catch (IOException e) {
+                LOGGER.error("Error while converting request body into buffer.", e);
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     /**

@@ -10,6 +10,11 @@ import io.vertx.core.json.JsonObject;
 @SuppressWarnings("TypeParameterUnusedInFormals")
 public interface DataContext {
     /**
+     * Key for raw body in map.
+     */
+    String RAW_BODY_KEY = "rawBody";
+
+    /**
      * Returns the correlation id of this request.
      *
      * @return the correlation id
