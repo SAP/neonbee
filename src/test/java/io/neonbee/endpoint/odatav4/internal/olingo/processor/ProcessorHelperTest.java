@@ -8,15 +8,8 @@ import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHel
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.ODATA_TOP_KEY;
 import static io.neonbee.endpoint.odatav4.internal.olingo.processor.ProcessorHelper.RESPONSE_HEADER_PREFIX;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.Charset;
 import java.util.Set;
 
-import io.neonbee.endpoint.odatav4.internal.olingo.expression.operators.StringFunctionMethodCallOperator;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.web.RequestBody;
-import org.apache.olingo.server.api.ODataRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -24,9 +17,12 @@ import org.mockito.Mockito;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.entity.EntityWrapper;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.impl.HttpServerRequestInternal;
 import io.vertx.core.net.HostAndPort;
+import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.impl.RouterImpl;
 import io.vertx.ext.web.impl.RoutingContextImpl;

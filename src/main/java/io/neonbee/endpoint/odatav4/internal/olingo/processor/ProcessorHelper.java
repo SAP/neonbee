@@ -1,6 +1,20 @@
 package io.neonbee.endpoint.odatav4.internal.olingo.processor;
 
+import static io.neonbee.entity.EntityVerticle.requestEntity;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import org.apache.olingo.commons.api.data.Entity;
+import org.apache.olingo.commons.api.edm.EdmEntityType;
+import org.apache.olingo.server.api.ODataRequest;
+import org.apache.olingo.server.api.uri.UriInfo;
+import org.apache.olingo.server.api.uri.UriResourceEntitySet;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import io.neonbee.data.DataAction;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
@@ -13,18 +27,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
-import org.apache.olingo.commons.api.data.Entity;
-import org.apache.olingo.commons.api.edm.EdmEntityType;
-import org.apache.olingo.server.api.ODataRequest;
-import org.apache.olingo.server.api.uri.UriInfo;
-import org.apache.olingo.server.api.uri.UriResourceEntitySet;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import static io.neonbee.entity.EntityVerticle.requestEntity;
 
 public final class ProcessorHelper {
 
@@ -70,8 +72,7 @@ public final class ProcessorHelper {
 
     private static final Set<HttpMethod> METHODS_WITH_BODY = Set.of(HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH);
 
-    private ProcessorHelper() {
-    }
+    private ProcessorHelper() {}
 
     private static DataQuery odataRequestToQuery(ODataRequest request, DataAction action, Buffer body) {
         // the uriPath without /odata root path and without query path
@@ -79,7 +80,7 @@ public final class ProcessorHelper {
         // the raw query path
         Map<String, List<String>> stringListMap = DataQuery.parseEncodedQueryString(request.getRawQueryPath());
         return new DataQuery(action, uriPath, stringListMap, request.getAllHeaders(), body).addHeader("X-HTTP-Method",
-            request.getMethod().name());
+                request.getMethod().name());
     }
 
     /**
@@ -94,7 +95,7 @@ public final class ProcessorHelper {
      * @return a Future of EntityWrapper holding the result of the entity request.
      */
     public static Future<EntityWrapper> forwardRequest(ODataRequest request, DataAction action, UriInfo uriInfo,
-                                                       Vertx vertx, RoutingContext routingContext, Promise<Void> processPromise) {
+            Vertx vertx, RoutingContext routingContext, Promise<Void> processPromise) {
         return forwardRequest(request, action, null, uriInfo, vertx, routingContext, processPromise);
     }
 
@@ -112,17 +113,17 @@ public final class ProcessorHelper {
      * @return a Future of EntityWrapper holding the result of the entity request.
      */
     public static Future<EntityWrapper> forwardRequest(ODataRequest request, DataAction action, Entity entity,
-                                                       UriInfo uriInfo, Vertx vertx, RoutingContext routingContext, Promise<Void> processPromise) {
+            UriInfo uriInfo, Vertx vertx, RoutingContext routingContext, Promise<Void> processPromise) {
         UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0);
         EdmEntityType entityType = uriResourceEntitySet.getEntitySet().getEntityType();
         Buffer body = Optional.ofNullable(entity)
-            .map(e -> new EntityWrapper(entityType.getFullQualifiedName(), e).toBuffer(vertx)).orElse(null);
+                .map(e -> new EntityWrapper(entityType.getFullQualifiedName(), e).toBuffer(vertx)).orElse(null);
         DataQuery query = odataRequestToQuery(request, action, body);
         DataContext dataContext = new DataContextImpl(routingContext);
         enhanceDataContextWithRawBody(routingContext, dataContext);
         return requestEntity(vertx, new DataRequest(entityType.getFullQualifiedName(), query), dataContext)
-            .map(result -> transferResponseHint(dataContext, routingContext, result))
-            .onFailure(processPromise::fail);
+                .map(result -> transferResponseHint(dataContext, routingContext, result))
+                .onFailure(processPromise::fail);
     }
 
     /**
@@ -147,7 +148,7 @@ public final class ProcessorHelper {
      */
     @VisibleForTesting
     static EntityWrapper transferResponseHint(DataContext dataContext, RoutingContext routingContext,
-                                              EntityWrapper result) {
+            EntityWrapper result) {
         dataContext.responseData().forEach((key, value) -> routingContext.put(RESPONSE_HEADER_PREFIX + key, value));
         return result;
     }
