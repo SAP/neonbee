@@ -134,7 +134,7 @@ public final class ProcessorHelper {
      */
     static void enhanceDataContextWithRawBody(RoutingContext routingContext, DataContext dataContext) {
         if (METHODS_WITH_BODY.contains(routingContext.request().method()) && routingContext.body().length() > 0) {
-            dataContext.put(DataContext.RAW_BODY_KEY, routingContext.body().buffer());
+            dataContext.put(DataContext.RAW_BODY_KEY, routingContext.body().buffer().toString());
         }
     }
 
