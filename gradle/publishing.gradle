@@ -229,9 +229,9 @@ publishing {
         maven {
             name = 'mavenCentral'
             credentials(org.gradle.api.artifacts.repositories.PasswordCredentials)
-            def releasesRepoUrl = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
-            def snapshotsRepoUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
-            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            def releasesRepoUrl = "https://central.sonatype.com/api/v1/publisher/deploy/maven2/releases"
+            def snapshotsRepoUrl = "https://central.sonatype.com/api/v1/publisher/deploy/maven2/snapshots"
+            url = version.endsWith("SNAPSHOT") ? snapshotsRepoUrl : releasesRepoUrl
         }
     }
 }
