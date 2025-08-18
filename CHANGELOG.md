@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.37.8 (2025-08-18)
+
+### Features
+
+- use body from routing context ([d8103585](https://github.com/SAP/neonbee/commit/d8103585dcc18dde1b146998e67a98a8280030b4))
+- put string into data context ([c92369e2](https://github.com/SAP/neonbee/commit/c92369e20eb2aa2ee4c3fcc4132ab2b50ca0b23d))
+- add raw body to data context ([18f1d590](https://github.com/SAP/neonbee/commit/18f1d590d307e111383b509cd11d890e8fb1aae7))
+- use body from routing context ([12c73953](https://github.com/SAP/neonbee/commit/12c739534f36edd122cde1df70a112aa0aa08f7f))
+- use body from routing context ([028e5d5a](https://github.com/SAP/neonbee/commit/028e5d5a8bb250ded36c0d271740c49ac7c1fba6))
+
+
 ## 0.37.7 (2025-06-18)
 
 ### Bug Fixes
