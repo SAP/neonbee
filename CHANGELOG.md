@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.37.8 (2025-08-18)
+## 0.37.9 (2025-09-01)
 
 ### Features
 
@@ -9,6 +9,9 @@
 - add raw body to data context ([18f1d590](https://github.com/SAP/neonbee/commit/18f1d590d307e111383b509cd11d890e8fb1aae7))
 - use body from routing context ([12c73953](https://github.com/SAP/neonbee/commit/12c739534f36edd122cde1df70a112aa0aa08f7f))
 - use body from routing context ([028e5d5a](https://github.com/SAP/neonbee/commit/028e5d5a8bb250ded36c0d271740c49ac7c1fba6))
+- update maven central url ([8945d512](https://github.com/SAP/neonbee/commit/8945d5124c374b4e72bde07252f8f54dd4f46be2))
+- change to ossrh-staging-api ([3ed765c3](https://github.com/SAP/neonbee/commit/3ed765c3bb0217ccde72f77816ac353f1eb6d5b9))
+- change to ossrh-staging-api ([bd14f3f5](https://github.com/SAP/neonbee/commit/bd14f3f5cdce6b85f61289c3657c9472c71c8e89))
 
 
 ## 0.37.7 (2025-06-18)
