@@ -11,14 +11,16 @@ import static io.neonbee.NeonBeeProfile.NO_WEB;
 import static io.neonbee.NeonBeeProfile.STABLE;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.test.base.NeonBeeTestBase.LONG_RUNNING_TEST;
-import static io.neonbee.test.helper.DeploymentHelper.getDeployedVerticles;
+import static io.neonbee.test.helper.DeploymentHelper.getAllDeployedVerticleClasses;
 import static io.neonbee.test.helper.OptionsHelper.defaultOptions;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,11 +34,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -52,6 +57,7 @@ import org.mockito.Mockito;
 
 import io.neonbee.NeonBeeInstanceConfiguration.ClusterManager;
 import io.neonbee.config.NeonBeeConfig;
+import io.neonbee.config.NeonBeeConfig.BootDeploymentHandling;
 import io.neonbee.health.DummyHealthCheck;
 import io.neonbee.health.DummyHealthCheckProvider;
 import io.neonbee.health.EventLoopHealthCheck;
@@ -75,6 +81,8 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
+import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryContext;
 import io.vertx.core.eventbus.EventBus;
@@ -89,6 +97,8 @@ import io.vertx.junit5.VertxTestContext;
 @SuppressWarnings({ "PMD.CouplingBetweenObjects" })
 class NeonBeeTest extends NeonBeeTestBase {
     private Vertx vertx;
+
+    private static boolean incubatorFails;
 
     @Override
     protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
@@ -108,6 +118,11 @@ class NeonBeeTest extends NeonBeeTestBase {
             break;
         default:
         }
+    }
+
+    @BeforeEach
+    void reset() {
+        incubatorFails = false;
     }
 
     @AfterEach
@@ -150,27 +165,28 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Test
     @DisplayName("NeonBee should deploy all none optional system verticles")
     void testDeployNoneOptionalSystemVerticles(Vertx vertx) {
-        assertThat(getDeployedVerticles(vertx)).containsExactly(ConsolidationVerticle.class,
+        assertThat(getAllDeployedVerticleClasses(vertx)).containsExactly(ConsolidationVerticle.class,
                 LoggerManagerVerticle.class);
     }
 
     @Test
     @DisplayName("NeonBee should deploy all none optional system verticles plus HealthCheckVerticle")
     void testDeployNoneOptionalSystemVerticlesPlusHealthCheckVerticle(Vertx vertx) {
-        assertThat(getDeployedVerticles(vertx)).containsExactly(ConsolidationVerticle.class,
+        assertThat(getAllDeployedVerticleClasses(vertx)).containsExactly(ConsolidationVerticle.class,
                 LoggerManagerVerticle.class, HealthCheckVerticle.class);
     }
 
     @Test
     @DisplayName("NeonBee should deploy class path verticles (from NeonBeeExtensionBasedTest)")
     void testDeployCoreVerticlesFromClassPath(Vertx vertx) {
-        assertThat(getDeployedVerticles(vertx)).contains(NeonBeeExtensionBasedTest.CoreDataVerticle.class);
+        assertThat(getAllDeployedVerticleClasses(vertx)).contains(NeonBeeExtensionBasedTest.CoreDataVerticle.class);
     }
 
     @Test
     @DisplayName("NeonBee should deploy module JAR")
     void testDeployModule(Vertx vertx) {
-        assertThat(getDeployedVerticles(vertx).stream().map(Class::getName)).containsAtLeast("ClassA", "ClassB");
+        assertThat(getAllDeployedVerticleClasses(vertx).stream().map(Class::getName)).containsAtLeast("ClassA",
+                "ClassB");
     }
 
     @Test
@@ -458,6 +474,64 @@ class NeonBeeTest extends NeonBeeTestBase {
         NeonBee.applyEncryptionOptions(neonBeeOptions, ebo).onComplete(verifier.apply(ebo, testContext));
     }
 
+    @Test
+    @DisplayName("Test if NeonBee boot fails if deployable fails, when FAIL_ON_ERROR is set")
+    @Tag(DOESNT_REQUIRE_NEONBEE)
+    void testDeployableFailure(VertxTestContext testContext) {
+        AtomicReference<Vertx> vertxSpy = new AtomicReference<>();
+        incubatorFails = true;
+        NeonBeeOptions options = defaultOptions().clearActiveProfiles().addActiveProfile(INCUBATOR)
+                .setIgnoreClassPath(false);
+        NeonBeeConfig config = new NeonBeeConfig().setBootDeploymentHandling(BootDeploymentHandling.FAIL_ON_ERROR);
+        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions, clusterManager) -> NeonBee
+                .newVertx(vertxOptions, clusterManager, options)
+                .map(newVertx -> registerVertxCloseSpy(vertx = newVertx, vertxSpy)),
+                ClusterManager.FAKE.factory(), options, config)
+                .onComplete(testContext.failing(throwable -> testContext.verify(() -> {
+                    assertThat(throwable).hasMessageThat().isEqualTo("incubator verticle fails");
+                    verify(vertxSpy.get()).close(); // verify that the spy received a call to close()
+                    testContext.completeNow();
+                })));
+    }
+
+    @Test
+    @DisplayName("Test if NeonBee boot doesn't fail if deployable fails, when UNDEPLOY_FAILING is set")
+    @Tag(DOESNT_REQUIRE_NEONBEE)
+    void testUndeployFailing(VertxTestContext testContext) {
+        AtomicReference<Vertx> vertxSpy = new AtomicReference<>();
+        incubatorFails = true;
+        NeonBeeOptions options = defaultOptions().clearActiveProfiles().addActiveProfile(INCUBATOR)
+                .setIgnoreClassPath(false);
+        NeonBeeConfig config = new NeonBeeConfig().setBootDeploymentHandling(BootDeploymentHandling.UNDEPLOY_FAILING);
+        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions, clusterManager) -> NeonBee
+                .newVertx(vertxOptions, clusterManager, options)
+                .map(newVertx -> registerVertxCloseSpy(vertx = newVertx, vertxSpy)),
+                ClusterManager.FAKE.factory(), options, config)
+                .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
+                    verify(vertxSpy.get(), times(0)).close(); // verify that the spy wasn't closed!
+                    Set<Class<? extends Verticle>> verticleClasses = getAllDeployedVerticleClasses(vertx);
+                    // verify that both the IncubatorVerticle was not deployed, while the probe was deployed
+                    assertThat(verticleClasses).doesNotContain(IncubatorVerticle.class);
+                    assertThat(verticleClasses).contains(IncubatorProbeVerticle.class);
+                    testContext.completeNow();
+                })));
+    }
+
+    private static Vertx registerVertxCloseSpy(Vertx newVertx, AtomicReference<Vertx> vertxSpy) {
+        // we have to spy on the close method, because the test runner closes Vert.x not NeonBee (if we
+        // wouldn't do that, the failing startup would cause the event loop threads to close and cause an
+        // early failure of the test because the "event executor terminated" (RejectedExecutionException)
+        Vertx newVertxSpy = spy(newVertx);
+        // also register the original newVertx with a NeonBee mock, otherwise some internal calls will fail
+        NeonBeeMockHelper.registerNeonBeeMock(newVertx);
+        // to stub spies Mockito suggests it is safer to use the "doReturn" method instead of "when", also
+        // we cannot simply return a succeeded future here, because the future returned by Vertx.close() is
+        // "special" because it is cast into a "ContextInternal", thus we use a "real" Vertx.close() future
+        doReturn(Vertx.vertx().close()).when(newVertxSpy).close();
+        vertxSpy.set(newVertxSpy);
+        return newVertxSpy;
+    }
+
     @NeonBeeDeployable(profile = CORE)
     private static class CoreVerticle extends AbstractVerticle {
         // empty class (comment needed as spotless formatter works different on windows)
@@ -469,7 +543,19 @@ class NeonBeeTest extends NeonBeeTestBase {
     }
 
     @NeonBeeDeployable(profile = INCUBATOR)
-    private static class IncubatorVerticle extends AbstractVerticle {
+    public static class IncubatorVerticle extends AbstractVerticle {
+        @Override
+        public void start(Promise<Void> startPromise) throws Exception {
+            if (incubatorFails) {
+                startPromise.fail("incubator verticle fails");
+            } else {
+                startPromise.complete();
+            }
+        }
+    }
+
+    @NeonBeeDeployable(profile = INCUBATOR)
+    public static class IncubatorProbeVerticle extends AbstractVerticle {
         // empty class (comment needed as spotless formatter works different on windows)
     }
 
