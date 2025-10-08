@@ -1,5 +1,8 @@
 package io.neonbee.entity;
 
+import static io.neonbee.data.DataException.FAILURE_CODE_PROCESSING_FAILED;
+import static io.neonbee.data.internal.DataContextImpl.decodeContextFromString;
+import static io.neonbee.data.internal.DataContextImpl.encodeContextToString;
 import static io.neonbee.entity.EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS;
 import static io.neonbee.entity.EntityModelManager.getBufferedOData;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
@@ -7,6 +10,9 @@ import static io.neonbee.internal.verticle.ConsolidationVerticle.ENTITY_TYPE_NAM
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -21,9 +27,11 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.neonbee.NeonBee;
 import io.neonbee.data.DataContext;
+import io.neonbee.data.DataException;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
+import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.internal.Registry;
 import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
@@ -31,6 +39,9 @@ import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonArray;
 
 public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
@@ -90,6 +101,11 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
             Pattern.compile("^/*((?:(.*)\\.)?(.*?))/(([A-Za-z_]\\w+).*?)(?:(?<=\\))/(.*))?$");
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
+
+    @SuppressWarnings("PMD.NullAssignment")
+    private List<MessageConsumer<DataQuery>> proxyConsumers = List.of();
+
+    private List<String> proxyAddresses = List.of();
 
     /**
      * Convenience method for calling the {@link #requestEntity(DataRequest, DataContext)} method.
@@ -251,8 +267,13 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
                 }
             });
         });
-
-        announceEntityVerticle(vertx).compose(nothing -> Future.<Void>future(super::start)).onComplete(promise);
+        announceEntityVerticle(vertx).compose(nothing -> Future.<Void>future(super::start))
+                .onSuccess(nothing -> {
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info("Entity verticle {} is listening on event bus address {}",
+                                getQualifiedName(), getAddress());
+                    }
+                }).compose(nothing -> registerProxyConsumerIfNecessary()).onComplete(promise);
     }
 
     /**
@@ -260,6 +281,10 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
      * adding the EntityTypes to a shared map in a secure and cluster-wide thread safe manner.
      */
     private Future<Void> announceEntityVerticle(Vertx vertx) {
+        if (!supportsODataRequests()) {
+            return succeededFuture();
+        }
+
         // in case this entity verticle does not listen to any entityTypeNames, do not add it to the shared map
         return entityTypeNames()
                 .map(entityTypeNames -> entityTypeNames != null ? entityTypeNames : Set.<FullQualifiedName>of())
@@ -275,5 +300,193 @@ public abstract class EntityVerticle extends DataVerticle<EntityWrapper> {
 
     private static Registry<String> getRegistry(Vertx vertx) {
         return NeonBee.get(vertx).getEntityRegistry();
+    }
+
+    private Future<Void> registerProxyConsumerIfNecessary() {
+        if (!supportsProxyRequests()) {
+            proxyConsumers = List.of();
+            proxyAddresses = List.of();
+            return succeededFuture();
+        }
+
+        return proxyQualifiedNames().compose(aliasQualifiedNames -> {
+            LinkedHashSet<String> qualifiedNames = new LinkedHashSet<>();
+            qualifiedNames.add(getQualifiedName());
+            qualifiedNames.addAll(aliasQualifiedNames);
+
+            List<MessageConsumer<DataQuery>> consumers = new ArrayList<>();
+            List<String> addresses = new ArrayList<>();
+            List<Future<Void>> registrations = new ArrayList<>();
+
+            for (String qualifiedName : qualifiedNames) {
+                String address = getProxyAddress(qualifiedName);
+                Promise<Void> registration = Promise.promise();
+                MessageConsumer<DataQuery> consumer = registerProxyConsumer(address, registration);
+                consumers.add(consumer);
+                addresses.add(address);
+                registrations.add(registration.future());
+            }
+
+            return Future.all(registrations)
+                    .onSuccess(v -> {
+                        proxyConsumers = List.copyOf(consumers);
+                        proxyAddresses = List.copyOf(addresses);
+
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Entity verticle {} registered proxy addresses {}", getQualifiedName(),
+                                    addresses);
+                        }
+                    })
+                    .onFailure(reason -> consumers.forEach(MessageConsumer::unregister)).mapEmpty();
+        });
+    }
+
+    private MessageConsumer<DataQuery> registerProxyConsumer(String address, Promise<Void> registration) {
+        MessageConsumer<DataQuery> consumer = vertx.eventBus().consumer(address, message -> {
+            DataContext decodedContext = decodeContextFromString(message.headers().get(DataVerticle.CONTEXT_HEADER));
+            DataContext context = decodedContext != null ? decodedContext : new DataContextImpl();
+
+            if (context instanceof DataContextImpl contextImpl) {
+                contextImpl.pushVerticleToPath(getQualifiedName());
+                contextImpl.amendTopVerticleCoordinate(deploymentID());
+            }
+
+            retrieveProxyData(message.body(), context).onComplete(asyncResult -> {
+                if (context instanceof DataContextImpl contextImpl) {
+                    contextImpl.popVerticleFromPath();
+                }
+
+                if (asyncResult.succeeded()) {
+                    DeliveryOptions replyOptions = new DeliveryOptions()
+                            .addHeader(DataVerticle.CONTEXT_HEADER, encodeContextToString(context));
+                    message.reply(asyncResult.result(), replyOptions);
+                } else {
+                    Throwable cause = asyncResult.cause();
+                    if (LOGGER.isWarnEnabled()) {
+                        LOGGER.correlateWith(context).warn("Proxy request of {} failed", getQualifiedName(), cause);
+                    }
+
+                    if (cause instanceof DataException dataException) {
+                        message.reply(dataException);
+                    } else {
+                        message.fail(FAILURE_CODE_PROCESSING_FAILED, cause.getMessage());
+                    }
+                }
+            });
+        });
+
+        consumer.completionHandler(asyncCompletion -> {
+            if (asyncCompletion.succeeded()) {
+                NeonBee neonBee = NeonBee.get(vertx);
+                if (neonBee != null) {
+                    neonBee.registerLocalConsumer(address);
+                }
+                registration.complete();
+            } else {
+                registration.fail(asyncCompletion.cause());
+            }
+        });
+
+        return consumer;
+    }
+
+    private Future<Set<String>> proxyQualifiedNames() {
+        return entityTypeNames().otherwise(Set.of()).map(typeNames -> {
+            if (typeNames == null || typeNames.isEmpty()) {
+                return Set.<String>of();
+            }
+
+            LinkedHashSet<String> aliases = new LinkedHashSet<>();
+            for (FullQualifiedName typeName : typeNames) {
+                if (typeName == null || typeName.getName() == null || typeName.getName().isBlank()) {
+                    continue;
+                }
+
+                aliases.addAll(expandProxyQualifiedNames(typeName));
+            }
+
+            return Collections.unmodifiableSet(aliases);
+        }).recover(throwable -> {
+            if (LOGGER.isWarnEnabled()) {
+                LOGGER.warn("Failed to resolve proxy aliases for {}", getQualifiedName(), throwable);
+            }
+            return succeededFuture(Set.of());
+        });
+    }
+
+    private static Set<String> expandProxyQualifiedNames(FullQualifiedName entityTypeName) {
+        LinkedHashSet<String> names = new LinkedHashSet<>();
+        String entityName = entityTypeName.getName();
+        String namespace = entityTypeName.getNamespace();
+
+        if (namespace == null || namespace.isBlank()) {
+            names.add(entityName);
+        } else {
+            names.add(DataVerticle.createQualifiedName(namespace, entityName));
+
+            if (namespace.contains(".")) {
+                names.add(DataVerticle.createQualifiedName(namespace.replace('.', '/'), entityName));
+            }
+        }
+
+        return names;
+    }
+
+    /**
+     * Signals whether this entity verticle exposes the proxy event-bus endpoint.
+     *
+     * @return {@code true} if proxy requests should be handled, otherwise {@code false}
+     */
+    protected boolean supportsProxyRequests() {
+        return false;
+    }
+
+    /**
+     * Signals whether this entity verticle exposes the regular OData handlers.
+     *
+     * @return {@code true} if OData requests should be handled, otherwise {@code false}
+     */
+    protected boolean supportsODataRequests() {
+        return !supportsProxyRequests();
+    }
+
+    /**
+     * Produces the serialized payload for a proxy request.
+     *
+     * @param query   the data query describing the requested resource
+     * @param context the data context accompanying the request
+     * @return a future that resolves to the buffer to be returned to the caller
+     */
+    protected Future<Buffer> retrieveProxyData(DataQuery query, DataContext context) {
+        return failedFuture(new UnsupportedOperationException(
+                String.format("Proxy requests are not supported by %s", getQualifiedName())));
+    }
+
+    /**
+     * Computes the proxy event-bus address for the given qualified entity verticle name.
+     *
+     * @param qualifiedName the qualified entity verticle name
+     * @return the proxy event-bus address used by the proxy endpoint
+     */
+    public static String getProxyAddress(String qualifiedName) {
+        return String.format("%s[%s]", EntityVerticle.class.getSimpleName() + "Proxy", qualifiedName);
+    }
+
+    @Override
+    @SuppressWarnings("PMD.NullAssignment")
+    public void stop() throws Exception {
+        if (!proxyConsumers.isEmpty()) {
+            proxyConsumers.forEach(MessageConsumer::unregister);
+            proxyConsumers = List.of();
+        }
+
+        NeonBee neonBee = NeonBee.get(vertx);
+        if (neonBee != null) {
+            proxyAddresses.forEach(neonBee::unregisterLocalConsumer);
+        }
+
+        proxyAddresses = List.of();
+
+        super.stop();
     }
 }
