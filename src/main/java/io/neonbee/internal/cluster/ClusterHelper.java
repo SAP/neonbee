@@ -1,12 +1,16 @@
 package io.neonbee.internal.cluster;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 
 import com.hazelcast.cluster.Member;
 
+import io.neonbee.cluster.ClusterCleanupCoordinator;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.spi.cluster.ClusterManager;
@@ -14,6 +18,9 @@ import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 public final class ClusterHelper {
+
+    private static final Map<Vertx, ClusterCleanupCoordinator> COORDINATORS = new ConcurrentHashMap<>();
+
     /**
      * Helper class does not require instantiation.
      */
@@ -88,10 +95,19 @@ public final class ClusterHelper {
             return true;
         }
 
-        return getHazelcastClusterManager(vertx).map(hcm -> isLeader(hcm))
-                .or(() -> getInfinispanClusterManager(vertx).map(icm -> isLeader(icm)))
-                .orElseThrow(() -> new IllegalStateException(
-                        "Can not find the cluster leader. Is vert.x running in a cluster?"));
+        // Try Hazelcast
+        Optional<Boolean> hazelcastLeader = getHazelcastClusterManager(vertx)
+            .map(ClusterHelper::isLeader);
+        if (hazelcastLeader.isPresent()) {
+            return hazelcastLeader.get();
+        }
+
+        // Try Infinispan
+        Optional<Boolean> infinispanLeader = getInfinispanClusterManager(vertx)
+            .map(ClusterHelper::isLeader);
+
+        return infinispanLeader.orElse(true);
+        // For others, return true
     }
 
     private static Boolean isLeader(InfinispanClusterManager icm) {
@@ -106,5 +122,41 @@ public final class ClusterHelper {
         Set<Member> members = hcm.getHazelcastInstance().getCluster().getMembers();
         Member oldestMember = members.iterator().next();
         return oldestMember.localMember();
+    }
+
+    /**
+     * Get or create and start a ClusterCleanupCoordinator for the given Vert.x instance.
+     * Returns a completed future with null if not running in clustered mode.
+     * This method handles creation, startup, and caching in a single operation.
+     *
+     * @param vertx the Vert.x instance
+     * @return Future that completes with the started ClusterCleanupCoordinator or null
+     */
+    public static Future<ClusterCleanupCoordinator> getOrCreateClusterCleanupCoordinator(
+        Vertx vertx
+    ) {
+        // Return null immediately if not clustered
+        if (!vertx.isClustered()) {
+            return Future.succeededFuture(null);
+        }
+
+        // Get or create coordinator
+        ClusterCleanupCoordinator coordinator = COORDINATORS.computeIfAbsent(
+            vertx,
+            v ->
+                getClusterManager(v)
+                    .map(clusterManager ->
+                        new ClusterCleanupCoordinator(v, clusterManager)
+                    )
+                    .orElse(null)
+        );
+
+        // Return null if coordinator creation failed
+        if (coordinator == null) {
+            return Future.succeededFuture(null);
+        }
+
+        // Start the coordinator and return it
+        return coordinator.start().map(map -> coordinator);
     }
 }
