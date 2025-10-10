@@ -97,14 +97,14 @@ public final class ClusterHelper {
 
         // Try Hazelcast
         Optional<Boolean> hazelcastLeader = getHazelcastClusterManager(vertx)
-            .map(ClusterHelper::isLeader);
+                .map(ClusterHelper::isLeader);
         if (hazelcastLeader.isPresent()) {
             return hazelcastLeader.get();
         }
 
         // Try Infinispan
         Optional<Boolean> infinispanLeader = getInfinispanClusterManager(vertx)
-            .map(ClusterHelper::isLeader);
+                .map(ClusterHelper::isLeader);
 
         return infinispanLeader.orElse(true);
         // For others, return true
@@ -125,16 +125,15 @@ public final class ClusterHelper {
     }
 
     /**
-     * Get or create and start a ClusterCleanupCoordinator for the given Vert.x instance.
-     * Returns a completed future with null if not running in clustered mode.
-     * This method handles creation, startup, and caching in a single operation.
+     * Get or create and start a ClusterCleanupCoordinator for the given Vert.x instance. Returns a completed future
+     * with null if not running in clustered mode. This method handles creation, startup, and caching in a single
+     * operation.
      *
      * @param vertx the Vert.x instance
      * @return Future that completes with the started ClusterCleanupCoordinator or null
      */
     public static Future<ClusterCleanupCoordinator> getOrCreateClusterCleanupCoordinator(
-        Vertx vertx
-    ) {
+            Vertx vertx) {
         // Return null immediately if not clustered
         if (!vertx.isClustered()) {
             return Future.succeededFuture(null);
@@ -142,14 +141,10 @@ public final class ClusterHelper {
 
         // Get or create coordinator
         ClusterCleanupCoordinator coordinator = COORDINATORS.computeIfAbsent(
-            vertx,
-            v ->
-                getClusterManager(v)
-                    .map(clusterManager ->
-                        new ClusterCleanupCoordinator(v, clusterManager)
-                    )
-                    .orElse(null)
-        );
+                vertx,
+                v -> getClusterManager(v)
+                        .map(clusterManager -> new ClusterCleanupCoordinator(v, clusterManager))
+                        .orElse(null));
 
         // Return null if coordinator creation failed
         if (coordinator == null) {

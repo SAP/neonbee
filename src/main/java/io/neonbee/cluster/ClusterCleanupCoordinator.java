@@ -26,8 +26,7 @@ import io.vertx.core.spi.cluster.ClusterManager;
 public class ClusterCleanupCoordinator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
-        ClusterCleanupCoordinator.class
-    );
+            ClusterCleanupCoordinator.class);
 
     private static final String MAP_NAME = "cluster:pending-node-cleanups";
 
@@ -56,15 +55,13 @@ public class ClusterCleanupCoordinator {
      * @param clusterManager the cluster manager for distributed operations
      */
     public ClusterCleanupCoordinator(
-        Vertx vertx,
-        ClusterManager clusterManager
-    ) {
+            Vertx vertx,
+            ClusterManager clusterManager) {
         this(
-            vertx,
-            clusterManager,
-            DEFAULT_CLEANUP_INTERVAL_MS,
-            DEFAULT_LOCK_TIMEOUT_MS
-        );
+                vertx,
+                clusterManager,
+                DEFAULT_CLEANUP_INTERVAL_MS,
+                DEFAULT_LOCK_TIMEOUT_MS);
     }
 
     /**
@@ -76,11 +73,10 @@ public class ClusterCleanupCoordinator {
      * @param lockTimeoutMs     the timeout for acquiring the cleanup lock in milliseconds
      */
     public ClusterCleanupCoordinator(
-        Vertx vertx,
-        ClusterManager clusterManager,
-        long cleanupIntervalMs,
-        long lockTimeoutMs
-    ) {
+            Vertx vertx,
+            ClusterManager clusterManager,
+            long cleanupIntervalMs,
+            long lockTimeoutMs) {
         this.vertx = vertx;
         this.clusterManager = clusterManager;
         this.cleanupIntervalMs = cleanupIntervalMs;
@@ -98,22 +94,21 @@ public class ClusterCleanupCoordinator {
         clusterManager.getAsyncMap(MAP_NAME, mapPromise);
 
         return mapPromise
-            .future()
-            .compose(map -> {
-                this.pendingRemovals = map;
+                .future()
+                .compose(map -> {
+                    this.pendingRemovals = map;
 
-                // Start periodic cleanup loop
-                this.periodicTimerId =
-                    vertx.setPeriodic(
-                        cleanupIntervalMs,
-                        id -> tryAcquireLockAndCleanup()
-                    );
+                    // Start periodic cleanup loop
+                    this.periodicTimerId =
+                            vertx.setPeriodic(
+                                    cleanupIntervalMs,
+                                    id -> tryAcquireLockAndCleanup());
 
-                return succeededFuture(map); // success
-            })
-            .onFailure(err -> {
-                LOGGER.error("Failed to initialize pendingRemovals", err);
-            });
+                    return succeededFuture(map); // success
+                })
+                .onFailure(err -> {
+                    LOGGER.error("Failed to initialize pendingRemovals", err);
+                });
     }
 
     /**
@@ -143,106 +138,91 @@ public class ClusterCleanupCoordinator {
 
         if (pendingRemovals != null) {
             pendingRemovals
-                .putIfAbsent(nodeId, true)
-                .onSuccess(v ->
-                    LOGGER.debug("Scheduled cleanup for node: {}", nodeId)
-                )
-                .onFailure(err ->
-                    LOGGER.error(
-                        "Failed to schedule cleanup for node: {}",
-                        nodeId,
-                        err
-                    )
-                );
+                    .putIfAbsent(nodeId, true)
+                    .onSuccess(v -> LOGGER.debug("Scheduled cleanup for node: {}", nodeId))
+                    .onFailure(err -> LOGGER.error(
+                            "Failed to schedule cleanup for node: {}",
+                            nodeId,
+                            err));
         } else {
             LOGGER.warn(
-                "Pending removals map not initialized, cannot schedule cleanup for node: {}",
-                nodeId
-            );
+                    "Pending removals map not initialized, cannot schedule cleanup for node: {}",
+                    nodeId);
         }
     }
 
     private void tryAcquireLockAndCleanup() {
         Promise<Lock> acquireLock = Promise.promise();
         clusterManager.getLockWithTimeout(
-            LOCK_NAME,
-            lockTimeoutMs,
-            acquireLock
-        );
+                LOCK_NAME,
+                lockTimeoutMs,
+                acquireLock);
 
         acquireLock
-            .future()
-            .onComplete(lockRes -> {
-                if (lockRes.succeeded()) {
-                    Lock lock = lockRes.result();
-                    cleanupPending()
-                        .onComplete(done -> {
-                            lock.release();
-                            if (done.failed() && LOGGER.isErrorEnabled()) {
-                                LOGGER.error(
-                                    "Cleanup operation failed",
-                                    done.cause()
-                                );
-                            }
-                        });
-                } else if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(
-                        "Failed to acquire cleanup lock, another node may be processing cleanups",
-                        lockRes.cause()
-                    );
-                }
-            });
+                .future()
+                .onComplete(lockRes -> {
+                    if (lockRes.succeeded()) {
+                        Lock lock = lockRes.result();
+                        cleanupPending()
+                                .onComplete(done -> {
+                                    lock.release();
+                                    if (done.failed() && LOGGER.isErrorEnabled()) {
+                                        LOGGER.error(
+                                                "Cleanup operation failed",
+                                                done.cause());
+                                    }
+                                });
+                    } else if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug(
+                                "Failed to acquire cleanup lock, another node may be processing cleanups",
+                                lockRes.cause());
+                    }
+                });
     }
 
     private Future<Void> cleanupPending() {
         Promise<Void> promise = Promise.promise();
 
         pendingRemovals
-            .entries()
-            .onComplete(ar -> {
-                if (ar.succeeded()) {
-                    Map<String, Boolean> entries = ar.result();
-                    List<Future<Void>> cleanups = entries
-                        .keySet()
-                        .stream()
-                        .map(this::processNodeCleanup)
-                        .collect(Collectors.toList());
+                .entries()
+                .onComplete(ar -> {
+                    if (ar.succeeded()) {
+                        Map<String, Boolean> entries = ar.result();
+                        List<Future<Void>> cleanups = entries
+                                .keySet()
+                                .stream()
+                                .map(this::processNodeCleanup)
+                                .collect(Collectors.toList());
 
-                    Future
-                        .all(cleanups)
-                        .onSuccess(v -> promise.complete())
-                        .onFailure(promise::fail);
-                } else {
-                    promise.fail(ar.cause());
-                }
-            });
+                        Future
+                                .all(cleanups)
+                                .onSuccess(v -> promise.complete())
+                                .onFailure(promise::fail);
+                    } else {
+                        promise.fail(ar.cause());
+                    }
+                });
 
         return promise.future();
     }
 
     private Future<Void> processNodeCleanup(String nodeId) {
         return doActualCleanup(nodeId)
-            .onSuccess(v -> {
-                pendingRemovals
-                    .remove(nodeId)
-                    .onSuccess(removed ->
-                        LOGGER.debug(
-                            "Successfully cleaned up and removed node: {}",
-                            nodeId
-                        )
-                    )
-                    .onFailure(err ->
-                        LOGGER.error(
-                            "Failed to remove node {} from pending removals",
-                            nodeId,
-                            err
-                        )
-                    );
-            })
-            .onFailure(err -> {
-                LOGGER.error("Failed to cleanup node: {}", nodeId, err);
-                // Don't remove from pending removals if cleanup failed - it will be retried
-            });
+                .onSuccess(v -> {
+                    pendingRemovals
+                            .remove(nodeId)
+                            .onSuccess(removed -> LOGGER.debug(
+                                    "Successfully cleaned up and removed node: {}",
+                                    nodeId))
+                            .onFailure(err -> LOGGER.error(
+                                    "Failed to remove node {} from pending removals",
+                                    nodeId,
+                                    err));
+                })
+                .onFailure(err -> {
+                    LOGGER.error("Failed to cleanup node: {}", nodeId, err);
+                    // Don't remove from pending removals if cleanup failed - it will be retried
+                });
     }
 
     private Future<Void> doActualCleanup(String nodeId) {
@@ -250,12 +230,9 @@ public class ClusterCleanupCoordinator {
         LOGGER.info("Cleaning up resources for node: {}", nodeId);
         Registry<String> registry = NeonBee.get(vertx).getEntityRegistry();
 
-        if (
-            !(registry instanceof ClusterEntityRegistry clusterEntityRegistry)
-        ) {
+        if (!(registry instanceof ClusterEntityRegistry clusterEntityRegistry)) {
             LOGGER.warn(
-                "Running in clustered mode but not using the ClusterEntityRegistry."
-            );
+                    "Running in clustered mode but not using the ClusterEntityRegistry.");
             return succeededFuture();
         }
         return clusterEntityRegistry.unregisterNode(nodeId);
