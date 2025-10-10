@@ -119,9 +119,7 @@ public class ClusterCleanupCoordinator {
     public Future<Void> stop() {
         if (periodicTimerId != null) {
             vertx.cancelTimer(periodicTimerId);
-            periodicTimerId = null;
         }
-        pendingRemovals = null;
         return succeededFuture();
     }
 
@@ -168,13 +166,13 @@ public class ClusterCleanupCoordinator {
                                     lock.release();
                                     if (done.failed() && LOGGER.isErrorEnabled()) {
                                         LOGGER.error(
-                                                "Cleanup operation failed",
+                                                "Cleanup operation failed {0}",
                                                 done.cause());
                                     }
                                 });
                     } else if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug(
-                                "Failed to acquire cleanup lock, another node may be processing cleanups",
+                                "Failed to acquire cleanup lock, another node may be processing cleanups {0}",
                                 lockRes.cause());
                     }
                 });
