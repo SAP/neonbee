@@ -2,139 +2,279 @@ package io.neonbee.internal.cluster;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
+
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
+import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import io.neonbee.NeonBee;
 import io.neonbee.hook.HookContext;
+import io.neonbee.internal.cluster.coordinator.ClusterCleanupCoordinator;
 import io.neonbee.internal.cluster.coordinator.ClusterCleanupCoordinatorHook;
+import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
-class ClusterCleanupCoordinatorHookTest {
+final class ClusterCleanupCoordinatorHookTest {
 
-    private ClusterCleanupCoordinatorHook hook;
+    private ListAppender<ILoggingEvent> listAppender;
 
-    private NeonBee mockNeonBee;
-
-    private Vertx vertx;
-
-    private String originalEnvVar;
+    private Logger logger;
 
     @BeforeEach
-    void setUp(Vertx vertx) {
-        this.vertx = vertx;
-        this.hook = new ClusterCleanupCoordinatorHook();
-        this.mockNeonBee = mock(NeonBee.class);
-        when(mockNeonBee.getVertx()).thenReturn(vertx);
-
-        // Store original system property value
-        originalEnvVar =
-                System.getProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP");
+    void setupLogger() {
+        logger =
+                (Logger) LoggerFactory.getLogger(
+                        ClusterCleanupCoordinatorHook.class);
+        listAppender = new ListAppender<>();
+        listAppender.start();
+        logger.addAppender(listAppender);
     }
 
     @AfterEach
     void tearDown() {
-        // Restore original system property
-        if (originalEnvVar != null) {
-            System.setProperty(
-                    "NEONBEE_PERSISTENT_CLUSTER_CLEANUP",
-                    originalEnvVar);
-        } else {
-            System.clearProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP");
+        logger.detachAppender(listAppender);
+        System.clearProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP");
+    }
+
+    @Test
+    void testInitializeCoordinatorNotClustered(
+            Vertx vertx,
+            VertxTestContext ctx) {
+        NeonBee neonBee = mock(NeonBee.class);
+        when(neonBee.getVertx()).thenReturn(vertx);
+
+        Promise<Void> promise = Promise.promise();
+        ClusterCleanupCoordinatorHook.initializeCoordinator(
+                neonBee,
+                mock(HookContext.class),
+                promise);
+
+        ctx.verify(() -> {
+            assertThat(promise.future().succeeded()).isTrue();
+            assertThat(
+                    listAppender.list
+                            .stream()
+                            .anyMatch(e -> e
+                                    .getFormattedMessage()
+                                    .contains("Not running in clustered mode")))
+                                            .isTrue();
+            ctx.completeNow();
+        });
+    }
+
+    @Test
+    void testInitializeCoordinatorSuccessful(VertxTestContext ctx)
+            throws InterruptedException {
+        System.setProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP", "true");
+        Vertx clustered = mock(Vertx.class);
+        when(clustered.isClustered()).thenReturn(true);
+        NeonBee neonBee = mock(NeonBee.class);
+        when(neonBee.getVertx()).thenReturn(clustered);
+
+        ClusterCleanupCoordinator mockCoordinator = mock(
+                ClusterCleanupCoordinator.class);
+        try (
+                MockedStatic<ClusterHelper> mocked = mockStatic(ClusterHelper.class)) {
+            mocked
+                    .when(() -> ClusterHelper.getOrCreateClusterCleanupCoordinator(
+                            clustered))
+                    .thenReturn(Future.succeededFuture(mockCoordinator));
+
+            Promise<Void> promise = Promise.promise();
+            ClusterCleanupCoordinatorHook.initializeCoordinator(
+                    neonBee,
+                    mock(HookContext.class),
+                    promise);
+
+            ctx.awaitCompletion(2, TimeUnit.SECONDS);
+            ctx.verify(() -> {
+                assertThat(promise.future().succeeded()).isTrue();
+                assertThat(
+                        listAppender.list
+                                .stream()
+                                .anyMatch(e -> e
+                                        .getFormattedMessage()
+                                        .contains(
+                                                "ClusterCleanupCoordinator initialized successfully")))
+                                                        .isTrue();
+                ctx.completeNow();
+            });
         }
-
-        // Clear any cached coordinators
-        ClusterHelper.removeCachedCoordinator(vertx);
     }
 
     @Test
-    @DisplayName("AFTER_STARTUP: Should skip initialization when not clustered")
-    void afterStartupNotClusteredSkipsInitialization(
-            VertxTestContext testContext) {
-        // Given: Non-clustered Vert.x (real Vert.x instance is not clustered by default)
+    void testInitializeCoordinatorFailure(VertxTestContext ctx)
+            throws InterruptedException {
+        System.setProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP", "true");
+        Vertx clustered = mock(Vertx.class);
+        when(clustered.isClustered()).thenReturn(true);
+        NeonBee neonBee = mock(NeonBee.class);
+        when(neonBee.getVertx()).thenReturn(clustered);
 
-        Promise<Void> promise = Promise.promise();
-        promise.future().onComplete(testContext.succeedingThenComplete());
+        Throwable cause = new RuntimeException("Boom");
+        try (
+                MockedStatic<ClusterHelper> mocked = mockStatic(ClusterHelper.class)) {
+            mocked
+                    .when(() -> ClusterHelper.getOrCreateClusterCleanupCoordinator(
+                            clustered))
+                    .thenReturn(Future.failedFuture(cause));
 
-        // When: Hook is called
-        hook.initializeCoordinator(
-                mockNeonBee,
-                mock(HookContext.class),
-                promise);
+            Promise<Void> promise = Promise.promise();
+            ClusterCleanupCoordinatorHook.initializeCoordinator(
+                    neonBee,
+                    mock(HookContext.class),
+                    promise);
 
-        // Then: Promise should complete successfully
-        testContext.verify(() -> {
-            assertThat(promise.future().succeeded()).isTrue();
-            // Verify no coordinator was created
-            assertThat(ClusterHelper.getCachedCoordinator(vertx)).isNull();
-        });
+            ctx.awaitCompletion(2, TimeUnit.SECONDS);
+            ctx.verify(() -> {
+                assertThat(promise.future().failed()).isTrue();
+                assertThat(promise.future().cause()).isSameInstanceAs(cause);
+                assertThat(
+                        listAppender.list
+                                .stream()
+                                .anyMatch(e -> e
+                                        .getFormattedMessage()
+                                        .contains(
+                                                "Failed to initialize ClusterCleanupCoordinator")))
+                                                        .isTrue();
+                ctx.completeNow();
+            });
+        }
     }
 
     @Test
-    @DisplayName("AFTER_STARTUP: Should skip initialization when system property disabled")
-    void afterStartupSystemPropertyDisabledSkipsInitialization(
-            VertxTestContext testContext) {
-        // Given: Clustered Vert.x but system property disabled
-        System.setProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP", "false");
+    void testShutdownCoordinatorNoCoordinator(VertxTestContext ctx) {
+        Vertx clustered = mock(Vertx.class);
+        when(clustered.isClustered()).thenReturn(true);
+        NeonBee neonBee = mock(NeonBee.class);
+        when(neonBee.getVertx()).thenReturn(clustered);
 
-        Promise<Void> promise = Promise.promise();
-        promise.future().onComplete(testContext.succeedingThenComplete());
+        try (
+                MockedStatic<ClusterHelper> mocked = mockStatic(ClusterHelper.class)) {
+            mocked
+                    .when(() -> ClusterHelper.getCachedCoordinator(clustered))
+                    .thenReturn(null);
 
-        // When: Hook is called
-        hook.initializeCoordinator(
-                mockNeonBee,
-                mock(HookContext.class),
-                promise);
+            Promise<Void> promise = Promise.promise();
+            ClusterCleanupCoordinatorHook.shutdownCoordinator(
+                    neonBee,
+                    mock(HookContext.class),
+                    promise);
 
-        // Then: Promise should complete successfully
-        testContext.verify(() -> {
-            assertThat(promise.future().succeeded()).isTrue();
-            // Verify no coordinator was created
-            assertThat(ClusterHelper.getCachedCoordinator(vertx)).isNull();
-        });
+            ctx.verify(() -> {
+                assertThat(promise.future().succeeded()).isTrue();
+                assertThat(
+                        listAppender.list
+                                .stream()
+                                .anyMatch(e -> e
+                                        .getFormattedMessage()
+                                        .contains(
+                                                "No ClusterCleanupCoordinator found to stop")))
+                                                        .isTrue();
+                ctx.completeNow();
+            });
+        }
     }
 
     @Test
-    @DisplayName("BEFORE_SHUTDOWN: Should skip shutdown when not clustered")
-    void beforeShutdownNotClusteredSkipsShutdown(VertxTestContext testContext) {
-        // Given: Non-clustered Vert.x (real Vert.x instance is not clustered by default)
+    void testShutdownCoordinatorSuccess(VertxTestContext ctx)
+            throws InterruptedException {
+        Vertx clustered = mock(Vertx.class);
+        when(clustered.isClustered()).thenReturn(true);
+        NeonBee neonBee = mock(NeonBee.class);
+        when(neonBee.getVertx()).thenReturn(clustered);
 
-        Promise<Void> promise = Promise.promise();
-        promise.future().onComplete(testContext.succeedingThenComplete());
+        ClusterCleanupCoordinator coordinator = mock(
+                ClusterCleanupCoordinator.class);
+        when(coordinator.stop()).thenReturn(Future.succeededFuture());
 
-        // When: Hook is called
-        hook.shutdownCoordinator(mockNeonBee, mock(HookContext.class), promise);
+        try (
+                MockedStatic<ClusterHelper> mocked = mockStatic(ClusterHelper.class)) {
+            mocked
+                    .when(() -> ClusterHelper.getCachedCoordinator(clustered))
+                    .thenReturn(coordinator);
+            mocked
+                    .when(() -> ClusterHelper.removeCachedCoordinator(clustered))
+                    .thenReturn(null);
 
-        // Then: Promise should complete successfully
-        testContext.verify(() -> {
-            assertThat(promise.future().succeeded()).isTrue();
-        });
+            Promise<Void> promise = Promise.promise();
+            ClusterCleanupCoordinatorHook.shutdownCoordinator(
+                    neonBee,
+                    mock(HookContext.class),
+                    promise);
+
+            ctx.awaitCompletion(2, TimeUnit.SECONDS);
+            ctx.verify(() -> {
+                assertThat(
+                        listAppender.list
+                                .stream()
+                                .anyMatch(e -> e
+                                        .getFormattedMessage()
+                                        .contains(
+                                                "ClusterCleanupCoordinator stopped successfully")))
+                                                        .isTrue();
+                assertThat(promise.future().succeeded()).isTrue();
+                ctx.completeNow();
+            });
+        }
     }
 
     @Test
-    @DisplayName("BEFORE_SHUTDOWN: Should complete when no coordinator exists")
-    void beforeShutdownNoCoordinatorCompletesSuccessfully(
-            VertxTestContext testContext) {
-        // Given: Clustered Vert.x but no coordinator cached
+    void testShutdownCoordinatorFailure(VertxTestContext ctx)
+            throws InterruptedException {
+        Vertx clustered = mock(Vertx.class);
+        when(clustered.isClustered()).thenReturn(true);
+        NeonBee neonBee = mock(NeonBee.class);
+        when(neonBee.getVertx()).thenReturn(clustered);
 
-        Promise<Void> promise = Promise.promise();
-        promise.future().onComplete(testContext.succeedingThenComplete());
+        ClusterCleanupCoordinator coordinator = mock(
+                ClusterCleanupCoordinator.class);
+        when(coordinator.stop())
+                .thenReturn(
+                        Future.failedFuture(new RuntimeException("stop failed")));
 
-        // When: Hook is called
-        hook.shutdownCoordinator(mockNeonBee, mock(HookContext.class), promise);
+        try (
+                MockedStatic<ClusterHelper> mocked = mockStatic(ClusterHelper.class)) {
+            mocked
+                    .when(() -> ClusterHelper.getCachedCoordinator(clustered))
+                    .thenReturn(coordinator);
+            mocked
+                    .when(() -> ClusterHelper.removeCachedCoordinator(clustered))
+                    .thenReturn(null);
 
-        // Then: Promise should complete successfully
-        testContext.verify(() -> {
-            assertThat(promise.future().succeeded()).isTrue();
-        });
+            Promise<Void> promise = Promise.promise();
+            ClusterCleanupCoordinatorHook.shutdownCoordinator(
+                    neonBee,
+                    mock(HookContext.class),
+                    promise);
+
+            ctx.awaitCompletion(2, TimeUnit.SECONDS);
+            ctx.verify(() -> {
+                assertThat(promise.future().succeeded()).isTrue();
+                assertThat(
+                        listAppender.list
+                                .stream()
+                                .anyMatch(e -> e
+                                        .getFormattedMessage()
+                                        .contains(
+                                                "Failed to stop ClusterCleanupCoordinator")))
+                                                        .isTrue();
+                ctx.completeNow();
+            });
+        }
     }
 }
