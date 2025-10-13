@@ -97,6 +97,7 @@ public class ClusterCleanupCoordinator {
                 .future()
                 .compose(map -> {
                     this.pendingRemovals = map;
+                    LOGGER.debug("Successfully initialized pendingRemovals map");
 
                     // Start periodic cleanup loop
                     this.periodicTimerId =
@@ -127,7 +128,7 @@ public class ClusterCleanupCoordinator {
      * @param nodeId the ID of the node that left the cluster
      */
     public void addNodeLeft(String nodeId) {
-        if (nodeId == null || nodeId.isBlank()) {
+        if (nodeId == null || nodeId.trim().isBlank()) {
             LOGGER.warn("Invalid nodeId provided to onNodeLeft: {}", nodeId);
             return;
         }
@@ -164,13 +165,13 @@ public class ClusterCleanupCoordinator {
                                     lock.release();
                                     if (done.failed() && LOGGER.isErrorEnabled()) {
                                         LOGGER.error(
-                                                "Cleanup operation failed {0}",
+                                                "Cleanup operation failed: {}",
                                                 done.cause());
                                     }
                                 });
                     } else if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug(
-                                "Failed to acquire cleanup lock, another node may be processing cleanups {0}",
+                                "Failed to acquire cleanup lock, another node may be processing cleanups: {}",
                                 lockRes.cause());
                     }
                 });
@@ -230,5 +231,14 @@ public class ClusterCleanupCoordinator {
             return succeededFuture();
         }
         return clusterEntityRegistry.unregisterNode(nodeId);
+    }
+
+    /**
+     * Package-private getter for testing purposes.
+     *
+     * @return the pendingRemovals map
+     */
+    AsyncMap<String, Boolean> getPendingRemovals() {
+        return pendingRemovals;
     }
 }
