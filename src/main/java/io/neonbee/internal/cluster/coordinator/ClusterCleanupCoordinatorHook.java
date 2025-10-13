@@ -43,9 +43,9 @@ public class ClusterCleanupCoordinatorHook {
             return;
         }
 
-        // Check if persistent cluster cleanup is enabled via environment variable
+        // Check if persistent cluster cleanup is enabled via system property
         boolean usePersistentCleanup = Boolean.parseBoolean(
-                System.getenv("NEONBEE_PERSISTENT_CLUSTER_CLEANUP"));
+                System.getProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP", "false"));
 
         if (!usePersistentCleanup) {
             LOGGER.debug(
