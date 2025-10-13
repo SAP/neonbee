@@ -23,7 +23,7 @@ public final class ClusterCleanupCoordinatorHook {
     /**
      * Private constructor to prevent instantiation of this utility class.
      */
-    private ClusterCleanupCoordinatorHook() {
+    public ClusterCleanupCoordinatorHook() {
         // Utility class - do not instantiate
     }
 
