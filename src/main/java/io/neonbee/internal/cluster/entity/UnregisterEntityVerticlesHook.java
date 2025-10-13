@@ -12,6 +12,7 @@ import io.neonbee.hook.HookContext;
 import io.neonbee.hook.HookType;
 import io.neonbee.internal.Registry;
 import io.neonbee.internal.cluster.ClusterHelper;
+import io.neonbee.internal.cluster.coordinator.ClusterCleanupCoordinator;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -103,36 +104,20 @@ public class UnregisterEntityVerticlesHook {
         if (ClusterHelper.isLeader(neonBee.getVertx())) {
             LOGGER.info("Cleaning registered qualified names ...");
 
-            // Check if persistent cluster cleanup is enabled via environment variable
-            boolean usePersistentCleanup = Boolean.parseBoolean(
-                    System.getenv("NEONBEE_PERSISTENT_CLUSTER_CLEANUP"));
-
-            if (usePersistentCleanup) {
+            // Use the pre-initialized cluster cleanup coordinator if available
+            ClusterCleanupCoordinator coordinator = ClusterHelper.getCachedCoordinator(
+                    neonBee.getVertx());
+            if (coordinator != null) {
                 LOGGER.info(
                         "Using ClusterCleanupCoordinator for persistent cleanup processing");
-                // Use the cluster cleanup coordinator for coordinated processing
-                ClusterHelper
-                        .getOrCreateClusterCleanupCoordinator(neonBee.getVertx())
-                        .compose(coordinator -> {
-                            if (coordinator != null) {
-                                coordinator.addNodeLeft(clusterNodeId);
-                                return succeededFuture();
-                            } else {
-                                // Fallback to direct cleanup if coordinator is not available
-                                LOGGER.warn(
-                                        "ClusterCleanupCoordinator not available, falling back to direct cleanup for node {}",
-                                        clusterNodeId);
-                                return unregister(neonBee, clusterNodeId);
-                            }
-                        })
-                        .onComplete(promise)
-                        .onSuccess(unused -> LOGGER.info(
-                                "Qualified names successfully cleaned up via coordinator"))
-                        .onFailure(ignoredCause -> LOGGER.error(
-                                "Failed to cleanup qualified names via coordinator"));
+                coordinator.addNodeLeft(clusterNodeId);
+                LOGGER.info(
+                        "Qualified names cleanup scheduled via coordinator for node {}",
+                        clusterNodeId);
+                promise.complete();
             } else {
                 LOGGER.info(
-                        "Using direct cleanup processing (default behavior)");
+                        "Using direct cleanup processing (ClusterCleanupCoordinator not available)");
                 // Use the original direct cleanup logic
                 unregister(neonBee, clusterNodeId)
                         .onComplete(promise)

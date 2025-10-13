@@ -9,7 +9,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 
 import com.hazelcast.cluster.Member;
 
-import io.neonbee.cluster.ClusterCleanupCoordinator;
+import io.neonbee.internal.cluster.coordinator.ClusterCleanupCoordinator;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.VertxInternal;
@@ -153,5 +153,26 @@ public final class ClusterHelper {
 
         // Start the coordinator and return it
         return coordinator.start().map(map -> coordinator);
+    }
+
+    /**
+     * Get the cached ClusterCleanupCoordinator for the given Vert.x instance without creating or starting it.
+     *
+     * @param vertx the Vert.x instance
+     * @return the cached ClusterCleanupCoordinator or null if not cached
+     */
+    public static ClusterCleanupCoordinator getCachedCoordinator(Vertx vertx) {
+        return COORDINATORS.get(vertx);
+    }
+
+    /**
+     * Remove the cached ClusterCleanupCoordinator for the given Vert.x instance.
+     *
+     * @param vertx the Vert.x instance
+     * @return the removed ClusterCleanupCoordinator or null if not cached
+     */
+    public static ClusterCleanupCoordinator removeCachedCoordinator(
+            Vertx vertx) {
+        return COORDINATORS.remove(vertx);
     }
 }

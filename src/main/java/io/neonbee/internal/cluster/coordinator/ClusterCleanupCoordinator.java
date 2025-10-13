@@ -1,4 +1,4 @@
-package io.neonbee.cluster;
+package io.neonbee.internal.cluster.coordinator;
 
 import static io.vertx.core.Future.succeededFuture;
 
@@ -106,9 +106,7 @@ public class ClusterCleanupCoordinator {
 
                     return succeededFuture(map); // success
                 })
-                .onFailure(err -> {
-                    LOGGER.error("Failed to initialize pendingRemovals", err);
-                });
+                .onFailure(err -> LOGGER.error("Failed to initialize pendingRemovals", err));
     }
 
     /**
@@ -206,17 +204,15 @@ public class ClusterCleanupCoordinator {
 
     private Future<Void> processNodeCleanup(String nodeId) {
         return doActualCleanup(nodeId)
-                .onSuccess(v -> {
-                    pendingRemovals
-                            .remove(nodeId)
-                            .onSuccess(removed -> LOGGER.debug(
-                                    "Successfully cleaned up and removed node: {}",
-                                    nodeId))
-                            .onFailure(err -> LOGGER.error(
-                                    "Failed to remove node {} from pending removals",
-                                    nodeId,
-                                    err));
-                })
+                .onSuccess(v -> pendingRemovals
+                        .remove(nodeId)
+                        .onSuccess(removed -> LOGGER.debug(
+                                "Successfully cleaned up and removed node: {}",
+                                nodeId))
+                        .onFailure(err -> LOGGER.error(
+                                "Failed to remove node {} from pending removals",
+                                nodeId,
+                                err)))
                 .onFailure(err -> {
                     LOGGER.error("Failed to cleanup node: {}", nodeId, err);
                     // Don't remove from pending removals if cleanup failed - it will be retried
