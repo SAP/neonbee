@@ -15,10 +15,17 @@ import io.vertx.core.Vertx;
  * Hook for initializing the ClusterCleanupCoordinator after NeonBee startup. This ensures the coordinator is ready to
  * handle node left events immediately.
  */
-public class ClusterCleanupCoordinatorHook {
+public final class ClusterCleanupCoordinatorHook {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
             ClusterCleanupCoordinatorHook.class);
+
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private ClusterCleanupCoordinatorHook() {
+        // Utility class - do not instantiate
+    }
 
     /**
      * This method is called after NeonBee has been initialized successfully. It initializes the
@@ -29,7 +36,7 @@ public class ClusterCleanupCoordinatorHook {
      * @param promise     {@link Promise} to complete the function.
      */
     @Hook(HookType.AFTER_STARTUP)
-    public void initializeCoordinator(
+    public static void initializeCoordinator(
             NeonBee neonBee,
             HookContext hookContext,
             Promise<Void> promise) {
@@ -84,7 +91,7 @@ public class ClusterCleanupCoordinatorHook {
      * @param promise     {@link Promise} to complete the function.
      */
     @Hook(HookType.BEFORE_SHUTDOWN)
-    public void shutdownCoordinator(
+    public static void shutdownCoordinator(
             NeonBee neonBee,
             HookContext hookContext,
             Promise<Void> promise) {
