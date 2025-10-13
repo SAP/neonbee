@@ -5,8 +5,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -77,8 +75,7 @@ final class ClusterCleanupCoordinatorHookTest {
     }
 
     @Test
-    void testInitializeCoordinatorSuccessful(VertxTestContext ctx)
-            throws InterruptedException {
+    void testInitializeCoordinatorSuccessful(VertxTestContext ctx) {
         System.setProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP", "true");
         Vertx clustered = mock(Vertx.class);
         when(clustered.isClustered()).thenReturn(true);
@@ -100,25 +97,28 @@ final class ClusterCleanupCoordinatorHookTest {
                     mock(HookContext.class),
                     promise);
 
-            ctx.awaitCompletion(2, TimeUnit.SECONDS);
-            ctx.verify(() -> {
-                assertThat(promise.future().succeeded()).isTrue();
-                assertThat(
-                        listAppender.list
-                                .stream()
-                                .anyMatch(e -> e
-                                        .getFormattedMessage()
-                                        .contains(
-                                                "ClusterCleanupCoordinator initialized successfully")))
-                                                        .isTrue();
-                ctx.completeNow();
-            });
+            promise
+                    .future()
+                    .onComplete(
+                            ctx.succeeding(result -> {
+                                ctx.verify(() -> {
+                                    assertThat(promise.future().succeeded()).isTrue();
+                                    assertThat(
+                                            listAppender.list
+                                                    .stream()
+                                                    .anyMatch(e -> e
+                                                            .getFormattedMessage()
+                                                            .contains(
+                                                                    "ClusterCleanupCoordinator initialized successfully")))
+                                                                            .isTrue();
+                                });
+                                ctx.completeNow();
+                            }));
         }
     }
 
     @Test
-    void testInitializeCoordinatorFailure(VertxTestContext ctx)
-            throws InterruptedException {
+    void testInitializeCoordinatorFailure(VertxTestContext ctx) {
         System.setProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP", "true");
         Vertx clustered = mock(Vertx.class);
         when(clustered.isClustered()).thenReturn(true);
@@ -139,20 +139,25 @@ final class ClusterCleanupCoordinatorHookTest {
                     mock(HookContext.class),
                     promise);
 
-            ctx.awaitCompletion(2, TimeUnit.SECONDS);
-            ctx.verify(() -> {
-                assertThat(promise.future().failed()).isTrue();
-                assertThat(promise.future().cause()).isSameInstanceAs(cause);
-                assertThat(
-                        listAppender.list
-                                .stream()
-                                .anyMatch(e -> e
-                                        .getFormattedMessage()
-                                        .contains(
-                                                "Failed to initialize ClusterCleanupCoordinator")))
-                                                        .isTrue();
-                ctx.completeNow();
-            });
+            promise
+                    .future()
+                    .onComplete(
+                            ctx.failing(throwable -> {
+                                ctx.verify(() -> {
+                                    assertThat(promise.future().failed()).isTrue();
+                                    assertThat(promise.future().cause())
+                                            .isSameInstanceAs(cause);
+                                    assertThat(
+                                            listAppender.list
+                                                    .stream()
+                                                    .anyMatch(e -> e
+                                                            .getFormattedMessage()
+                                                            .contains(
+                                                                    "Failed to initialize ClusterCleanupCoordinator")))
+                                                                            .isTrue();
+                                });
+                                ctx.completeNow();
+                            }));
         }
     }
 
@@ -191,8 +196,7 @@ final class ClusterCleanupCoordinatorHookTest {
     }
 
     @Test
-    void testShutdownCoordinatorSuccess(VertxTestContext ctx)
-            throws InterruptedException {
+    void testShutdownCoordinatorSuccess(VertxTestContext ctx) {
         Vertx clustered = mock(Vertx.class);
         when(clustered.isClustered()).thenReturn(true);
         NeonBee neonBee = mock(NeonBee.class);
@@ -217,25 +221,28 @@ final class ClusterCleanupCoordinatorHookTest {
                     mock(HookContext.class),
                     promise);
 
-            ctx.awaitCompletion(2, TimeUnit.SECONDS);
-            ctx.verify(() -> {
-                assertThat(
-                        listAppender.list
-                                .stream()
-                                .anyMatch(e -> e
-                                        .getFormattedMessage()
-                                        .contains(
-                                                "ClusterCleanupCoordinator stopped successfully")))
-                                                        .isTrue();
-                assertThat(promise.future().succeeded()).isTrue();
-                ctx.completeNow();
-            });
+            promise
+                    .future()
+                    .onComplete(
+                            ctx.succeeding(result -> {
+                                ctx.verify(() -> {
+                                    assertThat(
+                                            listAppender.list
+                                                    .stream()
+                                                    .anyMatch(e -> e
+                                                            .getFormattedMessage()
+                                                            .contains(
+                                                                    "ClusterCleanupCoordinator stopped successfully")))
+                                                                            .isTrue();
+                                    assertThat(promise.future().succeeded()).isTrue();
+                                });
+                                ctx.completeNow();
+                            }));
         }
     }
 
     @Test
-    void testShutdownCoordinatorFailure(VertxTestContext ctx)
-            throws InterruptedException {
+    void testShutdownCoordinatorFailure(VertxTestContext ctx) {
         Vertx clustered = mock(Vertx.class);
         when(clustered.isClustered()).thenReturn(true);
         NeonBee neonBee = mock(NeonBee.class);
@@ -262,19 +269,23 @@ final class ClusterCleanupCoordinatorHookTest {
                     mock(HookContext.class),
                     promise);
 
-            ctx.awaitCompletion(2, TimeUnit.SECONDS);
-            ctx.verify(() -> {
-                assertThat(promise.future().succeeded()).isTrue();
-                assertThat(
-                        listAppender.list
-                                .stream()
-                                .anyMatch(e -> e
-                                        .getFormattedMessage()
-                                        .contains(
-                                                "Failed to stop ClusterCleanupCoordinator")))
-                                                        .isTrue();
-                ctx.completeNow();
-            });
+            promise
+                    .future()
+                    .onComplete(
+                            ctx.succeeding(result -> {
+                                ctx.verify(() -> {
+                                    assertThat(promise.future().succeeded()).isTrue();
+                                    assertThat(
+                                            listAppender.list
+                                                    .stream()
+                                                    .anyMatch(e -> e
+                                                            .getFormattedMessage()
+                                                            .contains(
+                                                                    "Failed to stop ClusterCleanupCoordinator")))
+                                                                            .isTrue();
+                                });
+                                ctx.completeNow();
+                            }));
         }
     }
 }
