@@ -142,10 +142,10 @@ class ClusterCleanupCoordinatorTest {
                                     .collect(java.util.stream.Collectors.joining(", "));
                     testContext.failNow(
                             new AssertionError(
-                                    "Expected log message not found: '" +
-                                            expectedMessage +
-                                            "'. Available: " +
-                                            availableMessages));
+                                    "Expected log message not found: '"
+                                            + expectedMessage
+                                            + "'. Available: "
+                                            + availableMessages));
                 });
     }
 
