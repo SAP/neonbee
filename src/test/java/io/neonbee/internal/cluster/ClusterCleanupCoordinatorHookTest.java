@@ -130,6 +130,7 @@ final class ClusterCleanupCoordinatorHookTest {
                                                                 .contains(
                                                                         "ClusterCleanupCoordinator initialized successfully")))
                                                                                 .isTrue());
+                                        logger.info(listAppender.list.toString());
                                         ctx.completeNow();
                                     }));
                 })
