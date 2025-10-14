@@ -34,6 +34,7 @@ final class ClusterCleanupCoordinatorHookTest {
 
     @BeforeEach
     void setupLogger() {
+        System.clearProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP");
         logger =
                 (Logger) LoggerFactory.getLogger(
                         ClusterCleanupCoordinatorHook.class);
