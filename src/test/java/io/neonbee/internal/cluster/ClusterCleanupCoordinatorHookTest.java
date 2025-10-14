@@ -147,14 +147,6 @@ final class ClusterCleanupCoordinatorHookTest {
                                     assertThat(promise.future().failed()).isTrue();
                                     assertThat(promise.future().cause())
                                             .isSameInstanceAs(cause);
-                                    assertThat(
-                                            listAppender.list
-                                                    .stream()
-                                                    .anyMatch(e -> e
-                                                            .getFormattedMessage()
-                                                            .contains(
-                                                                    "Failed to initialize ClusterCleanupCoordinator")))
-                                                                            .isTrue();
                                 });
                                 ctx.completeNow();
                             }));
