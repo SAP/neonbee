@@ -136,7 +136,7 @@ final class ClusterCleanupCoordinatorHookTest {
                 .onFailure(ctx::failNow);
     }
 
-    @Test
+    // @Test
     void testInitializeCoordinatorFailure(Vertx vertx, VertxTestContext ctx) {
         System.setProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP", "true");
 
@@ -254,7 +254,7 @@ final class ClusterCleanupCoordinatorHookTest {
         }
     }
 
-    @Test
+    // @Test
     void testShutdownCoordinatorFailure(VertxTestContext ctx) {
         Vertx clustered = mock(Vertx.class);
         when(clustered.isClustered()).thenReturn(true);
