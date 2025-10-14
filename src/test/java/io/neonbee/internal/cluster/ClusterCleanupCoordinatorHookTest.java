@@ -22,6 +22,7 @@ import io.neonbee.internal.cluster.coordinator.ClusterCleanupCoordinatorHook;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.test.fakecluster.FakeClusterManager;
@@ -121,16 +122,14 @@ final class ClusterCleanupCoordinatorHookTest {
                             .future()
                             .onComplete(
                                     ctx.succeeding(v -> {
-                                        ctx.verify(() -> {
-                                            assertThat(
-                                                    listAppender.list
-                                                            .stream()
-                                                            .anyMatch(e -> e
-                                                                    .getFormattedMessage()
-                                                                    .contains(
-                                                                            "ClusterCleanupCoordinator initialized successfully")))
-                                                                                    .isTrue();
-                                        });
+                                        ctx.verify(() -> assertThat(
+                                                listAppender.list
+                                                        .stream()
+                                                        .anyMatch(e -> e
+                                                                .getFormattedMessage()
+                                                                .contains(
+                                                                        "ClusterCleanupCoordinator initialized successfully")))
+                                                                                .isTrue());
                                         ctx.completeNow();
                                     }));
                 })
@@ -138,38 +137,40 @@ final class ClusterCleanupCoordinatorHookTest {
     }
 
     @Test
-    void testInitializeCoordinatorFailure(VertxTestContext ctx) {
+    void testInitializeCoordinatorFailure(Vertx vertx, VertxTestContext ctx) {
         System.setProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP", "true");
-        Vertx clustered = mock(Vertx.class);
-        when(clustered.isClustered()).thenReturn(true);
+
         NeonBee neonBee = mock(NeonBee.class);
-        when(neonBee.getVertx()).thenReturn(clustered);
 
-        Throwable cause = new RuntimeException("Boom");
-        try (
-                MockedStatic<ClusterHelper> mocked = mockStatic(ClusterHelper.class)) {
-            mocked
-                    .when(() -> ClusterHelper.getOrCreateClusterCleanupCoordinator(
-                            clustered))
-                    .thenReturn(Future.failedFuture(cause));
+        // Arrange
+        FakeClusterManager clusterManager = new FailingClusterManager();
 
-            Promise<Void> promise = Promise.promise();
-            ClusterCleanupCoordinatorHook.initializeCoordinator(
-                    neonBee,
-                    mock(HookContext.class),
-                    promise);
+        Vertx.builder()
+                .withClusterManager(clusterManager)
+                .buildClustered()
+                .onComplete(ctx.succeeding(v -> {
+                    Promise<Void> promise = Promise.promise();
+                    when(neonBee.getVertx()).thenReturn(v);
+                    // Act
+                    ClusterCleanupCoordinatorHook.initializeCoordinator(
+                            neonBee,
+                            mock(HookContext.class),
+                            promise);
 
-            promise
-                    .future()
-                    .onComplete(
-                            ctx.failing(throwable -> {
-                                ctx.verify(() -> {
-                                    assertThat(promise.future().failed()).isTrue();
-                                    assertThat(promise.future().cause())
-                                            .isSameInstanceAs(cause);
-                                });
-                                ctx.completeNow();
-                            }));
+                    promise.future().onComplete(ctx.failing(throwable -> {
+                        ctx.verify(() -> {
+                            assertThat(promise.future().failed()).isTrue();
+                        });
+                        ctx.completeNow();
+                    }));
+                }))
+                .onFailure(ctx::failNow); // If Vert.x clustering fails
+    }
+
+    public static class FailingClusterManager extends FakeClusterManager {
+        @Override
+        public <K, V> void getAsyncMap(String name, Promise<AsyncMap<K, V>> promise) {
+            promise.fail(new RuntimeException("Boom"));
         }
     }
 
