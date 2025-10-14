@@ -24,6 +24,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import io.vertx.test.fakecluster.FakeClusterManager;
 
 @ExtendWith(VertxExtension.class)
 final class ClusterCleanupCoordinatorHookTest {
@@ -76,46 +77,42 @@ final class ClusterCleanupCoordinatorHookTest {
     }
 
     @Test
-    void testInitializeCoordinatorSuccessful(VertxTestContext ctx) {
+    void testInitializeCoordinatorSuccessful(Vertx vertx, VertxTestContext ctx) {
+        // Arrange
         System.setProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP", "true");
-        Vertx clustered = mock(Vertx.class);
-        when(clustered.isClustered()).thenReturn(true);
+
+        FakeClusterManager clusterManager = new FakeClusterManager();
+        Future<Vertx> clusteredFuture = Vertx.builder()
+                .withClusterManager(clusterManager)
+                .buildClustered();
+
         NeonBee neonBee = mock(NeonBee.class);
-        when(neonBee.getVertx()).thenReturn(clustered);
 
-        ClusterCleanupCoordinator mockCoordinator = mock(
-                ClusterCleanupCoordinator.class);
-        try (
-                MockedStatic<ClusterHelper> mocked = mockStatic(ClusterHelper.class)) {
-            mocked
-                    .when(() -> ClusterHelper.getOrCreateClusterCleanupCoordinator(
-                            clustered))
-                    .thenReturn(Future.succeededFuture(mockCoordinator));
+        clusteredFuture
+                .compose(clusteredVertx -> {
+                    clusterManager.init(clusteredVertx, null);
+                    when(neonBee.getVertx()).thenReturn(clusteredVertx);
 
-            Promise<Void> promise = Promise.promise();
-            ClusterCleanupCoordinatorHook.initializeCoordinator(
-                    neonBee,
-                    mock(HookContext.class),
-                    promise);
+                    Promise<Void> promise = Promise.promise();
 
-            promise
-                    .future()
-                    .onComplete(
-                            ctx.succeeding(result -> {
-                                ctx.verify(() -> {
-                                    assertThat(promise.future().succeeded()).isTrue();
-                                    assertThat(
-                                            listAppender.list
-                                                    .stream()
-                                                    .anyMatch(e -> e
-                                                            .getFormattedMessage()
-                                                            .contains(
-                                                                    "ClusterCleanupCoordinator initialized successfully")))
-                                                                            .isTrue();
-                                });
-                                ctx.completeNow();
-                            }));
-        }
+                    // Act
+                    ClusterCleanupCoordinatorHook.initializeCoordinator(
+                            neonBee,
+                            mock(HookContext.class),
+                            promise);
+
+                    // Assert
+                    return promise.future().onComplete(ctx.succeeding(v -> {
+                        ctx.verify(() -> {
+                            assertThat(listAppender.list.stream()
+                                    .anyMatch(e -> e.getFormattedMessage()
+                                            .contains("ClusterCleanupCoordinator initialized successfully")))
+                                                    .isTrue();
+                        });
+                        ctx.completeNow();
+                    }));
+                })
+                .onFailure(ctx::failNow);
     }
 
     @Test
