@@ -44,7 +44,7 @@ public final class ClusterCleanupCoordinatorHook {
 
         // Only initialize if running in clustered mode
         if (!vertx.isClustered()) {
-            LOGGER.debug(
+            LOGGER.info(
                     "Not running in clustered mode, skipping ClusterCleanupCoordinator initialization");
             promise.complete();
             return;
@@ -55,7 +55,7 @@ public final class ClusterCleanupCoordinatorHook {
                 System.getProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP", "false"));
 
         if (!usePersistentCleanup) {
-            LOGGER.debug(
+            LOGGER.info(
                     "Persistent cluster cleanup is disabled, skipping ClusterCleanupCoordinator initialization");
             promise.complete();
             return;
@@ -127,7 +127,7 @@ public final class ClusterCleanupCoordinatorHook {
                         promise.complete(); // Don't fail shutdown for this
                     });
         } else {
-            LOGGER.debug("No ClusterCleanupCoordinator found to stop");
+            LOGGER.warn("No ClusterCleanupCoordinator found to stop");
             promise.complete();
         }
     }
