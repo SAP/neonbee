@@ -46,9 +46,17 @@ final class ClusterCleanupCoordinatorHookTest {
     }
 
     @AfterEach
-    void tearDown() {
+    void tearDown(VertxTestContext testContext) {
         logger.detachAppender(listAppender);
         System.clearProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP");
+
+        ClusterCleanupCoordinator coordinator = ClusterHelper.getCachedCoordinator(Vertx.vertx());
+
+        if (coordinator != null) {
+            coordinator.stop().onComplete(ar -> testContext.completeNow());
+        } else {
+            testContext.completeNow();
+        }
     }
 
     @Test
