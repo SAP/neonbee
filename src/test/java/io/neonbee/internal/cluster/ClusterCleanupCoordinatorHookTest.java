@@ -145,7 +145,7 @@ final class ClusterCleanupCoordinatorHookTest {
     }
 
     // @Test
-    void testInitializeCoordinatorFailure(Vertx vertx, VertxTestContext ctx) {
+    void testInitializeCoordinatorFailure(VertxTestContext ctx) {
         System.setProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP", "true");
 
         NeonBee neonBee = mock(NeonBee.class);

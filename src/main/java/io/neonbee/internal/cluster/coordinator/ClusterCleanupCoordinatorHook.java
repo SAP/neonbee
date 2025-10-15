@@ -21,13 +21,6 @@ public final class ClusterCleanupCoordinatorHook {
             ClusterCleanupCoordinatorHook.class);
 
     /**
-     * Private constructor to prevent instantiation of this utility class.
-     */
-    public ClusterCleanupCoordinatorHook() {
-        // Utility class - do not instantiate
-    }
-
-    /**
      * This method is called after NeonBee has been initialized successfully. It initializes the
      * ClusterCleanupCoordinator if running in clustered mode and persistent cluster cleanup is enabled.
      *
