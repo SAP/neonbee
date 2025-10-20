@@ -191,8 +191,6 @@ public class ClusterCleanupCoordinator {
                         LOGGER.debug(
                                 "Failed to acquire cleanup lock, another node may be processing cleanups: {}",
                                 lockRes.cause());
-                        // Optional: retry after a short delay
-                        // vertx.setTimer(200, id -> tryAcquireLockAndCleanup());
                     }
                 });
     }
