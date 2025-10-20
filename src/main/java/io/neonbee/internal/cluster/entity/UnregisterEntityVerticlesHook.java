@@ -1,6 +1,7 @@
 package io.neonbee.internal.cluster.entity;
 
 import static io.neonbee.hook.HookType.CLUSTER_NODE_ID;
+import static io.neonbee.internal.cluster.ClusterHelper.usePersistentCleanup;
 import static io.vertx.core.Future.succeededFuture;
 
 import org.slf4j.Logger;
@@ -12,7 +13,6 @@ import io.neonbee.hook.HookContext;
 import io.neonbee.hook.HookType;
 import io.neonbee.internal.Registry;
 import io.neonbee.internal.cluster.ClusterHelper;
-import io.neonbee.internal.cluster.coordinator.ClusterCleanupCoordinator;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -104,16 +104,10 @@ public class UnregisterEntityVerticlesHook {
         if (ClusterHelper.isLeader(neonBee.getVertx())) {
             LOGGER.info("Cleaning registered qualified names ...");
 
-            // Use the pre-initialized cluster cleanup coordinator if available
-            ClusterCleanupCoordinator coordinator = ClusterHelper.getCachedCoordinator(
-                    neonBee.getVertx());
-            if (coordinator != null) {
-                LOGGER.info(
-                        "Using ClusterCleanupCoordinator for persistent cleanup processing");
-                coordinator.addNodeLeft(clusterNodeId);
-                LOGGER.info(
-                        "Qualified names cleanup scheduled via coordinator for node {}",
-                        clusterNodeId);
+            if (usePersistentCleanup()) {
+                // No null check needed; coordinator handles buffering internally
+                ClusterHelper.getOrCreateClusterCleanupCoordinatorImmediate(neonBee.getVertx())
+                        .addNodeLeft(clusterNodeId);
                 promise.complete();
             } else {
                 LOGGER.info(

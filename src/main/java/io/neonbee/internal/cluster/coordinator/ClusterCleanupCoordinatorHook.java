@@ -1,5 +1,7 @@
 package io.neonbee.internal.cluster.coordinator;
 
+import static io.neonbee.internal.cluster.ClusterHelper.usePersistentCleanup;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +21,13 @@ public final class ClusterCleanupCoordinatorHook {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
             ClusterCleanupCoordinatorHook.class);
+
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    public ClusterCleanupCoordinatorHook() {
+        // Utility class - do not instantiate
+    }
 
     /**
      * This method is called after NeonBee has been initialized successfully. It initializes the
@@ -43,11 +52,7 @@ public final class ClusterCleanupCoordinatorHook {
             return;
         }
 
-        // Check if persistent cluster cleanup is enabled via system property
-        boolean usePersistentCleanup = Boolean.parseBoolean(
-                System.getProperty("NEONBEE_PERSISTENT_CLUSTER_CLEANUP", "false"));
-
-        if (!usePersistentCleanup) {
+        if (!usePersistentCleanup()) {
             LOGGER.info(
                     "Persistent cluster cleanup is disabled, skipping ClusterCleanupCoordinator initialization");
             promise.complete();
@@ -55,25 +60,8 @@ public final class ClusterCleanupCoordinatorHook {
         }
 
         LOGGER.info("Initializing ClusterCleanupCoordinator after startup");
-
-        ClusterHelper
-                .getOrCreateClusterCleanupCoordinator(vertx)
-                .onSuccess(coordinator -> {
-                    if (coordinator != null) {
-                        LOGGER.info(
-                                "ClusterCleanupCoordinator initialized successfully");
-                    } else {
-                        LOGGER.warn(
-                                "Failed to initialize ClusterCleanupCoordinator - coordinator is null");
-                    }
-                    promise.complete();
-                })
-                .onFailure(cause -> {
-                    LOGGER.error(
-                            "Failed to initialize ClusterCleanupCoordinator",
-                            cause);
-                    promise.fail(cause);
-                });
+        ClusterHelper.getOrCreateClusterCleanupCoordinatorImmediate(vertx);
+        promise.complete();
     }
 
     /**
