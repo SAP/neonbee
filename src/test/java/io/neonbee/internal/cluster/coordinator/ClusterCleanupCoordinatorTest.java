@@ -1,8 +1,12 @@
 package io.neonbee.internal.cluster.coordinator;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +19,8 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import io.neonbee.NeonBee;
+import io.neonbee.internal.cluster.entity.ClusterEntityRegistry;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.shareddata.AsyncMap;
@@ -24,10 +30,6 @@ import io.vertx.test.fakecluster.FakeClusterManager;
 
 @ExtendWith(VertxExtension.class)
 class ClusterCleanupCoordinatorTest {
-
-    private static final long TEST_CLEANUP_INTERVAL_MS = 50;
-
-    private static final long TEST_LOCK_TIMEOUT_MS = 1000;
 
     private static final String TEST_NODE_ID = "test-node-123";
 
@@ -50,7 +52,6 @@ class ClusterCleanupCoordinatorTest {
     @BeforeEach
     void setUp(Vertx vertx) {
         this.vertx = vertx;
-
         // Create cluster manager
         this.clusterManager = new FakeClusterManager();
 
@@ -61,9 +62,7 @@ class ClusterCleanupCoordinatorTest {
         this.coordinator =
                 new ClusterCleanupCoordinator(
                         vertx,
-                        clusterManager,
-                        TEST_CLEANUP_INTERVAL_MS,
-                        TEST_LOCK_TIMEOUT_MS);
+                        clusterManager);
 
         // Set up logger for capturing log messages
         this.logger =
@@ -159,7 +158,7 @@ class ClusterCleanupCoordinatorTest {
                 vertx,
                 clusterManager,
                 200L,
-                3000L);
+                3000L, () -> NeonBee.get(vertx));
 
         // When: Starting the coordinator
         Future<AsyncMap<String, Boolean>> startResult = customCoordinator.start();
@@ -532,79 +531,68 @@ class ClusterCleanupCoordinatorTest {
                     testContext.completeNow();
                 });
     }
+
     // ========== Integration Tests ==========
     // Note: Tests that require actual AsyncMap functionality with FakeClusterManager
     // are not included here due to the complexity of setting up the Vertx context
     // in the FakeClusterManager. The basic functionality is covered by the unit tests above.
-
     @Test
     @DisplayName("reconcile should enqueue stale registry node IDs for cleanup")
-    void reconcileShouldEnqueueStaleNodes(VertxTestContext testContext) {
-        // Given: A NeonBee instance registered with clustered=true and a custom ClusterEntityRegistry
-        io.neonbee.NeonBee neonBee = io.neonbee.NeonBeeMockHelper.registerNeonBeeMock(
-                vertx,
-                io.neonbee.test.helper.OptionsHelper
-                        .defaultOptions()
-                        .setClustered(true),
-                new io.neonbee.config.NeonBeeConfig());
+    void reconcileShouldEnqueueStaleNodes(Vertx vertx, VertxTestContext testContext) {
+        FakeClusterManager clusterManagerLocal = new FakeClusterManager();
 
-        // Custom registry that reports two stale nodes and fails cleanup to keep entries
-        io.neonbee.internal.cluster.entity.ClusterEntityRegistry customRegistry =
-                new io.neonbee.internal.cluster.entity.ClusterEntityRegistry(
-                        vertx,
-                        "TEST_REGISTRY") {
-                    @Override
-                    public Future<java.util.Set<String>> getAllNodeIds() {
-                        return Future.succeededFuture(
-                                new java.util.HashSet<>(
-                                        java.util.List.of("stale-1", "stale-2")));
-                    }
-
-                    @Override
-                    public Future<Void> unregisterNode(
-                            String clusterNodeId) {
-                        return Future.failedFuture(
-                                "intended failure to keep pendingRemovals");
-                    }
-                };
-
-        try {
-            io.neonbee.test.helper.ReflectionHelper.setValueOfPrivateField(
-                    neonBee,
-                    "entityRegistry",
-                    customRegistry);
-        } catch (Exception e) {
-            testContext.failNow(e);
-            return;
-        }
-
-        // When: Starting the coordinator to initialize map and trigger periodic cleanup
-        coordinator
-                .start()
-                .onComplete(ar -> {
-                    if (ar.failed()) {
-                        testContext.failNow(ar.cause());
+        Vertx.builder()
+                .withClusterManager(clusterManagerLocal)
+                .buildClustered()
+                .onComplete(clusteredRes -> {
+                    if (clusteredRes.failed()) {
+                        testContext.failNow(clusteredRes.cause());
                         return;
                     }
 
-                    // Allow some time for periodic reconciliation and scheduling
-                    vertx.setTimer(
-                            200,
-                            tid -> coordinator
-                                    .getPendingRemovals()
-                                    .entries()
-                                    .onComplete(entriesRes -> {
-                                        if (entriesRes.failed()) {
-                                            testContext.failNow(entriesRes.cause());
-                                            return;
-                                        }
-                                        java.util.Map<String, Boolean> entries = entriesRes.result();
-                                        testContext.verify(() -> {
-                                            assertThat(entries.keySet())
-                                                    .containsAtLeast("stale-1", "stale-2");
-                                        });
-                                        testContext.completeNow();
-                                    }));
+                    Vertx clusteredVertx = clusteredRes.result();
+                    clusterManagerLocal.init(clusteredVertx, null);
+
+                    NeonBee neonBee = mock(NeonBee.class);
+
+                    // Custom registry with predictable behavior
+                    var customRegistry = new ClusterEntityRegistry(clusteredVertx, "TEST_REGISTRY") {
+                        @Override
+                        public Future<Set<String>> getAllNodeIds() {
+                            HashSet<String> nodes = new HashSet<>(2);
+                            nodes.add("stale-1");
+                            nodes.add("stale-2");
+                            return Future.succeededFuture(nodes);
+                        }
+
+                        @Override
+                        public Future<Void> unregisterNode(String clusterNodeId) {
+                            return Future.failedFuture("intended failure to keep pendingRemovals");
+                        }
+                    };
+
+                    when(neonBee.getVertx()).thenReturn(clusteredVertx);
+                    when(neonBee.getEntityRegistry()).thenReturn(customRegistry);
+
+                    ClusterCleanupCoordinator testCoordinator =
+                            new ClusterCleanupCoordinator(
+                                    clusteredVertx,
+                                    clusterManagerLocal,
+                                    100000,
+                                    3000,
+                                    () -> neonBee);
+
+                    // Use checkpoint to guarantee async test completion
+                    var checkpoint = testContext.checkpoint();
+
+                    testCoordinator.start()
+                            .compose(v -> testCoordinator.reconcileRegistryWithCluster())
+                            .compose(v -> testCoordinator.getPendingRemovals().entries())
+                            .onComplete(testContext.succeeding(entries -> testContext.verify(() -> {
+                                assertThat(entries.keySet()).containsAtLeast("stale-1", "stale-2");
+                                checkpoint.flag();
+                            })));
                 });
     }
+
 }

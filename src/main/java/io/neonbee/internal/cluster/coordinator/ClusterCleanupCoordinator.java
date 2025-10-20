@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -53,6 +54,8 @@ public class ClusterCleanupCoordinator {
 
     private final long lockTimeoutMs;
 
+    private final Supplier<NeonBee> neonBeeSupplier;
+
     /**
      * Constructs a ClusterCleanupCoordinator with default cleanup and lock timeout.
      *
@@ -66,7 +69,7 @@ public class ClusterCleanupCoordinator {
                 vertx,
                 clusterManager,
                 DEFAULT_CLEANUP_INTERVAL_MS,
-                DEFAULT_LOCK_TIMEOUT_MS);
+                DEFAULT_LOCK_TIMEOUT_MS, () -> NeonBee.get(vertx));
     }
 
     /**
@@ -76,16 +79,19 @@ public class ClusterCleanupCoordinator {
      * @param clusterManager    the cluster manager
      * @param cleanupIntervalMs the interval at which cleanup operations are performed, in milliseconds
      * @param lockTimeoutMs     the timeout for acquiring a lock, in milliseconds
+     * @param neonBeeSupplier   the supplier to inject
      */
     public ClusterCleanupCoordinator(
             Vertx vertx,
             ClusterManager clusterManager,
             long cleanupIntervalMs,
-            long lockTimeoutMs) {
+            long lockTimeoutMs, Supplier<NeonBee> neonBeeSupplier) {
         this.vertx = vertx;
         this.clusterManager = clusterManager;
         this.cleanupIntervalMs = cleanupIntervalMs;
         this.lockTimeoutMs = lockTimeoutMs;
+        this.neonBeeSupplier = neonBeeSupplier != null ? neonBeeSupplier : () -> NeonBee.get(vertx);
+
     }
 
     /**
@@ -264,8 +270,8 @@ public class ClusterCleanupCoordinator {
      * @return a {@link Future} that completes when the reconciliation process finishes (immediately successful if no
      *         stale nodes are found or reconciliation is skipped)
      */
-    private Future<Void> reconcileRegistryWithCluster() {
-        Registry<String> registry = NeonBee.get(vertx).getEntityRegistry();
+    public Future<Void> reconcileRegistryWithCluster() {
+        Registry<String> registry = neonBeeSupplier.get().getEntityRegistry();
 
         if (!(registry instanceof ClusterEntityRegistry clusterEntityRegistry)) {
             if (LOGGER.isDebugEnabled()) {
