@@ -10,7 +10,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import com.hazelcast.cluster.Member;
 
 import io.neonbee.internal.cluster.coordinator.ClusterCleanupCoordinator;
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.spi.cluster.ClusterManager;
@@ -47,7 +46,8 @@ public final class ClusterHelper {
      * @param vertx {@link Vertx} instance
      * @return null or the {@link HazelcastClusterManager} instance
      */
-    public static Optional<HazelcastClusterManager> getHazelcastClusterManager(Vertx vertx) {
+    public static Optional<HazelcastClusterManager> getHazelcastClusterManager(
+            Vertx vertx) {
         return getSpecificClusterManager(vertx, HazelcastClusterManager.class);
     }
 
@@ -58,7 +58,8 @@ public final class ClusterHelper {
      * @param vertx {@link Vertx} instance
      * @return null or the {@link InfinispanClusterManager} instance
      */
-    public static Optional<InfinispanClusterManager> getInfinispanClusterManager(Vertx vertx) {
+    public static Optional<InfinispanClusterManager> getInfinispanClusterManager(
+            Vertx vertx) {
         return getSpecificClusterManager(vertx, InfinispanClusterManager.class);
     }
 
@@ -70,7 +71,8 @@ public final class ClusterHelper {
      * @return null or the {@link InfinispanClusterManager} instance
      */
     private static <T extends ClusterManager> Optional<T> getSpecificClusterManager(Vertx vertx, Class<T> cmClass) {
-        return getClusterManager(vertx).map(cm -> cmClass.isInstance(cm) ? cmClass.cast(cm) : null);
+        return getClusterManager(vertx)
+                .map(cm -> cmClass.isInstance(cm) ? cmClass.cast(cm) : null);
     }
 
     /**
@@ -80,8 +82,10 @@ public final class ClusterHelper {
      * @return the cluster node ID
      */
     public static String getClusterNodeId(Vertx vertx) {
-        return getClusterManager(vertx).map(ClusterManager::getNodeId).orElseThrow(() -> new IllegalStateException(
-                "Can not retrieve the ClusterManager. Is vert.x running in a cluster?"));
+        return getClusterManager(vertx)
+                .map(ClusterManager::getNodeId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Can not retrieve the ClusterManager. Is vert.x running in a cluster?"));
     }
 
     /**
@@ -119,7 +123,10 @@ public final class ClusterHelper {
         // getMembers() returns a set. The first element is the leader.
         // The underlying set is a kind of linked hashset and In this case the order is kept.
         // see https://github.com/hazelcast/hazelcast/issues/3760
-        Set<Member> members = hcm.getHazelcastInstance().getCluster().getMembers();
+        Set<Member> members = hcm
+                .getHazelcastInstance()
+                .getCluster()
+                .getMembers();
         Member oldestMember = members.iterator().next();
         return oldestMember.localMember();
     }
@@ -132,27 +139,28 @@ public final class ClusterHelper {
      * @param vertx the Vert.x instance
      * @return Future that completes with the started ClusterCleanupCoordinator or null
      */
-    public static Future<ClusterCleanupCoordinator> getOrCreateClusterCleanupCoordinator(
+    public static ClusterCleanupCoordinator getOrCreateClusterCleanupCoordinatorImmediate(
             Vertx vertx) {
-        // Return null immediately if not clustered
         if (!vertx.isClustered()) {
-            return Future.succeededFuture(null);
+            return null;
         }
 
-        // Get or create coordinator
-        ClusterCleanupCoordinator coordinator = COORDINATORS.computeIfAbsent(
+        // Always return a coordinator instance, even if async map is not ready yet
+        return COORDINATORS.computeIfAbsent(
                 vertx,
-                v -> getClusterManager(v)
-                        .map(clusterManager -> new ClusterCleanupCoordinator(v, clusterManager))
-                        .orElse(null));
+                v -> {
+                    ClusterManager clusterManager = getClusterManager(v)
+                            .orElse(null);
+                    if (clusterManager == null) {
+                        return null;
+                    }
 
-        // Return null if coordinator creation failed
-        if (coordinator == null) {
-            return Future.succeededFuture(null);
-        }
-
-        // Start the coordinator and return it
-        return coordinator.start().map(map -> coordinator);
+                    ClusterCleanupCoordinator coordinator = new ClusterCleanupCoordinator(
+                            v,
+                            clusterManager);
+                    coordinator.start(); // async fire-and-forget
+                    return coordinator;
+                });
     }
 
     /**
@@ -174,5 +182,20 @@ public final class ClusterHelper {
     public static ClusterCleanupCoordinator removeCachedCoordinator(
             Vertx vertx) {
         return COORDINATORS.remove(vertx);
+    }
+
+    /**
+     * Checks whether persistent cluster cleanup is enabled.
+     *
+     * Persistent cleanup is controlled via the system property 'NEONBEE_PERSISTENT_CLUSTER_CLEANUP'.
+     *
+     * @return true if persistent cluster cleanup is enabled, false otherwise
+     */
+    public static boolean usePersistentCleanup() {
+        // Check if persistent cluster cleanup is enabled via system property
+        return Boolean.parseBoolean(
+                System.getProperty(
+                        "NEONBEE_PERSISTENT_CLUSTER_CLEANUP",
+                        System.getenv("NEONBEE_PERSISTENT_CLUSTER_CLEANUP")));
     }
 }
