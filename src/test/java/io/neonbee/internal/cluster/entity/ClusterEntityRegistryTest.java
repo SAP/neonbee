@@ -149,6 +149,25 @@ class ClusterEntityRegistryTest {
                 .onComplete(context.succeedingThenComplete());
     }
 
+    @Test
+    @DisplayName("get all node IDs from registry")
+    void getAllNodeIds(Vertx vertx, VertxTestContext context) {
+        ClusterEntityRegistry registry = new TestClusterEntityRegistry(
+                vertx,
+                REGISTRY_NAME);
+
+        registry
+                .register(KEY, VALUE)
+                .compose(unused -> registry.getAllNodeIds())
+                .onSuccess(nodeIds -> context.verify(() -> {
+                    assertThat(nodeIds)
+                            .containsExactly(
+                                    TestClusterEntityRegistry.CLUSTER_NODE_ID);
+                    context.completeNow();
+                }))
+                .onFailure(context::failNow);
+    }
+
     static class TestClusterEntityRegistry extends ClusterEntityRegistry {
         static final String CLUSTER_NODE_ID = "TEST_CLUSTER_ID_0000000000000000";
 

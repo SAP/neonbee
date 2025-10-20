@@ -536,4 +536,75 @@ class ClusterCleanupCoordinatorTest {
     // Note: Tests that require actual AsyncMap functionality with FakeClusterManager
     // are not included here due to the complexity of setting up the Vertx context
     // in the FakeClusterManager. The basic functionality is covered by the unit tests above.
+
+    @Test
+    @DisplayName("reconcile should enqueue stale registry node IDs for cleanup")
+    void reconcileShouldEnqueueStaleNodes(VertxTestContext testContext) {
+        // Given: A NeonBee instance registered with clustered=true and a custom ClusterEntityRegistry
+        io.neonbee.NeonBee neonBee = io.neonbee.NeonBeeMockHelper.registerNeonBeeMock(
+                vertx,
+                io.neonbee.test.helper.OptionsHelper
+                        .defaultOptions()
+                        .setClustered(true),
+                new io.neonbee.config.NeonBeeConfig());
+
+        // Custom registry that reports two stale nodes and fails cleanup to keep entries
+        io.neonbee.internal.cluster.entity.ClusterEntityRegistry customRegistry =
+                new io.neonbee.internal.cluster.entity.ClusterEntityRegistry(
+                        vertx,
+                        "TEST_REGISTRY") {
+                    @Override
+                    public Future<java.util.Set<String>> getAllNodeIds() {
+                        return Future.succeededFuture(
+                                new java.util.HashSet<>(
+                                        java.util.List.of("stale-1", "stale-2")));
+                    }
+
+                    @Override
+                    public Future<Void> unregisterNode(
+                            String clusterNodeId) {
+                        return Future.failedFuture(
+                                "intended failure to keep pendingRemovals");
+                    }
+                };
+
+        try {
+            io.neonbee.test.helper.ReflectionHelper.setValueOfPrivateField(
+                    neonBee,
+                    "entityRegistry",
+                    customRegistry);
+        } catch (Exception e) {
+            testContext.failNow(e);
+            return;
+        }
+
+        // When: Starting the coordinator to initialize map and trigger periodic cleanup
+        coordinator
+                .start()
+                .onComplete(ar -> {
+                    if (ar.failed()) {
+                        testContext.failNow(ar.cause());
+                        return;
+                    }
+
+                    // Allow some time for periodic reconciliation and scheduling
+                    vertx.setTimer(
+                            200,
+                            tid -> coordinator
+                                    .getPendingRemovals()
+                                    .entries()
+                                    .onComplete(entriesRes -> {
+                                        if (entriesRes.failed()) {
+                                            testContext.failNow(entriesRes.cause());
+                                            return;
+                                        }
+                                        java.util.Map<String, Boolean> entries = entriesRes.result();
+                                        testContext.verify(() -> {
+                                            assertThat(entries.keySet())
+                                                    .containsAtLeast("stale-1", "stale-2");
+                                        });
+                                        testContext.completeNow();
+                                    }));
+                });
+    }
 }
