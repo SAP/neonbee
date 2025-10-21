@@ -5,7 +5,6 @@ import static io.neonbee.entity.EntityVerticle.requestEntity;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
@@ -25,7 +24,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
 
 public final class ProcessorHelper {
@@ -69,8 +67,6 @@ public final class ProcessorHelper {
      * OData count size key.
      */
     public static final String ODATA_COUNT_SIZE_KEY = "OData.count.size";
-
-    private static final Set<HttpMethod> METHODS_WITH_BODY = Set.of(HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH);
 
     private ProcessorHelper() {}
 
@@ -120,22 +116,9 @@ public final class ProcessorHelper {
                 .map(e -> new EntityWrapper(entityType.getFullQualifiedName(), e).toBuffer(vertx)).orElse(null);
         DataQuery query = odataRequestToQuery(request, action, body);
         DataContext dataContext = new DataContextImpl(routingContext);
-        enhanceDataContextWithRawBody(routingContext, dataContext);
         return requestEntity(vertx, new DataRequest(entityType.getFullQualifiedName(), query), dataContext)
                 .map(result -> transferResponseHint(dataContext, routingContext, result))
                 .onFailure(processPromise::fail);
-    }
-
-    /**
-     * Add a new entry into data context with the raw body of the OData request under the key rawBody.
-     *
-     * @param routingContext routing context request
-     * @param dataContext    data context
-     */
-    static void enhanceDataContextWithRawBody(RoutingContext routingContext, DataContext dataContext) {
-        if (METHODS_WITH_BODY.contains(routingContext.request().method()) && routingContext.body().length() > 0) {
-            dataContext.put(DataContext.RAW_BODY_KEY, routingContext.body().buffer().toString());
-        }
     }
 
     /**
