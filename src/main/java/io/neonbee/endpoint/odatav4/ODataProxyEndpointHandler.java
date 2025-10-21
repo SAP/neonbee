@@ -85,7 +85,7 @@ public class ODataProxyEndpointHandler implements Handler<RoutingContext> {
         context.put(ORIG_URL_KEY, request.absoluteURI());
         context.put(METHOD_KEY, request.method().name());
 
-        DataQuery query = buildDataQuery(routingContext, qualifiedName, request, context);
+        DataQuery query = buildDataQuery(routingContext, qualifiedName, request);
 
         DeliveryOptions options = new DeliveryOptions().addHeader(CONTEXT_HEADER, encodeContextToString(context));
         if (sendTimeout > 0) {
@@ -163,11 +163,8 @@ public class ODataProxyEndpointHandler implements Handler<RoutingContext> {
     }
 
     private static DataQuery buildDataQuery(RoutingContext routingContext, String qualifiedName,
-            HttpServerRequest request, DataContextImpl context) {
+            HttpServerRequest request) {
         Buffer body = Optional.ofNullable(routingContext.body()).map(RequestBody::buffer).orElse(null);
-        if (body != null) {
-            context.put(DataContext.RAW_BODY_KEY, body);
-        }
 
         DataQuery query = new DataQuery().setAction(mapAction(request.method()))
                 .setUriPath(extractResourcePath(routingContext, qualifiedName))
