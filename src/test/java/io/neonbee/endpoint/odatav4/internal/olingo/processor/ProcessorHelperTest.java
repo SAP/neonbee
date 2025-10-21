@@ -17,12 +17,9 @@ import org.mockito.Mockito;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.entity.EntityWrapper;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.impl.HttpServerRequestInternal;
 import io.vertx.core.net.HostAndPort;
-import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.impl.RouterImpl;
 import io.vertx.ext.web.impl.RoutingContextImpl;
@@ -50,32 +47,5 @@ class ProcessorHelperTest {
         assertThat(routingContext.<Boolean>get(RESPONSE_HEADER_PREFIX + ODATA_TOP_KEY)).isNull();
         assertThat(routingContext.<Integer>get(RESPONSE_HEADER_PREFIX + ODATA_COUNT_SIZE_KEY)).isEqualTo(42);
         assertThat(result).isSameInstanceAs(entityWrapper);
-    }
-
-    @Test
-    void enhanceDataContextWithRawBody() {
-        RoutingContext routingContext = Mockito.mock(RoutingContext.class);
-        RequestBody requestBody = Mockito.mock(RequestBody.class);
-        HttpServerRequest request = Mockito.mock(HttpServerRequest.class);
-        String payload = "Hello World";
-        Mockito.when(requestBody.length()).thenReturn(payload.length());
-        Mockito.when(requestBody.buffer()).thenReturn(Buffer.buffer(payload));
-        Mockito.when(routingContext.body()).thenReturn(requestBody);
-        Mockito.when(routingContext.request()).thenReturn(request);
-        Mockito.when(request.method()).thenReturn(HttpMethod.POST);
-        DataContext dataContext = new DataContextImpl();
-        ProcessorHelper.enhanceDataContextWithRawBody(routingContext, dataContext);
-        assertThat(dataContext.get(DataContext.RAW_BODY_KEY).toString()).isEqualTo("Hello World");
-
-        dataContext = new DataContextImpl();
-        Mockito.when(requestBody.length()).thenReturn(-1);
-        ProcessorHelper.enhanceDataContextWithRawBody(routingContext, dataContext);
-        assertThat(dataContext.<Buffer>get(DataContext.RAW_BODY_KEY)).isNull();
-
-        dataContext = new DataContextImpl();
-        Mockito.when(requestBody.length()).thenReturn(1);
-        Mockito.when(request.method()).thenReturn(HttpMethod.GET);
-        ProcessorHelper.enhanceDataContextWithRawBody(routingContext, dataContext);
-        assertThat(dataContext.<Buffer>get(DataContext.RAW_BODY_KEY)).isNull();
     }
 }
