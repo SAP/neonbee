@@ -1,47 +1,8 @@
 package io.neonbee.endpoint.odatav4;
 
-import static com.google.common.truth.Truth.assertThat;
-import static io.neonbee.endpoint.odatav4.ODataProxyEndpoint.DEFAULT_BASE_PATH;
 //import static io.neonbee.endpoint.odatav4.ODataProxyEndpointHandler.determineQualifiedName;
-import static io.neonbee.test.helper.DeploymentHelper.NEONBEE_NAMESPACE;
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.BiFunction;
-
-import org.apache.olingo.commons.api.edm.FullQualifiedName;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
-
-import io.neonbee.NeonBeeDeployable;
-import io.neonbee.config.EndpointConfig;
-import io.neonbee.config.ServerConfig;
-import io.neonbee.data.DataContext;
-import io.neonbee.data.DataException;
-import io.neonbee.data.DataQuery;
-import io.neonbee.endpoint.Endpoint;
-import io.neonbee.entity.EntityVerticle;
-import io.neonbee.internal.verticle.ServerVerticle;
-import io.neonbee.test.base.DataVerticleTestBase;
-import io.neonbee.test.helper.WorkingDirectoryBuilder;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Route;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.junit5.VertxTestContext;
-
-class ODataProxyEndpointTest {//extends DataVerticleTestBase {
+class ODataProxyEndpointTest {// extends DataVerticleTestBase {
 //    @Override
 //    protected WorkingDirectoryBuilder provideWorkingDirectoryBuilder(TestInfo testInfo, VertxTestContext testContext) {
 //        return super.provideWorkingDirectoryBuilder(testInfo, testContext).setCustomTask(root -> {
