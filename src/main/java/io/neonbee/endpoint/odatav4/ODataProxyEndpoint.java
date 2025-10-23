@@ -1,8 +1,8 @@
 package io.neonbee.endpoint.odatav4;
 
-import static com.google.common.base.Strings.emptyToNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.base.Strings.nullToEmpty;
+import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.NormalizedUri;
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.STRICT;
 import static io.neonbee.entity.EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS;
 import static io.neonbee.internal.helper.FunctionalHelper.entryConsumer;
@@ -15,13 +15,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
-
-import com.google.common.base.MoreObjects;
 
 import io.neonbee.NeonBee;
 import io.neonbee.config.EndpointConfig;
@@ -32,17 +29,11 @@ import io.neonbee.internal.SharedDataAccessor;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 
 public class ODataProxyEndpoint implements Endpoint {
-    /**
-     * The key to configure the URI conversion.
-     */
-    public static final String CONFIG_URI_CONVERSION = "uriConversion";
 
     /**
      * The default path the OData V4 endpoint is exposed by NeonBee.
@@ -50,8 +41,6 @@ public class ODataProxyEndpoint implements Endpoint {
     public static final String DEFAULT_BASE_PATH = "/odataproxy/";
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
-
-    private static final String NORMALIZED_URI_CONTEXT_KEY = ODataV4Endpoint.class.getName() + "_normalizedUri";
 
     /**
      * Either STRICT (&lt;namespace&gt;.&lt;service&gt;), LOOSE (&lt;path mapping of namespace&gt;-&lt;path mapping of
@@ -249,7 +238,8 @@ public class ODataProxyEndpoint implements Endpoint {
                                 // some entities should not get exposed, register a handler, checking the block list
                                 .handler(routingContext -> {
                                     // normalize the URI first
-                                    NormalizedUri normalizedUri = normalizeUri(routingContext, schemaNamespace);
+                                    NormalizedUri normalizedUri =
+                                            ODataV4Endpoint.normalizeUri(routingContext, schemaNamespace);
                                     if (LOGGER.isDebugEnabled()) {
                                         LOGGER.correlateWith(routingContext).debug("Normalized OData V4 URI {}",
                                                 normalizedUri);
@@ -283,197 +273,5 @@ public class ODataProxyEndpoint implements Endpoint {
             }
             return succeededFuture();
         });
-    }
-
-    /**
-     * Normalize a given OData V4 request URI using a given {@link RoutingContext} and the schema namespace.
-     *
-     * A once parsed {@link NormalizedUri} is associated with the given {@link RoutingContext} so the same reference of
-     * the URI is returned if this method is invoked multiple times with the same {@link RoutingContext} given.
-     *
-     * @param routingContext  the routing context to parse the {@link NormalizedUri} from. Depending on the
-     *                        {@link UriConversion} the routing path / uri might not contain the right schema namespace
-     * @param schemaNamespace the schema namespace of the service in question
-     * @return a {@link NormalizedUri}
-     */
-    public static NormalizedUri normalizeUri(RoutingContext routingContext, String schemaNamespace) {
-        return Optional.<NormalizedUri>ofNullable(routingContext.get(NORMALIZED_URI_CONTEXT_KEY)).orElseGet(() -> {
-            NormalizedUri normalizedUri = new NormalizedUri(routingContext, schemaNamespace);
-            routingContext.put(NORMALIZED_URI_CONTEXT_KEY, normalizedUri);
-            return normalizedUri;
-        });
-    }
-
-    /* @formatter:off *//**
-     * This class represents a normalized OData V4 URI and helps to split it up in several path segments.
-     * <p>
-     * Asserting the most specific URI, given the following example from the OASIS OData URI specification:
-     *
-     * <pre>
-     *   http://host:port/path/SampleService.svc/Categories(1)/Products?&amp;top=2&amp;orderby=Name
-     * </pre>
-     *
-     * Assuming loose URI conversion is used, NeonBee will expose the service at:
-     *
-     * <pre>
-     *   http://host:port/path/sample-service-svc/Categories(1)/Products?&amp;top=2&amp;orderby=Name
-     * </pre>
-     *
-     * We get the following information from the handler configuration:
-     *
-     * <pre>
-     *   schemaNamespace = SampleService.svc
-     * </pre>
-     *
-     * We get the following information from the routing context / request:
-     *
-     * <pre>
-     *   requestUri      = http://host:port/path/sample-service-svc/Categories(1)/Products?&amp;top=2&amp;orderby=Name
-     *   requestPath     = /path/sample-service-svc/Categories(1)/Products
-     *   requestQuery    = &amp;top=2&amp;orderby=Name
-     *   routeMountPoint = /path/
-     *   routePath       = /sample-service-svc/
-     * </pre>
-     *
-     * The URI is normalized to the following components, note how the URI always will be normalized as if no
-     * URI conversion was performed:
-     *
-     * <pre>
-     *   requestUri        = http://host:port/path/SampleService.svc/Categories(1)/Products?&amp;top=2&amp;orderby=Name
-     *   requestPath       = /path/SampleService.svc/Categories(1)/Products
-     *   requestQuery      = &amp;top=2&amp;orderby=Name
-     *   baseUri           = http://host:port/path/
-     *   basePath          = /path/
-     *   schemaNamespace   = SampleService.svc
-     *   resourcePath      = /Categories(1)/Products
-     *   entityName        = Categories
-     *   fullQualifiedName = SampleService.svc.Categories
-     * </pre>
-     *//* @formatter:on */
-    public static class NormalizedUri {
-        /**
-         * The full request URI.
-         *
-         * <pre>
-         * http://host:port/path/SampleService.svc/Categories(1)/Products?&amp;top=2&amp;orderby=Name
-         * </pre>
-         */
-        public final String requestUri;
-
-        /**
-         * The requests path.
-         *
-         * <pre>
-         * /path/SampleService.svc/Categories(1)/Products
-         * </pre>
-         */
-        public final String requestPath;
-
-        /**
-         * The requests query.
-         *
-         * <pre>
-         * &amp;top=2&amp;orderby=Name
-         * </pre>
-         */
-        public final String requestQuery;
-
-        /**
-         * The base URI of the OData endpoint.
-         *
-         * <pre>
-         * http://host:port/path/
-         * </pre>
-         */
-        public final String baseUri;
-
-        /**
-         * The base path of the OData endpoint.
-         *
-         * <pre>
-         * /path/
-         * </pre>
-         */
-        public final String basePath;
-
-        /**
-         * The schema namespace of the OData model the request was made for.
-         *
-         * <pre>
-         * SampleService.svc
-         * </pre>
-         */
-        public final String schemaNamespace;
-
-        /**
-         * The full resource path of the OData request.
-         *
-         * <pre>
-         * /Categories(1)/Products
-         * </pre>
-         */
-        public final String resourcePath;
-
-        /**
-         * The entity name of the requested entity (if any or null).
-         *
-         * <pre>
-         * Categories
-         * </pre>
-         */
-        public final String entityName;
-
-        /**
-         * The full qualified name of the requested entity (if any or null).
-         *
-         * <pre>
-         * Categories
-         * </pre>
-         */
-        public final String fullQualifiedName;
-
-        private NormalizedUri(RoutingContext routingContext, String schemaNamespace) {
-            // the (unconverted) schema namespace is a input to the constructor
-            this.schemaNamespace = schemaNamespace;
-
-            Route route = routingContext.currentRoute();
-            // note that getPath() returns *only* the path prefix, so essentially the base path and converted schema
-            // namespace with leading and tailing slashes w/o the tailing *, which is handled and stripped by the router
-            String routeMountPoint = routingContext.mountPoint();
-            String routePath = // routePath w/ exactly one tailing slash
-                    Optional.ofNullable(route).map(Route::getPath).orElse(EMPTY).replaceAll("/+$", EMPTY) + "/";
-
-            HttpServerRequest request = routingContext.request();
-            String requestPath = request.path();
-            if (!requestPath.contains(routePath)) {
-                // special case if calling the service root at /path/SampleService.svc, always append a forward slash
-                // for easier handling, so to make it /path/SampleService.svc/
-                requestPath += '/';
-            }
-
-            // parse out the base URI and path
-            String hostUri = request.scheme() + "://" + request.authority().host();
-            baseUri = hostUri + (basePath = routeMountPoint);
-
-            // parse out the resource path and entity name
-            resourcePath = requestPath.substring((routeMountPoint + routePath).replaceAll("/{2,}", "/").length() - 1);
-            entityName = emptyToNull(resourcePath.split("\\W", 2)[0]); // assume the first non-word char separates it
-
-            // if an entity name is provided, concatenate the full qualified name
-            fullQualifiedName = entityName != null ? schemaNamespace + '.' + entityName : null;
-
-            // construct the full request path and URI, the query is provided by the request
-            requestQuery = nullToEmpty(request.query());
-            requestUri = hostUri + (this.requestPath = basePath + schemaNamespace + resourcePath)
-                    + (requestQuery.isEmpty() ? EMPTY : "?" + requestQuery);
-        }
-
-        @Override
-        public String toString() {
-            return MoreObjects.toStringHelper(this).add("requestUri", requestUri).add("requestPath", requestPath)
-                    .add("requestQuery", requestQuery).add("baseUri", baseUri).add("basePath", basePath)
-                    .add("schemaNamespace", schemaNamespace).add("resourcePath", resourcePath)
-                    .add("entityName", entityName).add("fullQualifiedName", fullQualifiedName).toString();
-        }
     }
 }
