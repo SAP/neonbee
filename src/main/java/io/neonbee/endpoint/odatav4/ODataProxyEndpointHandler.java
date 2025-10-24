@@ -5,7 +5,6 @@ import static io.neonbee.data.DataAction.DELETE;
 import static io.neonbee.data.DataAction.READ;
 import static io.neonbee.data.DataAction.UPDATE;
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.normalizeUri;
-import static io.neonbee.internal.helper.BufferHelper.inputStreamToBuffer;
 import static io.vertx.core.http.HttpMethod.GET;
 import static io.vertx.core.http.HttpMethod.HEAD;
 import static io.vertx.core.http.HttpMethod.PATCH;
@@ -15,30 +14,24 @@ import static org.apache.olingo.server.core.ODataHandlerException.MessageKeys.AM
 import static org.apache.olingo.server.core.ODataHandlerException.MessageKeys.HTTP_METHOD_NOT_ALLOWED;
 import static org.apache.olingo.server.core.ODataHandlerException.MessageKeys.INVALID_HTTP_METHOD;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.apache.olingo.commons.api.edm.EdmEntityType;
+import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.commons.api.http.HttpHeader;
 import org.apache.olingo.commons.api.http.HttpMethod;
-import org.apache.olingo.server.api.OData;
 import org.apache.olingo.server.api.ODataApplicationException;
 import org.apache.olingo.server.api.ODataLibraryException;
 import org.apache.olingo.server.api.ODataRequest;
-import org.apache.olingo.server.api.ODataResponse;
 import org.apache.olingo.server.api.ServiceMetadata;
-import org.apache.olingo.server.api.uri.UriInfo;
-import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 import org.apache.olingo.server.core.ODataHandlerException;
-import org.apache.olingo.server.core.uri.parser.Parser;
-import org.apache.olingo.server.core.uri.parser.UriParserException;
-import org.apache.olingo.server.core.uri.validator.UriValidationException;
 
 import com.google.common.annotations.VisibleForTesting;
 
 import io.neonbee.data.DataAction;
+import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.internal.DataContextImpl;
@@ -52,6 +45,11 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
 
 public final class ODataProxyEndpointHandler implements Handler<RoutingContext> {
+
+    // Regex to find last path segment
+    private static final Pattern ENTITY_NAME_PATTERN =
+            Pattern.compile("/(\\w+)(?:\\(.*\\))?(?:/(\\w+))?$");
+
     private final ServiceMetadata serviceMetadata;
 
     /**
@@ -81,164 +79,76 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
     @Override
     public void handle(RoutingContext routingContext) {
 
-        ODataRequest odataRequest;
         DataQuery dataQuery;
-        EdmEntityType entityType;
+        FullQualifiedName fullQualifiedName;
 
         try {
-            odataRequest =
-                    mapToODataRequest(routingContext, serviceMetadata.getEdm().getEntityContainer().getNamespace());
+            ODataRequest odataRequest = mapToODataRequest(
+                    routingContext,
+                    serviceMetadata.getEdm().getEntityContainer().getNamespace());
+
             DataAction action = mapMethodToAction(routingContext.request().method());
             dataQuery = odataRequestToQuery(odataRequest, action, routingContext.body().buffer());
-            entityType = getEdmEntityType(odataRequest);
+            fullQualifiedName = getFullQualifiedName(odataRequest);
         } catch (Exception cause) {
             routingContext.fail(getStatusCode(cause), cause);
             return;
         }
 
-        DataRequest dataRequest = new DataRequest(entityType.getFullQualifiedName(), dataQuery);
-        Future<Buffer> bufferFuture = AbstractEntityVerticle.<Buffer>requestEntity(Buffer.class, routingContext.vertx(),
-                dataRequest, new DataContextImpl(routingContext));
+        DataRequest dataRequest = new DataRequest(fullQualifiedName, dataQuery);
+        // fixme halber: buffer => tpye T
+        DataContextImpl context = new DataContextImpl(routingContext);
+        Future<Buffer> bufferFuture = AbstractEntityVerticle.requestEntity(
+                Buffer.class,
+                routingContext.vertx(),
+                dataRequest,
+                context);
         bufferFuture.onSuccess(buffer -> {
             HttpServerResponse response = routingContext.response();
+            copyResponseDataToHeaders(context, response);
             response.end(buffer);
         }).onFailure(cause -> routingContext.fail(getStatusCode(cause), cause));
-
-//        ODataResponse odataResponse;
-
-//        // Determine the event address/full qualified name of the recipient verticle
-//        String qualifiedName = determineQualifiedName(routingContext);
-//        if (qualifiedName == null || qualifiedName.isEmpty()) {
-//            routingContext.fail(BAD_REQUEST.code(),
-//                    new IllegalArgumentException("Missing the full qualified verticle name"));
-//            return;
-//        }
-//
-//        HttpServerRequest request = routingContext.request();
-//
-//        // Create DataContext and add the origUrl into it
-//        DataContextImpl context = new DataContextImpl(routingContext);
-//        context.put(ORIG_URL_KEY, request.absoluteURI());
-//        context.put(METHOD_KEY, request.method().name());
-//
-//        DataQuery query = buildDataQuery(routingContext, qualifiedName, request);
-//
-//        DeliveryOptions options = new DeliveryOptions().addHeader(CONTEXT_HEADER, encodeContextToString(context));
-//        if (sendTimeout > 0) {
-//            options.setSendTimeout(sendTimeout);
-//        }
-//
-//        String address = EntityVerticle.getProxyAddress(qualifiedName);
-//
-//        routingContext.vertx().eventBus().<Object>request(address, query, options).onComplete(asyncResult -> {
-//            if (asyncResult.failed()) {
-//                handleFailure(routingContext, asyncResult.cause());
-//                return;
-//            }
-//
-//            Message<Object> reply = asyncResult.result();
-//            mergeResponseContext(context, reply);
-//
-//            Object result = reply.body();
-//            if (result instanceof DataException dataException) {
-//                handleDataException(routingContext, dataException);
-//                return;
-//            }
-//
-//            HttpServerResponse response = routingContext.response();
-//            applyResponseHeaders(response, context);
-//
-//            Buffer responseBuffer = toBuffer(result);
-//            String contentType = Optional.ofNullable(context.responseData().get(CONTENT_TYPE_HINT))
-//                    .map(Object::toString).filter(value -> !value.isBlank()).orElse(null);
-//            if (contentType != null) {
-//                response.putHeader(CONTENT_TYPE_HINT, contentType);
-//            } else if (!response.headers().contains(CONTENT_TYPE_HINT)) {
-//                response.putHeader(CONTENT_TYPE_HINT, "application/octet-stream");
-//            }
-//
-//            int statusCode = Optional.ofNullable(context.responseData().get(STATUS_CODE_HINT))
-//                    .filter(Number.class::isInstance).map(Number.class::cast).map(Number::intValue)
-//                    .filter(code -> code > 0)
-//                    .orElse(response.getStatusCode() > 0 ? response.getStatusCode() : OK.code());
-//            response.setStatusCode(statusCode);
-//
-//            if (responseBuffer == null || responseBuffer.length() == 0) {
-//                response.putHeader(HttpHeaders.CONTENT_LENGTH, "0");
-//                response.end(Buffer.buffer());
-//            } else {
-//                response.end(responseBuffer);
-//            }
-//        });
     }
 
-    private EdmEntityType getEdmEntityType(ODataRequest odataRequest)
-            throws UriParserException, UriValidationException {
-        OData odata = OData.newInstance();
+    /**
+     * Copy all entries from {@code context.responseData()} into the provided {@code HttpServerResponse} headers.
+     *
+     * @param context  the data context containing the response data map; may be null
+     * @param response the HTTP response where headers will be written; may be null
+     */
+    private static void copyResponseDataToHeaders(DataContext context, HttpServerResponse response) {
+        Map<String, Object> respData = context.responseData();
+        for (Map.Entry<String, Object> e : respData.entrySet()) {
+            String name = e.getKey();
+            Object value = e.getValue();
 
-        UriInfo uriInfo = new Parser(serviceMetadata.getEdm(), odata)
-                .parseUri(
-                        odataRequest.getRawODataPath(),
-                        odataRequest.getRawQueryPath(),
-                        null,
-                        odataRequest.getRawBaseUri());
-
-        UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0);
-        return uriResourceEntitySet.getEntitySet().getEntityType();
+            if (value instanceof Iterable<?>) {
+                for (Object v : (Iterable<?>) value) {
+                    if (v != null) {
+                        response.putHeader(name, v.toString());
+                    }
+                }
+            } else {
+                response.putHeader(name, value.toString());
+            }
+        }
     }
 
-//    @Override
-//    public void handle(RoutingContext routingContext) {
-//        // In case the OData request is asynchronously processed, the processor will complete the processPromise when
-//        // done, in case Olingo handles the request synchronously, the processPromise will be completed here
-//        Vertx vertx = routingContext.vertx();
-//        Promise<Void> processPromise = Promise.promise();
-//        vertx.executeBlocking(() -> {
-//            OData odata = OData.newInstance();
-//            ODataHandler odataHandler = odata.createRawHandler(serviceMetadata);
-//
-//            // add further built-in processors for NeonBee here (every processor must handle the processPromise)
-//            odataHandler.register(new CountEntityCollectionProcessor(vertx, routingContext, processPromise));
-//            odataHandler.register(new EntityProcessor(vertx, routingContext, processPromise));
-//            odataHandler.register(new BatchProcessor(vertx, routingContext, processPromise));
-//            odataHandler.register(new PrimitiveProcessor(vertx, routingContext, processPromise));
-//
-//            ODataResponse odataResponse = odataHandler.process(mapToODataRequest(routingContext,
-//                    serviceMetadata.getEdm().getEntityContainer().getNamespace()));
-//            // check for synchronous processing, complete the processPromise in case a response body is set
-//            if ((odataResponse.getStatusCode() != INTERNAL_SERVER_ERROR.code())
-//                    || (odataResponse.getContent() != null) || (odataResponse.getODataContent() != null)) {
-//                processPromise.tryComplete();
-//            }
-//            return odataResponse;
-//        }).onComplete(asyncODataResponse -> {
-//            // failed to map / process OData request, so fail the web request
-//            if (asyncODataResponse.failed()) {
-//                Throwable cause = asyncODataResponse.cause();
-//                routingContext.fail(getStatusCode(cause), cause);
-//                return;
-//            }
-//
-//            // the contents of the odataResponse could still be null, in case the processing was done asynchronous, so
-//            // wait for the processPromise to finish before continuing processing
-//            ODataResponse odataResponse = asyncODataResponse.result();
-//            processPromise.future().onComplete(asyncResult -> {
-//                // (asynchronously) retrieving the odata response failed, so fail the web request
-//                if (asyncResult.failed()) {
-//                    Throwable cause = asyncResult.cause();
-//                    routingContext.fail(getStatusCode(cause), cause);
-//                    return;
-//                }
-//
-//                try {
-//                    // map the odataResponse to the routingContext.response
-//                    mapODataResponse(odataResponse, routingContext.response());
-//                } catch (IOException | ODataRuntimeException e) {
-//                    routingContext.fail(-1, e);
-//                }
-//            });
-//        });
-//    }
+    /**
+     * Retrieves the EdmEntityType from the ODataRequest.
+     *
+     * @param odataRequest The ODataRequest
+     * @return The FullQualifiedName
+     */
+    private FullQualifiedName getFullQualifiedName(ODataRequest odataRequest) {
+        Matcher matcher = ENTITY_NAME_PATTERN.matcher(odataRequest.getRawODataPath());
+        if (matcher.matches()) {
+            return new FullQualifiedName(odataRequest.getRawServiceResolutionUri(), matcher.group(1));
+        } else {
+            throw new IllegalArgumentException("Cannot determine entity name from OData path: "
+                    + odataRequest.getRawODataPath());
+        }
+    }
 
     private static DataQuery odataRequestToQuery(ODataRequest request, DataAction action, Buffer body) {
         // the uriPath without /odata root path and without query path
@@ -340,34 +250,6 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
             }
         } catch (IllegalArgumentException e) {
             throw new ODataHandlerException("Invalid HTTP method" + rawMethod, e, INVALID_HTTP_METHOD, rawMethod);
-        }
-    }
-
-    /**
-     * Maps a ODataResponse to a existing Vert.x HttpServerResponse.
-     *
-     * @param odataResponse The ODataResponse to map
-     * @param response      The HttpServerResponse to map to
-     * @throws IOException IOException
-     */
-    @VisibleForTesting
-    static void mapODataResponse(ODataResponse odataResponse, HttpServerResponse response) throws IOException {
-        // status code and headers
-        response.setStatusCode(odataResponse.getStatusCode());
-        for (Map.Entry<String, List<String>> entry : odataResponse.getAllHeaders().entrySet()) {
-            for (String headerValue : entry.getValue()) {
-                response.putHeader(entry.getKey(), headerValue);
-            }
-        }
-        // OData response content
-        if (odataResponse.getContent() != null) {
-            response.end(inputStreamToBuffer(odataResponse.getContent()));
-        } else if (odataResponse.getODataContent() != null) {
-            ByteArrayOutputStream byteArrayOutput = new ByteArrayOutputStream();
-            odataResponse.getODataContent().write(byteArrayOutput);
-            response.end(Buffer.buffer(byteArrayOutput.toByteArray()));
-        } else {
-            response.end(); // no content (e.g. for update / delete requests)
         }
     }
 }
