@@ -188,7 +188,7 @@ public class ODataProxyEndpoint implements Endpoint {
         // already and potentially have to deal with a race condition b) no model is loaded / routes are initialized if
         // when NeonBee is started and / or in case the endpoint is not used.
         Route initialRoute = router.route();
-        initialRoute.handler(routingContext -> new SharedDataAccessor(vertx, ODataV4Endpoint.class)
+        initialRoute.handler(routingContext -> new SharedDataAccessor(vertx, ODataProxyEndpoint.class)
                 .getLocalLock(asyncLock ->
                 // immediately initialize the router, this will also "arm" the event bus listener
                 (!initialized.getAndSet(true)
