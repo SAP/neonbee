@@ -198,19 +198,4 @@ public final class ClusterHelper {
             Vertx vertx) {
         return COORDINATORS.remove(vertx);
     }
-
-    /**
-     * Checks whether persistent cluster cleanup is enabled.
-     *
-     * Persistent cleanup is controlled via the system property 'NEONBEE_PERSISTENT_CLUSTER_CLEANUP'.
-     *
-     * @return true if persistent cluster cleanup is enabled, false otherwise
-     */
-    public static boolean usePersistentCleanup() {
-        // Check if persistent cluster cleanup is enabled via system property
-        return Boolean.parseBoolean(
-                System.getProperty(
-                        "NEONBEE_PERSISTENT_CLUSTER_CLEANUP",
-                        System.getenv("NEONBEE_PERSISTENT_CLUSTER_CLEANUP")));
-    }
 }
