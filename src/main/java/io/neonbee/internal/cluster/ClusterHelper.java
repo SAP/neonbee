@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 
@@ -19,6 +20,8 @@ import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 public final class ClusterHelper {
 
     private static final Map<Vertx, ClusterCleanupCoordinator> COORDINATORS = new ConcurrentHashMap<>();
+
+    private static final AtomicReference<Boolean> LEADER_CACHE = new AtomicReference<>();
 
     /**
      * Helper class does not require instantiation.
@@ -95,31 +98,43 @@ public final class ClusterHelper {
      * @return true if this node is the leader, otherwise false
      */
     public static boolean isLeader(Vertx vertx) {
+        Boolean cached = LEADER_CACHE.get();
+        if (cached != null) {
+            return cached;
+        }
+        boolean leader = determineLeader(vertx);
+        LEADER_CACHE.set(leader);
+        return leader;
+    }
+
+    private static boolean determineLeader(Vertx vertx) {
         if (!vertx.isClustered()) {
             return true;
         }
 
-        // Try Hazelcast
-        Optional<Boolean> hazelcastLeader = getHazelcastClusterManager(vertx)
-                .map(ClusterHelper::isLeader);
-        if (hazelcastLeader.isPresent()) {
-            return hazelcastLeader.get();
-        }
-
-        // Try Infinispan
-        Optional<Boolean> infinispanLeader = getInfinispanClusterManager(vertx)
-                .map(ClusterHelper::isLeader);
-
-        return infinispanLeader.orElse(true);
-        // For others, return true
+        return getHazelcastClusterManager(vertx)
+                .map(ClusterHelper::isLeaderFromHazelcast)
+                .or(() -> getInfinispanClusterManager(vertx)
+                        .map(ClusterHelper::isLeaderFromInfinispan))
+                .or(() -> getClusterManager(vertx).map(ClusterHelper::isLeaderFromConfig))
+                .orElse(false);
     }
 
-    private static Boolean isLeader(InfinispanClusterManager icm) {
+    private static Boolean isLeaderFromConfig(
+            @SuppressWarnings("unused") ClusterManager clm) {
+        return Boolean.parseBoolean(
+                System.getProperty(
+                        "NEONBEE_CLUSTER_LEADER",
+                        System.getenv("NEONBEE_CLUSTER_LEADER")));
+    }
+
+    private static Boolean isLeaderFromInfinispan(
+            InfinispanClusterManager icm) {
         EmbeddedCacheManager cacheContainer = (EmbeddedCacheManager) icm.getCacheContainer();
         return cacheContainer.isCoordinator();
     }
 
-    private static boolean isLeader(HazelcastClusterManager hcm) {
+    private static boolean isLeaderFromHazelcast(HazelcastClusterManager hcm) {
         // getMembers() returns a set. The first element is the leader.
         // The underlying set is a kind of linked hashset and In this case the order is kept.
         // see https://github.com/hazelcast/hazelcast/issues/3760
