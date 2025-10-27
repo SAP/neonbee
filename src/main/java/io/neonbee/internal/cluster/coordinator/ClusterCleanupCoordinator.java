@@ -34,8 +34,7 @@ import io.vertx.core.spi.cluster.ClusterManager;
 public class ClusterCleanupCoordinator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
-        ClusterCleanupCoordinator.class
-    );
+            ClusterCleanupCoordinator.class);
 
     /** The name of the distributed lock used for coordinating cleanup operations. */
     private static final String LOCK_NAME = "cluster:cleanup-lock";
@@ -86,16 +85,14 @@ public class ClusterCleanupCoordinator {
      * @param clusterManager the cluster manager to use for node detection
      */
     public ClusterCleanupCoordinator(
-        Vertx vertx,
-        ClusterManager clusterManager
-    ) {
+            Vertx vertx,
+            ClusterManager clusterManager) {
         this(
-            vertx,
-            clusterManager,
-            DEFAULT_INTERVAL,
-            LOCK_TIMEOUT,
-            () -> NeonBee.get(vertx)
-        );
+                vertx,
+                clusterManager,
+                DEFAULT_INTERVAL,
+                LOCK_TIMEOUT,
+                () -> NeonBee.get(vertx));
     }
 
     /**
@@ -108,19 +105,18 @@ public class ClusterCleanupCoordinator {
      * @param neonBeeSupplier supplier for obtaining the NeonBee instance
      */
     public ClusterCleanupCoordinator(
-        Vertx vertx,
-        ClusterManager clusterManager,
-        long initialInterval,
-        long lockTimeoutMs,
-        Supplier<NeonBee> neonBeeSupplier
-    ) {
+            Vertx vertx,
+            ClusterManager clusterManager,
+            long initialInterval,
+            long lockTimeoutMs,
+            Supplier<NeonBee> neonBeeSupplier) {
         this.vertx = vertx;
         this.clusterManager = clusterManager;
         this.lockTimeoutMs = lockTimeoutMs;
         this.neonBeeSupplier =
-            neonBeeSupplier != null
-                ? neonBeeSupplier
-                : () -> NeonBee.get(vertx);
+                neonBeeSupplier != null
+                        ? neonBeeSupplier
+                        : () -> NeonBee.get(vertx);
         this.currentIntervalMs = Math.max(MIN_INTERVAL, initialInterval);
     }
 
@@ -166,37 +162,33 @@ public class ClusterCleanupCoordinator {
     private Future<Void> runCleanupCycle() {
         Promise<Lock> lockPromise = Promise.promise();
         clusterManager.getLockWithTimeout(
-            LOCK_NAME,
-            lockTimeoutMs,
-            lockPromise
-        );
+                LOCK_NAME,
+                lockTimeoutMs,
+                lockPromise);
 
         return lockPromise
-            .future()
-            .compose(lock ->
-                performCleanup()
-                    // release lock regardless of cleanup result
-                    .eventually(() -> {
-                        try {
-                            lock.release();
-                        } catch (Exception e) {
-                            LOGGER.warn("Failed to release cleanup lock", e);
-                        }
-                        return succeededFuture();
-                    })
-            )
-            .onComplete(ar -> scheduleNext(ar.succeeded()))
-            .recover(err -> {
-                // failed to get lock or other non-fatal error
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(
-                        "Cleanup lock not acquired or failed: {}",
-                        err.getMessage()
-                    );
-                }
-                scheduleNext(false);
-                return succeededFuture();
-            });
+                .future()
+                .compose(lock -> performCleanup()
+                        // release lock regardless of cleanup result
+                        .eventually(() -> {
+                            try {
+                                lock.release();
+                            } catch (Exception e) {
+                                LOGGER.warn("Failed to release cleanup lock", e);
+                            }
+                            return succeededFuture();
+                        }))
+                .onComplete(ar -> scheduleNext(ar.succeeded()))
+                .recover(err -> {
+                    // failed to get lock or other non-fatal error
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug(
+                                "Cleanup lock not acquired or failed: {}",
+                                err.getMessage());
+                    }
+                    scheduleNext(false);
+                    return succeededFuture();
+                });
     }
 
     /**
@@ -211,33 +203,32 @@ public class ClusterCleanupCoordinator {
     private Future<Void> performCleanup() {
         Promise<Void> promise = Promise.promise();
         reconcileRegistryWithCluster()
-            .compose(staleNodes -> {
-                if (staleNodes.isEmpty()) {
-                    LOGGER.debug("No stale nodes found during reconciliation.");
-                    return succeededFuture();
-                }
+                .compose(staleNodes -> {
+                    if (staleNodes.isEmpty()) {
+                        LOGGER.debug("No stale nodes found during reconciliation.");
+                        return succeededFuture();
+                    }
 
-                List<String> batch = staleNodes
-                    .stream()
-                    .limit(MAX_BATCH)
-                    .toList();
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info(
-                        "Found {} stale nodes, cleaning up {} in this batch.",
-                        staleNodes.size(),
-                        batch.size()
-                    );
-                }
+                    List<String> batch = staleNodes
+                            .stream()
+                            .limit(MAX_BATCH)
+                            .toList();
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info(
+                                "Found {} stale nodes, cleaning up {} in this batch.",
+                                staleNodes.size(),
+                                batch.size());
+                    }
 
-                return Future
-                    .all(batch.stream().map(this::cleanupNode).toList())
-                    .mapEmpty();
-            })
-            .onSuccess(v -> promise.complete())
-            .onFailure(err -> {
-                LOGGER.error("Cleanup cycle failed", err);
-                promise.fail(err);
-            });
+                    return Future
+                            .all(batch.stream().map(this::cleanupNode).toList())
+                            .mapEmpty();
+                })
+                .onSuccess(v -> promise.complete())
+                .onFailure(err -> {
+                    LOGGER.error("Cleanup cycle failed", err);
+                    promise.fail(err);
+                });
         return promise.future();
     }
 
@@ -256,21 +247,16 @@ public class ClusterCleanupCoordinator {
 
         if (!(registry instanceof ClusterEntityRegistry clusterRegistry)) {
             LOGGER.warn(
-                "No ClusterEntityRegistry found, skipping cleanup for {}",
-                nodeId
-            );
+                    "No ClusterEntityRegistry found, skipping cleanup for {}",
+                    nodeId);
             return succeededFuture();
         }
 
         LOGGER.info("Cleaning up resources for stale node: {}", nodeId);
         return clusterRegistry
-            .unregisterNode(nodeId)
-            .onSuccess(v ->
-                LOGGER.debug("Successfully cleaned up node {}", nodeId)
-            )
-            .onFailure(err ->
-                LOGGER.error("Failed to clean up node {}", nodeId, err)
-            );
+                .unregisterNode(nodeId)
+                .onSuccess(v -> LOGGER.debug("Successfully cleaned up node {}", nodeId))
+                .onFailure(err -> LOGGER.error("Failed to clean up node {}", nodeId, err));
     }
 
     /**
@@ -287,18 +273,17 @@ public class ClusterCleanupCoordinator {
 
         if (!(registry instanceof ClusterEntityRegistry clusterRegistry)) {
             LOGGER.debug(
-                "Entity registry is not ClusterEntityRegistry, skipping reconciliation."
-            );
+                    "Entity registry is not ClusterEntityRegistry, skipping reconciliation.");
             return succeededFuture(Set.of());
         }
 
         Set<String> activeNodes = new HashSet<>(clusterManager.getNodes());
         return clusterRegistry
-            .getAllNodeIds()
-            .map(registryNodeIds -> {
-                registryNodeIds.removeAll(activeNodes);
-                return registryNodeIds;
-            });
+                .getAllNodeIds()
+                .map(registryNodeIds -> {
+                    registryNodeIds.removeAll(activeNodes);
+                    return registryNodeIds;
+                });
     }
 
     /**
@@ -316,24 +301,23 @@ public class ClusterCleanupCoordinator {
      */
     private void scheduleNext(boolean success) {
         currentIntervalMs =
-            success
-                ? Math.max(currentIntervalMs / 2, MIN_INTERVAL)
-                : Math.min(currentIntervalMs * 2, MAX_INTERVAL);
+                success
+                        ? Math.max(currentIntervalMs / 2, MIN_INTERVAL)
+                        : Math.min(currentIntervalMs * 2, MAX_INTERVAL);
 
         if (timerId != null) {
             vertx.cancelTimer(timerId);
         }
 
         long jitter = ThreadLocalRandom
-            .current()
-            .nextLong(JITTER_MIN, JITTER_MAX);
+                .current()
+                .nextLong(JITTER_MIN, JITTER_MAX);
         long delay = currentIntervalMs + jitter;
 
         timerId = vertx.setTimer(delay, id -> runCleanupCycle());
         LOGGER.debug(
-            "Next cleanup scheduled in {} ms (success={})",
-            delay,
-            success
-        );
+                "Next cleanup scheduled in {} ms (success={})",
+                delay,
+                success);
     }
 }
