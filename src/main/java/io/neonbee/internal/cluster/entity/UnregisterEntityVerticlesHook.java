@@ -1,7 +1,6 @@
 package io.neonbee.internal.cluster.entity;
 
 import static io.neonbee.hook.HookType.CLUSTER_NODE_ID;
-import static io.neonbee.internal.cluster.ClusterHelper.usePersistentCleanup;
 import static io.vertx.core.Future.succeededFuture;
 
 import org.slf4j.Logger;
@@ -104,20 +103,12 @@ public class UnregisterEntityVerticlesHook {
         if (ClusterHelper.isLeader(neonBee.getVertx())) {
             LOGGER.info("Cleaning registered qualified names ...");
 
-            if (usePersistentCleanup()) {
-                // No null check needed; coordinator handles buffering internally
-                ClusterHelper.getOrCreateClusterCleanupCoordinatorImmediate(neonBee.getVertx())
-                        .addNodeLeft(clusterNodeId);
-                promise.complete();
-            } else {
-                LOGGER.info(
-                        "Using direct cleanup processing (ClusterCleanupCoordinator not available)");
-                // Use the original direct cleanup logic
-                unregister(neonBee, clusterNodeId)
-                        .onComplete(promise)
-                        .onSuccess(unused -> LOGGER.info("Qualified names successfully cleaned up"))
-                        .onFailure(ignoredCause -> LOGGER.error("Failed to cleanup qualified names"));
-            }
+            // Use the original direct cleanup logic
+            unregister(neonBee, clusterNodeId)
+                    .onComplete(promise)
+                    .onSuccess(unused -> LOGGER.info("Qualified names successfully cleaned up"))
+                    .onFailure(ignoredCause -> LOGGER.error("Failed to cleanup qualified names"));
+
         } else {
             promise.complete(); // Not the leader, no cleanup needed
         }

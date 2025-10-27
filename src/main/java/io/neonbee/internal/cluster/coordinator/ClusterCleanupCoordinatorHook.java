@@ -1,7 +1,5 @@
 package io.neonbee.internal.cluster.coordinator;
 
-import static io.neonbee.internal.cluster.ClusterHelper.usePersistentCleanup;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,15 +44,6 @@ public final class ClusterCleanupCoordinatorHook {
 
         // Only initialize if running in clustered mode
         if (!vertx.isClustered()) {
-            LOGGER.info(
-                    "Not running in clustered mode, skipping ClusterCleanupCoordinator initialization");
-            promise.complete();
-            return;
-        }
-
-        if (!usePersistentCleanup()) {
-            LOGGER.info(
-                    "Persistent cluster cleanup is disabled, skipping ClusterCleanupCoordinator initialization");
             promise.complete();
             return;
         }
