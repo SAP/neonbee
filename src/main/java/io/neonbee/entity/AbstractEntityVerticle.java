@@ -280,13 +280,4 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
             return failedFuture("The result of entity verticle must be an " + type.getSimpleName());
         });
     }
-
-//    /**
-//     * Signals whether this entity verticle exposes the proxy event-bus endpoint.
-//     *
-//     * @return {@code true} if proxy requests should be handled, otherwise {@code false}
-//     */
-//    protected boolean supportsProxyRequests() {
-//        return false;
-//    }
 }
