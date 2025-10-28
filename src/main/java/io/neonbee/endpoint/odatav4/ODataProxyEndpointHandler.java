@@ -96,16 +96,16 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
         }
 
         DataRequest dataRequest = new DataRequest(fullQualifiedName, dataQuery);
-        // fixme halber: buffer => tpye T
         DataContextImpl context = new DataContextImpl(routingContext);
         Future<Buffer> bufferFuture = AbstractEntityVerticle.requestEntity(
                 Buffer.class,
                 routingContext.vertx(),
                 dataRequest,
                 context);
+
         bufferFuture.onSuccess(buffer -> {
             HttpServerResponse response = routingContext.response();
-            copyResponseDataToHeaders(context, response);
+            copyResponseDataToHttpResponse(context, response);
             response.end(buffer);
         }).onFailure(cause -> routingContext.fail(getStatusCode(cause), cause));
     }
@@ -116,11 +116,16 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
      * @param context  the data context containing the response data map; may be null
      * @param response the HTTP response where headers will be written; may be null
      */
-    private static void copyResponseDataToHeaders(DataContext context, HttpServerResponse response) {
+    private static void copyResponseDataToHttpResponse(DataContext context, HttpServerResponse response) {
         Map<String, Object> respData = context.responseData();
         for (Map.Entry<String, Object> e : respData.entrySet()) {
             String name = e.getKey();
             Object value = e.getValue();
+
+            if(DataContext.STATUS_CODE_HINT.equals(name)) {
+                response.setStatusCode((Integer) value);
+                continue;
+            }
 
             if (value instanceof Iterable<?>) {
                 for (Object v : (Iterable<?>) value) {
@@ -185,16 +190,16 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
         }
 
         /* @formatter:off *//*
-             * The OData request is awaiting the following fields:
-             *
-             * rawRequestUri = http://localhost/odata/sys1/Employees?$format=json,$top=10
-             * rawBaseUri = http://localhost/odata/
-             * rawServiceResolutionUri = sys1
-             * rawODataPath = /Employees
-             * rawQueryPath = $format=json,$top=10
-             *
-             * We can map these from the normalizedUri
-             *//* @formatter:on */
+         * The OData request is awaiting the following fields:
+         *
+         * rawRequestUri = http://localhost/odata/sys1/Employees?$format=json,$top=10
+         * rawBaseUri = http://localhost/odata/
+         * rawServiceResolutionUri = sys1
+         * rawODataPath = /Employees
+         * rawQueryPath = $format=json,$top=10
+         *
+         * We can map these from the normalizedUri
+         *//* @formatter:on */
 
         ODataV4Endpoint.NormalizedUri normalizedUri = normalizeUri(routingContext, schemaNamespace);
         odataRequest.setRawRequestUri(normalizedUri.requestUri);
