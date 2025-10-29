@@ -122,7 +122,7 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
             String name = e.getKey();
             Object value = e.getValue();
 
-            if(DataContext.STATUS_CODE_HINT.equals(name)) {
+            if (DataContext.STATUS_CODE_HINT.equals(name)) {
                 response.setStatusCode((Integer) value);
                 continue;
             }
