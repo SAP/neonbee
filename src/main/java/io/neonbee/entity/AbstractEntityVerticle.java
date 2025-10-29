@@ -249,6 +249,16 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
         return NeonBee.get(vertx).getEntityRegistry();
     }
 
+    /**
+     * Requests an entity from the entity verticle(s) registered for the given entity type name in the request.
+     *
+     * @param <T>     The expected type of the returned entity
+     * @param type    The class of the expected type of the returned entity
+     * @param vertx   The Vert.x instance
+     * @param request The data request containing the entity type name to request data from
+     * @param context The data context to be used for the request
+     * @return A future to the requested entity of the expected type
+     */
     public static <T> Future<T> requestEntity(Class<T> type, Vertx vertx, DataRequest request, DataContext context) {
         FullQualifiedName entityTypeName = request.getEntityTypeName();
         if (entityTypeName == null) {
