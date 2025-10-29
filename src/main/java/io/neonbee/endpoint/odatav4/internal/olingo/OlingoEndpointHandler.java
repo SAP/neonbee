@@ -105,9 +105,14 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
         });
     }
 
-    private static int getStatusCode(Throwable throwable) {
-        return throwable instanceof ODataApplicationException ? ((ODataApplicationException) throwable).getStatusCode()
-                : -1;
+    /**
+     * Returns the status code of the ODataApplicationException or -1 if the throwable is of another type.
+     *
+     * @param throwable The throwable to get the status code from
+     * @return The status code or -1
+     */
+    public static int getStatusCode(Throwable throwable) {
+        return throwable instanceof ODataApplicationException odae ? odae.getStatusCode() : -1;
     }
 
     /**
@@ -118,8 +123,7 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
      * @return A new ODataRequest
      * @throws ODataLibraryException ODataLibraryException
      */
-    @VisibleForTesting
-    static ODataRequest mapToODataRequest(RoutingContext routingContext, String schemaNamespace)
+    public static ODataRequest mapToODataRequest(RoutingContext routingContext, String schemaNamespace)
             throws ODataLibraryException {
         HttpServerRequest request = routingContext.request();
 

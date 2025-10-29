@@ -1,13 +1,11 @@
 package io.neonbee.endpoint.raw;
 
 import static io.neonbee.data.DataAction.CREATE;
-import static io.neonbee.data.DataAction.DELETE;
-import static io.neonbee.data.DataAction.READ;
-import static io.neonbee.data.DataAction.UPDATE;
 import static io.neonbee.data.DataException.FAILURE_CODE_NO_HANDLERS;
 import static io.neonbee.data.DataException.FAILURE_CODE_TIMEOUT;
 import static io.neonbee.data.DataVerticle.requestData;
 import static io.neonbee.endpoint.Endpoint.createRouter;
+import static io.neonbee.endpoint.HttpMethodToDataActionMapper.mapMethodToAction;
 import static io.neonbee.internal.helper.CollectionHelper.multiMapToMap;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CREATED;
@@ -16,11 +14,6 @@ import static io.netty.handler.codec.http.HttpResponseStatus.METHOD_NOT_ALLOWED;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.vertx.core.Future.succeededFuture;
-import static io.vertx.core.http.HttpMethod.GET;
-import static io.vertx.core.http.HttpMethod.HEAD;
-import static io.vertx.core.http.HttpMethod.PATCH;
-import static io.vertx.core.http.HttpMethod.POST;
-import static io.vertx.core.http.HttpMethod.PUT;
 import static io.vertx.ext.web.impl.Utils.pathOffset;
 import static java.lang.Character.isUpperCase;
 
@@ -45,7 +38,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
@@ -231,20 +223,6 @@ public class RawEndpoint implements Endpoint {
             }
 
             return null;
-        }
-
-        private DataAction mapMethodToAction(HttpMethod method) {
-            if (POST.equals(method)) {
-                return CREATE;
-            } else if (HEAD.equals(method) || GET.equals(method)) {
-                return READ;
-            } else if (PUT.equals(method) || PATCH.equals(method)) {
-                return UPDATE;
-            } else if (HttpMethod.DELETE.equals(method)) {
-                return DELETE;
-            } else {
-                return null;
-            }
         }
     }
 }
