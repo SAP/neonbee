@@ -31,7 +31,7 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
 
     // Regex to find last path segment
     private static final Pattern ENTITY_NAME_PATTERN =
-            Pattern.compile("/(\\w+)(?:\\(.*\\))?(?:/(\\w+))?$");
+            Pattern.compile("/(\\w+)(?:\\([^)]*\\))?(?:/(\\w+))?$");
 
     private final ServiceMetadata serviceMetadata;
 
