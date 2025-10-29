@@ -21,7 +21,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
+import org.apache.olingo.server.api.ServiceMetadata;
+
 import com.google.common.base.MoreObjects;
+import com.sap.cds.reflect.CdsAnnotation;
+import com.sap.cds.reflect.CdsService;
 
 import io.neonbee.NeonBee;
 import io.neonbee.config.EndpointConfig;
@@ -32,6 +36,7 @@ import io.neonbee.internal.RegexBlockList;
 import io.neonbee.internal.SharedDataAccessor;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
@@ -45,14 +50,18 @@ public class ODataV4Endpoint implements Endpoint {
      */
     public static final String CONFIG_URI_CONVERSION = "uriConversion";
 
+    private static final String BASE_PATH_SEGMENT = "odata";
+
     /**
      * The default path the OData V4 endpoint is exposed by NeonBee.
      */
-    public static final String DEFAULT_BASE_PATH = "/odata/";
+    public static final String DEFAULT_BASE_PATH = "/" + BASE_PATH_SEGMENT + "/";
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     private static final String NORMALIZED_URI_CONTEXT_KEY = ODataV4Endpoint.class.getName() + "_normalizedUri";
+
+    public static final String NEONBEE_ENDPOINT_CDS_SERVICE_ANNOTATION = "neonbee.endpoint";
 
     /**
      * Either STRICT (&lt;namespace&gt;.&lt;service&gt;), LOOSE (&lt;path mapping of namespace&gt;-&lt;path mapping of
@@ -200,7 +209,7 @@ public class ODataV4Endpoint implements Endpoint {
         // already and potentially have to deal with a race condition b) no model is loaded / routes are initialized if
         // when NeonBee is started and / or in case the endpoint is not used.
         Route initialRoute = router.route();
-        initialRoute.handler(routingContext -> new SharedDataAccessor(vertx, ODataV4Endpoint.class)
+        initialRoute.handler(routingContext -> new SharedDataAccessor(vertx, this.getClass())
                 .getLocalLock(asyncLock ->
                 // immediately initialize the router, this will also "arm" the event bus listener
                 (!initialized.getAndSet(true)
@@ -226,7 +235,7 @@ public class ODataV4Endpoint implements Endpoint {
         return succeededFuture(router);
     }
 
-    private static Future<Void> refreshRouter(Vertx vertx, Router router, String basePath, UriConversion uriConversion,
+    protected Future<Void> refreshRouter(Vertx vertx, Router router, String basePath, UriConversion uriConversion,
             RegexBlockList exposedEntities, AtomicReference<Map<String, EntityModel>> currentModels) {
         return NeonBee.get(vertx).getModelManager().getSharedModels().compose(models -> {
             if (models == currentModels.get()) {
@@ -240,7 +249,9 @@ public class ODataV4Endpoint implements Endpoint {
 
             // register new routes first, this will avoid downtimes of already existing services. Register the shortest
             // routes last, this will lead to some routes like the empty namespace / to be registered last.
-            models.values().stream().flatMap(entityModel -> entityModel.getAllEdmxMetadata().entrySet().stream())
+            models.values().stream()
+                    .filter(this::filterModels)
+                    .flatMap(entityModel -> entityModel.getAllEdmxMetadata().entrySet().stream())
                     .map(entryFunction(
                             (schemaNamespace, edmxModel) -> Map.entry(uriConversion.apply(schemaNamespace), edmxModel)))
                     .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(String::length).reversed()))
@@ -267,7 +278,7 @@ public class ODataV4Endpoint implements Endpoint {
                                     routingContext.next();
                                 })
                                 // TODO depending on the config either create Olingo or CDS based OData V4 handlers here
-                                .handler(new OlingoEndpointHandler(edmxModel));
+                                .handler(getRequestHandler(edmxModel));
                         if (LOGGER.isInfoEnabled()) {
                             LOGGER.info("Serving OData service endpoint for {} at {}{} ({} URI mapping)",
                                     schemaNamespace, basePath, uriPath,
@@ -284,6 +295,34 @@ public class ODataV4Endpoint implements Endpoint {
             }
             return succeededFuture();
         });
+    }
+
+    /**
+     * Creates the request handler for the OData V4 endpoint.
+     *
+     * @param edmxModel The EDMX model to be used by the handler.
+     * @return The request handler.
+     */
+    protected Handler<RoutingContext> getRequestHandler(ServiceMetadata edmxModel) {
+        return new OlingoEndpointHandler(edmxModel);
+    }
+
+    /**
+     * Filters the models to be included in the OData Proxy Endpoint. If the annotation "neonbee.endpoint" annotation is
+     * not present, the model is included by default.
+     *
+     * @param model The entity model to be checked.
+     * @return true if the model should be included, false otherwise.
+     */
+    protected boolean filterModels(EntityModel model) {
+        String value = model.getCsnModel().services()
+                .flatMap(CdsService::annotations)
+                .filter(annotation -> NEONBEE_ENDPOINT_CDS_SERVICE_ANNOTATION.equals(annotation.getName()))
+                .map(CdsAnnotation::getValue)
+                .map(Object::toString)
+                .findFirst()
+                .orElse(BASE_PATH_SEGMENT);
+        return BASE_PATH_SEGMENT.equalsIgnoreCase(value);
     }
 
     /**
