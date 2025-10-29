@@ -253,6 +253,6 @@ jobs:
       
       - name: Publish to Maven Central
         run: |
-            MAVEN_TOKEN=$(echo -n "${{ secrets.MAVEN_CENTRAL_USER }}:${{ secrets.MAVEN_CENTRAL_PASSWORD }}" | base64)
+            MAVEN_TOKEN=$(printf  "${{ secrets.MAVEN_CENTRAL_USER }}:${{ secrets.MAVEN_CENTRAL_PASSWORD }}" | base64)
             curl -H "Authorization: Bearer $MAVEN_TOKEN" \
                 -i -X POST https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/io.neonbee
