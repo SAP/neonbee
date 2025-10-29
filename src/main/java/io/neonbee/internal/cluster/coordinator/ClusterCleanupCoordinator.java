@@ -52,7 +52,7 @@ public class ClusterCleanupCoordinator {
     private static final long LOCK_TIMEOUT = 2_000;
 
     /** Maximum number of nodes to clean up in a single batch. */
-    private static final int MAX_BATCH = 100;
+    private static final int MAX_BATCH = 10;
 
     /** Minimum jitter value in milliseconds to add to the cleanup interval. */
     private static final int JITTER_MIN = 1_000;
@@ -71,6 +71,9 @@ public class ClusterCleanupCoordinator {
 
     /** Timeout for acquiring the cleanup lock in milliseconds. */
     private final long lockTimeoutMs;
+
+    /** Maximum number of nodes to clean up in a single batch. */
+    private final int maxNodesPerBatch;
 
     /** The ID of the currently scheduled cleanup timer. */
     private Long timerId;
@@ -92,27 +95,31 @@ public class ClusterCleanupCoordinator {
                 clusterManager,
                 DEFAULT_INTERVAL,
                 LOCK_TIMEOUT,
+                MAX_BATCH,
                 () -> NeonBee.get(vertx));
     }
 
     /**
      * Creates a new ClusterCleanupCoordinator with custom configuration.
      *
-     * @param vertx           the Vert.x instance
-     * @param clusterManager  the cluster manager to use for node detection
-     * @param initialInterval the initial interval between cleanup cycles in milliseconds
-     * @param lockTimeoutMs   the timeout for acquiring the cleanup lock in milliseconds
-     * @param neonBeeSupplier supplier for obtaining the NeonBee instance
+     * @param vertx            the Vert.x instance
+     * @param clusterManager   the cluster manager to use for node detection
+     * @param initialInterval  the initial interval between cleanup cycles in milliseconds
+     * @param lockTimeoutMs    the timeout for acquiring the cleanup lock in milliseconds
+     * @param maxNodesPerBatch the maximum number of nodes to clean up in a single batch
+     * @param neonBeeSupplier  supplier for obtaining the NeonBee instance
      */
     public ClusterCleanupCoordinator(
             Vertx vertx,
             ClusterManager clusterManager,
             long initialInterval,
             long lockTimeoutMs,
+            int maxNodesPerBatch,
             Supplier<NeonBee> neonBeeSupplier) {
         this.vertx = vertx;
         this.clusterManager = clusterManager;
         this.lockTimeoutMs = lockTimeoutMs;
+        this.maxNodesPerBatch = maxNodesPerBatch;
         this.neonBeeSupplier =
                 neonBeeSupplier != null
                         ? neonBeeSupplier
@@ -211,7 +218,7 @@ public class ClusterCleanupCoordinator {
 
                     List<String> batch = staleNodes
                             .stream()
-                            .limit(MAX_BATCH)
+                            .limit(maxNodesPerBatch)
                             .toList();
                     if (LOGGER.isInfoEnabled()) {
                         LOGGER.info(

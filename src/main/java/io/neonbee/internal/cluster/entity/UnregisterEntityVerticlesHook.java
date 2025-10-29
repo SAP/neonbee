@@ -98,10 +98,9 @@ public class UnregisterEntityVerticlesHook {
             HookContext hookContext,
             Promise<Void> promise) {
         String clusterNodeId = hookContext.get(CLUSTER_NODE_ID);
-        LOGGER.info("Cleanup qualified names for node {}", clusterNodeId);
 
         if (ClusterHelper.isLeader(neonBee.getVertx())) {
-            LOGGER.info("Cleaning registered qualified names ...");
+            LOGGER.info("Cleaning qualified names for node {}", clusterNodeId);
 
             // Use the original direct cleanup logic
             unregister(neonBee, clusterNodeId)
