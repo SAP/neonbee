@@ -241,6 +241,7 @@ class ClusterCleanupCoordinatorTest {
                             clusterManagerLocal,
                             100000,
                             3000,
+                            10,
                             () -> neonBee);
 
                     // Use checkpoint to guarantee async test completion
