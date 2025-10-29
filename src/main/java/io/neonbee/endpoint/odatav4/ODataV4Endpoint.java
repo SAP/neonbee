@@ -50,6 +50,11 @@ public class ODataV4Endpoint implements Endpoint {
      */
     public static final String CONFIG_URI_CONVERSION = "uriConversion";
 
+    /**
+     * The NeonBee CDS service annotation to include or exclude services from being exposed via the OData V4 endpoint.
+     */
+    public static final String NEONBEE_ENDPOINT_CDS_SERVICE_ANNOTATION = "neonbee.endpoint";
+
     private static final String BASE_PATH_SEGMENT = "odata";
 
     /**
@@ -60,8 +65,6 @@ public class ODataV4Endpoint implements Endpoint {
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     private static final String NORMALIZED_URI_CONTEXT_KEY = ODataV4Endpoint.class.getName() + "_normalizedUri";
-
-    public static final String NEONBEE_ENDPOINT_CDS_SERVICE_ANNOTATION = "neonbee.endpoint";
 
     /**
      * Either STRICT (&lt;namespace&gt;.&lt;service&gt;), LOOSE (&lt;path mapping of namespace&gt;-&lt;path mapping of
@@ -235,6 +238,17 @@ public class ODataV4Endpoint implements Endpoint {
         return succeededFuture(router);
     }
 
+    /**
+     * Refreshes the given router with the current models.
+     *
+     * @param vertx           The Vert.x instance.
+     * @param router          The router to refresh.
+     * @param basePath        The base path of the endpoint.
+     * @param uriConversion   The URI conversion to use.
+     * @param exposedEntities The block / allow list of entities to be exposed.
+     * @param currentModels   The current models reference.
+     * @return A future indicating when the refresh is complete.
+     */
     protected Future<Void> refreshRouter(Vertx vertx, Router router, String basePath, UriConversion uriConversion,
             RegexBlockList exposedEntities, AtomicReference<Map<String, EntityModel>> currentModels) {
         return NeonBee.get(vertx).getModelManager().getSharedModels().compose(models -> {
