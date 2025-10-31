@@ -11,6 +11,8 @@ import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -21,6 +23,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import com.aayushatharva.brotli4j.encoder.Encoder;
+
+import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeDeployable;
 import io.neonbee.data.DataAdapter;
 import io.neonbee.data.DataContext;
@@ -35,7 +40,10 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.junit5.VertxTestContext;
 
 class RawEndpointTest extends DataVerticleTestBase {
@@ -173,6 +181,26 @@ class RawEndpointTest extends DataVerticleTestBase {
                 })));
     }
 
+    @Test
+    @DisplayName("RawDataEndpointHandler should support Brotli compression")
+    void testBrotliCompression(VertxTestContext testContext) {
+
+        NeonBee neonBee = getNeonBee();
+        WebClientOptions opts = new WebClientOptions().setDefaultHost("localhost")
+                .setDefaultPort(neonBee.getOptions().getServerPort()).setDecompressionSupported(true);
+
+        HttpRequest<Buffer> request = WebClient.create(neonBee.getVertx(), opts)
+                .request(HttpMethod.GET, String.format("/raw/%s/%s", NEONBEE_NAMESPACE, "Brotli"))
+                .putHeader("Accept-Encoding", "br");
+
+        deployVerticle(new BrotliResponseVerticle())
+                .compose(s -> request.send())
+                .onComplete(testContext.succeeding(response -> testContext.verify(() -> {
+                    assertThat(response.bodyAsString()).isEqualTo("Hello from Vert.x with Brotli4j!");
+                    testContext.completeNow();
+                })));
+    }
+
     @NeonBeeDeployable(namespace = NEONBEE_NAMESPACE, autoDeploy = false)
     public static class JsonResponseVerticle extends DataVerticle<JsonObject> {
 
@@ -207,6 +235,41 @@ class RawEndpointTest extends DataVerticleTestBase {
         @Override
         public String getName() {
             return "Test";
+        }
+    }
+
+    @NeonBeeDeployable(namespace = NEONBEE_NAMESPACE, autoDeploy = false)
+    public static class BrotliResponseVerticle extends DataVerticle<Buffer> {
+
+        @Override
+        public Future<Buffer> retrieveData(DataQuery query, DataContext context) {
+            context.responseData().put(
+                    RESPONSE_HEADERS,
+                    Map.of(
+                            "foo", "bar",
+                            "hodor", "hodor",
+                            "Content-Encoding", "br"));
+            return Future.succeededFuture(Buffer.buffer(compressResponse()));
+        }
+
+        /**
+         * Compress a sample response using Brotli4j. The data should be compressed before being put into the Buffer to
+         * be returned.
+         *
+         * @return the compressed byte array
+         */
+        public byte[] compressResponse() {
+            try {
+                byte[] input = "Hello from Vert.x with Brotli4j!".getBytes(StandardCharsets.UTF_8);
+                return Encoder.compress(input); // Compress using Brotli4j
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to load Brotli4j native library", e);
+            }
+        }
+
+        @Override
+        public String getName() {
+            return "Brotli";
         }
     }
 
