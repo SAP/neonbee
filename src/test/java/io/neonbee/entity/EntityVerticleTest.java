@@ -155,7 +155,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     void parseUriInfoTest(Vertx vertx, VertxTestContext testContext) {
         Checkpoint checkpoint = testContext.checkpoint(3);
 
-        EntityVerticle
+        entityVerticleImpl1
                 .parseUriInfo(vertx,
                         new DataQuery().setUriPath("/io.neonbee.test1.TestService1/AllPropertiesNullable")
                                 .addParameter("$format", "json"))
@@ -169,7 +169,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
                     checkpoint.flag();
                 })));
 
-        EntityVerticle
+        entityVerticleImpl1
                 .parseUriInfo(vertx,
                         new DataQuery().setUriPath("/io.neonbee.test1.TestService1/AllPropertiesNullable('123')"))
                 .onComplete(testContext.succeeding(uriInfo -> testContext.verify(() -> {
@@ -181,7 +181,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
         DataQuery query = new DataQuery(DataAction.READ, "/io.neonbee.test1.TestService1/AllPropertiesNullable");
         query.addParameter("$orderby", "KeyPropertyString").addParameter("$filter", "KeyPropertyString eq 'Test123'");
 
-        EntityVerticle.parseUriInfo(vertx, query)
+        entityVerticleImpl1.parseUriInfo(vertx, query)
                 .onComplete(testContext.succeeding(uriInfo -> testContext.verify(() -> {
                     assertThat(uriInfo.getUriResourceParts().stream().map(UriResource::getSegmentValue)
                             .toList()).contains("AllPropertiesNullable");
@@ -242,7 +242,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
         var parameters = dataQuery.getParameters();
         assertThat(parameters).isNotNull();
 
-        EntityVerticle.parseUriInfo(vertx, dataQuery).onSuccess(uriInfo -> {
+        entityVerticleImpl1.parseUriInfo(vertx, dataQuery).onSuccess(uriInfo -> {
             assertThat(uriInfo).isNotNull();
             testContext.completeNow();
         }).onFailure(t -> testContext.failNow(t));
