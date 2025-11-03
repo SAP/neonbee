@@ -240,6 +240,21 @@ jobs:
         run: |
           ./gradlew clean publishAllPublicationsToMavenCentralRepository
 
+      - name: Trigger Sonatype upload
+        env:
+            MAVEN_CENTRAL_USER: ${{ secrets.MAVEN_CENTRAL_USER }}
+            MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: |
+            BEARER=$(echo -n "${MAVEN_CENTRAL_USER}:${MAVEN_CENTRAL_PASSWORD}" | base64)
+
+            # Print masked confirmation for debugging
+            echo "Generated bearer token (masked): ${BEARER:0:5}*****"
+
+            curl -v \
+              -H "Authorization: Bearer ${BEARER}" \
+              -X POST 'https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/io.neonbee'
+
+
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@master
