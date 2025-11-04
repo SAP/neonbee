@@ -1,7 +1,5 @@
 package io.neonbee.internal.cluster.coordinator;
 
-import static io.neonbee.internal.cluster.ClusterHelper.usePersistentCleanup;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,8 +12,8 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 
 /**
- * Hook for initializing the ClusterCleanupCoordinator after NeonBee startup. This ensures the coordinator is ready to
- * handle node left events immediately.
+ * Hook for initializing the ClusterCleanupCoordinator after NeonBee startup. Configuration is read from
+ * ClusterHelper.getOrCreateClusterCleanupCoordinator() which reads the config file asynchronously.
  */
 public final class ClusterCleanupCoordinatorHook {
 
@@ -44,17 +42,8 @@ public final class ClusterCleanupCoordinatorHook {
             Promise<Void> promise) {
         Vertx vertx = neonBee.getVertx();
 
-        // Only initialize if running in clustered mode
-        if (!vertx.isClustered()) {
-            LOGGER.info(
-                    "Not running in clustered mode, skipping ClusterCleanupCoordinator initialization");
-            promise.complete();
-            return;
-        }
-
-        if (!usePersistentCleanup()) {
-            LOGGER.info(
-                    "Persistent cluster cleanup is disabled, skipping ClusterCleanupCoordinator initialization");
+        // Initialize only if running in clustered mode AND this node is the leader
+        if (!vertx.isClustered() || !ClusterHelper.isLeader(vertx)) {
             promise.complete();
             return;
         }

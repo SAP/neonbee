@@ -74,6 +74,8 @@ public class DataRequest {
 
     private boolean localPreferred = true;
 
+    private String originalUrl;
+
     /**
      * Request data from a DataSource.
      *
@@ -279,6 +281,26 @@ public class DataRequest {
      */
     public DataRequest setLocalPreferred(boolean localPreferred) {
         this.localPreferred = localPreferred;
+        return this;
+    }
+
+    /**
+     * Get the original URL of the request.
+     *
+     * @return the original URL
+     */
+    public String getOriginalUrl() {
+        return originalUrl;
+    }
+
+    /**
+     * Set the original URL of the request.
+     *
+     * @param originalUrl the original URL to set
+     * @return this DataRequest for chaining
+     */
+    public DataRequest setOriginalUrl(String originalUrl) {
+        this.originalUrl = originalUrl;
         return this;
     }
 
