@@ -25,7 +25,7 @@ plugins {
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 group = 'io.neonbee'
-version = '0.37.12'
+version = '0.37.13-SNAPSHOT'
 mainClassName = 'io.neonbee.Launcher'
 archivesBaseName = 'neonbee-core'
 sourceCompatibility = 17
