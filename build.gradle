@@ -9,7 +9,7 @@ plugins {
     id 'checkstyle'
 
     // community plugins
-    id 'org.jreleaser' version '1.13.0'
+    id 'org.jreleaser' version '1.21.0'
     id 'com.diffplug.spotless' version '6.25.0'
     id 'net.ltgt.errorprone' version '4.0.1'
     id 'com.github.spotbugs' version '6.0.19'
@@ -443,30 +443,5 @@ signing {
 }
 
 jreleaser {
-    project {
-        name = 'neonbee-core'
-        description = 'NeonBee Core Library'
-        website = 'https://github.com/SAP/neonbee'
-        license = 'Apache-2.0'
-        authors = ['SAP']
-    }
-    release {
-        github {
-            setOwner('SAP')
-            setName('neonbee')
-            overwrite = true
-        }
-    }
-    deploy {
-        maven {
-            mavenCentral {
-                username = findProperty("mavenCentralUsername")
-                password = findProperty("mavenCentralPassword")
-                sign = true
-                active = 'ALWAYS'
-            }
-        }
-    }
+    configFile = file('jreleaser.yml')
 }
-
-

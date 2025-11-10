@@ -1,0 +1,28 @@
+project:
+  name: neonbee-core
+
+release:
+  github:
+    owner: SAP               
+    name: neonbee               
+    skipRelease: true         
+
+deploy:
+  maven:
+    mavenCentral:
+      neonbee:              
+        active: ALWAYS
+        url: https://central.sonatype.com/api/v1/publisher
+        authorization: BEARER
+        username: {{ env.MAVEN_CENTRAL_USER }}
+        password: {{ env.MAVEN_CENTRAL_PASSWORD }}
+
+        applyMavenCentralRules: true
+        sign: true
+        sourceJar: true
+        javadocJar: true
+        verifyPom: true
+
+signing:
+  active: ALWAYS
+  armored: true
