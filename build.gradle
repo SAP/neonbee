@@ -445,15 +445,15 @@ signing {
 jreleaser {
     project {
         name = 'neonbee-core'
-        description = 'Neonbee Core Library'
+        description = 'NeonBee Core Library'
         website = 'https://github.com/SAP/neonbee'
         license = 'Apache-2.0'
-        authors = ['Neonbee']
+        authors = ['SAP']
     }
     release {
         github {
-            owner = 'neonbee'
-            name = 'neonbee-core'
+            setOwner('SAP')
+            setName('neonbee')
             overwrite = true
         }
     }
@@ -468,3 +468,5 @@ jreleaser {
         }
     }
 }
+
+
