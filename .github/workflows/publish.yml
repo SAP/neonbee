@@ -100,7 +100,7 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USER }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
         run: |
-          ./gradlew jreleaserFullRelease -Pdryrun=false
+          ./gradlew clean publishAllPublicationsToMavenCentralRepository
 
       - name: Trigger Central Portal release
         if: success()
