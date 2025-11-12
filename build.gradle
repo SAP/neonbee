@@ -9,7 +9,6 @@ plugins {
     id 'checkstyle'
 
     // community plugins
-    id "com.vanniktech.maven.publish" version "0.35.0"
     id 'com.diffplug.spotless' version '6.25.0'
     id 'net.ltgt.errorprone' version '4.0.1'
     id 'com.github.spotbugs' version '6.0.19'
@@ -443,9 +442,7 @@ signing {
 }
 
 // MavenPublication
-import com.vanniktech.maven.publish.SonatypeHost
-
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
     signAllPublications()
 }
