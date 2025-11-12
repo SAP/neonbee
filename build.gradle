@@ -9,6 +9,7 @@ plugins {
     id 'checkstyle'
 
     // community plugins
+    id "com.vanniktech.maven.publish" version "0.35.0"
     id 'com.diffplug.spotless' version '6.25.0'
     id 'net.ltgt.errorprone' version '4.0.1'
     id 'com.github.spotbugs' version '6.0.19'
@@ -442,48 +443,9 @@ signing {
 }
 
 // MavenPublication
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            pom {
-                name.set('neonbee-core')
-                description.set('Neonbee Core Library')
-                url.set('https://github.com/SAP/neonbee')
-                licenses {
-                    license {
-                        name.set('Apache License, Version 2.0')
-                        url.set('https://www.apache.org/licenses/LICENSE-2.0')
-                    }
-                }
-                developers {
-                    developer {
-                        id.set('maintainer')
-                        name.set('Eduard Baghdasaryan')
-                        email.set('e.baghdasaryan@sap.com')
-                    }
-                }
-                scm {
-                    connection.set('scm:git:https://github.com/SAP/neonbee.git')
-                    developerConnection.set('scm:git:ssh://github.com:SAP/neonbee.git')
-                    url.set('https://github.com/SAP/neonbee')
-                }
-            }
-        }
-    }
-    repositories {
-        maven {
-            name = "MavenCentral"
-            url = uri("https://central.sonatype.com/api/v1/publisher/upload")
-            credentials {
-                username = findProperty("mavenCentralUsername")
-                password = findProperty("mavenCentralPassword")
-            }
-        }
-    }
-}
+import com.vanniktech.maven.publish.SonatypeHost
 
-signing {
-    useInMemoryPgpKeys(findProperty("signingKey"), findProperty("signingPassword"))
-    sign publishing.publications
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    signAllPublications()
 }
