@@ -4,6 +4,7 @@ import static io.neonbee.endpoint.HttpMethodToDataActionMapper.mapMethodToAction
 import static io.neonbee.endpoint.odatav4.internal.olingo.OlingoEndpointHandler.getStatusCode;
 import static io.neonbee.endpoint.odatav4.internal.olingo.OlingoEndpointHandler.mapToODataRequest;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -11,7 +12,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
+import org.apache.olingo.commons.api.ex.ODataRuntimeException;
+import org.apache.olingo.server.api.OData;
 import org.apache.olingo.server.api.ODataRequest;
+import org.apache.olingo.server.api.ODataResponse;
 import org.apache.olingo.server.api.ServiceMetadata;
 
 import io.neonbee.data.DataAction;
@@ -19,9 +23,11 @@ import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.internal.DataContextImpl;
+import io.neonbee.endpoint.odatav4.internal.olingo.OlingoEndpointHandler;
 import io.neonbee.entity.AbstractEntityVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RequestBody;
@@ -47,6 +53,11 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
     @SuppressWarnings("unused") // normale Java-Warnung
     @Override
     public void handle(RoutingContext routingContext) {
+
+        if (routingContext.request().path().endsWith("$metadata")) {
+            handleMetadata(routingContext);
+            return;
+        }
 
         DataQuery dataQuery;
         FullQualifiedName fullQualifiedName;
@@ -80,6 +91,35 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
             copyResponseDataToHttpResponse(context, response);
             response.end(buffer);
         }).onFailure(cause -> routingContext.fail(getStatusCode(cause), cause));
+    }
+
+    /**
+     * Handles the $metadata request.
+     *
+     * @param routingContext The routing context
+     */
+    public void handleMetadata(RoutingContext routingContext) {
+        Vertx vertx = routingContext.vertx();
+        vertx.executeBlocking(() -> {
+            OData odata = OData.newInstance();
+            String namespace = serviceMetadata.getEdm().getEntityContainer().getNamespace();
+            return odata.createRawHandler(serviceMetadata)
+                    .process(mapToODataRequest(routingContext, namespace));
+        }).onComplete(asyncODataResponse -> {
+            if (asyncODataResponse.failed()) {
+                Throwable cause = asyncODataResponse.cause();
+                routingContext.fail(getStatusCode(cause), cause);
+                return;
+            }
+
+            ODataResponse odataResponse = asyncODataResponse.result();
+            try {
+                // map the odataResponse to the routingContext.response
+                OlingoEndpointHandler.mapODataResponse(odataResponse, routingContext.response());
+            } catch (IOException | ODataRuntimeException e) {
+                routingContext.fail(-1, e);
+            }
+        });
     }
 
     /**

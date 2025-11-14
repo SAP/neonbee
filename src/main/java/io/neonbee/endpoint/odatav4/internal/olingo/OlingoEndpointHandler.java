@@ -210,8 +210,7 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
      * @param response      The HttpServerResponse to map to
      * @throws IOException IOException
      */
-    @VisibleForTesting
-    static void mapODataResponse(ODataResponse odataResponse, HttpServerResponse response) throws IOException {
+    public static void mapODataResponse(ODataResponse odataResponse, HttpServerResponse response) throws IOException {
         // status code and headers
         response.setStatusCode(odataResponse.getStatusCode());
         for (Map.Entry<String, List<String>> entry : odataResponse.getAllHeaders().entrySet()) {

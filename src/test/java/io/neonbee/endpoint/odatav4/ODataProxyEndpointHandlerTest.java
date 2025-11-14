@@ -36,6 +36,7 @@ class ODataProxyEndpointHandlerTest {
         when(routingContext.request()).thenReturn(request);
         when(routingContext.response()).thenReturn(response);
         when(request.method()).thenReturn(HttpMethod.GET);
+        when(request.path()).thenReturn("/odataproxy");
         when(routingContext.vertx()).thenReturn(Vertx.vertx());
 
         // mock ServiceMetadata and nested edm container namespace
@@ -95,6 +96,7 @@ class ODataProxyEndpointHandlerTest {
         HttpServerRequest request = mock(HttpServerRequest.class);
         when(routingContext.request()).thenReturn(request);
         when(request.method()).thenReturn(HttpMethod.GET);
+        when(request.path()).thenReturn("/odataproxy");
 
         org.apache.olingo.server.api.ServiceMetadata serviceMetadata =
                 mock(org.apache.olingo.server.api.ServiceMetadata.class);
