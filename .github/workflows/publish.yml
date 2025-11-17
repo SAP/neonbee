@@ -78,11 +78,11 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17.0'
+          java-version: '21.0'
           cache: 'gradle'
 
       - name: Get new version
@@ -100,7 +100,7 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USER }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
         run: |
-           ./gradlew publishAndReleaseToMavenCentral --stacktrace
+          ./gradlew clean publishAllPublicationsToMavenCentralRepository
 
   publishRelease:
     runs-on: ubuntu-latest
@@ -114,11 +114,11 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17.0'
+          java-version: '21.0'
           cache: 'gradle'
 
       - name: Tag release commit

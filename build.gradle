@@ -8,8 +8,9 @@ plugins {
     id 'pmd'
     id 'checkstyle'
 
+
+
     // community plugins
-    id("com.vanniktech.maven.publish") version "0.30.0"
     id 'com.diffplug.spotless' version '6.25.0'
     id 'net.ltgt.errorprone' version '4.0.1'
     id 'com.github.spotbugs' version '6.0.19'
@@ -435,15 +436,4 @@ task release(type: Exec) {
             commandLine 'sh', '-c', "./gradle/release.sh ${nextVersion}"
         }
     }
-}
-
-// signing {
-//     useInMemoryPgpKeys(findProperty("signingKey"), findProperty("signingPassword"))
-//     sign publishing.publications
-// }
-
-// MavenPublication
-mavenPublishing {
-    publishToMavenCentral()
-    signAllPublications()
 }
