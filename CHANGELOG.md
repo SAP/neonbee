@@ -1,6 +1,15 @@
 # Changelog
 
-## 0.37.12 (2025-11-03)
+## 0.37.17 (2025-11-17)
+
+### Bug Fixes
+
+- odataproxy metadata request ([853ebf48](https://github.com/SAP/neonbee/commit/853ebf48a6d96d2c3db53e5a129cdf718be406a0))
+- revert release attempts: ([acf39499](https://github.com/SAP/neonbee/commit/acf39499a1f7f2bd55f872a57b8d44c94acc9298))
+- set version 0.37.17-SNAPSHOT ([732b3d6d](https://github.com/SAP/neonbee/commit/732b3d6d92c76d630d4425bd0639d44ebffcb2c6))
+
+
+## 0.37.12 (2025-11-06)
 
 ### Bug Fixes
 
@@ -44,12 +53,14 @@
 - refactor odata endpoints ([20ef9804](https://github.com/SAP/neonbee/commit/20ef98046d715be0b8e12b26e37cf459340680a8))
 - move requestEntity to AbstractEntityVerticle ([18667d0f](https://github.com/SAP/neonbee/commit/18667d0f2ca81e1d9252417e6ad46819dc46c1e4))
 - response headers and FullQualifiedName ([02516305](https://github.com/SAP/neonbee/commit/02516305ab39edebc0de0cc6e1d5ea42ed8b03cc))
+- brotli ([21948026](https://github.com/SAP/neonbee/commit/2194802639304c3b9177d846c54ac5052976eb4d))
 
 
 ### Features
 
 - add ODataProxyEndpoint ([65fa9d65](https://github.com/SAP/neonbee/commit/65fa9d65f7a0e8bf6ce3b59c89af1bd6206912ab))
 - introduce abstract entity verticle ([331d5cee](https://github.com/SAP/neonbee/commit/331d5cee1e6ea55df9bd68ce81301deb78e2db67))
+- add Brotli compression library ([e469ab11](https://github.com/SAP/neonbee/commit/e469ab1131caaad0da9ce533b795a7093f615229))
 
 
 ## 0.37.11 (2025-09-03)
