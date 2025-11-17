@@ -2,26 +2,175 @@
   "nextVersion" : {
     "major" : 0,
     "minor" : 37,
-    "patch" : 13,
+    "patch" : 18,
     "preReleaseParts" : [ ],
     "buildMetaDataParts" : [ ],
     "preRelease" : "",
     "stable" : true,
-    "buildMetaData" : "",
-    "initialDevelopment" : true
+    "initialDevelopment" : true,
+    "buildMetaData" : ""
   },
   "lastVersion" : {
     "major" : 0,
     "minor" : 37,
-    "patch" : 12,
+    "patch" : 17,
     "preReleaseParts" : [ ],
     "buildMetaDataParts" : [ ],
     "preRelease" : "",
     "stable" : true,
-    "buildMetaData" : "",
-    "initialDevelopment" : true
+    "initialDevelopment" : true,
+    "buildMetaData" : ""
   },
   "tags" : [ {
+    "version" : {
+      "major" : 0,
+      "minor" : 37,
+      "patch" : 17,
+      "preReleaseParts" : [ ],
+      "buildMetaDataParts" : [ ],
+      "preRelease" : "",
+      "stable" : true,
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
+    },
+    "releaseDate" : "2025-11-17 09:02:40.000 +0100",
+    "sections" : [ {
+      "title" : "Bug Fixes",
+      "commits" : [ {
+        "hashFull" : "853ebf48a6d96d2c3db53e5a129cdf718be406a0",
+        "hash" : "853ebf48a6d96d2",
+        "hash7" : "853ebf4",
+        "hash8" : "853ebf48",
+        "commitTime" : "2025-11-17 08:10:39.000 +0100",
+        "commitTimeLong" : 1763363439,
+        "message" : "fix: odataproxy metadata request\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2025-11-14 15:31:33.000 +0100",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2025-11-17 08:10:39.000 +0100",
+          "name" : "halber",
+          "email" : "michael.halberstadt@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/853ebf48a6d96d2c3db53e5a129cdf718be406a0",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "odataproxy metadata request",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "odataproxy metadata request",
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "messageBody" : "",
+        "messageTitle" : "fix: odataproxy metadata request"
+      }, {
+        "hashFull" : "acf39499a1f7f2bd55f872a57b8d44c94acc9298",
+        "hash" : "acf39499a1f7f2b",
+        "hash7" : "acf3949",
+        "hash8" : "acf39499",
+        "commitTime" : "2025-11-17 09:02:29.000 +0100",
+        "commitTimeLong" : 1763366549,
+        "message" : "fix: revert release attempts:\n\nThis reverts the following commits:\nb38b949f846757ab2969a58595b9706dd9cf30d2\n21942f37415b31f3a10532bcadb6863318c3ec8c\n71406549e068b648e76010a6951ebb463dcb6764\n4f14a12f784f38e55aa3ee32c68933c2a28e34a3\ne8951e1530b787c85b701508e0d388359dccd496\n23e2bdbe268f2d9278e3a8f47d4bc39843d80f29\n09333bbfd5754bd9fc03396b94cbaae913952ed8\n6f223a69ccd6c72b354a890d8043b98f62e10c28\ne367895e2ff380d6371139c622927f378848f35e\nf987d91afe3d9a0fc8e7241af23e014ee2d5ecde\n40ef3a9f71b7ef04f48ecca9355ecc87ec94a17d\na0e9248ee7f7d2f0918a97881fb9667f3e4777bd\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2025-11-17 08:51:48.000 +0100",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2025-11-17 09:02:29.000 +0100",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/acf39499a1f7f2bd55f872a57b8d44c94acc9298",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "revert release attempts:",
+        "commitBody" : "This reverts the following commits:\nb38b949f846757ab2969a58595b9706dd9cf30d2\n21942f37415b31f3a10532bcadb6863318c3ec8c\n71406549e068b648e76010a6951ebb463dcb6764\n4f14a12f784f38e55aa3ee32c68933c2a28e34a3\ne8951e1530b787c85b701508e0d388359dccd496\n23e2bdbe268f2d9278e3a8f47d4bc39843d80f29\n09333bbfd5754bd9fc03396b94cbaae913952ed8\n6f223a69ccd6c72b354a890d8043b98f62e10c28\ne367895e2ff380d6371139c622927f378848f35e\nf987d91afe3d9a0fc8e7241af23e014ee2d5ecde\n40ef3a9f71b7ef04f48ecca9355ecc87ec94a17d\na0e9248ee7f7d2f0918a97881fb9667f3e4777bd",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "revert release attempts:",
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "messageBody" : "This reverts the following commits:\nb38b949f846757ab2969a58595b9706dd9cf30d2\n21942f37415b31f3a10532bcadb6863318c3ec8c\n71406549e068b648e76010a6951ebb463dcb6764\n4f14a12f784f38e55aa3ee32c68933c2a28e34a3\ne8951e1530b787c85b701508e0d388359dccd496\n23e2bdbe268f2d9278e3a8f47d4bc39843d80f29\n09333bbfd5754bd9fc03396b94cbaae913952ed8\n6f223a69ccd6c72b354a890d8043b98f62e10c28\ne367895e2ff380d6371139c622927f378848f35e\nf987d91afe3d9a0fc8e7241af23e014ee2d5ecde\n40ef3a9f71b7ef04f48ecca9355ecc87ec94a17d\na0e9248ee7f7d2f0918a97881fb9667f3e4777bd",
+        "messageTitle" : "fix: revert release attempts:"
+      }, {
+        "hashFull" : "732b3d6d92c76d630d4425bd0639d44ebffcb2c6",
+        "hash" : "732b3d6d92c76d6",
+        "hash7" : "732b3d6",
+        "hash8" : "732b3d6d",
+        "commitTime" : "2025-11-17 09:02:40.000 +0100",
+        "commitTimeLong" : 1763366560,
+        "message" : "fix: set version 0.37.17-SNAPSHOT\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2025-11-17 08:59:39.000 +0100",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2025-11-17 09:02:40.000 +0100",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/732b3d6d92c76d630d4425bd0639d44ebffcb2c6",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "set version 0.37.17-SNAPSHOT",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "set version 0.37.17-SNAPSHOT",
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "messageBody" : "",
+        "messageTitle" : "fix: set version 0.37.17-SNAPSHOT"
+      } ]
+    } ]
+  }, {
     "version" : {
       "major" : 0,
       "minor" : 37,
@@ -30,10 +179,10 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
-    "releaseDate" : "2025-11-03 11:06:04.000 +0100",
+    "releaseDate" : "2025-11-06 08:56:28.000 +0100",
     "sections" : [ {
       "title" : "Bug Fixes",
       "commits" : [ {
@@ -1796,6 +1945,50 @@
         "firstLocaleCommitScope" : null,
         "messageBody" : "- set response headers from DataContext responseData\n- changed how the FullQualifiedName is determined.",
         "messageTitle" : "fix: response headers and FullQualifiedName"
+      }, {
+        "hashFull" : "2194802639304c3b9177d846c54ac5052976eb4d",
+        "hash" : "2194802639304c3",
+        "hash7" : "2194802",
+        "hash8" : "21948026",
+        "commitTime" : "2025-11-05 12:14:54.000 +0100",
+        "commitTimeLong" : 1762341294,
+        "message" : "fix: brotli\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2025-11-04 12:37:19.000 +0100",
+          "name" : "Michael Halberstadt",
+          "email" : "michael.halberstadt@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2025-11-05 12:14:54.000 +0100",
+          "name" : "halber",
+          "email" : "michael.halberstadt@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/2194802639304c3b9177d846c54ac5052976eb4d",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "brotli",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "brotli",
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "messageBody" : "",
+        "messageTitle" : "fix: brotli"
       } ]
     }, {
       "title" : "Features",
@@ -1887,6 +2080,50 @@
         "firstLocaleCommitScope" : null,
         "messageBody" : "",
         "messageTitle" : "feat: introduce abstract entity verticle"
+      }, {
+        "hashFull" : "e469ab1131caaad0da9ce533b795a7093f615229",
+        "hash" : "e469ab1131caaad",
+        "hash7" : "e469ab1",
+        "hash8" : "e469ab11",
+        "commitTime" : "2025-11-05 12:14:54.000 +0100",
+        "commitTimeLong" : 1762341294,
+        "message" : "feat: add Brotli compression library\n\nBrotli is a compression format and an open-source compression algorithm which is widely used in applications and web servers to achieve high compression ratios and improve performance, particularly for web content.\n\nJira: SFMBBB-888\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2025-09-25 10:06:12.000 +0200",
+          "name" : "D072772",
+          "email" : "sunil.kumar.selvaraj@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2025-11-05 12:14:54.000 +0100",
+          "name" : "halber",
+          "email" : "michael.halberstadt@gmail.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/e469ab1131caaad0da9ce533b795a7093f615229",
+        "commitType" : "feat",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "add Brotli compression library",
+        "commitBody" : "Brotli is a compression format and an open-source compression algorithm which is widely used in applications and web servers to achieve high compression ratios and improve performance, particularly for web content.\n\nJira: SFMBBB-888",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "rawCommitType" : "feat",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "add Brotli compression library",
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "messageBody" : "Brotli is a compression format and an open-source compression algorithm which is widely used in applications and web servers to achieve high compression ratios and improve performance, particularly for web content.\n\nJira: SFMBBB-888",
+        "messageTitle" : "feat: add Brotli compression library"
       } ]
     } ]
   }, {
@@ -1898,8 +2135,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-09-03 14:14:03.000 +0200",
     "sections" : [ {
@@ -1959,8 +2196,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-09-02 12:15:26.000 +0200",
     "sections" : [ {
@@ -2020,8 +2257,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-09-02 09:33:14.000 +0200",
     "sections" : [ {
@@ -2389,8 +2626,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-06-18 12:21:36.000 +0200",
     "sections" : [ {
@@ -2538,8 +2775,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-06-17 09:31:09.000 +0200",
     "sections" : [ {
@@ -3529,8 +3766,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-01-24 17:14:56.000 +0100",
     "sections" : [ {
@@ -3634,8 +3871,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-01-24 14:30:56.000 +0100",
     "sections" : [ {
@@ -3739,8 +3976,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-01-21 10:36:24.000 +0100",
     "sections" : [ {
@@ -4155,8 +4392,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-10-31 14:21:10.000 +0100",
     "sections" : [ {
@@ -4263,8 +4500,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-08-21 14:18:38.000 +0200",
     "sections" : [ {
@@ -4368,8 +4605,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-08-05 11:39:56.000 +0200",
     "sections" : [ {
@@ -4872,8 +5109,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-06-06 18:05:12.000 +0200",
     "sections" : [ {
@@ -5156,8 +5393,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-05-03 14:48:39.000 +0200",
     "sections" : [ {
@@ -6059,8 +6296,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-03-27 12:47:05.000 +0100",
     "sections" : [ {
@@ -6384,8 +6621,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-03-13 16:29:41.000 +0100",
     "sections" : [ {
@@ -6756,8 +6993,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-02-14 12:11:30.000 +0100",
     "sections" : [ {
@@ -7219,8 +7456,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-01-22 15:39:10.000 +0100",
     "sections" : [ {
@@ -8234,8 +8471,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-11-20 14:56:39.000 +0100",
     "sections" : [ {
@@ -8474,8 +8711,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-11-16 13:48:28.000 +0100",
     "sections" : [ {
@@ -8579,8 +8816,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-11-14 15:09:14.000 +0100",
     "sections" : [ {
@@ -9262,8 +9499,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-10-02 14:24:16.000 +0200",
     "sections" : [ {
@@ -9634,8 +9871,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-09-05 09:51:06.000 +0200",
     "sections" : [ {
@@ -9921,8 +10158,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-07-25 16:38:30.000 +0200",
     "sections" : [ {
@@ -10262,8 +10499,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-06-29 15:11:48.000 +0200",
     "sections" : [ {
@@ -10323,8 +10560,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-06-27 16:06:58.000 +0200",
     "sections" : [ {
@@ -10516,8 +10753,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-06-19 13:07:52.000 +0200",
     "sections" : [ {
@@ -10577,8 +10814,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-06-14 09:00:41.000 +0200",
     "sections" : [ {
@@ -11436,8 +11673,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-05-12 15:57:08.000 +0200",
     "sections" : [ {
@@ -12031,8 +12268,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-03-27 12:13:21.000 +0200",
     "sections" : [ {
@@ -12409,8 +12646,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-03-07 16:13:57.000 +0100",
     "sections" : [ {
@@ -13861,8 +14098,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-01-19 17:00:06.000 +0100",
     "sections" : [ {
@@ -14734,8 +14971,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-11-15 13:57:10.000 +0100",
     "sections" : [ {
@@ -15070,8 +15307,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-10-24 10:44:48.000 +0200",
     "sections" : [ {
@@ -15360,8 +15597,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-10-12 17:43:37.000 +0200",
     "sections" : [ {
@@ -15421,8 +15658,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-10-11 11:31:42.000 +0200",
     "sections" : [ {
@@ -15708,8 +15945,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-10-05 11:46:05.000 +0200",
     "sections" : [ {
@@ -16180,8 +16417,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-08-30 13:15:07.000 +0200",
     "sections" : [ {
@@ -16376,8 +16613,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-08-10 09:09:11.000 +0200",
     "sections" : [ {
@@ -16622,8 +16859,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-07-14 16:23:19.000 +0200",
     "sections" : [ {
@@ -16862,8 +17099,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-07-13 08:29:40.000 +0200",
     "sections" : [ {
@@ -17202,8 +17439,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-06-06 16:06:00.000 +0200",
     "sections" : [ {
@@ -17263,8 +17500,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-06-03 12:13:06.000 +0200",
     "sections" : [ {
@@ -17876,8 +18113,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-03-07 22:17:58.000 +0100",
     "sections" : [ {
@@ -18210,8 +18447,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-02-17 17:52:27.000 +0100",
     "sections" : [ {
@@ -18271,8 +18508,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-02-15 17:58:20.000 +0100",
     "sections" : [ {
@@ -18423,8 +18660,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-01-27 11:41:02.000 +0100",
     "sections" : [ {
@@ -19031,8 +19268,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-12-15 15:08:44.000 +0100",
     "sections" : [ {
@@ -19274,8 +19511,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-11-23 12:25:14.000 +0100",
     "sections" : [ {
@@ -19382,8 +19619,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-10-05 13:44:34.000 +0200",
     "sections" : [ {
@@ -19443,8 +19680,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-10-04 15:47:42.000 +0200",
     "sections" : [ {
@@ -20930,8 +21167,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-07-27 09:22:26.000 +0200",
     "sections" : [ {
@@ -21264,8 +21501,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-06-07 07:52:14.000 +0200",
     "sections" : [ {
@@ -22839,8 +23076,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-03-18 14:45:15.000 +0100",
     "sections" : [ {
@@ -23223,8 +23460,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-03-10 16:24:12.000 +0100",
     "sections" : [ {
