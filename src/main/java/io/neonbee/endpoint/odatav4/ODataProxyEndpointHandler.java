@@ -25,6 +25,7 @@ import io.neonbee.data.DataRequest;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.endpoint.odatav4.internal.olingo.OlingoEndpointHandler;
 import io.neonbee.entity.AbstractEntityVerticle;
+import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -35,26 +36,79 @@ import io.vertx.ext.web.RoutingContext;
 
 public final class ODataProxyEndpointHandler implements Handler<RoutingContext> {
 
+    private static final LoggingFacade LOGGER = LoggingFacade.create();
+
     // Regex to find last path segment
     private static final Pattern ENTITY_NAME_PATTERN =
             Pattern.compile("/(\\w+)(?:\\([^)]*\\))?(?:/(\\w+))?$");
 
+    private static final String BASE_PATH_SEGMENT = "odataproxy";
+
     private final ServiceMetadata serviceMetadata;
+
+//    /**
+//     * All instances (optional, V4.01)
+//     */
+//    private final String allPath;
+
+    /**
+     * Overview of available resources
+     */
+    private final String availableResourcesPath;
+
+    /**
+     * Multiple operations in one request
+     */
+    private final String batchRequestPath;
+
+//    /**
+//     * Join entity sets
+//     */
+//    private final String crossjoinentityPath;
+//
+//    /**
+//     * Retrieve single entity raw
+//     */
+//    private final String entityPath;
+
+    /**
+     * EDM model
+     */
+    private final String metadataRequestPath;
 
     /**
      * Returns the ODataProxyEndpointHandler.
      *
      * @param serviceMetadata The metadata of the service
+     * @param uriConversion   The URI conversion strategy
      */
-    public ODataProxyEndpointHandler(ServiceMetadata serviceMetadata) {
+    public ODataProxyEndpointHandler(ServiceMetadata serviceMetadata, ODataV4Endpoint.UriConversion uriConversion) {
         this.serviceMetadata = serviceMetadata;
+        String requestNamespace = uriConversion.apply(serviceMetadata.getEdm().getEntityContainer().getNamespace());
+//        this.allPath = requestPath(requestNamespace, "$all");
+        this.availableResourcesPath = requestPath(requestNamespace, "");
+        this.batchRequestPath = requestPath(requestNamespace, "$batch");
+//        this.crossjoinentityPath = requestPath(requestNamespace, "$crossjoin"); // (A,B);
+//        this.entityPath = requestPath(requestNamespace, "$entity");
+        this.metadataRequestPath = requestPath(requestNamespace, "$metadata");
+    }
+
+    private static String requestPath(String requestNamespace, String function) {
+        return String.format("/%s/%s/%s", BASE_PATH_SEGMENT, requestNamespace, function);
     }
 
     @SuppressWarnings("unused") // normale Java-Warnung
     @Override
     public void handle(RoutingContext routingContext) {
 
-        if (routingContext.request().path().endsWith("$metadata")) {
+        String path = routingContext.request().path();
+        if (batchRequestPath.equals(path)) {
+            handleBatch(routingContext);
+            return;
+        }
+
+        if (availableResourcesPath.equals(path)
+                || metadataRequestPath.equals(path)) {
             handleMetadata(routingContext);
             return;
         }
@@ -63,9 +117,8 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
         FullQualifiedName fullQualifiedName;
 
         try {
-            ODataRequest odataRequest = mapToODataRequest(
-                    routingContext,
-                    serviceMetadata.getEdm().getEntityContainer().getNamespace());
+            String namespace = serviceMetadata.getEdm().getEntityContainer().getNamespace();
+            ODataRequest odataRequest = mapToODataRequest(routingContext, namespace);
 
             DataAction action = mapMethodToAction(routingContext.request().method());
             Buffer body = Optional.ofNullable(routingContext.body())
@@ -91,6 +144,10 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
             copyResponseDataToHttpResponse(context, response);
             response.end(buffer);
         }).onFailure(cause -> routingContext.fail(getStatusCode(cause), cause));
+    }
+
+    private void handleBatch(RoutingContext routingContext) {
+        LOGGER.warn("Batch request path {}", routingContext.request().path());
     }
 
     /**

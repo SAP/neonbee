@@ -250,7 +250,7 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
     @DisplayName("Test get request handler returns ODataProxyEndpointHandler")
     void testGetRequestHandlerReturnsODataProxyEndpointHandler() {
         ODataV4Endpoint endpoint = new ODataV4Endpoint();
-        assertThat(endpoint.getRequestHandler(null)).isInstanceOf(OlingoEndpointHandler.class);
+        assertThat(endpoint.getRequestHandler(null, STRICT)).isInstanceOf(OlingoEndpointHandler.class);
         // explicit JUnit assertion so static analysis recognizes this test has assertions
         assertNotNull(endpoint);
     }
