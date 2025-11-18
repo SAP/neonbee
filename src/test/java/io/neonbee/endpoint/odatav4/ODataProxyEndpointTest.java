@@ -13,6 +13,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import io.neonbee.config.EndpointConfig;
+import io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion;
 import io.neonbee.entity.EntityModel;
 
 class ODataProxyEndpointTest {
@@ -32,14 +33,15 @@ class ODataProxyEndpointTest {
         assertThat(defaultConfig.getType()).isEqualTo(ODataProxyEndpoint.class.getName());
         assertThat(defaultConfig.getBasePath()).isEqualTo(ODataProxyEndpoint.DEFAULT_BASE_PATH);
         assertThat(defaultConfig.getAdditionalConfig().getString("uriConversion"))
-                .isEqualTo(ODataV4Endpoint.UriConversion.STRICT.name());
+                .isEqualTo(UriConversion.STRICT.name());
     }
 
     @Test
     @DisplayName("Test get request handler returns ODataProxyEndpointHandler")
     void testGetRequestHandlerReturnsODataProxyEndpointHandler() {
         ODataProxyEndpoint endpoint = new ODataProxyEndpoint();
-        assertThat(endpoint.getRequestHandler(null)).isInstanceOf(ODataProxyEndpointHandler.class);
+        assertThat(endpoint.getRequestHandler(null, UriConversion.STRICT))
+                .isInstanceOf(ODataProxyEndpointHandler.class);
         // explicit JUnit assertion so static analysis recognizes this test has assertions
         assertNotNull(endpoint);
     }

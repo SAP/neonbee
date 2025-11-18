@@ -76,7 +76,9 @@ class ODataProxyEndpointHandlerTest {
                             return Future.succeededFuture(Buffer.buffer("the-body"));
                         });
 
-                ODataProxyEndpointHandler handler = new ODataProxyEndpointHandler(serviceMetadata);
+                ODataProxyEndpointHandler handler = new ODataProxyEndpointHandler(
+                        serviceMetadata,
+                        ODataV4Endpoint.UriConversion.STRICT);
                 handler.handle(routingContext);
 
                 // verify that status code and headers were set and response was ended
@@ -120,7 +122,9 @@ class ODataProxyEndpointHandlerTest {
                             .getStatusCode(any(Throwable.class)))
                     .thenReturn(400);
 
-            ODataProxyEndpointHandler handler = new ODataProxyEndpointHandler(serviceMetadata);
+            ODataProxyEndpointHandler handler = new ODataProxyEndpointHandler(
+                    serviceMetadata,
+                    ODataV4Endpoint.UriConversion.STRICT);
             handler.handle(routingContext);
 
             // verify that routingContext.fail was invoked with code 400

@@ -33,12 +33,13 @@ public class ODataProxyEndpoint extends ODataV4Endpoint {
     /**
      * Creates a new OData Proxy Endpoint.
      *
-     * @param edmxModel The EDMX model to be used by the handler.
+     * @param edmxModel     The EDMX model to be used by the handler.
+     * @param uriConversion The URI conversion strategy.
      * @return The request handler.
      */
     @Override
-    protected Handler<RoutingContext> getRequestHandler(ServiceMetadata edmxModel) {
-        return new ODataProxyEndpointHandler(edmxModel);
+    protected Handler<RoutingContext> getRequestHandler(ServiceMetadata edmxModel, UriConversion uriConversion) {
+        return new ODataProxyEndpointHandler(edmxModel, uriConversion);
     }
 
     /**

@@ -292,7 +292,7 @@ public class ODataV4Endpoint implements Endpoint {
                                     routingContext.next();
                                 })
                                 // TODO depending on the config either create Olingo or CDS based OData V4 handlers here
-                                .handler(getRequestHandler(edmxModel));
+                                .handler(getRequestHandler(edmxModel, uriConversion));
                         if (LOGGER.isInfoEnabled()) {
                             LOGGER.info("Serving OData service endpoint for {} at {}{} ({} URI mapping)",
                                     schemaNamespace, basePath, uriPath,
@@ -314,10 +314,11 @@ public class ODataV4Endpoint implements Endpoint {
     /**
      * Creates the request handler for the OData V4 endpoint.
      *
-     * @param edmxModel The EDMX model to be used by the handler.
+     * @param edmxModel     The EDMX model to be used by the handler.
+     * @param uriConversion The URI that is used.
      * @return The request handler.
      */
-    protected Handler<RoutingContext> getRequestHandler(ServiceMetadata edmxModel) {
+    protected Handler<RoutingContext> getRequestHandler(ServiceMetadata edmxModel, UriConversion uriConversion) {
         return new OlingoEndpointHandler(edmxModel);
     }
 
