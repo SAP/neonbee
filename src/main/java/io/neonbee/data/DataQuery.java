@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -188,10 +189,12 @@ public final class DataQuery { // NOPMD not a "god class"
      * @return the URL encoded query string
      */
     public String getRawQuery() {
-        return getQuery(s -> URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20"));
+        return getQuery(s -> s == null
+                ? ""
+                : URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20"));
     }
 
-    private String getQuery(Function<String, String> encoder) {
+    private String getQuery(UnaryOperator<String> encoder) {
         Function<String, Stream<String>> paramBuilder = name -> getParameterValues(name).stream()
                 .map(value -> String.format("%s=%s", encoder.apply(name), encoder.apply(value)));
 
@@ -302,7 +305,7 @@ public final class DataQuery { // NOPMD not a "god class"
         return parseQueryString(encodedQuery, s -> URLDecoder.decode(s, StandardCharsets.UTF_8));
     }
 
-    private static Map<String, List<String>> parseQueryString(String encodedQuery, Function<String, String> decoder) {
+    private static Map<String, List<String>> parseQueryString(String encodedQuery, UnaryOperator<String> decoder) {
         if (Strings.isNullOrEmpty(encodedQuery)) {
             return new HashMap<>();
         }
