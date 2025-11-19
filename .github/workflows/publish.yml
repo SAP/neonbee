@@ -100,7 +100,7 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USER }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
         run: |
-          ./gradlew clean publishAllPublicationsToMavenCentralRepository
+          ./gradlew clean build publishNeonbee-corePublicationToPreDeployRepository jreleaserDeploy
 
   publishRelease:
     runs-on: ubuntu-latest
