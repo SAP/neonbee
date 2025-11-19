@@ -6,11 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.stream.Stream;
 
+import org.apache.olingo.commons.api.edm.Edm;
+import org.apache.olingo.commons.api.edm.EdmEntityContainer;
+import org.apache.olingo.server.api.ServiceMetadata;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mockito;
 
 import io.neonbee.config.EndpointConfig;
 import io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion;
@@ -39,8 +43,16 @@ class ODataProxyEndpointTest {
     @Test
     @DisplayName("Test get request handler returns ODataProxyEndpointHandler")
     void testGetRequestHandlerReturnsODataProxyEndpointHandler() {
+        ServiceMetadata serviceMetadata = Mockito.mock(ServiceMetadata.class);
+        Edm edm = Mockito.mock(Edm.class);
+        EdmEntityContainer container = Mockito.mock(EdmEntityContainer.class);
+
+        Mockito.when(serviceMetadata.getEdm()).thenReturn(edm);
+        Mockito.when(edm.getEntityContainer()).thenReturn(container);
+        Mockito.when(container.getNamespace()).thenReturn("odataproxy");
+
         ODataProxyEndpoint endpoint = new ODataProxyEndpoint();
-        assertThat(endpoint.getRequestHandler(null, UriConversion.STRICT))
+        assertThat(endpoint.getRequestHandler(serviceMetadata, UriConversion.STRICT))
                 .isInstanceOf(ODataProxyEndpointHandler.class);
         // explicit JUnit assertion so static analysis recognizes this test has assertions
         assertNotNull(endpoint);

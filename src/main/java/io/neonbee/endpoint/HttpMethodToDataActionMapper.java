@@ -37,4 +37,26 @@ public class HttpMethodToDataActionMapper {
             return null;
         }
     }
+
+    /**
+     * Maps an HTTP method to a DataAction.
+     *
+     * @param method The HTTP method
+     * @return The corresponding DataAction, or null if no mapping exists
+     */
+    public static DataAction mapMethodToAction(org.apache.olingo.commons.api.http.HttpMethod method) {
+        if (org.apache.olingo.commons.api.http.HttpMethod.POST.equals(method)) {
+            return CREATE;
+        } else if (org.apache.olingo.commons.api.http.HttpMethod.HEAD.equals(method)
+                || org.apache.olingo.commons.api.http.HttpMethod.GET.equals(method)) {
+            return READ;
+        } else if (org.apache.olingo.commons.api.http.HttpMethod.PUT.equals(method)
+                || org.apache.olingo.commons.api.http.HttpMethod.PATCH.equals(method)) {
+            return UPDATE;
+        } else if (org.apache.olingo.commons.api.http.HttpMethod.DELETE.equals(method)) {
+            return DELETE;
+        } else {
+            return null;
+        }
+    }
 }

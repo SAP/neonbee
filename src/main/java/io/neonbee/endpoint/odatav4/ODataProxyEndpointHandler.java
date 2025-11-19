@@ -1,22 +1,39 @@
 package io.neonbee.endpoint.odatav4;
 
 import static io.neonbee.endpoint.HttpMethodToDataActionMapper.mapMethodToAction;
-import static io.neonbee.endpoint.odatav4.internal.olingo.OlingoEndpointHandler.getStatusCode;
 import static io.neonbee.endpoint.odatav4.internal.olingo.OlingoEndpointHandler.mapToODataRequest;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.AbstractMap;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.commons.api.ex.ODataRuntimeException;
+import org.apache.olingo.commons.api.format.ContentType;
+import org.apache.olingo.commons.api.http.HttpHeader;
+import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.OData;
 import org.apache.olingo.server.api.ODataRequest;
 import org.apache.olingo.server.api.ODataResponse;
 import org.apache.olingo.server.api.ServiceMetadata;
+import org.apache.olingo.server.api.deserializer.batch.BatchOptions;
+import org.apache.olingo.server.api.deserializer.batch.BatchRequestPart;
+import org.apache.olingo.server.api.deserializer.batch.ODataResponsePart;
+import org.apache.olingo.server.api.serializer.FixedFormatSerializer;
+import org.apache.olingo.server.core.deserializer.FixedFormatDeserializerImpl;
+import org.apache.olingo.server.core.deserializer.batch.BatchParserCommon;
+import org.apache.olingo.server.core.serializer.FixedFormatSerializerImpl;
 
 import io.neonbee.data.DataAction;
 import io.neonbee.data.DataContext;
@@ -30,6 +47,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
@@ -46,33 +65,18 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
 
     private final ServiceMetadata serviceMetadata;
 
-//    /**
-//     * All instances (optional, V4.01)
-//     */
-//    private final String allPath;
-
     /**
-     * Overview of available resources
+     * Overview of available resources.
      */
     private final String availableResourcesPath;
 
     /**
-     * Multiple operations in one request
+     * Multiple operations in one request.
      */
     private final String batchRequestPath;
 
-//    /**
-//     * Join entity sets
-//     */
-//    private final String crossjoinentityPath;
-//
-//    /**
-//     * Retrieve single entity raw
-//     */
-//    private final String entityPath;
-
     /**
-     * EDM model
+     * EDM model.
      */
     private final String metadataRequestPath;
 
@@ -85,11 +89,8 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
     public ODataProxyEndpointHandler(ServiceMetadata serviceMetadata, ODataV4Endpoint.UriConversion uriConversion) {
         this.serviceMetadata = serviceMetadata;
         String requestNamespace = uriConversion.apply(serviceMetadata.getEdm().getEntityContainer().getNamespace());
-//        this.allPath = requestPath(requestNamespace, "$all");
         this.availableResourcesPath = requestPath(requestNamespace, "");
         this.batchRequestPath = requestPath(requestNamespace, "$batch");
-//        this.crossjoinentityPath = requestPath(requestNamespace, "$crossjoin"); // (A,B);
-//        this.entityPath = requestPath(requestNamespace, "$entity");
         this.metadataRequestPath = requestPath(requestNamespace, "$metadata");
     }
 
@@ -101,75 +102,144 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
     @Override
     public void handle(RoutingContext routingContext) {
 
-        String path = routingContext.request().path();
-        if (batchRequestPath.equals(path)) {
-            handleBatch(routingContext);
-            return;
-        }
+        HttpServerRequest request = routingContext.request();
+        String path = request.path();
 
         if (availableResourcesPath.equals(path)
                 || metadataRequestPath.equals(path)) {
-            handleMetadata(routingContext);
+            handleMetadataRequest(routingContext);
             return;
         }
 
         DataQuery dataQuery;
-        FullQualifiedName fullQualifiedName;
+        ODataRequest odataRequest;
 
         try {
-            String namespace = serviceMetadata.getEdm().getEntityContainer().getNamespace();
-            ODataRequest odataRequest = mapToODataRequest(routingContext, namespace);
-
-            DataAction action = mapMethodToAction(routingContext.request().method());
+            DataAction action = mapMethodToAction(request.method());
             Buffer body = Optional.ofNullable(routingContext.body())
                     .map(RequestBody::buffer)
                     .orElse(Buffer.buffer());
+            String namespace = serviceMetadata.getEdm().getEntityContainer().getNamespace();
+            odataRequest = mapToODataRequest(routingContext, namespace);
             dataQuery = odataRequestToQuery(odataRequest, action, body);
-            fullQualifiedName = getFullQualifiedName(odataRequest);
         } catch (Exception cause) {
             routingContext.fail(getStatusCode(cause), cause);
             return;
         }
 
-        DataRequest dataRequest = new DataRequest(fullQualifiedName, dataQuery);
-        DataContextImpl context = new DataContextImpl(routingContext);
-        Future<Buffer> bufferFuture = AbstractEntityVerticle.requestEntity(
-                Buffer.class,
-                routingContext.vertx(),
-                dataRequest,
-                context);
+        DataContext context = new DataContextImpl();
+        Future<Buffer> bufferFuture;
+        if (HttpMethod.POST.equals(request.method()) && batchRequestPath.equals(path)) {
+            bufferFuture = handleBatchRequest(routingContext, context, odataRequest, dataQuery);
+        } else {
+            bufferFuture = handleEntityRequest(routingContext, context, odataRequest, dataQuery);
+        }
 
         bufferFuture.onSuccess(buffer -> {
             HttpServerResponse response = routingContext.response();
-            copyResponseDataToHttpResponse(context, response);
+            setHeaderValues(context.responseData(), response::putHeader);
+            response.setStatusCode(getStatusCode(context.responseData()));
             response.end(buffer);
-        }).onFailure(cause -> routingContext.fail(getStatusCode(cause), cause));
+        }).onFailure(cause -> {
+            LOGGER.correlateWith(routingContext).error("Error processing OData request", cause);
+            routingContext.fail(getStatusCode(cause), cause);
+        });
     }
 
-    private void handleBatch(RoutingContext routingContext) {
-        LOGGER.warn("Batch request path {}", routingContext.request().path());
+    static Future<Buffer> handleEntityRequest(
+            RoutingContext routingContext,
+            DataContext context,
+            ODataRequest odataRequest,
+            DataQuery dataQuery) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.correlateWith(routingContext).debug("Entity request path {}", routingContext.request().path());
+        }
+
+        FullQualifiedName fullQualifiedName = getFullQualifiedName(odataRequest);
+        DataRequest dataRequest = new DataRequest(fullQualifiedName, dataQuery);
+        return AbstractEntityVerticle.requestEntity(Buffer.class, routingContext.vertx(), dataRequest, context);
+    }
+
+    /**
+     * Handles entity requests. We do NOT support change sets os far!
+     *
+     * @param routingContext The routing context
+     * @param context        The data context
+     * @param odataRequest   The OData request
+     * @param dataQuery      The data query
+     * @return A future with the result buffer
+     */
+    static Future<Buffer> handleBatchRequest(
+            RoutingContext routingContext,
+            DataContext context,
+            ODataRequest odataRequest,
+            DataQuery dataQuery) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.correlateWith(routingContext).debug("Batch request path {}", routingContext.request().path());
+        }
+
+        String requestContentType = odataRequest.getHeader(HttpHeader.CONTENT_TYPE);
+        List<Future<ODataResponsePart>> responseParts;
+        try {
+            String boundary = BatchParserCommon.getBoundary(requestContentType, 0);
+            BatchOptions options = BatchOptions.with().rawBaseUri(odataRequest.getRawBaseUri())
+                    .rawServiceResolutionUri(odataRequest.getRawServiceResolutionUri()).build();
+
+            List<BatchRequestPart> requestParts = new FixedFormatDeserializerImpl()
+                    .parseBatchRequest(odataRequest.getBody(), boundary, options);
+
+            responseParts = requestParts.stream().map(BatchRequestPart::getRequests)
+                    .flatMap(Collection::stream)
+                    .map(req -> getODataResponsePart(routingContext, context, req))
+                    .toList();
+        } catch (Exception e) {
+            return Future.failedFuture(e);
+        }
+
+        return Future.all(responseParts)
+                .map(response -> {
+                    // set headers and status code
+                    String responseBoundary = "batch_" + UUID.randomUUID();
+
+                    String responseContentType = ContentType.MULTIPART_MIXED + ";boundary=" + responseBoundary;
+                    context.responseData().put(HttpHeader.CONTENT_TYPE, responseContentType);
+                    context.responseData().put(DataContext.STATUS_CODE_HINT,
+                            HttpStatusCode.ACCEPTED.getStatusCode());
+
+                    List<ODataResponsePart> list = responseParts.stream().map(Future::result).toList();
+                    byte[] bytes;
+                    FixedFormatSerializer fixedFormatSerializer = new FixedFormatSerializerImpl();
+                    try (InputStream responseContent = fixedFormatSerializer.batchResponse(list, responseBoundary)) {
+                        bytes = responseContent.readAllBytes();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    return Buffer.buffer(bytes);
+                });
     }
 
     /**
      * Handles the $metadata request.
      *
      * @param routingContext The routing context
+     * @return A future with the OData response
      */
-    public void handleMetadata(RoutingContext routingContext) {
+    Future<ODataResponse> handleMetadataRequest(RoutingContext routingContext) {
         Vertx vertx = routingContext.vertx();
-        vertx.executeBlocking(() -> {
+        return vertx.executeBlocking(() -> {
             OData odata = OData.newInstance();
             String namespace = serviceMetadata.getEdm().getEntityContainer().getNamespace();
             return odata.createRawHandler(serviceMetadata)
                     .process(mapToODataRequest(routingContext, namespace));
-        }).onComplete(asyncODataResponse -> {
-            if (asyncODataResponse.failed()) {
-                Throwable cause = asyncODataResponse.cause();
+        }).onComplete(asyncResult -> {
+            if (asyncResult.failed()) {
+                Throwable cause = asyncResult.cause();
                 routingContext.fail(getStatusCode(cause), cause);
                 return;
             }
 
-            ODataResponse odataResponse = asyncODataResponse.result();
+            ODataResponse odataResponse = asyncResult.result();
             try {
                 // map the odataResponse to the routingContext.response
                 OlingoEndpointHandler.mapODataResponse(odataResponse, routingContext.response());
@@ -179,33 +249,43 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
         });
     }
 
-    /**
-     * Copy all entries from {@code context.responseData()} into the provided {@code HttpServerResponse} headers.
-     *
-     * @param context  the data context containing the response data map; may be null
-     * @param response the HTTP response where headers will be written; may be null
-     */
-    private static void copyResponseDataToHttpResponse(DataContext context, HttpServerResponse response) {
-        Map<String, Object> respData = context.responseData();
-        for (Map.Entry<String, Object> e : respData.entrySet()) {
-            String name = e.getKey();
-            Object value = e.getValue();
-
-            if (DataContext.STATUS_CODE_HINT.equals(name)) {
-                response.setStatusCode((Integer) value);
-                continue;
-            }
-
-            if (value instanceof Iterable<?>) {
-                for (Object v : (Iterable<?>) value) {
-                    if (v != null) {
-                        response.putHeader(name, v.toString());
-                    }
-                }
-            } else {
-                response.putHeader(name, value.toString());
-            }
+    static Future<ODataResponsePart> getODataResponsePart(
+            RoutingContext routingContext,
+            DataContext context,
+            ODataRequest odataRequest) {
+        Buffer body;
+        try {
+            body = Buffer.buffer(odataRequest.getBody().readAllBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+        DataContext contextCopy = context.copy();
+        DataAction action = mapMethodToAction(odataRequest.getMethod());
+        DataQuery partDataQuery = odataRequestToQuery(odataRequest, action, body);
+        return handleEntityRequest(routingContext, contextCopy, odataRequest, partDataQuery)
+                .map(buffer -> createODataResponse(contextCopy, buffer))
+                .map(odataResponse -> new ODataResponsePart(odataResponse, false));
+    }
+
+    /**
+     * Creates an ODataResponse from the DataContext and Buffer.
+     *
+     * @param context The data context
+     * @param buffer  The response buffer
+     * @return The ODataResponse
+     */
+    static ODataResponse createODataResponse(DataContext context, Buffer buffer) {
+        ODataResponse response = new ODataResponse();
+        Map<String, Object> respData = context.responseData();
+        response.setStatusCode(getStatusCode(respData));
+
+        // Because org.apache.olingo.server.api.ODataResponse.addHeader(java.lang.String, java.lang.String) overrides
+        // the previous value, we need to use
+        // org.apache.olingo.server.api.ODataResponse.addHeader(java.lang.String, java.util.List<java.lang.String>)
+        // see: https://github.com/apache/olingo-odata4/pull/174
+        setHeaderValues(respData, (k, v) -> response.addHeader(k, List.of(v)));
+        response.setContent(new ByteArrayInputStream(buffer.getBytes()));
+        return response;
     }
 
     /**
@@ -214,7 +294,7 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
      * @param odataRequest The ODataRequest
      * @return The FullQualifiedName
      */
-    private FullQualifiedName getFullQualifiedName(ODataRequest odataRequest) {
+    static FullQualifiedName getFullQualifiedName(ODataRequest odataRequest) {
         Matcher matcher = ENTITY_NAME_PATTERN.matcher(odataRequest.getRawODataPath());
         if (matcher.matches()) {
             return new FullQualifiedName(odataRequest.getRawServiceResolutionUri(), matcher.group(1));
@@ -224,12 +304,57 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
         }
     }
 
-    private static DataQuery odataRequestToQuery(ODataRequest request, DataAction action, Buffer body) {
+    static DataQuery odataRequestToQuery(ODataRequest request, DataAction action, Buffer body) {
         // the uriPath without /odata root path and without query path
         String uriPath = "/" + request.getRawServiceResolutionUri() + request.getRawODataPath();
         // the raw query path
         Map<String, List<String>> stringListMap = DataQuery.parseEncodedQueryString(request.getRawQueryPath());
-        return new DataQuery(action, uriPath, stringListMap, request.getAllHeaders(), body).addHeader("X-HTTP-Method",
-                request.getMethod().name());
+        return new DataQuery(action, uriPath, stringListMap, request.getAllHeaders(), body)
+                .addHeader("X-HTTP-Method", request.getMethod().name());
+    }
+
+    /**
+     * Sets the header values from the response data map using the provided operator.
+     *
+     * @param respData               The response data map
+     * @param addHeaderValueOperator The operator to add header values. This operator can be called multiple times for
+     *                               with same header key with different values.
+     */
+    static void setHeaderValues(Map<String, Object> respData, BiConsumer<String, String> addHeaderValueOperator) {
+        respData.entrySet().stream()
+                .filter(e -> !DataContext.STATUS_CODE_HINT.equals(e.getKey()))
+                .flatMap(e -> {
+                    String key = e.getKey();
+                    Object value = e.getValue();
+                    if (value instanceof Iterable<?> iterable) {
+                        return StreamSupport.stream(iterable.spliterator(), false)
+                                .map(v -> new AbstractMap.SimpleEntry<>(key, v));
+                    } else {
+                        return Stream.of(new AbstractMap.SimpleEntry<>(key, value));
+                    }
+                }).forEach(e -> {
+                    String value = e.getValue() == null ? null : e.getValue().toString();
+                    addHeaderValueOperator.accept(e.getKey(), value);
+                });
+    }
+
+    /**
+     * Retrieves the status code from the response data map.
+     *
+     * @param respData The response data map
+     * @return The status code
+     */
+    static Integer getStatusCode(Map<String, Object> respData) {
+        return (Integer) respData.get(DataContext.STATUS_CODE_HINT);
+    }
+
+    /**
+     * Retrieves the status code from the Throwable cause.
+     *
+     * @param cause The Throwable cause
+     * @return The status code
+     */
+    static int getStatusCode(Throwable cause) {
+        return OlingoEndpointHandler.getStatusCode(cause);
     }
 }
