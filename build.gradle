@@ -439,6 +439,16 @@ task release(type: Exec) {
     }
 }
 
+repositories {
+    maven {
+        name = "PreDeploy"
+        url = uri(layout.buildDirectory.dir("pre-deploy"))
+    }
+}
+
+signing {
+    setRequired { false }
+}
 
 jreleaser {
     signing {
@@ -461,6 +471,12 @@ jreleaser {
                     stagingRepository('build/pre-deploy')
                 }
             }
+        }
+    }
+
+    release {
+        github {
+            enabled = false
         }
     }
 }
