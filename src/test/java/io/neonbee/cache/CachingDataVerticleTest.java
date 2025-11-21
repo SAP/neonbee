@@ -324,4 +324,40 @@ class CachingDataVerticleTest extends DataVerticleTestBase {
                         assertDataEquals(requestData(dr), 2, testContext)))
                 .onComplete(testContext.succeedingThenComplete());
     }
+
+    @Test
+    @DisplayName("FilterDataFromCache should be called for each data request even if data is in the cache")
+    void callFilterDataFromCacheOnEachDataRequest(VertxTestContext testContext) {
+        CachingDataVerticle<Integer> testClass = new CachingDataVerticle<>() {
+            int filterCallCounter;
+
+            @Override
+            public String getName() {
+                return "TestCachingVerticle";
+            }
+
+            @Override
+            public Future<Collection<DataRequest>> requireDataForCaching(DataQuery query, DataContext context) {
+                return Future.succeededFuture(List.of());
+            }
+
+            @Override
+            public Future<Integer> retrieveDataToCache(DataQuery query, DataMap require, DataContext context) {
+                return Future.succeededFuture(1);
+            }
+
+            @Override
+            protected Future<Integer> filterDataFromCache(DataQuery query, Integer data, DataContext context) {
+                filterCallCounter++;
+                return Future.succeededFuture(filterCallCounter);
+            }
+
+        };
+
+        DataRequest dr = new DataRequest(testClass.getName());
+        deployVerticle(testClass)
+                .compose(id -> assertDataEquals(requestData(dr), 1, testContext))
+                .compose(v -> assertDataEquals(requestData(dr), 2, testContext))
+                .onComplete(testContext.succeedingThenComplete());
+    }
 }
