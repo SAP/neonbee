@@ -450,7 +450,10 @@ signing {
     setRequired { false }
 }
 
+
 jreleaser {
+    outputDirectory = layout.buildDirectory.dir("jreleaser").get().asFile.absolutePath
+
     signing {
         active = 'ALWAYS'
         armored = true
