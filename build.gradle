@@ -481,3 +481,13 @@ jreleaser {
         }
     }
 }
+
+tasks.register('prepareJreleaserDir') {
+    doLast {
+        mkdir("$buildDir/jreleaser")
+    }
+}
+
+tasks.named('jreleaserDeploy') {
+    dependsOn 'prepareJreleaserDir', 'publishCorePublicationToPreDeployRepository'
+}
