@@ -127,7 +127,7 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
             return;
         }
 
-        DataContext context = new DataContextImpl();
+        DataContext context = new DataContextImpl(routingContext);
         Future<Buffer> bufferFuture;
         if (HttpMethod.POST.equals(request.method()) && batchRequestPath.equals(path)) {
             bufferFuture = handleBatchRequest(routingContext, context, odataRequest, dataQuery);
