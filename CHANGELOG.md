@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.37.20 (2025-11-25)
+
+### Bug Fixes
+
+- release(snapshot) 0.37.20-SNAPSHOT ([765f6a8f](https://github.com/SAP/neonbee/commit/765f6a8f0721b8cb599d986ad0f6df813add28bc))
+- odataproxy datacontext ([df3fdcbc](https://github.com/SAP/neonbee/commit/df3fdcbcd0fc4c2168bef5ada6484d46838d965e))
+
+
 ## 0.37.19 (2025-11-25)
 
 ### Reverts
