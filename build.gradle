@@ -11,7 +11,6 @@ plugins {
 
 
     // community plugins
-    id 'org.jreleaser' version '1.15.0'
     id 'com.diffplug.spotless' version '6.25.0'
     id 'net.ltgt.errorprone' version '4.0.1'
     id 'com.github.spotbugs' version '6.0.19'
@@ -435,49 +434,6 @@ task release(type: Exec) {
             commandLine 'cmd', '/c', 'gradle/release.sh', nextVersion
         } else {
             commandLine 'sh', '-c', "./gradle/release.sh ${nextVersion}"
-        }
-    }
-}
-
-repositories {
-    maven {
-        name = "PreDeploy"
-        url = uri(layout.buildDirectory.dir("pre-deploy"))
-    }
-}
-
-signing {
-    setRequired { false }
-}
-
-
-jreleaser {
-    signing {
-        active = 'ALWAYS'
-        armored = true
-        mode = 'FILE'
-        publicKey = 'public.key'
-        secretKey = 'private.key'
-        passphrase = providers.environmentVariable('ORG_GRADLE_PROJECT_signingPassword')
-    }
-
-    deploy {
-        maven {
-            mavenCentral {
-                sonatype {
-                    active = 'ALWAYS'
-                    url = 'https://central.sonatype.com/api/v1/publisher'
-                    username = providers.environmentVariable('ORG_GRADLE_PROJECT_mavenCentralUsername')
-                    password = providers.environmentVariable('ORG_GRADLE_PROJECT_mavenCentralPassword')
-                    stagingRepository('build/pre-deploy')
-                }
-            }
-        }
-    }
-
-    release {
-        github {
-            enabled = false
         }
     }
 }
