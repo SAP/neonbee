@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.37.19 (2025-11-25)
+
+### Reverts
+
+- release: 0.37.19 commits ([94988ea3](https://github.com/SAP/neonbee/commit/94988ea3c37388a558c1673cc56dbd820b79d285))
+
+
+### Bug Fixes
+
+- treat null query name/value as empty ([78d7abb7](https://github.com/SAP/neonbee/commit/78d7abb796cc7b5b51579340366da4cdb598d8c8))
+- odataproxy metadata ([55621594](https://github.com/SAP/neonbee/commit/55621594fc5ad1a44bed8f2bb763d263db04b7bf))
+
+
+### Features
+
+- odataproxy batch handling and test ([ad857cd6](https://github.com/SAP/neonbee/commit/ad857cd6828c73e4dd428a7acc3e98681c672d86))
+
+
+## 0.37.18 (2025-11-17)
+
 ## 0.37.17 (2025-11-17)
 
 ### Bug Fixes
