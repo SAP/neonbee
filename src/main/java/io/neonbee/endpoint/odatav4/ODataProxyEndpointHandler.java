@@ -138,7 +138,8 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
         bufferFuture.onSuccess(buffer -> {
             HttpServerResponse response = routingContext.response();
             setHeaderValues(context.responseData(), response::putHeader);
-            response.setStatusCode(getStatusCode(context.responseData()));
+            response.putHeader("OData-Version", "4.0");
+            response.setStatusCode(getStatusCode(context.responseData(), HttpStatusCode.OK.getStatusCode()));
             response.end(buffer);
         }).onFailure(cause -> {
             LOGGER.correlateWith(routingContext).error("Error processing OData request", cause);
@@ -355,7 +356,7 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
      * @param defaultCode The default status code
      * @return The status code
      */
-    static Integer getStatusCode(Map<String, Object> respData, int defaultCode) {
+    static Integer getStatusCode(Map<String, Object> respData, Integer defaultCode) {
         return (Integer) respData.getOrDefault(DataContext.STATUS_CODE_HINT, defaultCode);
     }
 
