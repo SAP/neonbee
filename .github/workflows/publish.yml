@@ -251,3 +251,55 @@ jobs:
           body: ${{ steps.setChangelog.outputs.releaseBody }}
           draft: true
           prerelease: false
+
+      - name: Search and Upload to Maven Central
+        env:
+          MAVEN_USER: ${{ secrets.MAVEN_CENTRAL_USER }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: |
+          echo "Generating Maven token..."
+          
+          # Generate the Maven token from username and password
+          # Using env variables prevents issues with special characters like !
+          MAVEN_TOKEN=$(printf '%s:%s' "$MAVEN_USER" "$MAVEN_PASSWORD" | base64 -w 0)
+          
+          echo "Searching for open repository..."
+          
+          # Make the search request and capture the response
+          RESPONSE=$(curl -s -X 'GET' \
+            'https://ossrh-staging-api.central.sonatype.com/manual/search/repositories?profile_id=io.neonbee&state=open&ip=any' \
+            -H 'accept: application/json' \
+            -H "Authorization: Bearer $MAVEN_TOKEN")
+          
+          echo "Response: $RESPONSE"
+          
+          # Extract the key from the JSON response using jq
+          REPO_KEY=$(echo "$RESPONSE" | jq -r '.repositories[0].key // empty')
+          
+          # Check if we found a key
+          if [ -z "$REPO_KEY" ]; then
+            echo "No open repository found. Exiting."
+            exit 1
+          fi
+          
+          echo "Found repository key: $REPO_KEY"
+          
+          # Extract the state to verify it's open
+          STATE=$(echo "$RESPONSE" | jq -r '.repositories[0].state // empty')
+          
+          if [ "$STATE" != "open" ]; then
+            echo "Repository state is not 'open'. Current state: $STATE"
+            exit 1
+          fi
+          
+          echo "Repository state confirmed as 'open'. Proceeding with upload..."
+          
+          # Construct the upload URL and make the POST request
+          UPLOAD_URL="https://ossrh-staging-api.central.sonatype.com/manual/upload/repository/${REPO_KEY}"
+          
+          echo "Uploading to: $UPLOAD_URL"
+          
+          curl -H "Authorization: Bearer $MAVEN_TOKEN" \
+            -i -X POST "$UPLOAD_URL"
+          
+          echo "Upload request completed."
