@@ -138,7 +138,8 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
         bufferFuture.onSuccess(buffer -> {
             HttpServerResponse response = routingContext.response();
             setHeaderValues(context.responseData(), response::putHeader);
-            response.setStatusCode(getStatusCode(context.responseData()));
+            response.putHeader("OData-Version", "4.0");
+            response.setStatusCode(getStatusCode(context.responseData(), HttpStatusCode.OK.getStatusCode()));
             response.end(buffer);
         }).onFailure(cause -> {
             LOGGER.correlateWith(routingContext).error("Error processing OData request", cause);
@@ -277,7 +278,7 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
     static ODataResponse createODataResponse(DataContext context, Buffer buffer) {
         ODataResponse response = new ODataResponse();
         Map<String, Object> respData = context.responseData();
-        response.setStatusCode(getStatusCode(respData));
+        response.setStatusCode(getStatusCode(respData, HttpStatusCode.ACCEPTED.getStatusCode()));
 
         // Because org.apache.olingo.server.api.ODataResponse.addHeader(java.lang.String, java.lang.String) overrides
         // the previous value, we need to use
@@ -345,7 +346,18 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
      * @return The status code
      */
     static Integer getStatusCode(Map<String, Object> respData) {
-        return (Integer) respData.get(DataContext.STATUS_CODE_HINT);
+        return getStatusCode(respData, -1);
+    }
+
+    /**
+     * Retrieves the status code from the response data map.
+     *
+     * @param respData    The response data map
+     * @param defaultCode The default status code
+     * @return The status code
+     */
+    static Integer getStatusCode(Map<String, Object> respData, int defaultCode) {
+        return (Integer) respData.getOrDefault(DataContext.STATUS_CODE_HINT, defaultCode);
     }
 
     /**

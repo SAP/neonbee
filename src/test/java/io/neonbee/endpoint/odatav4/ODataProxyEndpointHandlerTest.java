@@ -317,7 +317,13 @@ class ODataProxyEndpointHandlerTest {
         assertThat(code).isEqualTo(123);
 
         Integer absent = ODataProxyEndpointHandler.getStatusCode(Map.of());
-        assertThat(absent).isNull();
+        assertThat(absent).isEqualTo(-1);
+
+        Integer defaultValue = ODataProxyEndpointHandler.getStatusCode(Map.of(), 404);
+        assertThat(defaultValue).isEqualTo(404);
+
+        Integer hintCode = ODataProxyEndpointHandler.getStatusCode(Map.of(DataContext.STATUS_CODE_HINT, 123), 404);
+        assertThat(hintCode).isEqualTo(123);
 
         // throwable-based status code delegates to OlingoEndpointHandler
         try (MockedStatic<io.neonbee.endpoint.odatav4.internal.olingo.OlingoEndpointHandler> olingoMock =
