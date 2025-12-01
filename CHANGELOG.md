@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.37.21 (2025-12-01)
+
+### Bug Fixes
+
+- set header odata-version: 4.0 ([e74a82a5](https://github.com/SAP/neonbee/commit/e74a82a51b011d3313b5949943c194a0226149ce))
+- set default status code ([e25d993c](https://github.com/SAP/neonbee/commit/e25d993c1936740277fccaa39347ff4b90fa2414))
+
+
 ## 0.37.20 (2025-11-25)
 
 ### Bug Fixes
