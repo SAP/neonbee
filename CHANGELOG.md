@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.37.22 (2025-12-01)
+
+### Reverts
+
+- release commits ([28d342af](https://github.com/SAP/neonbee/commit/28d342afeddf00b23704354af650f48f91dddc35))
+
+
 ## 0.37.21 (2025-12-01)
 
 ### Bug Fixes
