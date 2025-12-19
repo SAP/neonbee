@@ -149,7 +149,20 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
         return neonBee.getModelManager().getSharedModel(EntityModelDefinition.retrieveNamespace(serviceName))
                 .compose(entityModel -> neonBee.getVertx().executeBlocking(
                         () -> new Parser(entityModel.getEdmxMetadata(serviceName).getEdm(), getBufferedOData())
-                                .parseUri(uriMatcher.group(ENTITY_PATH_GROUP), query.getRawQuery(), EMPTY, EMPTY)));
+                                .parseUri(buildPath(uriMatcher), query.getRawQuery(), EMPTY, EMPTY)));
+    }
+
+    /**
+     * Builds the path part for the OData UriInfo from the given matcher.
+     *
+     * @param m the matcher to build the path from
+     * @return the built path
+     */
+    private static String buildPath(Matcher m) {
+        String base = m.group(ENTITY_PATH_GROUP);
+        String prop = m.group(ENTITY_PROPERTY_NAME_GROUP);
+
+        return (prop == null) ? base : base + '/' + prop;
     }
 
     /**
