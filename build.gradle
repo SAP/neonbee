@@ -7,6 +7,7 @@ plugins {
     id 'jacoco'
     id 'pmd'
     id 'checkstyle'
+    id 'java-library'
 
 
 
@@ -35,6 +36,34 @@ project.ext {
     distributionDir = file("${buildDir}/dist")
     distributionLibsDir = file("${distributionDir}/libs")
     generatedTrustStorePassword = UUID.randomUUID().toString()
+
+    brotli4jVersion = '1.20.0' // https://mvnrepository.com/artifact/com.aayushatharva.brotli4j/brotli4
+    brotli4jArchitecture = {
+        def os = DefaultNativePlatform.currentOperatingSystem
+        def arch = DefaultNativePlatform.currentArchitecture
+
+        if (os.windows) {
+            if (arch.amd64) return "windows-x86_64"
+            if (arch.arm64) return "windows-aarch64"
+        }
+
+        if (os.macOsX) {
+            return arch.arm64 ? "osx-aarch64" : "osx-x86_64"
+        }
+
+        if (os.linux) {
+            if (arch.arm64)   return "linux-aarch64"
+            if (arch.amd64)   return "linux-x86_64"
+            if (arch.armV7)   return "linux-armv7"
+            if (arch.ppc64le) return "linux-ppc64le"
+            if (arch.s390x)   return "linux-s390x"
+            if (arch.riscv64) return "linux-riscv64"
+        }
+
+        throw new GradleException(
+            "Unsupported platform: ${os.displayName} / ${arch.displayName}"
+        )
+    }.call()
 }
 
 repositories {
@@ -99,31 +128,8 @@ dependencies {
     implementation group: 'com.google.guava', name: 'guava', version: guava_version
     implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.8.6'
 
-    def brotli4j_version = '1.20.0'  // https://mvnrepository.com/artifact/com.aayushatharva.brotli4j/brotli4
-    def brotli4j_architecture = """${
-        def operatingSystem = DefaultNativePlatform.getCurrentOperatingSystem()
-        def currentArchitecture = DefaultNativePlatform.getCurrentArchitecture()
-        if (operatingSystem.isWindows()) {
-            if (currentArchitecture.isAmd64()) "windows-x86_64"
-            else if (currentArchitecture.isArm64()) "windows-aarch64"
-            else throw new IllegalStateException("Unsupported architecture: ${currentArchitecture.getName()}")
-        } else if (operatingSystem.isMacOsX()) {
-            if (currentArchitecture.isArm64()) "osx-aarch64"
-            else "osx-x86_64"
-        } else if (operatingSystem.isLinux()) {
-            if (currentArchitecture.isArm64()) "linux-aarch64"
-            else if (currentArchitecture.isAmd64()) "linux-x86_64"
-            else if (currentArchitecture.isARM_V7()) "linux-armv7"
-            else if (currentArchitecture.isPPC64LE()) "linux-ppc64le"
-            else if (currentArchitecture.isS390X()) "linux-s390x"
-            else if (currentArchitecture.isRISCV64()) "linux-riscv64"
-            else throw new IllegalStateException("Unsupported architecture: ${currentArchitecture.getName()}")
-        } else {
-            throw new IllegalStateException("Unsupported operating system: $operatingSystem")
-        }
-    }"""
-    implementation group: 'com.aayushatharva.brotli4j', name: 'brotli4j', version: brotli4j_version
-    runtimeOnly group: 'com.aayushatharva.brotli4j', name: 'native-' + brotli4j_architecture, version: brotli4j_version
+    implementation "com.aayushatharva.brotli4j:brotli4j:$brotli4jVersion"
+    api "com.aayushatharva.brotli4j:native-$brotli4jArchitecture:$brotli4jVersion"
 
     // Compile only
     compileOnly group: 'io.vertx', name: 'vertx-codegen', version: vertx_version
