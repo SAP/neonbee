@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -101,7 +102,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.eventbus.MessageCodec;
-import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.PfxOptions;
@@ -184,7 +184,7 @@ public class NeonBee {
 
     private AsyncMap<String, Object> sharedAsyncMap;
 
-    private final Set<String> localConsumers = new ConcurrentHashSet<>();
+    private final Set<String> localConsumers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final EntityModelManager modelManager;
 

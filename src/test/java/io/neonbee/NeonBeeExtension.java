@@ -359,7 +359,7 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
             // additional logic for tests, due to Hazelcast / Infinispan clusters tend to get stuck, after test
             // execution finishes, thus we forcefully will terminate the clusters at some point in time
             Vertx vertx = neonBee.getVertx();
-            ClusterManager clusterManager = vertx instanceof VertxImpl ? ((VertxImpl) vertx).getClusterManager() : null;
+            ClusterManager clusterManager = vertx instanceof VertxImpl ? ((VertxImpl) vertx).clusterManager() : null;
             if (clusterManager != null) {
                 Executors.newSingleThreadScheduledExecutor(runnable -> {
                     Thread thread = new Thread(runnable, "neonbee-cluster-terminator");

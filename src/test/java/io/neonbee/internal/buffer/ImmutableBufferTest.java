@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import org.junit.jupiter.api.Test;
 
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.internal.buffer.BufferInternal;
 
 @SuppressWarnings("deprecation") // see https://github.com/SAP/neonbee/issues/387
 class ImmutableBufferTest {
@@ -33,13 +34,13 @@ class ImmutableBufferTest {
 
     @Test
     void testGetBuffer() {
-        Buffer anyBuffer = Buffer.buffer("any");
+        BufferInternal anyBuffer = BufferInternal.buffer("any");
         Buffer anyImmutableBuffer = ImmutableBuffer.buffer(anyBuffer).getBuffer();
         assertThat(anyBuffer).isEqualTo(anyImmutableBuffer);
         assertThat(anyBuffer.getByteBuf().isReadOnly()).isFalse();
-        assertThat(anyImmutableBuffer.getByteBuf().isReadOnly()).isTrue();
-        assertThat(anyImmutableBuffer.getByteBuf().isWritable()).isFalse();
-        assertThrows(IndexOutOfBoundsException.class, () -> anyImmutableBuffer.getByteBuf().writeInt(1));
+        assertThat(anyBuffer.getByteBuf().isReadOnly()).isTrue();
+        assertThat(anyBuffer.getByteBuf().isWritable()).isFalse();
+        assertThrows(IndexOutOfBoundsException.class, () -> anyBuffer.getByteBuf().writeInt(1));
     }
 
     @Test

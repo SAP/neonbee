@@ -9,6 +9,7 @@ import java.nio.charset.Charset;
 import io.netty.buffer.ByteBuf;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.buffer.impl.BufferImpl;
+import io.vertx.core.internal.buffer.BufferInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -73,7 +74,7 @@ public final class ImmutableBuffer implements Buffer {
      * @param buffer the buffer to wrap
      */
     ImmutableBuffer(Buffer buffer) {
-        this(requireNonNull(buffer), buffer.getByteBuf());
+        this(requireNonNull(buffer), ((BufferInternal) buffer).getByteBuf());
     }
 
     /**
@@ -82,18 +83,18 @@ public final class ImmutableBuffer implements Buffer {
      * @param byteBuffer the Netty byte buffer to wrap
      */
     ImmutableBuffer(ByteBuf byteBuffer) {
-        this(Buffer.buffer(byteBuffer), byteBuffer);
+        this(Buffer.buffer(byteBuffer.array()), byteBuffer);
     }
 
     /**
-     * Small optimization, as calling {@link Buffer#getByteBuf} will duplicate the underlying buffer.
+     * Small optimization, as calling will duplicate the underlying buffer.
      *
      * @param buffer     the buffer to wrap
      * @param byteBuffer the associated Netty byte-buffer
      */
     private ImmutableBuffer(Buffer buffer, ByteBuf byteBuffer) {
         // if the underlying byte buffer is read-only already, there is no need to make it any more immutable
-        this.buffer = byteBuffer.isReadOnly() ? buffer : Buffer.buffer(byteBuffer.asReadOnly());
+        this.buffer = byteBuffer.isReadOnly() ? buffer : Buffer.buffer(byteBuffer.asReadOnly().array());
     }
 
     /**
@@ -181,8 +182,18 @@ public final class ImmutableBuffer implements Buffer {
     }
 
     @Override
+    public double getDoubleLE(int pos) {
+        return buffer.getDoubleLE(pos);
+    }
+
+    @Override
     public float getFloat(int pos) {
         return buffer.getFloat(pos);
+    }
+
+    @Override
+    public float getFloatLE(int pos) {
+        return buffer.getFloatLE(pos);
     }
 
     @Override
@@ -365,8 +376,18 @@ public final class ImmutableBuffer implements Buffer {
     }
 
     @Override
+    public Buffer appendFloatLE(float f) {
+        return buffer.appendFloatLE(f);
+    }
+
+    @Override
     public ImmutableBuffer appendDouble(double d) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Buffer appendDoubleLE(double d) {
+        return buffer.appendDoubleLE(d);
     }
 
     @Override
@@ -435,8 +456,18 @@ public final class ImmutableBuffer implements Buffer {
     }
 
     @Override
+    public Buffer setDoubleLE(int pos, double d) {
+        return null;
+    }
+
+    @Override
     public ImmutableBuffer setFloat(int pos, float f) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Buffer setFloatLE(int pos, float f) {
+        return null;
     }
 
     @Override
@@ -509,9 +540,8 @@ public final class ImmutableBuffer implements Buffer {
         return new ImmutableBuffer(buffer.slice(start, end));
     }
 
-    @Override
     public ByteBuf getByteBuf() {
-        return buffer.getByteBuf();
+        return ((BufferInternal) buffer).getByteBuf();
     }
 
     @Override

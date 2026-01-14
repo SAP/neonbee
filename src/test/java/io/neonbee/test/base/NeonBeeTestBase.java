@@ -63,7 +63,7 @@ import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
@@ -212,7 +212,7 @@ public class NeonBeeTestBase {
 
         // in case we had run in clustered mode and used a FakeClusterManager, we will have to reset it
         if (neonBee.getOptions().isClustered() && vertx instanceof VertxInternal
-                && ((VertxInternal) vertx).getClusterManager() instanceof FakeClusterManager) {
+                && ((VertxInternal) vertx).clusterManager() instanceof FakeClusterManager) {
             FakeClusterManager.reset();
         }
 
@@ -450,7 +450,9 @@ public class NeonBeeTestBase {
 
     private ServerVerticle createDummyServerVerticle(TestInfo testInfo) {
         ChainAuthHandler dummyAuthHandler = ctx -> {
-            ctx.setUser(User.create(provideUserPrincipal(testInfo)));
+            User user = User.create(provideUserPrincipal(testInfo));
+            ctx.put("userContext", new UserContext(user));
+
             Session session = ctx.session();
             if (session != null) {
                 // the user has upgraded from unauthenticated to authenticated
@@ -469,5 +471,14 @@ public class NeonBeeTestBase {
                 return super.mountEndpoints(router, endpointConfigs, Optional.of(dummyAuthHandler));
             }
         };
+    }
+
+    private class UserContext {
+
+        private final User user;
+
+        public UserContext(User user) {
+            this.user = user;
+        }
     }
 }

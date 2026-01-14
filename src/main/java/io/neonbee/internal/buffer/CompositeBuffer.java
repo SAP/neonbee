@@ -7,6 +7,7 @@ import java.util.Arrays;
 
 import io.netty.buffer.ByteBuf;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.internal.buffer.BufferInternal;
 
 public final class CompositeBuffer {
     /**
@@ -33,8 +34,9 @@ public final class CompositeBuffer {
             return ImmutableBuffer.buffer(buffers[0]);
         default:
             return new ImmutableBuffer(
-                    wrappedUnmodifiableBuffer(Arrays.stream(buffers).map(Buffer::getByteBuf).toArray(ByteBuf[]::new))
-                            .asReadOnly());
+                    wrappedUnmodifiableBuffer(Arrays.stream(buffers)
+                            .map(buffer -> ((BufferInternal) buffer).getByteBuf()).toArray(ByteBuf[]::new))
+                                    .asReadOnly());
         }
     }
 }

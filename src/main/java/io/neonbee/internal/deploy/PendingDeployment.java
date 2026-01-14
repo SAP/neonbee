@@ -15,10 +15,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.impl.future.Expect;
-import io.vertx.core.impl.future.FutureInternal;
-import io.vertx.core.impl.future.Listener;
+import io.vertx.core.internal.ContextInternal;
+import io.vertx.core.internal.FutureInternal;
 
 public abstract class PendingDeployment extends Deployment implements FutureInternal<Deployment> {
     private static final LoggingFacade LOGGER = LoggingFacade.create();
@@ -55,13 +53,6 @@ public abstract class PendingDeployment extends Deployment implements FutureInte
         }).onFailure(throwable -> {
             LOGGER.error("Deployment of {} failed", deployable, throwable);
         });
-    }
-
-    @Override
-    public Future<Deployment> expecting(Expectation<? super Deployment> expectation) {
-        Expect<Deployment> expect = new Expect(context(), expectation);
-        this.addListener(expect);
-        return expect;
     }
 
     @Override
@@ -134,30 +125,13 @@ public abstract class PendingDeployment extends Deployment implements FutureInte
     }
 
     @Override
-    public <U> Future<U> compose(Function<Deployment, Future<U>> successMapper,
-            Function<Throwable, Future<U>> failureMapper) {
-        return mapDeployment().compose(successMapper, failureMapper);
-    }
-
-    @Override
     public <U> Future<U> transform(Function<AsyncResult<Deployment>, Future<U>> mapper) {
         return mapDeployment().transform(mapper);
     }
 
     @Override
-    @Deprecated
-    public <U> Future<Deployment> eventually(Function<Void, Future<U>> mapper) {
-        return mapDeployment().eventually(mapper);
-    }
-
-    @Override
     public <U> Future<Deployment> eventually(Supplier<Future<U>> supplier) {
         return mapDeployment().eventually(supplier);
-    }
-
-    @Override
-    public <U> Future<U> map(Function<Deployment, U> mapper) {
-        return mapDeployment().map(mapper);
     }
 
     @Override
@@ -181,17 +155,23 @@ public abstract class PendingDeployment extends Deployment implements FutureInte
     }
 
     @Override
-    public void addListener(Listener<Deployment> listener) {
-        ((FutureInternal<Deployment>) mapDeployment()).addListener(listener);
-    }
-
-    @Override
-    public void removeListener(Listener<Deployment> listener) {
-        ((FutureInternal<Deployment>) mapDeployment()).removeListener(listener);
-    }
-
-    @Override
     public Future<Deployment> timeout(long delay, TimeUnit unit) {
         return mapDeployment().timeout(delay, unit);
+    }
+
+    @Override
+    public <U> Future<U> map(Function<? super Deployment, U> function) {
+        return mapDeployment().map(function);
+    }
+
+    @Override
+    public Future<Deployment> expecting(Expectation<? super Deployment> expectation) {
+        return mapDeployment().expecting(expectation);
+    }
+
+    @Override
+    public <U> Future<U> compose(Function<? super Deployment, Future<U>> function,
+            Function<Throwable, Future<U>> function1) {
+        return mapDeployment().compose(function, function1);
     }
 }

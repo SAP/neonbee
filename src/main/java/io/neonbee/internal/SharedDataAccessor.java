@@ -1,5 +1,8 @@
 package io.neonbee.internal;
 
+import static io.vertx.core.Future.failedFuture;
+import static io.vertx.core.Future.succeededFuture;
+
 import java.util.Optional;
 
 import io.neonbee.NeonBee;
@@ -53,9 +56,20 @@ public class SharedDataAccessor implements SharedData {
         getAsyncMap(null, resultHandler);
     }
 
-    @Override
+    /**
+     * @deprecated Deprecated since Vert.x 4.x (callback model), use {@link SharedDataAccessor#getAsyncMap(String)}
+     *             (future-based) instead. Removed in Vert.x 5.
+     */
+    @Deprecated(since = "4.x", forRemoval = true)
     public <K, V> void getAsyncMap(String name, Handler<AsyncResult<AsyncMap<K, V>>> resultHandler) {
-        sharedData.getAsyncMap(sharedName(name), resultHandler);
+        sharedData.getAsyncMap(sharedName(name)).onComplete(asyncResult -> {
+            if (asyncResult.succeeded()) {
+                AsyncMap<K, V> map = (AsyncMap<K, V>) asyncResult.result();
+                handleSuccess(map, resultHandler);
+            } else {
+                handleFailure(asyncResult.cause(), resultHandler);
+            }
+        });
     }
 
     /**
@@ -87,9 +101,20 @@ public class SharedDataAccessor implements SharedData {
         getLocalAsyncMap(null, resultHandler);
     }
 
-    @Override
+    /**
+     * @deprecated Deprecated since Vert.x 4.x (callback model), use {@link SharedDataAccessor#getLocalAsyncMap(String)}
+     *             (future-based) instead. Removed in Vert.x 5.
+     */
+    @Deprecated(since = "4.x", forRemoval = true)
     public <K, V> void getLocalAsyncMap(String name, Handler<AsyncResult<AsyncMap<K, V>>> resultHandler) {
-        sharedData.getLocalAsyncMap(sharedName(name), resultHandler);
+        sharedData.getLocalAsyncMap(sharedName(name)).onComplete(asyncResult -> {
+            if (asyncResult.succeeded()) {
+                AsyncMap<K, V> map = (AsyncMap<K, V>) asyncResult.result();
+                handleSuccess(map, resultHandler);
+            } else {
+                handleFailure(asyncResult.cause(), resultHandler);
+            }
+        });
     }
 
     /**
@@ -121,9 +146,20 @@ public class SharedDataAccessor implements SharedData {
         getClusterWideMap(null, resultHandler);
     }
 
-    @Override
+    /**
+     * @deprecated Deprecated since Vert.x 4.x (callback model), use
+     *             {@link SharedDataAccessor#getClusterWideMap(String)} (future-based) instead. Removed in Vert.x 5.
+     */
+    @Deprecated(since = "4.x", forRemoval = true)
     public <K, V> void getClusterWideMap(String name, Handler<AsyncResult<AsyncMap<K, V>>> resultHandler) {
-        sharedData.getClusterWideMap(sharedName(name), resultHandler);
+        sharedData.getClusterWideMap(sharedName(name)).onComplete(asyncResult -> {
+            if (asyncResult.succeeded()) {
+                AsyncMap<K, V> map = (AsyncMap<K, V>) asyncResult.result();
+                handleSuccess(map, resultHandler);
+            } else {
+                handleFailure(asyncResult.cause(), resultHandler);
+            }
+        });
     }
 
     /**
@@ -151,9 +187,13 @@ public class SharedDataAccessor implements SharedData {
         getCounter(null, resultHandler);
     }
 
-    @Override
+    /**
+     * @deprecated Deprecated since Vert.x 4.x (callback model), use {@link SharedDataAccessor#getCounter(String)}
+     *             (future-based) instead. Removed in Vert.x 5.
+     */
+    @Deprecated(since = "4.x", forRemoval = true)
     public void getCounter(String name, Handler<AsyncResult<Counter>> resultHandler) {
-        sharedData.getCounter(sharedName(name), resultHandler);
+        sharedData.getCounter(sharedName(name)).onComplete(asyncResult -> resultHandler.handle(asyncResult));
     }
 
     /**
@@ -181,9 +221,13 @@ public class SharedDataAccessor implements SharedData {
         getLocalCounter(null, resultHandler);
     }
 
-    @Override
+    /**
+     * @deprecated Deprecated since Vert.x 4.x (callback model), use {@link SharedDataAccessor#getLocalCounter(String)}
+     *             (future-based) instead. Removed in Vert.x 5.
+     */
+    @Deprecated(since = "4.x", forRemoval = true)
     public void getLocalCounter(String name, Handler<AsyncResult<Counter>> resultHandler) {
-        sharedData.getLocalCounter(sharedName(name), resultHandler);
+        sharedData.getLocalCounter(sharedName(name)).onComplete(asyncResult -> resultHandler.handle(asyncResult));
     }
 
     /**
@@ -211,9 +255,13 @@ public class SharedDataAccessor implements SharedData {
         getLock(null, resultHandler);
     }
 
-    @Override
+    /**
+     * @deprecated Deprecated since Vert.x 4.x (callback model), use {@link SharedDataAccessor#getLock(String)}
+     *             (future-based) instead. Removed in Vert.x 5.
+     */
+    @Deprecated(since = "4.x", forRemoval = true)
     public void getLock(String name, Handler<AsyncResult<Lock>> resultHandler) {
-        sharedData.getLock(sharedName(name), resultHandler);
+        sharedData.getLock(sharedName(name)).onComplete(asyncResult -> resultHandler.handle(asyncResult));
     }
 
     /**
@@ -241,9 +289,13 @@ public class SharedDataAccessor implements SharedData {
         getLocalLock(null, resultHandler);
     }
 
-    @Override
+    /**
+     * @deprecated Deprecated since Vert.x 4.x (callback model), use {@link SharedDataAccessor#getLocalLock(String)}
+     *             (future-based) instead. Removed in Vert.x 5.
+     */
+    @Deprecated(since = "4.x", forRemoval = true)
     public void getLocalLock(String name, Handler<AsyncResult<Lock>> resultHandler) {
-        sharedData.getLocalLock(sharedName(name), resultHandler);
+        sharedData.getLocalLock(sharedName(name)).onComplete(asyncLock -> resultHandler.handle(asyncLock));
     }
 
     /**
@@ -273,9 +325,14 @@ public class SharedDataAccessor implements SharedData {
         getLockWithTimeout(null, timeout, resultHandler);
     }
 
-    @Override
+    /**
+     * @deprecated Deprecated since Vert.x 4.x (callback model), use {@link SharedDataAccessor#getLockWithTimeout(long)}
+     *             (future-based) instead. Removed in Vert.x 5.
+     */
+    @Deprecated(since = "4.x", forRemoval = true)
     public void getLockWithTimeout(String name, long timeout, Handler<AsyncResult<Lock>> resultHandler) {
-        sharedData.getLockWithTimeout(sharedName(name), timeout, resultHandler);
+        sharedData.getLockWithTimeout(sharedName(name), timeout)
+                .onComplete(asyncResult -> resultHandler.handle(asyncResult));
     }
 
     /**
@@ -305,9 +362,14 @@ public class SharedDataAccessor implements SharedData {
         getLocalLockWithTimeout(null, timeout, resultHandler);
     }
 
-    @Override
+    /**
+     * @deprecated Deprecated since Vert.x 4.x (callback model), use
+     *             {@link SharedDataAccessor#getLocalLockWithTimeout(long)} (future-based) instead. Removed in Vert.x 5.
+     */
+    @Deprecated(since = "4.x", forRemoval = true)
     public void getLocalLockWithTimeout(String name, long timeout, Handler<AsyncResult<Lock>> resultHandler) {
-        sharedData.getLocalLockWithTimeout(sharedName(name), timeout, resultHandler);
+        sharedData.getLocalLockWithTimeout(sharedName(name), timeout)
+                .onComplete(asyncResult -> resultHandler.handle(asyncResult));
     }
 
     /**
@@ -330,5 +392,13 @@ public class SharedDataAccessor implements SharedData {
     private String sharedName(String name) {
         return String.format("%s-%s#%s", NeonBee.class.getSimpleName(), accessClass.getName(),
                 Optional.ofNullable(name).orElse(DEFAULT_NAME));
+    }
+
+    private <K, V> void handleSuccess(AsyncMap<K, V> map, Handler<AsyncResult<AsyncMap<K, V>>> resultHandler) {
+        resultHandler.handle(succeededFuture(map));
+    }
+
+    private <K, V> void handleFailure(Throwable cause, Handler<AsyncResult<AsyncMap<K, V>>> resultHandler) {
+        resultHandler.handle(failedFuture(cause));
     }
 }
