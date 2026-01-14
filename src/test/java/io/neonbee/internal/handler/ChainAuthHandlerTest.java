@@ -63,7 +63,7 @@ class ChainAuthHandlerTest {
             firstHandlerCalled.set(true);
             ((Handler<Future<Void>>) invocation.getArgument(1)).handle(Future.failedFuture(new HttpException(401)));
             return null;
-        }).when(handler1).authenticate(any(), any());
+        }).when(handler1).authenticate(any());
 
         AuthenticationHandlerInternal handler2 = mock(AuthenticationHandlerInternal.class);
         AuthHandlerConfig config2 = mock(AuthHandlerConfig.class);
@@ -77,6 +77,6 @@ class ChainAuthHandlerTest {
         ChainAuthHandler handler = ChainAuthHandler.create(vertx, List.of(config1, config2));
         handler.handle(routingContextMock);
         assertThat(firstHandlerCalled.get()).isTrue();
-        verify(handler2).authenticate(eq(routingContextMock), any());
+        verify(handler2).authenticate(eq(routingContextMock));
     }
 }

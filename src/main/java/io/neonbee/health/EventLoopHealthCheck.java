@@ -10,6 +10,7 @@ import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.healthchecks.Status;
 
@@ -63,7 +64,7 @@ public class EventLoopHealthCheck extends AbstractHealthCheck {
     @SuppressWarnings({ "PMD.DoNotUseThreads", "deprecation" }) // see https://github.com/SAP/neonbee/issues/387
     private JsonObject getCriticalEventLoops(NeonBee neonBee, int threshold) {
         JsonObject busyEventLoops = new JsonObject();
-        for (EventExecutor elg : neonBee.getVertx().nettyEventLoopGroup()) {
+        for (EventExecutor elg : ((VertxInternal) neonBee.getVertx()).nettyEventLoopGroup()) {
             SingleThreadEventExecutor singleEventExecutor = ((SingleThreadEventExecutor) elg);
 
             if (singleEventExecutor.pendingTasks() > threshold) {

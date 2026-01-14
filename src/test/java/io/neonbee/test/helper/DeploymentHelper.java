@@ -2,6 +2,8 @@ package io.neonbee.test.helper;
 
 import static java.util.stream.Collectors.toList;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -10,13 +12,17 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.Deployment;
-import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
 
 public final class DeploymentHelper {
 
     public static final String NEONBEE_NAMESPACE = "neonbee";
+
+    private static final Map<String, Deployment> DEPLOYMENT_INFO_MAP = new HashMap<>();
+
+    private DeploymentHelper() {
+        // Utils class no need to instantiate
+    }
 
     /**
      * This method deploys the passed verticle.
@@ -40,7 +46,10 @@ public final class DeploymentHelper {
      * @return A succeeded future with the deploymentId, or a failed future with the cause.
      */
     public static Future<String> deployVerticle(Vertx vertx, Verticle verticle, JsonObject verticleConfig) {
-        return vertx.deployVerticle(verticle, new DeploymentOptions().setConfig(verticleConfig));
+        return vertx.deployVerticle(verticle, new DeploymentOptions().setConfig(verticleConfig))
+                .onSuccess(deploymentId -> {
+                    DEPLOYMENT_INFO_MAP.put(deploymentId, new Deployment(deploymentId, verticle.getClass()));
+                });
     }
 
     /**
@@ -51,6 +60,7 @@ public final class DeploymentHelper {
      * @return A succeeded future, or a failed future with the cause.
      */
     public static Future<Void> undeployVerticle(Vertx vertx, String deploymentID) {
+        DEPLOYMENT_INFO_MAP.remove(deploymentID);
         return vertx.undeploy(deploymentID);
     }
 
@@ -64,8 +74,8 @@ public final class DeploymentHelper {
     public static Future<Void> undeployAllVerticlesOfClass(Vertx vertx, Class<? extends Verticle> verticleClass) {
         return Future
                 .all(getAllDeployments(vertx)
-                        .filter(deployment -> deployment.getVerticles().stream().anyMatch(verticleClass::isInstance))
-                        .map(deployment -> undeployVerticle(vertx, deployment.deploymentID())).collect(toList()))
+                        .filter(deployment -> deployment.getVerticleClass().isAssignableFrom(verticleClass))
+                        .map(deployment -> undeployVerticle(vertx, deployment.getDeploymentId())).collect(toList()))
                 .mapEmpty();
     }
 
@@ -84,14 +94,34 @@ public final class DeploymentHelper {
     }
 
     private static Stream<Deployment> getAllDeployments(Vertx vertx) {
-        return vertx.deploymentIDs().stream().map(((VertxInternal) vertx)::getDeployment);
+        return vertx.deploymentIDs().stream().filter(deploymentId -> DEPLOYMENT_INFO_MAP.containsKey(deploymentId))
+                .map(DEPLOYMENT_INFO_MAP::get).collect(toList()).stream();
     }
 
     private static Stream<Verticle> getAllDeployedVerticles(Vertx vertx) {
-        return getAllDeployments(vertx).map(Deployment::getVerticles).flatMap(Set::stream);
+        return getAllDeployments(vertx)
+                .map(deployment -> vertx.getOrCreateContext().get(deployment.getDeploymentId()))
+                .filter(object -> object instanceof Verticle)
+                .map(Verticle.class::cast);
     }
 
-    private DeploymentHelper() {
-        // Utils class no need to instantiate
+    private static class Deployment {
+        private final String deploymentId;
+
+        private final Class<? extends Verticle> verticleClass;
+
+        private Deployment(String deploymentId, Class<? extends Verticle> verticleClass) {
+            this.deploymentId = deploymentId;
+            this.verticleClass = verticleClass;
+        }
+
+        public String getDeploymentId() {
+            return deploymentId;
+        }
+
+        public Class<? extends Verticle> getVerticleClass() {
+            return verticleClass;
+        }
     }
+
 }
