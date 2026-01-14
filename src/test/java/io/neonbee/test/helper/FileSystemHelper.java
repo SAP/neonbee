@@ -26,7 +26,7 @@ public final class FileSystemHelper {
      * @return A future to resolve when the delete operation finishes
      */
     public static Future<Void> deleteRecursive(Vertx vertx, Path path) {
-        return vertx.fileSystem().deleteRecursive(path.toString(), true);
+        return vertx.fileSystem().deleteRecursive(path.toString());
     }
 
     /**
@@ -51,7 +51,7 @@ public final class FileSystemHelper {
      * @param path  The path to delete
      */
     public static void deleteRecursiveBlocking(Vertx vertx, Path path) {
-        vertx.fileSystem().deleteRecursiveBlocking(path.toString(), true);
+        vertx.fileSystem().deleteRecursiveBlocking(path.toString());
     }
 
     /**

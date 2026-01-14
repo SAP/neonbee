@@ -48,7 +48,7 @@ public class CorsHandlerFactory implements RoutingHandlerFactory {
                 corsHandler.addOrigins(corsConfig.getOrigins());
             }
             if (corsConfig.getRelativeOrigins() != null) {
-                corsHandler.addRelativeOrigins(corsConfig.getRelativeOrigins());
+                corsHandler.addOriginsWithRegex(corsConfig.getRelativeOrigins());
             }
             if (corsConfig.getAllowedHeaders() != null) {
                 corsHandler.allowedHeaders(corsConfig.getAllowedHeaders());

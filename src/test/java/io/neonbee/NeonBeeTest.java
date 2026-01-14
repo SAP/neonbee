@@ -50,6 +50,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.NeonBeeInstanceConfiguration.ClusterManager;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.health.DummyHealthCheck;
@@ -192,9 +193,10 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Tag(DOESNT_REQUIRE_NEONBEE)
     void testStandaloneInitialization(VertxTestContext testContext) {
         NeonBeeOptions options = defaultOptions().clearActiveProfiles().addActiveProfile(NO_WEB);
+        CompositeMeterRegistry meterRegistry = new CompositeMeterRegistry();
         NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions, clusterManager) -> NeonBee
-                .newVertx(vertxOptions, clusterManager, options)
-                .onSuccess(newVertx -> vertx = newVertx), ClusterManager.FAKE.factory(), options, null)
+                .newVertx(vertxOptions, clusterManager, options, meterRegistry)
+                .onSuccess(newVertx -> vertx = newVertx), ClusterManager.FAKE.factory(), options, null, meterRegistry)
                 .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
                     assertThat(neonBee.getVertx().isClustered()).isFalse();
                     testContext.completeNow();
@@ -206,9 +208,10 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Tag(DOESNT_REQUIRE_NEONBEE)
     void testClusterInitialization(VertxTestContext testContext) {
         NeonBeeOptions options = defaultOptions().clearActiveProfiles().addActiveProfile(NO_WEB).setClustered(true);
+        CompositeMeterRegistry meterRegistry = new CompositeMeterRegistry();
         NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions, clusterManager) -> NeonBee
-                .newVertx(vertxOptions, clusterManager, options)
-                .onSuccess(newVertx -> vertx = newVertx), ClusterManager.FAKE.factory(), options, null)
+                .newVertx(vertxOptions, clusterManager, options, meterRegistry)
+                .onSuccess(newVertx -> vertx = newVertx), ClusterManager.FAKE.factory(), options, null, meterRegistry)
                 .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
                     assertThat(neonBee.getVertx().isClustered()).isTrue();
                     testContext.completeNow();
@@ -242,11 +245,12 @@ class NeonBeeTest extends NeonBeeTestBase {
     @Tag(DOESNT_REQUIRE_NEONBEE)
     void testRegisterClusterHealthChecks(VertxTestContext testContext) {
         NeonBeeOptions options = defaultOptions().clearActiveProfiles().addActiveProfile(NO_WEB).setClustered(true);
+        CompositeMeterRegistry meterRegistry = new CompositeMeterRegistry();
         NeonBee.create(
                 (NeonBee.OwnVertxFactory) (vertxOptions, clusterManager) -> NeonBee
-                        .newVertx(vertxOptions, clusterManager, options)
+                        .newVertx(vertxOptions, clusterManager, options, meterRegistry)
                         .onSuccess(newVertx -> vertx = newVertx),
-                HAZELCAST.factory(), options, null)
+                HAZELCAST.factory(), options, null, meterRegistry)
                 .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
                     Map<String, HealthCheck> registeredChecks = neonBee.getHealthCheckRegistry().getHealthChecks();
                     assertThat(registeredChecks.size()).isEqualTo(4);
@@ -368,7 +372,7 @@ class NeonBeeTest extends NeonBeeTestBase {
         try (MockedStatic<NeonBee> mocked = mockStatic(NeonBee.class)) {
             mocked.when(() -> NeonBee.loadConfig(any(), any()))
                     .thenReturn(failedFuture(new RuntimeException("Failing Vert.x!")));
-            mocked.when(() -> NeonBee.create(any(), any(), any(), any())).thenCallRealMethod();
+            mocked.when(() -> NeonBee.create(any(), any(), any(), any(), any())).thenCallRealMethod();
 
             Vertx failingVertxMock = mock(Vertx.class);
             when(failingVertxMock.close()).thenReturn(result);
@@ -382,7 +386,7 @@ class NeonBeeTest extends NeonBeeTestBase {
             }
 
             NeonBee.create(vertxFactory, HAZELCAST.factory(),
-                    defaultOptions().clearActiveProfiles().addActiveProfile(NO_WEB), null)
+                    defaultOptions().clearActiveProfiles().addActiveProfile(NO_WEB), null, new CompositeMeterRegistry())
                     .onComplete(testContext.failing(throwable -> {
                         testContext.verify(() -> {
                             // assert that the original message why the boot failed to start is propagated

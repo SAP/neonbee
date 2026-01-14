@@ -73,8 +73,9 @@ repositories {
 
 dependencies {
     // Framework dependencies
-    def vertx_version = '4.5.9'
+    def vertx_version = '5.0.7'
     implementation group: 'io.vertx', name: 'vertx-core', version: vertx_version
+    implementation group: 'io.vertx', name: 'vertx-launcher-legacy-cli', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-web', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-web-client', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-web-openapi-router', version: vertx_version
@@ -88,6 +89,9 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-auth-oauth2', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-hazelcast', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-health-check', version: vertx_version
+
+    def micrometer_version = '1.15.8'
+    implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: micrometer_version
 
     def hazelcast_version = '5.3.8'
     implementation group: 'com.hazelcast', name: 'hazelcast', version: hazelcast_version
