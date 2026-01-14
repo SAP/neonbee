@@ -14,7 +14,7 @@ import io.neonbee.internal.cluster.coordinator.ClusterCleanupCoordinator;
 import io.neonbee.internal.helper.ConfigHelper;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
@@ -51,7 +51,7 @@ public final class ClusterHelper {
     public static Optional<ClusterManager> getClusterManager(Vertx vertx) {
         if (vertx instanceof VertxInternal) {
             VertxInternal vertxInternal = (VertxInternal) vertx;
-            return Optional.ofNullable(vertxInternal.getClusterManager());
+            return Optional.ofNullable(vertxInternal.clusterManager());
         }
         return Optional.empty();
     }

@@ -21,7 +21,7 @@ import com.hazelcast.core.HazelcastInstance;
 import io.neonbee.test.helper.ReflectionHelper;
 import io.neonbee.test.helper.SystemHelper;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
@@ -80,7 +80,7 @@ class ClusterHelperTest {
         when(cluster.getMembers()).thenReturn(members);
         when(hcm.getHazelcastInstance()).thenReturn(hzInstance);
 
-        when(((VertxInternal) vertx).getClusterManager()).thenReturn(hcm);
+        when(((VertxInternal) vertx).clusterManager()).thenReturn(hcm);
 
         // When: Checking if leader
         boolean result = ClusterHelper.isLeader(vertx);
@@ -117,7 +117,7 @@ class ClusterHelperTest {
         when(cluster.getMembers()).thenReturn(members);
         when(hcm.getHazelcastInstance()).thenReturn(hzInstance);
 
-        when(((VertxInternal) vertx).getClusterManager()).thenReturn(hcm);
+        when(((VertxInternal) vertx).clusterManager()).thenReturn(hcm);
 
         // When: Checking if leader
         boolean result = ClusterHelper.isLeader(vertx);
@@ -138,7 +138,7 @@ class ClusterHelperTest {
                 org.infinispan.manager.EmbeddedCacheManager.class);
         when(cacheManager.isCoordinator()).thenReturn(true);
         when(icm.getCacheContainer()).thenReturn(cacheManager);
-        when(((VertxInternal) vertx).getClusterManager()).thenReturn(icm);
+        when(((VertxInternal) vertx).clusterManager()).thenReturn(icm);
 
         // When: Checking if leader
         boolean result = ClusterHelper.isLeader(vertx);
@@ -159,7 +159,7 @@ class ClusterHelperTest {
                 org.infinispan.manager.EmbeddedCacheManager.class);
         when(cacheManager.isCoordinator()).thenReturn(false);
         when(icm.getCacheContainer()).thenReturn(cacheManager);
-        when(((VertxInternal) vertx).getClusterManager()).thenReturn(icm);
+        when(((VertxInternal) vertx).clusterManager()).thenReturn(icm);
 
         // When: Checking if leader
         boolean result = ClusterHelper.isLeader(vertx);
@@ -178,7 +178,7 @@ class ClusterHelperTest {
         when(vertx.isClustered()).thenReturn(true);
 
         ClusterManager cm = mock(ClusterManager.class);
-        when(((VertxInternal) vertx).getClusterManager()).thenReturn(cm);
+        when(((VertxInternal) vertx).clusterManager()).thenReturn(cm);
 
         // Set system property
         String originalValue = System.getProperty("NEONBEE_CLUSTER_LEADER");
@@ -211,7 +211,7 @@ class ClusterHelperTest {
         when(vertx.isClustered()).thenReturn(true);
 
         ClusterManager cm = mock(ClusterManager.class);
-        when(((VertxInternal) vertx).getClusterManager()).thenReturn(cm);
+        when(((VertxInternal) vertx).clusterManager()).thenReturn(cm);
 
         // Set environment variable (system property not set)
         SystemHelper.withEnvironment(
@@ -230,7 +230,7 @@ class ClusterHelperTest {
         when(vertx.isClustered()).thenReturn(true);
 
         ClusterManager cm = mock(ClusterManager.class);
-        when(((VertxInternal) vertx).getClusterManager()).thenReturn(cm);
+        when(((VertxInternal) vertx).clusterManager()).thenReturn(cm);
 
         // Clear any existing value
         System.clearProperty("NEONBEE_CLUSTER_LEADER");
@@ -275,7 +275,7 @@ class ClusterHelperTest {
         // Given: A clustered Vertx but no ClusterManager
         Vertx vertx = mock(VertxInternal.class);
         when(vertx.isClustered()).thenReturn(true);
-        when(((VertxInternal) vertx).getClusterManager()).thenReturn(null);
+        when(((VertxInternal) vertx).clusterManager()).thenReturn(null);
 
         // When: Checking if leader
         boolean result = ClusterHelper.isLeader(vertx);
@@ -292,7 +292,7 @@ class ClusterHelperTest {
         when(vertx.isClustered()).thenReturn(true);
 
         ClusterManager genericManager = mock(ClusterManager.class);
-        when(((VertxInternal) vertx).getClusterManager())
+        when(((VertxInternal) vertx).clusterManager())
                 .thenReturn(genericManager);
 
         // Set environment variable as fallback
@@ -315,7 +315,7 @@ class ClusterHelperTest {
         when(vertx.isClustered()).thenReturn(true);
 
         ClusterManager cm = mock(ClusterManager.class);
-        when(((VertxInternal) vertx).getClusterManager()).thenReturn(cm);
+        when(((VertxInternal) vertx).clusterManager()).thenReturn(cm);
 
         String originalValue = System.getProperty("NEONBEE_CLUSTER_LEADER");
         try {

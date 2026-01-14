@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hazelcast.core.LifecycleService;
 
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.NeonBeeOptions.Mutable;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
@@ -317,10 +318,11 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         AtomicReference<NeonBee> neonBeeBox = new AtomicReference<>();
         AtomicReference<Throwable> errorBox = new AtomicReference<>();
 
+        CompositeMeterRegistry meterRegistry = new CompositeMeterRegistry();
         NeonBee.create(
                 (NeonBee.OwnVertxFactory) (vertxOptions, clusterManagerInstance) -> NeonBee.newVertx(vertxOptions,
-                        clusterManagerInstance, options),
-                clusterManager.factory(), options, null).onComplete(ar -> {
+                        clusterManagerInstance, options, meterRegistry),
+                clusterManager.factory(), options, null, meterRegistry).onComplete(ar -> {
                     if (ar.succeeded()) {
                         neonBeeBox.set(ar.result());
                     } else {
@@ -359,7 +361,7 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
             // additional logic for tests, due to Hazelcast / Infinispan clusters tend to get stuck, after test
             // execution finishes, thus we forcefully will terminate the clusters at some point in time
             Vertx vertx = neonBee.getVertx();
-            ClusterManager clusterManager = vertx instanceof VertxImpl ? ((VertxImpl) vertx).getClusterManager() : null;
+            ClusterManager clusterManager = vertx instanceof VertxImpl ? ((VertxImpl) vertx).clusterManager() : null;
             if (clusterManager != null) {
                 Executors.newSingleThreadScheduledExecutor(runnable -> {
                     Thread thread = new Thread(runnable, "neonbee-cluster-terminator");
