@@ -82,7 +82,7 @@ class DeployableVerticleTest {
         assertThat(deployable1.getIdentifier()).isEqualTo(DUMMY_VERTICLE.getClass().getName());
 
         PendingDeployment deployment1 = deployable1.deploy(neonBeeMock);
-        assertThat(deployment1.succeeded()).isTrue();
+        assertThat(deployment1.getDeployment().succeeded()).isTrue();
         verify(vertxMock).deployVerticle(DUMMY_VERTICLE, deployable1.options);
 
         assertThat(deployment1.undeploy().succeeded()).isTrue();
@@ -92,7 +92,7 @@ class DeployableVerticleTest {
         assertThat(deployable2.getIdentifier()).isEqualTo(DUMMY_VERTICLE.getClass().getName());
 
         PendingDeployment deployment2 = deployable2.deploy(neonBeeMock);
-        assertThat(deployment2.succeeded()).isTrue();
+        assertThat(deployment2.getDeployment().succeeded()).isTrue();
         verify(vertxMock).deployVerticle(DUMMY_VERTICLE.getClass(), deployable2.options);
 
         assertThat(deployment2.undeploy().succeeded()).isTrue();
@@ -110,8 +110,8 @@ class DeployableVerticleTest {
         DeployableVerticle deployable = new DeployableVerticle(DUMMY_VERTICLE, new DeploymentOptions());
 
         PendingDeployment deployment = deployable.deploy(neonBeeMock);
-        assertThat(deployment.failed()).isTrue();
-        assertThat(deployment.cause()).hasMessageThat().isEqualTo("any failure");
+        assertThat(deployment.getDeployment().failed()).isTrue();
+        assertThat(deployment.getDeployment().cause()).hasMessageThat().isEqualTo("any failure");
         assertThat(deployment.undeploy().succeeded()).isTrue();
     }
 

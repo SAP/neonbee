@@ -22,7 +22,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.neonbee.config.metrics.MicrometerRegistryLoader;
 import io.neonbee.test.base.NeonBeeTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
