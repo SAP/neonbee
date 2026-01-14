@@ -49,13 +49,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.JdkSSLEngineOptions;
-import io.vertx.core.net.JksOptions;
 import io.vertx.core.net.KeyCertOptions;
-import io.vertx.core.net.OpenSSLEngineOptions;
-import io.vertx.core.net.PemKeyCertOptions;
-import io.vertx.core.net.PemTrustOptions;
-import io.vertx.core.net.PfxOptions;
 import io.vertx.core.net.SSLEngineOptions;
 import io.vertx.core.net.TrustOptions;
 import io.vertx.core.tracing.TracingPolicy;
@@ -858,22 +852,8 @@ public class ServerConfig extends HttpServerOptions {
     }
 
     @Override
-    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
-    public ServerConfig setJdkSslEngineOptions(JdkSSLEngineOptions sslEngineOptions) {
-        super.setJdkSslEngineOptions(sslEngineOptions);
-        return this;
-    }
-
-    @Override
     public ServerConfig setKeyCertOptions(KeyCertOptions options) {
         super.setKeyCertOptions(options);
-        return this;
-    }
-
-    @Override
-    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
-    public ServerConfig setKeyStoreOptions(JksOptions options) {
-        super.setKeyStoreOptions(options);
         return this;
     }
 
@@ -914,27 +894,6 @@ public class ServerConfig extends HttpServerOptions {
     }
 
     @Override
-    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
-    public ServerConfig setOpenSslEngineOptions(OpenSSLEngineOptions sslEngineOptions) {
-        super.setOpenSslEngineOptions(sslEngineOptions);
-        return this;
-    }
-
-    @Override
-    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
-    public ServerConfig setPemKeyCertOptions(PemKeyCertOptions options) {
-        super.setPemKeyCertOptions(options);
-        return this;
-    }
-
-    @Override
-    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
-    public ServerConfig setPemTrustOptions(PemTrustOptions options) {
-        super.setPemTrustOptions(options);
-        return this;
-    }
-
-    @Override
     public ServerConfig setPerFrameWebSocketCompressionSupported(boolean supported) {
         super.setPerFrameWebSocketCompressionSupported(supported);
         return this;
@@ -943,20 +902,6 @@ public class ServerConfig extends HttpServerOptions {
     @Override
     public ServerConfig setPerMessageWebSocketCompressionSupported(boolean supported) {
         super.setPerMessageWebSocketCompressionSupported(supported);
-        return this;
-    }
-
-    @Override
-    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
-    public ServerConfig setPfxKeyCertOptions(PfxOptions options) {
-        super.setPfxKeyCertOptions(options);
-        return this;
-    }
-
-    @Override
-    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
-    public ServerConfig setPfxTrustOptions(PfxOptions options) {
-        super.setPfxTrustOptions(options);
         return this;
     }
 
@@ -1083,13 +1028,6 @@ public class ServerConfig extends HttpServerOptions {
     @Override
     public ServerConfig setTrustOptions(TrustOptions options) {
         super.setTrustOptions(options);
-        return this;
-    }
-
-    @Override
-    @SuppressWarnings("deprecation") // reason: we have to comply to the interface still
-    public ServerConfig setTrustStoreOptions(JksOptions options) {
-        super.setTrustStoreOptions(options);
         return this;
     }
 

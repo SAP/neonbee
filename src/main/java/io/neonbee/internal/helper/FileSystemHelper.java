@@ -141,7 +141,7 @@ public final class FileSystemHelper {
      * @return Future of {@link Void}
      */
     public static Future<Void> deleteRecursive(Vertx vertx, Path path) {
-        return vertx.fileSystem().deleteRecursive(path.toString(), true);
+        return vertx.fileSystem().deleteRecursive(path.toString());
     }
 
     /**

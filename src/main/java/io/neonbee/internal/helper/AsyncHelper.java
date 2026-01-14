@@ -97,13 +97,14 @@ public final class AsyncHelper {
     @Deprecated(forRemoval = true)
     public static <T> Future<T> executeBlocking(Vertx vertx, ThrowingConsumer<Promise<T>, Exception> asyncTask) {
         Promise<T> asyncTaskPromise = Promise.promise();
-        vertx.executeBlocking(promise -> {
+        vertx.executeBlocking(() -> {
             try {
-                asyncTask.accept(promise);
+                asyncTask.accept(asyncTaskPromise);
             } catch (Exception e) {
-                promise.fail(e);
+                asyncTaskPromise.fail(e);
             }
-        }, asyncTaskPromise);
+            return null;
+        }).onFailure(asyncTaskPromise::fail); // propagate any unexpected executeBlocking failure
         return asyncTaskPromise.future();
     }
 

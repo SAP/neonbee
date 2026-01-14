@@ -18,7 +18,6 @@ import io.neonbee.data.DataContext;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.entity.EntityWrapper;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.impl.HttpServerRequestInternal;
 import io.vertx.core.net.HostAndPort;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.impl.RouterImpl;
@@ -29,7 +28,7 @@ class ProcessorHelperTest {
     @Test
     @DisplayName("Response hints should be transferred to routing context")
     void transferResponseHint() {
-        HttpServerRequest request = Mockito.mock(HttpServerRequestInternal.class);
+        HttpServerRequest request = Mockito.mock(HttpServerRequest.class);
         Mockito.when(request.path()).thenReturn("/path");
         Mockito.when(request.authority()).thenReturn(Mockito.mock(HostAndPort.class));
         RouterImpl router = Mockito.mock(RouterImpl.class);

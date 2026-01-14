@@ -27,10 +27,12 @@ import org.junit.jupiter.api.Test;
 import io.neonbee.NeonBee;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.internal.deploy.DeployableTest.DeployableThing;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.future.FutureInternal;
+import io.vertx.core.internal.FutureInternal;
 
 class PendingDeploymentTest {
     @Test
@@ -82,8 +84,8 @@ class PendingDeploymentTest {
         deployment.isComplete();
         verify(futureMock).isComplete();
 
-        deployment.onComplete(null);
-        verify(futureMock).onComplete(any());
+        deployment.onComplete((Handler<AsyncResult<Deployment>>) null);
+        verify(futureMock).onComplete((Handler<AsyncResult<String>>) any());
 
         deployment.result();
         verify(futureMock).succeeded();
@@ -101,11 +103,11 @@ class PendingDeploymentTest {
         deployment.compose(null);
         verify(futureMock).compose(any(), any());
 
-        deployment.transform(null);
-        verify(futureMock).transform(any());
+        deployment.transform((Function<AsyncResult<Deployment>, Future<Object>>) null);
+        verify(futureMock).transform((Function<AsyncResult<String>, Future<Object>>) any());
 
-        deployment.eventually((Function) null);
-        verify(futureMock).eventually((Function) any());
+        deployment.eventually((Supplier) null);
+        verify(futureMock).eventually((Supplier) any());
 
         deployment.eventually((Supplier) null);
         verify(futureMock).eventually((Supplier) any());
@@ -126,9 +128,6 @@ class PendingDeploymentTest {
 
         deployment.context();
         verify(futureMock).context();
-
-        deployment.addListener(null);
-        verify(futureMock).addListener(any());
 
         deployment.timeout(10, TimeUnit.SECONDS);
         verify(futureMock).timeout(10, TimeUnit.SECONDS);

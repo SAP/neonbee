@@ -32,7 +32,7 @@ class ClusterCleanupCoordinatorTest {
         FakeClusterManager clusterManager = new FakeClusterManager();
 
         // Initialize cluster manager with the Vert.x instance
-        clusterManager.init(vertx, null);
+        clusterManager.init(vertx);
 
         // Create coordinator
         this.coordinator = new ClusterCleanupCoordinator(vertx, clusterManager);
@@ -210,7 +210,7 @@ class ClusterCleanupCoordinatorTest {
                     }
 
                     Vertx clusteredVertx = clusteredRes.result();
-                    clusterManagerLocal.init(clusteredVertx, null);
+                    clusterManagerLocal.init(clusteredVertx);
 
                     NeonBee neonBee = mock(NeonBee.class);
 
