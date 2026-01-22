@@ -23,8 +23,13 @@ import java.util.function.BiConsumer;
 
 import org.apache.olingo.commons.api.edm.Edm;
 import org.apache.olingo.commons.api.edm.EdmEntityContainer;
+import org.apache.olingo.commons.api.http.HttpHeader;
+import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.ODataRequest;
+import org.apache.olingo.server.api.ODataResponse;
 import org.apache.olingo.server.api.ServiceMetadata;
+import org.apache.olingo.server.api.deserializer.batch.BatchRequestPart;
+import org.apache.olingo.server.api.deserializer.batch.ODataResponsePart;
 import org.apache.olingo.server.core.MetadataParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -335,5 +340,83 @@ class ODataProxyEndpointHandlerTest {
             int sc = ODataProxyEndpointHandler.getStatusCode(new RuntimeException("boom"));
             assertThat(sc).isEqualTo(400);
         }
+    }
+
+    @Test
+    void createBatchResponsePartChangeSetReturnsChangeSetPartWhenSuccessful() {
+        RoutingContext routingContext = mock(RoutingContext.class);
+        DataContext context = new DataContextImpl();
+        ODataRequest request1 = new ODataRequest();
+        ODataRequest request2 = new ODataRequest();
+        BatchRequestPart batchRequestPart = new BatchRequestPart(true, List.of(request1, request2));
+
+        ODataResponse response1 = new ODataResponse();
+        response1.setStatusCode(HttpStatusCode.CREATED.getStatusCode());
+        ODataResponse response2 = new ODataResponse();
+        response2.setStatusCode(HttpStatusCode.OK.getStatusCode());
+
+        try (MockedStatic<ODataProxyEndpointHandler> handlerMock =
+                Mockito.mockStatic(ODataProxyEndpointHandler.class, Mockito.CALLS_REAL_METHODS)) {
+            handlerMock.when(() -> ODataProxyEndpointHandler.getODataResponse(eq(routingContext), eq(context),
+                    eq(request1))).thenReturn(Future.succeededFuture(response1));
+            handlerMock.when(() -> ODataProxyEndpointHandler.getODataResponse(eq(routingContext), eq(context),
+                    eq(request2))).thenReturn(Future.succeededFuture(response2));
+
+            ODataResponsePart responsePart =
+                    ODataProxyEndpointHandler.createBatchResponsePart(routingContext, context, batchRequestPart)
+                            .result();
+
+            assertThat(responsePart.isChangeSet()).isTrue();
+            assertThat(responsePart.getResponses()).containsExactly(response1, response2).inOrder();
+        }
+    }
+
+    @Test
+    void createBatchResponsePartChangeSetReturnsSingleErrorResponse() {
+        RoutingContext routingContext = mock(RoutingContext.class);
+        DataContext context = new DataContextImpl();
+        ODataRequest request1 = new ODataRequest();
+        ODataRequest request2 = new ODataRequest();
+        BatchRequestPart batchRequestPart = new BatchRequestPart(true, List.of(request1, request2));
+
+        ODataResponse response1 = new ODataResponse();
+        response1.setStatusCode(HttpStatusCode.CREATED.getStatusCode());
+        ODataResponse response2 = new ODataResponse();
+        response2.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
+
+        try (MockedStatic<ODataProxyEndpointHandler> handlerMock =
+                Mockito.mockStatic(ODataProxyEndpointHandler.class, Mockito.CALLS_REAL_METHODS)) {
+            handlerMock.when(() -> ODataProxyEndpointHandler.getODataResponse(eq(routingContext), eq(context),
+                    eq(request1))).thenReturn(Future.succeededFuture(response1));
+            handlerMock.when(() -> ODataProxyEndpointHandler.getODataResponse(eq(routingContext), eq(context),
+                    eq(request2))).thenReturn(Future.succeededFuture(response2));
+
+            ODataResponsePart responsePart =
+                    ODataProxyEndpointHandler.createBatchResponsePart(routingContext, context, batchRequestPart)
+                            .result();
+
+            assertThat(responsePart.isChangeSet()).isFalse();
+            assertThat(responsePart.getResponses()).containsExactly(response2);
+        }
+    }
+
+    @Test
+    void applyContentIdAddsHeaderWhenMissing() {
+        ODataResponse response = new ODataResponse();
+        String contentId = "content-1";
+
+        ODataResponse updated = ODataProxyEndpointHandler.applyContentId(response, contentId);
+
+        assertThat(updated.getHeader(HttpHeader.CONTENT_ID)).isEqualTo(contentId);
+    }
+
+    @Test
+    void applyContentIdDoesNotOverrideExistingHeader() {
+        ODataResponse response = new ODataResponse();
+        response.addHeader(HttpHeader.CONTENT_ID, "existing");
+
+        ODataResponse updated = ODataProxyEndpointHandler.applyContentId(response, "new-id");
+
+        assertThat(updated.getHeader(HttpHeader.CONTENT_ID)).isEqualTo("existing");
     }
 }

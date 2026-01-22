@@ -7,7 +7,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.AbstractMap;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -162,7 +161,8 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
     }
 
     /**
-     * Handles entity requests. We do NOT support change sets os far!
+     * Handles entity requests. Change sets are processed in order but not atomically; if one request fails, prior
+     * requests are not rolled back as required by the OData specification.
      *
      * @param routingContext The routing context
      * @param context        The data context
@@ -189,9 +189,8 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
             List<BatchRequestPart> requestParts = new FixedFormatDeserializerImpl()
                     .parseBatchRequest(odataRequest.getBody(), boundary, options);
 
-            responseParts = requestParts.stream().map(BatchRequestPart::getRequests)
-                    .flatMap(Collection::stream)
-                    .map(req -> getODataResponsePart(routingContext, context, req))
+            responseParts = requestParts.stream()
+                    .map(part -> createBatchResponsePart(routingContext, context, part))
                     .toList();
         } catch (Exception e) {
             return Future.failedFuture(e);
@@ -250,7 +249,44 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
         });
     }
 
+    static Future<ODataResponsePart> createBatchResponsePart(
+            RoutingContext routingContext,
+            DataContext context,
+            BatchRequestPart requestPart) {
+        if (requestPart.isChangeSet()) {
+            List<Future<ODataResponse>> responseFutures = requestPart.getRequests().stream()
+                    .map(odataRequest -> getODataResponse(routingContext, context, odataRequest))
+                    .toList();
+            return Future.all(responseFutures).map(ignored -> {
+                List<ODataResponse> responses = responseFutures.stream()
+                        .map(Future::result)
+                        .toList();
+                Optional<ODataResponse> errorResponse = responses.stream()
+                        .filter(response -> response.getStatusCode() >= HttpStatusCode.BAD_REQUEST.getStatusCode())
+                        .findFirst();
+                if (errorResponse.isPresent()) {
+                    return new ODataResponsePart(errorResponse.get(), false);
+                }
+                return new ODataResponsePart(responses, true);
+            });
+        }
+
+        List<ODataRequest> requests = requestPart.getRequests();
+        if (requests.isEmpty()) {
+            return Future.failedFuture(new IllegalArgumentException("Batch request part contains no requests"));
+        }
+        return getODataResponsePart(routingContext, context, requests.get(0));
+    }
+
     static Future<ODataResponsePart> getODataResponsePart(
+            RoutingContext routingContext,
+            DataContext context,
+            ODataRequest odataRequest) {
+        return getODataResponse(routingContext, context, odataRequest)
+                .map(odataResponse -> new ODataResponsePart(odataResponse, false));
+    }
+
+    static Future<ODataResponse> getODataResponse(
             RoutingContext routingContext,
             DataContext context,
             ODataRequest odataRequest) {
@@ -263,9 +299,18 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
         DataContext contextCopy = context.copy();
         DataAction action = mapMethodToAction(odataRequest.getMethod());
         DataQuery partDataQuery = odataRequestToQuery(odataRequest, action, body);
+        String contentId = odataRequest.getHeader(HttpHeader.CONTENT_ID);
         return handleEntityRequest(routingContext, contextCopy, odataRequest, partDataQuery)
                 .map(buffer -> createODataResponse(contextCopy, buffer))
-                .map(odataResponse -> new ODataResponsePart(odataResponse, false));
+                .map(response -> applyContentId(response, contentId));
+    }
+
+    static ODataResponse applyContentId(ODataResponse response, String contentId) {
+        if (contentId == null || response.getHeader(HttpHeader.CONTENT_ID) != null) {
+            return response;
+        }
+        response.addHeader(HttpHeader.CONTENT_ID, contentId);
+        return response;
     }
 
     /**
