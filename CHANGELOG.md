@@ -1,6 +1,19 @@
 # Changelog
 
-## 0.37.23 (2025-12-01)
+## 0.37.24 (2026-01-23)
+
+### Bug Fixes
+
+- enable brotli to be available at runtime ([62c27e7c](https://github.com/SAP/neonbee/commit/62c27e7c0a1224bb965980e8e7e4436b5a788eaa))
+- add change set support for OData proxy ([e4a17c38](https://github.com/SAP/neonbee/commit/e4a17c3868ae7078f941b491b2cfa5635959fbd2))
+
+
+## 0.37.23 (2025-12-19)
+
+### Bug Fixes
+
+- parseUriInfo ([a8f068ee](https://github.com/SAP/neonbee/commit/a8f068ee635227b597226a08eb99f7dcc5ed9e37))
+
 
 ## 0.37.22 (2025-12-01)
 
