@@ -34,7 +34,7 @@ import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.shareddata.Lock;
 import io.vertx.core.shareddata.SharedData;
-import io.vertx.micrometer.impl.VertxMetricsFactoryImpl;
+import io.vertx.micrometer.MicrometerMetricsFactory;
 
 public final class NeonBeeMockHelper {
     /**
@@ -191,10 +191,10 @@ public final class NeonBeeMockHelper {
     public static Future<NeonBee> createNeonBee(Vertx vertx, NeonBeeOptions options) {
         return NeonBee.create((vertxOptions, clusterManager) -> {
             if (vertxOptions.getMetricsOptions() != null) {
-                new VertxMetricsFactoryImpl().metrics(vertxOptions);
+                new MicrometerMetricsFactory().metrics(vertxOptions);
             }
             return succeededFuture(vertx);
-        }, ClusterManager.FAKE.factory(), options, null);
+        }, ClusterManager.FAKE.factory(), options, null, new CompositeMeterRegistry());
     }
 
     /**

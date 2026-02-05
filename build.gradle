@@ -89,6 +89,9 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-hazelcast', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-health-check', version: vertx_version
 
+    def micrometer_version = '1.15.8'
+    implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: micrometer_version
+
     def hazelcast_version = '5.3.8'
     implementation group: 'com.hazelcast', name: 'hazelcast', version: hazelcast_version
 

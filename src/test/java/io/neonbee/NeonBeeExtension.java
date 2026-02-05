@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hazelcast.core.LifecycleService;
 
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.NeonBeeOptions.Mutable;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
@@ -317,10 +318,11 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         AtomicReference<NeonBee> neonBeeBox = new AtomicReference<>();
         AtomicReference<Throwable> errorBox = new AtomicReference<>();
 
+        CompositeMeterRegistry meterRegistry = new CompositeMeterRegistry();
         NeonBee.create(
                 (NeonBee.OwnVertxFactory) (vertxOptions, clusterManagerInstance) -> NeonBee.newVertx(vertxOptions,
-                        clusterManagerInstance, options),
-                clusterManager.factory(), options, null).onComplete(ar -> {
+                        clusterManagerInstance, options, meterRegistry),
+                clusterManager.factory(), options, null, meterRegistry).onComplete(ar -> {
                     if (ar.succeeded()) {
                         neonBeeBox.set(ar.result());
                     } else {

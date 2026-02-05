@@ -18,7 +18,7 @@ public final class DeploymentHelper {
 
     public static final String NEONBEE_NAMESPACE = "neonbee";
 
-    private static final Map<String, Deployment> deploymentInfoMap = new HashMap<>();
+    private static final Map<String, Deployment> DEPLOYMENT_INFO_MAP = new HashMap<>();
 
     private DeploymentHelper() {
         // Utils class no need to instantiate
@@ -48,7 +48,7 @@ public final class DeploymentHelper {
     public static Future<String> deployVerticle(Vertx vertx, Verticle verticle, JsonObject verticleConfig) {
         return vertx.deployVerticle(verticle, new DeploymentOptions().setConfig(verticleConfig))
                 .onSuccess(deploymentId -> {
-                    deploymentInfoMap.put(deploymentId, new Deployment(deploymentId, verticle.getClass()));
+                    DEPLOYMENT_INFO_MAP.put(deploymentId, new Deployment(deploymentId, verticle.getClass()));
                 });
     }
 
@@ -60,6 +60,7 @@ public final class DeploymentHelper {
      * @return A succeeded future, or a failed future with the cause.
      */
     public static Future<Void> undeployVerticle(Vertx vertx, String deploymentID) {
+        DEPLOYMENT_INFO_MAP.remove(deploymentID);
         return vertx.undeploy(deploymentID);
     }
 
@@ -73,7 +74,7 @@ public final class DeploymentHelper {
     public static Future<Void> undeployAllVerticlesOfClass(Vertx vertx, Class<? extends Verticle> verticleClass) {
         return Future
                 .all(getAllDeployments(vertx)
-                        .filter(deployment -> deployment.getVerticleClass().isInstance(verticleClass))
+                        .filter(deployment -> deployment.getVerticleClass().isAssignableFrom(verticleClass))
                         .map(deployment -> undeployVerticle(vertx, deployment.getDeploymentId())).collect(toList()))
                 .mapEmpty();
     }
@@ -93,8 +94,8 @@ public final class DeploymentHelper {
     }
 
     private static Stream<Deployment> getAllDeployments(Vertx vertx) {
-        return vertx.deploymentIDs().stream().filter(deploymentId -> deploymentInfoMap.containsKey(deploymentId))
-                .map(deploymentInfoMap::get).collect(Collectors.toList()).stream();
+        return vertx.deploymentIDs().stream().filter(deploymentId -> DEPLOYMENT_INFO_MAP.containsKey(deploymentId))
+                .map(DEPLOYMENT_INFO_MAP::get).collect(toList()).stream();
     }
 
     private static Stream<Verticle> getAllDeployedVerticles(Vertx vertx) {

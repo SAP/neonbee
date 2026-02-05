@@ -18,6 +18,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.FutureInternal;
 
+@SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
 public abstract class PendingDeployment extends Deployment implements FutureInternal<Deployment> {
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 

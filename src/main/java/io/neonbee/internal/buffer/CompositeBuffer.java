@@ -33,10 +33,10 @@ public final class CompositeBuffer {
         case 1:
             return ImmutableBuffer.buffer(buffers[0]);
         default:
-            return new ImmutableBuffer(
-                    wrappedUnmodifiableBuffer(Arrays.stream(buffers)
-                            .map(buffer -> ((BufferInternal) buffer).getByteBuf()).toArray(ByteBuf[]::new))
-                                    .asReadOnly());
+            ByteBuf[] byteBuffers = Arrays.stream(buffers)
+                    .map(buffer -> ((BufferInternal) buffer).getByteBuf())
+                    .toArray(ByteBuf[]::new);
+            return new ImmutableBuffer(wrappedUnmodifiableBuffer(byteBuffers).asReadOnly());
         }
     }
 }

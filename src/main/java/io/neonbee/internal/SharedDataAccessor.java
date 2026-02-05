@@ -59,6 +59,10 @@ public class SharedDataAccessor implements SharedData {
     /**
      * @deprecated Deprecated since Vert.x 4.x (callback model), use {@link SharedDataAccessor#getAsyncMap(String)}
      *             (future-based) instead. Removed in Vert.x 5.
+     * @param name          name of the lock
+     * @param resultHandler the handler to return the lock asynchronously
+     * @param <K>           The type of the key of the async map entries
+     * @param <V>           The type of the value of the async map entries
      */
     @Deprecated(since = "4.x", forRemoval = true)
     public <K, V> void getAsyncMap(String name, Handler<AsyncResult<AsyncMap<K, V>>> resultHandler) {
@@ -104,6 +108,10 @@ public class SharedDataAccessor implements SharedData {
     /**
      * @deprecated Deprecated since Vert.x 4.x (callback model), use {@link SharedDataAccessor#getLocalAsyncMap(String)}
      *             (future-based) instead. Removed in Vert.x 5.
+     * @param name          name of the lock
+     * @param resultHandler the handler to return the lock asynchronously
+     * @param <K>           The type of the key of the async map entries
+     * @param <V>           The type of the value of the async map entries
      */
     @Deprecated(since = "4.x", forRemoval = true)
     public <K, V> void getLocalAsyncMap(String name, Handler<AsyncResult<AsyncMap<K, V>>> resultHandler) {
@@ -149,6 +157,10 @@ public class SharedDataAccessor implements SharedData {
     /**
      * @deprecated Deprecated since Vert.x 4.x (callback model), use
      *             {@link SharedDataAccessor#getClusterWideMap(String)} (future-based) instead. Removed in Vert.x 5.
+     * @param name          name of the lock
+     * @param resultHandler the handler to return the lock asynchronously
+     * @param <K>           The type of the key of the async map entries
+     * @param <V>           The type of the value of the async map entries
      */
     @Deprecated(since = "4.x", forRemoval = true)
     public <K, V> void getClusterWideMap(String name, Handler<AsyncResult<AsyncMap<K, V>>> resultHandler) {
@@ -190,6 +202,8 @@ public class SharedDataAccessor implements SharedData {
     /**
      * @deprecated Deprecated since Vert.x 4.x (callback model), use {@link SharedDataAccessor#getCounter(String)}
      *             (future-based) instead. Removed in Vert.x 5.
+     * @param name          name of the lock
+     * @param resultHandler the handler to return the lock asynchronously
      */
     @Deprecated(since = "4.x", forRemoval = true)
     public void getCounter(String name, Handler<AsyncResult<Counter>> resultHandler) {
@@ -224,6 +238,8 @@ public class SharedDataAccessor implements SharedData {
     /**
      * @deprecated Deprecated since Vert.x 4.x (callback model), use {@link SharedDataAccessor#getLocalCounter(String)}
      *             (future-based) instead. Removed in Vert.x 5.
+     * @param name          name of the lock
+     * @param resultHandler the handler to return the lock asynchronously
      */
     @Deprecated(since = "4.x", forRemoval = true)
     public void getLocalCounter(String name, Handler<AsyncResult<Counter>> resultHandler) {
@@ -258,6 +274,8 @@ public class SharedDataAccessor implements SharedData {
     /**
      * @deprecated Deprecated since Vert.x 4.x (callback model), use {@link SharedDataAccessor#getLock(String)}
      *             (future-based) instead. Removed in Vert.x 5.
+     * @param name          name of the lock
+     * @param resultHandler the handler to return the lock asynchronously
      */
     @Deprecated(since = "4.x", forRemoval = true)
     public void getLock(String name, Handler<AsyncResult<Lock>> resultHandler) {
@@ -292,6 +310,8 @@ public class SharedDataAccessor implements SharedData {
     /**
      * @deprecated Deprecated since Vert.x 4.x (callback model), use {@link SharedDataAccessor#getLocalLock(String)}
      *             (future-based) instead. Removed in Vert.x 5.
+     * @param name          name of the lock
+     * @param resultHandler the handler to return the lock asynchronously
      */
     @Deprecated(since = "4.x", forRemoval = true)
     public void getLocalLock(String name, Handler<AsyncResult<Lock>> resultHandler) {
@@ -328,6 +348,9 @@ public class SharedDataAccessor implements SharedData {
     /**
      * @deprecated Deprecated since Vert.x 4.x (callback model), use {@link SharedDataAccessor#getLockWithTimeout(long)}
      *             (future-based) instead. Removed in Vert.x 5.
+     * @param name          name of the lock
+     * @param timeout       timeout in ms
+     * @param resultHandler the handler to return the lock asynchronously
      */
     @Deprecated(since = "4.x", forRemoval = true)
     public void getLockWithTimeout(String name, long timeout, Handler<AsyncResult<Lock>> resultHandler) {
@@ -365,6 +388,9 @@ public class SharedDataAccessor implements SharedData {
     /**
      * @deprecated Deprecated since Vert.x 4.x (callback model), use
      *             {@link SharedDataAccessor#getLocalLockWithTimeout(long)} (future-based) instead. Removed in Vert.x 5.
+     * @param name          name of the lock
+     * @param timeout       timeout in ms
+     * @param resultHandler the handler to return the lock asynchronously
      */
     @Deprecated(since = "4.x", forRemoval = true)
     public void getLocalLockWithTimeout(String name, long timeout, Handler<AsyncResult<Lock>> resultHandler) {

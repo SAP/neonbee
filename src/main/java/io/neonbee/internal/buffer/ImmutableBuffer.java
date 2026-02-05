@@ -83,18 +83,18 @@ public final class ImmutableBuffer implements Buffer {
      * @param byteBuffer the Netty byte buffer to wrap
      */
     ImmutableBuffer(ByteBuf byteBuffer) {
-        this(Buffer.buffer(byteBuffer.array()), byteBuffer);
+        this(BufferInternal.buffer(byteBuffer), byteBuffer);
     }
 
     /**
-     * Small optimization, as calling will duplicate the underlying buffer.
+     * Small optimization, as calling {@link BufferInternal#getByteBuf} will duplicate the underlying buffer.
      *
      * @param buffer     the buffer to wrap
      * @param byteBuffer the associated Netty byte-buffer
      */
     private ImmutableBuffer(Buffer buffer, ByteBuf byteBuffer) {
         // if the underlying byte buffer is read-only already, there is no need to make it any more immutable
-        this.buffer = byteBuffer.isReadOnly() ? buffer : Buffer.buffer(byteBuffer.asReadOnly().array());
+        this.buffer = byteBuffer.isReadOnly() ? buffer : BufferInternal.buffer(byteBuffer.asReadOnly());
     }
 
     /**
@@ -540,6 +540,13 @@ public final class ImmutableBuffer implements Buffer {
         return new ImmutableBuffer(buffer.slice(start, end));
     }
 
+    /**
+     * Returns the underlying Netty {@link ByteBuf} of this buffer. Note that this method will not return a read-only
+     * view of the buffer, as the underlying Netty {@link ByteBuf} is already casted to a read-only instance by the
+     * constructor of this class, so there is no need to make it any more immutable
+     *
+     * @return the underlying Netty {@link ByteBuf}
+     */
     public ByteBuf getByteBuf() {
         return ((BufferInternal) buffer).getByteBuf();
     }
