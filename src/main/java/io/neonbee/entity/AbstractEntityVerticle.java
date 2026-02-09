@@ -96,7 +96,7 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
      */
     @VisibleForTesting
     static final Pattern URI_PATH_PATTERN =
-            Pattern.compile("^/*((?:(.*)\\.)?(.*?))/(([A-Za-z_]\\w+).*?)(?:(?<=\\))/(.*))?$");
+            Pattern.compile("^/*((?:(.+/?)\\.)?([^/]+))/(([A-Za-z_]\\w+)[^/]*)(?:/(.*))?$");
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
@@ -224,13 +224,13 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
      */
     @Override
     public void start(Promise<Void> promise) {
-        vertx.eventBus().consumer(EVENT_BUS_MODELS_LOADED_ADDRESS, message -> {
-            announceEntityVerticle(vertx).onFailure(throwable -> {
-                if (LOGGER.isErrorEnabled()) {
-                    LOGGER.error("Updating announcements of entity verticle {} failed", getQualifiedName(), throwable);
-                }
-            });
-        });
+        vertx.eventBus().consumer(EVENT_BUS_MODELS_LOADED_ADDRESS,
+                message -> announceEntityVerticle(vertx).onFailure(throwable -> {
+                    if (LOGGER.isErrorEnabled()) {
+                        LOGGER.error("Updating announcements of entity verticle {} failed", getQualifiedName(),
+                                throwable);
+                    }
+                }));
         announceEntityVerticle(vertx).compose(nothing -> Future.<Void>future(super::start))
                 .onSuccess(nothing -> {
                     if (LOGGER.isInfoEnabled()) {
