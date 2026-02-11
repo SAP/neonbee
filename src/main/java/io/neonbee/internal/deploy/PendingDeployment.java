@@ -4,22 +4,14 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import io.neonbee.NeonBee;
 import io.neonbee.logging.LoggingFacade;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Expectation;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.internal.ContextInternal;
-import io.vertx.core.internal.FutureInternal;
 
-@SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
-public abstract class PendingDeployment extends Deployment implements FutureInternal<Deployment> {
+public abstract class PendingDeployment extends Deployment {
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
     private final Future<String> deployFuture;
@@ -86,93 +78,12 @@ public abstract class PendingDeployment extends Deployment implements FutureInte
      */
     protected abstract Future<Void> undeploy(String deploymentId);
 
-    private Future<Deployment> mapDeployment() {
-        return deployFuture.map((Deployment) this);
-    }
-
-    @Override
-    public String getDeploymentId() {
-        return deployFuture.result();
-    }
-
-    @Override
-    public boolean isComplete() {
-        return deployFuture.isComplete();
-    }
-
-    @Override
-    public Future<Deployment> onComplete(Handler<AsyncResult<Deployment>> handler) {
-        return mapDeployment().onComplete(handler);
-    }
-
-    @Override
-    public Deployment result() {
-        return succeeded() ? this : null;
-    }
-
-    @Override
-    public Throwable cause() {
-        return deployFuture.cause();
-    }
-
-    @Override
-    public boolean succeeded() {
-        return deployFuture.succeeded();
-    }
-
-    @Override
-    public boolean failed() {
-        return deployFuture.failed();
-    }
-
-    @Override
-    public <U> Future<U> transform(Function<AsyncResult<Deployment>, Future<U>> mapper) {
-        return mapDeployment().transform(mapper);
-    }
-
-    @Override
-    public <U> Future<Deployment> eventually(Supplier<Future<U>> supplier) {
-        return mapDeployment().eventually(supplier);
-    }
-
-    @Override
-    public <V> Future<V> map(V value) {
-        return mapDeployment().map(value);
-    }
-
-    @Override
-    public Future<Deployment> otherwise(Function<Throwable, Deployment> mapper) {
-        return mapDeployment().otherwise(mapper);
-    }
-
-    @Override
-    public Future<Deployment> otherwise(Deployment value) {
-        return mapDeployment().otherwise(value);
-    }
-
-    @Override
-    public ContextInternal context() {
-        return ((FutureInternal<String>) deployFuture).context();
-    }
-
-    @Override
-    public Future<Deployment> timeout(long delay, TimeUnit unit) {
-        return mapDeployment().timeout(delay, unit);
-    }
-
-    @Override
-    public <U> Future<U> map(Function<? super Deployment, U> function) {
-        return mapDeployment().map(function);
-    }
-
-    @Override
-    public Future<Deployment> expecting(Expectation<? super Deployment> expectation) {
-        return mapDeployment().expecting(expectation);
-    }
-
-    @Override
-    public <U> Future<U> compose(Function<? super Deployment, Future<U>> function,
-            Function<Throwable, Future<U>> function1) {
-        return mapDeployment().compose(function, function1);
+    /**
+     * Returns the Deployment object after deployment is completed.
+     *
+     * @return future containing deployment object.
+     */
+    public Future<Deployment> getDeployment() {
+        return deployFuture.map(id -> this);
     }
 }

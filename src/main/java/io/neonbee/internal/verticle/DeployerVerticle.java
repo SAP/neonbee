@@ -57,7 +57,7 @@ public class DeployerVerticle extends WatchVerticle {
 
         DeployableModule.fromJar(vertx, affectedPath).compose(deployableModule -> {
             // The deploy method automatically cleans up in case of failure.
-            return deployableModule.deploy(NeonBee.get(vertx)).compose(deployment -> {
+            return deployableModule.deploy(NeonBee.get(vertx)).getDeployment().compose(deployment -> {
                 Deployment replacedModule = deployedModules.put(affectedPath, deployment);
                 if (Objects.isNull(replacedModule)) {
                     return Future.succeededFuture();
