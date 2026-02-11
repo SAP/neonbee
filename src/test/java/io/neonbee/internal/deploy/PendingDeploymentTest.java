@@ -9,30 +9,21 @@ import static io.vertx.core.Future.succeededFuture;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
 import io.neonbee.NeonBee;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.internal.deploy.DeployableTest.DeployableThing;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.internal.FutureInternal;
 
 class PendingDeploymentTest {
     @Test
@@ -52,85 +43,7 @@ class PendingDeploymentTest {
     void getDeploymentIdTest() {
         String deploymentId = "Hodor";
         PendingDeployment deployment = new TestPendingDeployment(succeededFuture(deploymentId));
-        assertThat(deployment.getDeploymentId()).isEqualTo(deploymentId);
-    }
-
-    @Test
-    void setHandlerTest() {
-        Promise<String> deployPromise = Promise.promise();
-        PendingDeployment deployment = new TestPendingDeployment(deployPromise.future());
-        assertThat(deployment.isComplete()).isFalse();
-        deployPromise.complete("test");
-        assertThat(deployment.isComplete()).isTrue();
-        assertThat(deployment.succeeded()).isTrue();
-        assertThat(deployment.result().getDeploymentId()).isEqualTo("test");
-    }
-
-    @Test
-    @SuppressWarnings({ "unchecked", "deprecation" })
-    void testFutureInterface() {
-        FutureInternal<String> futureMock = mock(FutureInternal.class);
-        doReturn(futureMock).when(futureMock).map((Function<String, ?>) any());
-        doReturn(futureMock).when(futureMock).map((Supplier<String>) any());
-        doReturn(futureMock).when(futureMock).map((Deployable) any());
-        doReturn(futureMock).when(futureMock).onSuccess(any());
-        doReturn(futureMock).when(futureMock).onFailure(any());
-
-        PendingDeployment deployment = new TestPendingDeployment(futureMock);
-        verify(futureMock).map((Function<String, ?>) any());
-        verify(futureMock).onSuccess(any());
-        verify(futureMock).onFailure(any());
-
-        deployment.isComplete();
-        verify(futureMock).isComplete();
-
-        deployment.onComplete((Handler<AsyncResult<Deployment>>) null);
-        verify(futureMock).onComplete((Handler<AsyncResult<String>>) any());
-
-        deployment.result();
-        verify(futureMock).succeeded();
-        clearInvocations(futureMock);
-
-        deployment.cause();
-        verify(futureMock).cause();
-
-        deployment.succeeded();
-        verify(futureMock).succeeded();
-
-        deployment.failed();
-        verify(futureMock).failed();
-
-        deployment.compose(null);
-        verify(futureMock).compose(any(), any());
-
-        deployment.transform((Function<AsyncResult<Deployment>, Future<Object>>) null);
-        verify(futureMock).transform((Function<AsyncResult<String>, Future<Object>>) any());
-
-        deployment.eventually((Supplier) null);
-        verify(futureMock).eventually((Supplier) any());
-
-        deployment.eventually((Supplier) null);
-        verify(futureMock).eventually((Supplier) any());
-
-        clearInvocations(futureMock);
-        deployment.map((Function<String, ?>) null);
-        verify(futureMock, atLeastOnce()).map(any(Object.class));
-
-        clearInvocations(futureMock);
-        deployment.map((String) null);
-        verify(futureMock, atLeastOnce()).map(any(Object.class));
-
-        deployment.otherwise((Function<Throwable, Deployment>) null);
-        verify(futureMock).otherwise((Function<Throwable, String>) any());
-
-        deployment.otherwise((Deployment) null);
-        verify(futureMock).otherwise((String) any());
-
-        deployment.context();
-        verify(futureMock).context();
-
-        deployment.timeout(10, TimeUnit.SECONDS);
-        verify(futureMock).timeout(10, TimeUnit.SECONDS);
+        assertThat(deployment.getDeployment().result().getDeployable().getIdentifier()).isEqualTo(deploymentId);
     }
 
     @Test
@@ -185,7 +98,7 @@ class PendingDeploymentTest {
         }
 
         protected TestPendingDeployment(NeonBee neonBee, String deployableType, Future<String> deployFuture) {
-            super(neonBee, new DeployableThing("foo") {
+            super(neonBee, new DeployableThing("Hodor") {
                 @Override
                 public String getType() {
                     return deployableType == null ? super.getType() : deployableType;

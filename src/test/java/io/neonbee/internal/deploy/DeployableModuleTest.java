@@ -78,7 +78,7 @@ class DeployableModuleTest {
         URLClassLoader classLoaderMock = mock(URLClassLoader.class);
         PendingDeployment deployment = new DeployableModule("module", classLoaderMock, List.of())
                 .deploy(neonBeeMock);
-        assertThat(deployment.succeeded()).isTrue();
+        assertThat(deployment.getDeployment().succeeded()).isTrue();
         assertThat(deployment.undeploy().succeeded()).isTrue();
         verify(classLoaderMock).close();
     }
