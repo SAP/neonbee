@@ -621,7 +621,7 @@ public class NeonBee {
     private Future<Void> deployServerVerticle() {
         LOGGER.info("Deploying server verticle ...");
         return fromClass(vertx, ServerVerticle.class, new JsonObject().put("instances", NUMBER_DEFAULT_INSTANCES))
-                .compose(deployable -> deployable.deploy(this)).mapEmpty();
+                .compose(deployable -> deployable.deploy(this).getDeployment()).mapEmpty();
     }
 
     /**
