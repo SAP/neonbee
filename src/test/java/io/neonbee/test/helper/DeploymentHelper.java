@@ -63,14 +63,36 @@ public final class DeploymentHelper {
      */
     public static Future<Void> undeployAllVerticlesOfClass(Vertx vertx, Class<? extends Verticle> verticleClass) {
         return Future
-                .all(getAllDeployments(vertx)
+                .all(streamAllDeployments(vertx)
                         .filter(deployment -> deployment.getVerticles().stream().anyMatch(verticleClass::isInstance))
                         .map(deployment -> undeployVerticle(vertx, deployment.deploymentID())).collect(toList()))
                 .mapEmpty();
     }
 
     public static boolean isVerticleDeployed(Vertx vertx, Class<? extends Verticle> verticleToCheck) {
-        return getAllDeployedVerticles(vertx).anyMatch(verticleToCheck::isInstance);
+        return streamAllDeployedVerticles(vertx).anyMatch(verticleToCheck::isInstance);
+    }
+
+    /**
+     * Provides a Set of the classes of the deployed Verticles.
+     *
+     * @param vertx The related Vert.x instance
+     * @return A Set of the classes of the deployed Verticles.
+     * @deprecated Use {@link #getAllDeployedVerticleClasses(Vertx)} instead
+     */
+    @Deprecated(forRemoval = true)
+    public static Set<Class<? extends Verticle>> getDeployedVerticles(Vertx vertx) {
+        return getAllDeployedVerticleClasses(vertx);
+    }
+
+    /**
+     * Provides a Set of the deployed Verticles.
+     *
+     * @param vertx The related Vert.x instance
+     * @return A Set of the deployed Verticles.
+     */
+    public static Set<Verticle> getAllDeployedVerticles(Vertx vertx) {
+        return streamAllDeployedVerticles(vertx).collect(Collectors.toSet());
     }
 
     /**
@@ -79,16 +101,16 @@ public final class DeploymentHelper {
      * @param vertx The related Vert.x instance
      * @return A Set of the classes of the deployed Verticles.
      */
-    public static Set<Class<? extends Verticle>> getDeployedVerticles(Vertx vertx) {
-        return getAllDeployedVerticles(vertx).map(Verticle::getClass).collect(Collectors.toSet());
+    public static Set<Class<? extends Verticle>> getAllDeployedVerticleClasses(Vertx vertx) {
+        return streamAllDeployedVerticles(vertx).map(Verticle::getClass).collect(Collectors.toSet());
     }
 
-    private static Stream<Deployment> getAllDeployments(Vertx vertx) {
+    private static Stream<Deployment> streamAllDeployments(Vertx vertx) {
         return vertx.deploymentIDs().stream().map(((VertxInternal) vertx)::getDeployment);
     }
 
-    private static Stream<Verticle> getAllDeployedVerticles(Vertx vertx) {
-        return getAllDeployments(vertx).map(Deployment::getVerticles).flatMap(Set::stream);
+    private static Stream<Verticle> streamAllDeployedVerticles(Vertx vertx) {
+        return streamAllDeployments(vertx).map(Deployment::getVerticles).flatMap(Set::stream);
     }
 
     private DeploymentHelper() {
