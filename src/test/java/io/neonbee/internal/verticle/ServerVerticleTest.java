@@ -31,7 +31,7 @@ class ServerVerticleTest extends NeonBeeTestBase {
 
         // positive case, both initial line and headers have a small size
         createRequest(HttpMethod.GET, "/any404").putHeader("smallHeader", "x")
-                .send(testCtx.succeeding(response -> testCtx.verify(() -> {
+                .send().onComplete(testCtx.succeeding(response -> testCtx.verify(() -> {
                     assertThat(response.statusCode()).isEqualTo(404);
                     checkpoint.flag();
                 })));
@@ -41,20 +41,22 @@ class ServerVerticleTest extends NeonBeeTestBase {
         // leaving the rest for the URI. By default the URI may be 4096 bytes long, that leaves 4082 bytes for the URI!
         // Note: Since the upgrade to Vert.x 4.0 we cannot send the full length of 4096 bytes, we have to send one byte
         // less. See https://github.com/eclipse-vertx/vert.x/commit/9363774e996a9549261ff2e30aa55f1e1cbe20a6
-        createRequest(HttpMethod.GET, "/" + "x".repeat(4081)).send(testCtx.succeeding(response -> testCtx.verify(() -> {
-            assertThat(response.statusCode()).isEqualTo(404);
-            checkpoint.flag();
-        })));
+        createRequest(HttpMethod.GET, "/" + "x".repeat(4081)).send()
+                .onComplete(testCtx.succeeding(response -> testCtx.verify(() -> {
+                    assertThat(response.statusCode()).isEqualTo(404);
+                    checkpoint.flag();
+                })));
 
         // negative edge case for the initial line
-        createRequest(HttpMethod.GET, "/" + "x".repeat(4083)).send(testCtx.succeeding(response -> testCtx.verify(() -> {
-            assertThat(response.statusCode()).isEqualTo(414); // URI too long
-            checkpoint.flag();
-        })));
+        createRequest(HttpMethod.GET, "/" + "x".repeat(4083)).send()
+                .onComplete(testCtx.succeeding(response -> testCtx.verify(() -> {
+                    assertThat(response.statusCode()).isEqualTo(414); // URI too long
+                    checkpoint.flag();
+                })));
 
         // negative case for the header, all headers may not exceed 8192 bytes
         createRequest(HttpMethod.GET, "/any404").putHeader("largeHeader", "x".repeat(10000))
-                .send(testCtx.succeeding(response -> testCtx.verify(() -> {
+                .send().onComplete(testCtx.succeeding(response -> testCtx.verify(() -> {
                     assertThat(response.statusCode()).isEqualTo(431);
                     checkpoint.flag();
                 })));
@@ -65,14 +67,15 @@ class ServerVerticleTest extends NeonBeeTestBase {
         Checkpoint checkpoint = testCtx.checkpoint(2);
 
         // by default the initial line length may only be 4096 bytes
-        createRequest(HttpMethod.GET, "/" + "x".repeat(4083)).send(testCtx.succeeding(response -> testCtx.verify(() -> {
-            assertThat(response.statusCode()).isEqualTo(404);
-            checkpoint.flag();
-        })));
+        createRequest(HttpMethod.GET, "/" + "x".repeat(4083)).send()
+                .onComplete(testCtx.succeeding(response -> testCtx.verify(() -> {
+                    assertThat(response.statusCode()).isEqualTo(404);
+                    checkpoint.flag();
+                })));
 
         // by default the maximum header size may only be 8196 bytes
         createRequest(HttpMethod.GET, "/any404").putHeader("largeHeader", "x".repeat(10000))
-                .send(testCtx.succeeding(response -> testCtx.verify(() -> {
+                .send().onComplete(testCtx.succeeding(response -> testCtx.verify(() -> {
                     assertThat(response.statusCode()).isEqualTo(404);
                     checkpoint.flag();
                 })));

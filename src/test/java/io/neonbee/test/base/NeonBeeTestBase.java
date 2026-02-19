@@ -63,7 +63,7 @@ import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
@@ -212,7 +212,7 @@ public class NeonBeeTestBase {
 
         // in case we had run in clustered mode and used a FakeClusterManager, we will have to reset it
         if (neonBee.getOptions().isClustered() && vertx instanceof VertxInternal
-                && ((VertxInternal) vertx).getClusterManager() instanceof FakeClusterManager) {
+                && ((VertxInternal) vertx).clusterManager() instanceof FakeClusterManager) {
             FakeClusterManager.reset();
         }
 
@@ -300,7 +300,7 @@ public class NeonBeeTestBase {
      */
     public Future<Deployment> deployVerticle(Verticle verticle) {
         return DeployableVerticle.fromVerticle(neonBee.getVertx(), verticle, null)
-                .compose(deployable -> deployable.deploy(neonBee))
+                .compose(deployable -> deployable.deploy(neonBee).getDeployment())
                 .onSuccess(result -> LOGGER.info("Successfully deployed verticle {}", verticle))
                 .onFailure(throwable -> LOGGER.error("Failed to deploy verticle {}", verticle, throwable));
     }
@@ -313,7 +313,7 @@ public class NeonBeeTestBase {
      * @return A succeeded future with the Deployment, or a failed future with the cause.
      */
     public Future<Deployment> deployVerticle(Verticle verticle, DeploymentOptions options) {
-        return new DeployableVerticle(verticle, options).deploy(neonBee)
+        return new DeployableVerticle(verticle, options).deploy(neonBee).getDeployment()
                 .onSuccess(result -> LOGGER.info("Successfully deployed verticle {}", verticle))
                 .onFailure(throwable -> LOGGER.error("Failed to deploy verticle {}", verticle, throwable));
     }
@@ -326,7 +326,7 @@ public class NeonBeeTestBase {
      */
     public Future<Deployment> deployVerticle(Class<? extends Verticle> verticleClass) {
         return DeployableVerticle.fromClass(neonBee.getVertx(), verticleClass, null)
-                .compose(deployable -> deployable.deploy(neonBee))
+                .compose(deployable -> deployable.deploy(neonBee).getDeployment())
                 .onSuccess(
                         result -> LOGGER.info("Successfully deployed verticle with class {}", verticleClass.getName()))
                 .onFailure(throwable -> LOGGER.error("Failed to deploy verticle with class {}", verticleClass.getName(),
@@ -341,7 +341,7 @@ public class NeonBeeTestBase {
      * @return A succeeded future with the Deployment, or a failed future with the cause.
      */
     public Future<Deployment> deployVerticle(Class<? extends Verticle> verticleClass, DeploymentOptions options) {
-        return new DeployableVerticle(verticleClass, options).deploy(neonBee)
+        return new DeployableVerticle(verticleClass, options).deploy(neonBee).getDeployment()
                 .onSuccess(
                         result -> LOGGER.info("Successfully deployed verticle with class {}", verticleClass.getName()))
                 .onFailure(throwable -> LOGGER.error("Failed to deploy verticle with class {}", verticleClass.getName(),
@@ -450,7 +450,8 @@ public class NeonBeeTestBase {
 
     private ServerVerticle createDummyServerVerticle(TestInfo testInfo) {
         ChainAuthHandler dummyAuthHandler = ctx -> {
-            ctx.setUser(User.create(provideUserPrincipal(testInfo)));
+            ctx.put("userContext", User.create(provideUserPrincipal(testInfo)));
+
             Session session = ctx.session();
             if (session != null) {
                 // the user has upgraded from unauthenticated to authenticated
@@ -470,4 +471,5 @@ public class NeonBeeTestBase {
             }
         };
     }
+
 }

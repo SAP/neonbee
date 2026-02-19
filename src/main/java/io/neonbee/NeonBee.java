@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -101,7 +102,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.eventbus.MessageCodec;
-import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.PfxOptions;
@@ -109,6 +109,7 @@ import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.core.spi.cluster.NodeListener;
+import io.vertx.micrometer.MicrometerMetricsFactory;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 
 @SuppressWarnings({ "PMD.CouplingBetweenObjects", "PMD.GodClass", "PMD.ExcessiveImports" })
@@ -184,7 +185,7 @@ public class NeonBee {
 
     private AsyncMap<String, Object> sharedAsyncMap;
 
-    private final Set<String> localConsumers = new ConcurrentHashSet<>();
+    private final Set<String> localConsumers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final EntityModelManager modelManager;
 
@@ -250,16 +251,17 @@ public class NeonBee {
      * @return the future to a new NeonBee instance initialized with default options and a new Vert.x instance
      */
     public static Future<NeonBee> create(NeonBeeOptions options, NeonBeeConfig config) {
+        CompositeMeterRegistry meterRegistry = new CompositeMeterRegistry();
         // using the marker interface we signal, that we are responsible of also closing Vert.x if NeonBee shuts down
         return create((OwnVertxFactory) (vertxOptions, clusterManager) -> {
-            return newVertx(vertxOptions, clusterManager, options);
-        }, options.getClusterManager(), options, config);
+            return newVertx(vertxOptions, clusterManager, options, meterRegistry);
+        }, options.getClusterManager(), options, config, meterRegistry);
     }
 
     @VisibleForTesting
     @SuppressWarnings({ "PMD.EmptyCatchBlock", "PMD.AvoidCatchingThrowable" })
     static Future<NeonBee> create(VertxFactory vertxFactory, @Nullable ClusterManagerFactory clusterManagerFactory,
-            NeonBeeOptions options, NeonBeeConfig config) {
+            NeonBeeOptions options, NeonBeeConfig config, CompositeMeterRegistry meterRegistry) {
         try {
             // create the NeonBee working and logging directory (as the only mandatory directory for NeonBee)
             Files.createDirectories(options.getLogDirectory());
@@ -267,13 +269,6 @@ public class NeonBee {
             // nothing to do here, we can also (at least try) to work w/o a working directory
             // we should discuss if NeonBee can run in general without a working dir or not
         }
-
-        VertxOptions vertxOptions = new VertxOptions().setEventLoopPoolSize(options.getEventLoopPoolSize())
-                .setWorkerPoolSize(options.getWorkerPoolSize());
-
-        CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
-        vertxOptions.setMetricsOptions(new MicrometerMetricsOptions().setRegistryName(options.getMetricsRegistryName())
-                .setMicrometerRegistry(compositeMeterRegistry).setEnabled(true));
 
         Future<ClusterManager> loadClusterManager = succeededFuture();
         if (options.isClustered()) {
@@ -283,6 +278,13 @@ public class NeonBee {
 
             loadClusterManager = clusterManagerFactory.create(options);
         }
+
+        VertxOptions vertxOptions = new VertxOptions()
+                .setEventLoopPoolSize(options.getEventLoopPoolSize())
+                .setWorkerPoolSize(options.getWorkerPoolSize())
+                .setMetricsOptions(
+                        new MicrometerMetricsOptions().setRegistryName(options.getMetricsRegistryName())
+                                .setEnabled(true));
 
         // create a Vert.x instance (clustered or unclustered)
         return loadClusterManager.compose(clusterManager -> vertxFactory.create(vertxOptions, clusterManager))
@@ -315,7 +317,7 @@ public class NeonBee {
 
                         // create a NeonBee instance, hook registry and close handler
                         Future<NeonBee> neonBeeFuture = configFuture.map(loadedConfig -> {
-                            return new NeonBee(vertx, options, loadedConfig, compositeMeterRegistry);
+                            return new NeonBee(vertx, options, loadedConfig, meterRegistry);
                         });
 
                         // boot NeonBee, on failure close Vert.x
@@ -329,9 +331,13 @@ public class NeonBee {
     }
 
     @VisibleForTesting
-    static Future<Vertx> newVertx(VertxOptions vertxOptions, ClusterManager clusterManager, NeonBeeOptions options) {
+    static Future<Vertx> newVertx(VertxOptions vertxOptions, ClusterManager clusterManager, NeonBeeOptions options,
+            CompositeMeterRegistry compositeMeterRegistry) {
+
         if (!options.isClustered()) {
-            return succeededFuture(Vertx.vertx(vertxOptions));
+            return succeededFuture(Vertx.builder().with(vertxOptions)
+                    .withMetrics(new MicrometerMetricsFactory(compositeMeterRegistry))
+                    .build());
         }
 
         vertxOptions.getEventBusOptions().setPort(options.getClusterPort());
@@ -340,7 +346,9 @@ public class NeonBee {
 
         return applyEncryptionOptions(options, vertxOptions.getEventBusOptions())
                 .compose(v -> Vertx.builder().with(vertxOptions)
-                        .withClusterManager(clusterManager).buildClustered())
+                        .withClusterManager(clusterManager)
+                        .withMetrics(new MicrometerMetricsFactory(compositeMeterRegistry))
+                        .buildClustered())
                 .onFailure(throwable -> {
                     LOGGER.error("Failed to start clustered Vert.x", throwable); // NOPMD slf4j
                 });
@@ -621,7 +629,7 @@ public class NeonBee {
     private Future<Void> deployServerVerticle() {
         LOGGER.info("Deploying server verticle ...");
         return fromClass(vertx, ServerVerticle.class, new JsonObject().put("instances", NUMBER_DEFAULT_INSTANCES))
-                .compose(deployable -> deployable.deploy(this)).mapEmpty();
+                .compose(deployable -> deployable.deploy(this).getDeployment()).mapEmpty();
     }
 
     /**

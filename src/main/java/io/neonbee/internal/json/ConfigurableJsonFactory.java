@@ -15,6 +15,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.netty.buffer.ByteBufInputStream;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.internal.buffer.BufferInternal;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.core.json.jackson.JacksonCodec;
@@ -194,7 +195,7 @@ public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
         @SuppressWarnings("deprecation") // see https://github.com/SAP/neonbee/issues/387
         protected JsonParser createParser(Buffer buf) {
             try {
-                return factory.createParser((InputStream) new ByteBufInputStream(buf.getByteBuf()));
+                return factory.createParser((InputStream) new ByteBufInputStream(((BufferInternal) buf).getByteBuf()));
             } catch (IOException e) {
                 throw new DecodeException("Failed to decode:" + e.getMessage(), e);
             }

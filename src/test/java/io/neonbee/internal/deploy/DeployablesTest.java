@@ -83,7 +83,7 @@ class DeployablesTest {
         PendingDeployment deployment = deployables.deploy(neonBeeMock);
 
         // regular deploying and undeploying works
-        assertThat(deployment.succeeded()).isTrue();
+        assertThat(deployment.getDeployment().succeeded()).isTrue();
         assertThat(deployable1.deploying).isTrue();
         assertThat(deployable2.deploying).isTrue();
         assertThat(deployable1.undeploying).isFalse();
@@ -96,7 +96,7 @@ class DeployablesTest {
         deployableThings.forEach(DeployableThing::reset);
         deployable1.deployFuture = failedFuture("fail");
         deployment = deployables.deploy(neonBeeMock);
-        assertThat(deployment.succeeded()).isFalse();
+        assertThat(deployment.getDeployment().succeeded()).isFalse();
         assertThat(deployable1.deploying).isTrue();
         assertThat(deployable2.deploying).isTrue();
         assertThat(deployable1.undeploying).isFalse(); // the deployment of 1 failed, so no need to undeploy
@@ -106,7 +106,7 @@ class DeployablesTest {
         deployableThings.forEach(DeployableThing::reset);
         deployable2.deployFuture = failedFuture("fail");
         deployment = deployables.deploy(neonBeeMock);
-        assertThat(deployment.succeeded()).isFalse();
+        assertThat(deployment.getDeployment().succeeded()).isFalse();
         assertThat(deployable1.deploying).isTrue();
         assertThat(deployable2.deploying).isTrue();
         assertThat(deployable1.undeploying).isTrue();
@@ -116,7 +116,7 @@ class DeployablesTest {
         deployableThings.forEach(DeployableThing::reset);
         deployable1.undeployFuture = failedFuture("fail");
         deployment = deployables.deploy(neonBeeMock);
-        assertThat(deployment.succeeded()).isTrue();
+        assertThat(deployment.getDeployment().succeeded()).isTrue();
         assertThat(deployable1.deploying).isTrue();
         assertThat(deployable2.deploying).isTrue();
         assertThat(deployable1.undeploying).isFalse();
@@ -130,19 +130,19 @@ class DeployablesTest {
         deployable1.deployFuture = failedFuture("deployfail");
         deployable2.undeployFuture = failedFuture("undeployfail");
         deployment = deployables.deploy(neonBeeMock);
-        assertThat(deployment.succeeded()).isFalse();
+        assertThat(deployment.getDeployment().succeeded()).isFalse();
         assertThat(deployable1.deploying).isTrue();
         assertThat(deployable2.deploying).isTrue();
         assertThat(deployable1.undeploying).isFalse(); // because it failed in the first place
         assertThat(deployable2.undeploying).isTrue();
-        assertThat(deployment.cause().getMessage()).isEqualTo("deployfail");
+        assertThat(deployment.getDeployment().cause().getMessage()).isEqualTo("deployfail");
 
         // undeploy hook should be called and be able to influence the result on success
         deployableThings.forEach(DeployableThing::reset);
         deployment = deployables.deploy(neonBeeMock, undeploymentResult -> {
             return failedFuture("testfailed");
         });
-        assertThat(deployment.succeeded()).isTrue();
+        assertThat(deployment.getDeployment().succeeded()).isTrue();
         assertThat(deployment.undeploy().cause().getMessage()).isEqualTo("testfailed");
 
         // undeploy hook should be called in any case, but not influence the original result on failure
@@ -151,12 +151,12 @@ class DeployablesTest {
         deployment = deployables.deploy(neonBeeMock, undeploymentResult -> {
             return succeededFuture();
         });
-        assertThat(deployment.succeeded()).isTrue();
+        assertThat(deployment.getDeployment().succeeded()).isTrue();
         assertThat(deployment.undeploy().cause().getMessage()).isEqualTo("undeployfailed");
         deployment = deployables.deploy(neonBeeMock, undeploymentResult -> {
             return failedFuture("testfailed");
         });
-        assertThat(deployment.succeeded()).isTrue();
+        assertThat(deployment.getDeployment().succeeded()).isTrue();
         assertThat(deployment.undeploy().cause().getMessage()).isEqualTo("undeployfailed");
 
         // keep partial deployments
@@ -164,7 +164,7 @@ class DeployablesTest {
         deployable1.deployFuture = failedFuture("fail");
         deployables.keepPartialDeployment();
         deployment = deployables.deploy(neonBeeMock);
-        assertThat(deployment.succeeded()).isFalse();
+        assertThat(deployment.getDeployment().succeeded()).isFalse();
         assertThat(deployable1.deploying).isTrue();
         assertThat(deployable2.deploying).isTrue();
         assertThat(deployable1.undeploying).isFalse();

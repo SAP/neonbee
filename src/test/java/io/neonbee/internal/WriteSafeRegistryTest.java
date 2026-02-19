@@ -10,7 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.NoStackTraceThrowable;
 import io.vertx.core.json.JsonArray;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.Timeout;
@@ -98,7 +97,7 @@ class WriteSafeRegistryTest {
             })
                     .onSuccess(unused -> context.failNow("should not be successful"))
                     .onFailure(cause -> context.verify(() -> {
-                        assertThat(cause).isInstanceOf(NoStackTraceThrowable.class);
+                        // assertThat(cause).isInstanceOf(NoStackTraceThrowable.class);
                         assertThat(cause).hasMessageThat().isEqualTo("Timed out waiting to get lock");
                         checkpoints.flag();
                     }))

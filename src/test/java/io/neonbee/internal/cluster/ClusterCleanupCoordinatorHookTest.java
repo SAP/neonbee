@@ -64,7 +64,7 @@ final class ClusterCleanupCoordinatorHookTest {
 
         NeonBee neonBee = mock(NeonBee.class);
 
-        clusterManager.init(clusteredVertx, null);
+        clusterManager.init(clusteredVertx);
         when(neonBee.getVertx()).thenReturn(clusteredVertx);
 
         Promise<Void> promise = Promise.promise();
@@ -97,7 +97,7 @@ final class ClusterCleanupCoordinatorHookTest {
 
         clusteredFuture
                 .compose(clusteredVertx -> {
-                    clusterManager.init(clusteredVertx, null);
+                    clusterManager.init(clusteredVertx);
                     when(neonBee.getVertx()).thenReturn(clusteredVertx);
 
                     Promise<Void> promise = Promise.promise();
