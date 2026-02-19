@@ -20,7 +20,6 @@ import org.mockito.stubbing.Answer;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.NeonBeeInstanceConfiguration.ClusterManager;
 import io.neonbee.config.NeonBeeConfig;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Closeable;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -67,23 +66,6 @@ public final class NeonBeeMockHelper {
         when(vertxMock.deployVerticle((String) any(), (DeploymentOptions) any())).thenReturn(succeededFuture());
         when(vertxMock.undeploy((String) any())).thenReturn(succeededFuture());
 
-        Answer<?> handleAnswer = invocation -> {
-            invocation.<Handler<AsyncResult<?>>>getArgument(invocation.getArguments().length - 1)
-                    .handle(succeededFuture());
-            return null;
-        };
-        doAnswer(handleAnswer).when(vertxMock).deployVerticle((Verticle) any());
-        doAnswer(handleAnswer).when(vertxMock).deployVerticle((Verticle) any(), (DeploymentOptions) any());
-        doAnswer(handleAnswer).when(vertxMock).deployVerticle((Class<? extends Verticle>) any(),
-                (DeploymentOptions) any());
-        doAnswer(invocation -> {
-            ((Supplier<Verticle>) invocation.getArgument(0)).get();
-            return handleAnswer.answer(invocation);
-        }).when(vertxMock).deployVerticle((Supplier<Verticle>) any(), any());
-        doAnswer(handleAnswer).when(vertxMock).deployVerticle((String) any());
-        doAnswer(handleAnswer).when(vertxMock).deployVerticle((String) any(), any());
-        doAnswer(handleAnswer).when(vertxMock).undeploy((String) any());
-
         // mock context creation
         ContextInternal contextMock = mock(ContextInternal.class);
         when(vertxMock.getOrCreateContext()).thenReturn(contextMock);
@@ -98,26 +80,12 @@ public final class NeonBeeMockHelper {
         // e.g. when the NeonBeeConfig object is initialized. If other strings are needed, a more
         // sophisticated implementation of this answer is needed.
         when(fileSystemMock.exists(any())).thenReturn(succeededFuture(true));
-        when(fileSystemMock.exists(any())).thenAnswer(invocation -> {
-            invocation.<Handler<AsyncResult<?>>>getArgument(invocation.getArguments().length - 1)
-                    .handle(succeededFuture(true));
-            return fileSystemMock;
-        });
         when(fileSystemMock.existsBlocking(any())).thenReturn(true);
         Buffer dummyBuffer = Buffer.buffer("{}");
         when(fileSystemMock.readFile(any())).thenReturn(succeededFuture(dummyBuffer));
-        when(fileSystemMock.readFile(any())).thenAnswer(invocation -> {
-            invocation.<Handler<AsyncResult<?>>>getArgument(invocation.getArguments().length - 1)
-                    .handle(succeededFuture(dummyBuffer));
-            return fileSystemMock;
-        });
+
         when(fileSystemMock.readFileBlocking(any())).thenReturn(dummyBuffer);
         when(fileSystemMock.readDir(any())).thenReturn(succeededFuture(List.of()));
-        when(fileSystemMock.readDir(any())).thenAnswer(invocation -> {
-            invocation.<Handler<AsyncResult<?>>>getArgument(invocation.getArguments().length - 1)
-                    .handle(succeededFuture(List.of()));
-            return fileSystemMock;
-        });
         when(fileSystemMock.readDirBlocking(any())).thenReturn(List.of());
 
         // mock event bus
@@ -145,11 +113,6 @@ public final class NeonBeeMockHelper {
 
         // mock local locks (and always grant them)
         when(sharedDataMock.getLocalLock(any())).thenReturn(succeededFuture(mock(Lock.class)));
-        doAnswer(invocation -> {
-            invocation.<Handler<AsyncResult<Lock>>>getArgument(1).handle(succeededFuture(mock(Lock.class)));
-            return null;
-        }).when(sharedDataMock).getLocalLock(any());
-
         return vertxMock;
     }
 

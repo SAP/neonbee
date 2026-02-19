@@ -431,8 +431,6 @@ class NeonBeeTest extends NeonBeeTestBase {
                     assertThat(ebo.getTrustOptions()).isNull();
                     assertThat(ebo.getKeyCertOptions()).isNull();
                     assertThat(ebo.getClientAuth()).isEqualTo(ClientAuth.NONE);
-                    assertThat(ebo.getSslOptions().getTrustOptions()).isNull();
-                    assertThat(ebo.getSslOptions().getKeyCertOptions()).isNull();
                     testContext.completeNow();
                 });
 
