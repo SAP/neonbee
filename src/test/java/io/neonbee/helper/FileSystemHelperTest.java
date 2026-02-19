@@ -96,7 +96,14 @@ class FileSystemHelperTest {
         Buffer gotBuffer = Buffer.buffer();
         openFile(vertx, new OpenOptions(), subFile)
                 .compose(asyncFile -> Future
-                        .<Buffer>future(promise -> asyncFile.read(gotBuffer, 0, 0L, expectedContent.length(), promise)))
+                        .<Buffer>future(promise -> asyncFile.read(gotBuffer, 0, 0L, expectedContent.length())
+                                .onComplete(rFile -> {
+                                    if (rFile.succeeded()) {
+                                        promise.complete(rFile.result());
+                                    } else {
+                                        promise.fail(rFile.cause());
+                                    }
+                                })))
                 .onComplete(testContext.succeeding(buffer -> testContext.verify(() -> {
                     assertThat(buffer).isEqualTo(expectedContent);
                     testContext.completeNow();

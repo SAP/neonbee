@@ -17,7 +17,7 @@ class InstanceInfoHandlerTest extends DataVerticleTestBase {
     @Test
     @DisplayName("Check the set X-Instance-Info header")
     void testXInstanceName(Vertx vertx) {
-        createRequest(HttpMethod.GET, "/").send(asyncResponse -> {
+        createRequest(HttpMethod.GET, "/").send().onComplete(asyncResponse -> {
             if (asyncResponse.succeeded()) {
                 HttpResponse<Buffer> response = asyncResponse.result();
                 // We expect that the configured instance name (NeonBeeOptions), is added to the response header by the
