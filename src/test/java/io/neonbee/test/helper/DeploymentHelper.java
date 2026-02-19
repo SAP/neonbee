@@ -2,8 +2,6 @@ package io.neonbee.test.helper;
 
 import static java.util.stream.Collectors.toList;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -12,13 +10,12 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
+import io.vertx.core.impl.VertxImpl;
 import io.vertx.core.json.JsonObject;
 
 public final class DeploymentHelper {
 
     public static final String NEONBEE_NAMESPACE = "neonbee";
-
-    private static final Map<String, Deployment> DEPLOYMENT_INFO_MAP = new HashMap<>();
 
     private DeploymentHelper() {
         // Utils class no need to instantiate
@@ -46,10 +43,7 @@ public final class DeploymentHelper {
      * @return A succeeded future with the deploymentId, or a failed future with the cause.
      */
     public static Future<String> deployVerticle(Vertx vertx, Verticle verticle, JsonObject verticleConfig) {
-        return vertx.deployVerticle(verticle, new DeploymentOptions().setConfig(verticleConfig))
-                .onSuccess(deploymentId -> {
-                    DEPLOYMENT_INFO_MAP.put(deploymentId, new Deployment(deploymentId, verticle.getClass()));
-                });
+        return vertx.deployVerticle(verticle, new DeploymentOptions().setConfig(verticleConfig));
     }
 
     /**
@@ -60,7 +54,6 @@ public final class DeploymentHelper {
      * @return A succeeded future, or a failed future with the cause.
      */
     public static Future<Void> undeployVerticle(Vertx vertx, String deploymentID) {
-        DEPLOYMENT_INFO_MAP.remove(deploymentID);
         return vertx.undeploy(deploymentID);
     }
 
@@ -75,7 +68,8 @@ public final class DeploymentHelper {
         return Future
                 .all(getAllDeployments(vertx)
                         .filter(deployment -> deployment.getVerticleClass().isAssignableFrom(verticleClass))
-                        .map(deployment -> undeployVerticle(vertx, deployment.getDeploymentId())).collect(toList()))
+                        .map(deploymentObj -> undeployVerticle(vertx, deploymentObj.getDeploymentId()))
+                        .collect(toList()))
                 .mapEmpty();
     }
 
@@ -93,24 +87,74 @@ public final class DeploymentHelper {
         return getAllDeployedVerticles(vertx).map(Verticle::getClass).collect(Collectors.toSet());
     }
 
-    private static Stream<Deployment> getAllDeployments(Vertx vertx) {
-        return vertx.deploymentIDs().stream().filter(deploymentId -> DEPLOYMENT_INFO_MAP.containsKey(deploymentId))
-                .map(DEPLOYMENT_INFO_MAP::get).collect(toList()).stream();
+    /**
+     * Provides a Stream of the TestDeployment objects of the deployed Verticles. The TestDeployment class contains the
+     * deploymentId and the verticle class of a deployed verticle.
+     *
+     * @param vertx The related Vert.x instance
+     * @return A Stream of the TestDeployment objects of the deployed Verticles.
+     */
+    private static Stream<TestDeployment> getAllDeployments(Vertx vertx) {
+        return ((VertxImpl) vertx).deploymentManager().deployments().stream().map(deploymentObject -> {
+            try {
+                return new TestDeployment(deploymentObject.id(),
+                        resolveVerticleClass(deploymentObject.deployment().identifier()));
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }).toList().stream();
     }
 
+    /**
+     * Provides a Stream of the deployed Verticles.
+     *
+     * @param vertx The related Vert.x instance
+     * @return A Stream of the deployed Verticles.
+     */
     private static Stream<Verticle> getAllDeployedVerticles(Vertx vertx) {
         return getAllDeployments(vertx)
-                .map(deployment -> vertx.getOrCreateContext().get(deployment.getDeploymentId()))
-                .filter(object -> object instanceof Verticle)
-                .map(Verticle.class::cast);
+                .map(TestDeployment::getVerticleClass)
+                .map(DeploymentHelper::instantiate);
     }
 
-    private static class Deployment {
+    private static Verticle instantiate(Class<? extends Verticle> clazz) {
+        try {
+            return clazz.getDeclaredConstructor().newInstance();
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(
+                    "Failed to instantiate verticle: " + clazz.getName(), e);
+        }
+    }
+
+    /**
+     * This method resolves the verticle class from the passed identifier. The identifier is the class name of the
+     * verticle, prefixed with "java:".
+     *
+     * @param identifier The identifier to resolve the verticle class from.
+     * @return The verticle class resolved from the identifier.
+     */
+    private static Class<? extends Verticle> resolveVerticleClass(String identifier)
+            throws ClassNotFoundException {
+        String className = identifier.startsWith("java:")
+                ? identifier.substring(5)
+                : identifier;
+        return Class.forName(className).asSubclass(Verticle.class);
+    }
+
+    /**
+     * This class represents a TestDeployment class, containing the deploymentId and the verticle class. The
+     * TestDeployment class is used to store the deploymentId and the verticle class of a deployed verticle. Vertx 5
+     * does not provide a way to get the verticle class of a deployed verticle, so we need to store it ourselves in this
+     * class.
+     */
+
+    private static final class TestDeployment {
+
         private final String deploymentId;
 
         private final Class<? extends Verticle> verticleClass;
 
-        private Deployment(String deploymentId, Class<? extends Verticle> verticleClass) {
+        private TestDeployment(String deploymentId, Class<? extends Verticle> verticleClass) {
             this.deploymentId = deploymentId;
             this.verticleClass = verticleClass;
         }
@@ -123,5 +167,4 @@ public final class DeploymentHelper {
             return verticleClass;
         }
     }
-
 }
