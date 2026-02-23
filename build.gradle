@@ -128,7 +128,7 @@ dependencies {
     implementation group: 'org.ow2.asm', name: 'asm', version: '9.7'
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.13'
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.5.6'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.5.19'
     def guava_version = '33.2.1-jre'
     implementation group: 'com.google.guava', name: 'guava', version: guava_version
     implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.8.6'
@@ -174,6 +174,12 @@ dependencies {
 
     // Without this the IDE can't find the test source files which are needed for debugging
     testCompileOnly group: 'io.vertx', name: 'vertx-core', classifier: 'test-sources', version: vertx_version
+
+    constraints {
+        implementation('commons-io:commons-io:2.14.0') {
+            because 'CVE-2024-47554: Fixes security vulnerability in commons-io 2.13.0 (transitively from org.apache.olingo:odata-server-core)'
+        }
+    }
 }
 
 // fix checkstyle wrongfully using google collections instead of Guava
