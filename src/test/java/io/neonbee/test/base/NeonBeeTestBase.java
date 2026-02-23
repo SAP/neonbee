@@ -72,6 +72,7 @@ import io.vertx.ext.web.Session;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.ext.web.impl.UserContextInternal;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.micrometer.backends.BackendRegistries;
@@ -450,8 +451,8 @@ public class NeonBeeTestBase {
 
     private ServerVerticle createDummyServerVerticle(TestInfo testInfo) {
         ChainAuthHandler dummyAuthHandler = ctx -> {
-            ctx.put("userContext", User.create(provideUserPrincipal(testInfo)));
-
+            ((UserContextInternal) ctx.userContext())
+                    .setUser(User.create(provideUserPrincipal(testInfo)));
             Session session = ctx.session();
             if (session != null) {
                 // the user has upgraded from unauthenticated to authenticated
