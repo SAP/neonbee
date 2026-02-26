@@ -152,12 +152,29 @@ public final class NeonBeeMockHelper {
      * @return the mocked NeonBee instance
      */
     public static Future<NeonBee> createNeonBee(Vertx vertx, NeonBeeOptions options) {
+        return createNeonBee(vertx, options, new CompositeMeterRegistry());
+    }
+
+    /**
+     * Convenience method for creating a new NeonBee instance for an (existing) Vert.x mock or instance.
+     *
+     * Attention: This method actually does NOT care whether the provided Vert.x instance is actually a mock or not. In
+     * case you pass a "real" Vert.x instance, NeonBee will more or less start normally with the options / config
+     * provided. This includes, among other things, deployment of all system verticles.
+     *
+     * @param vertx   the Vert.x instance
+     * @param options the NeonBee options
+     * @param cmr     the CompositeMeterRegistry to use for the NeonBee instance. If null, a new instance will be
+     *                created.
+     * @return the mocked NeonBee instance
+     */
+    public static Future<NeonBee> createNeonBee(Vertx vertx, NeonBeeOptions options, CompositeMeterRegistry cmr) {
         return NeonBee.create((vertxOptions, clusterManager) -> {
             if (vertxOptions.getMetricsOptions() != null) {
                 new MicrometerMetricsFactory().metrics(vertxOptions);
             }
             return succeededFuture(vertx);
-        }, ClusterManager.FAKE.factory(), options, null, new CompositeMeterRegistry());
+        }, ClusterManager.FAKE.factory(), options, null, cmr);
     }
 
     /**
