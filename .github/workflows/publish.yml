@@ -100,12 +100,7 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USER }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
         run: |
-          set -euo pipefail
-          if [[ "${{ steps.getVersion.outputs.releaseVersion }}" == *SNAPSHOT ]]; then
-            ./gradlew clean publishAllPublicationsToMavenCentralRepository
-          else
-            ./gradlew clean publishReleaseToMavenCentral
-          fi
+          ./gradlew clean publishAllPublicationsToMavenCentralRepository
 
   publishRelease:
     runs-on: ubuntu-latest
