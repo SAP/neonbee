@@ -21,6 +21,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '8.1.1'
     id 'org.sonarqube' version '5.1.0.4882'
     id 'team.yi.semantic-gitlog' version '0.6.12'
+    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
 }
 
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
@@ -194,7 +195,33 @@ apply from: 'gradle/release.gradle'
 apply from: 'gradle/staticCodeCheck.gradle'
 apply from: 'gradle/changelog.gradle'
 
-// ############ Annotation Processing
+// See: https://github.com/gradle-nexus/publish-plugin
+nexusPublishing {
+    repositories {
+        sonatype {
+            // Align with the URLs used in gradle/publishing.gradle
+            nexusUrl.set(uri('https://ossrh-staging-api.central.sonatype.com/service/local/'))
+            snapshotRepositoryUrl.set(uri('https://central.sonatype.com/repository/maven-snapshots/'))
+            username.set(findProperty('mavenCentralUsername')?.toString())
+            password.set(findProperty('mavenCentralPassword')?.toString())
+        }
+    }
+}
+
+tasks.register('publishReleaseToMavenCentral') {
+    group = 'publishing'
+    description = 'Publish a release build to Sonatype and close+release the staging repository (Maven Central).'
+
+    doLast {
+        if (String.valueOf(project.version).endsWith('-SNAPSHOT')) {
+            throw new GradleException('publishReleaseToMavenCentral must be run with a non-SNAPSHOT version')
+        }
+    }
+}
+
+publishReleaseToMavenCentral.dependsOn('publishToSonatype')
+publishReleaseToMavenCentral.dependsOn('closeAndReleaseSonatypeStagingRepository')
+
 
 task annotationProcessing(type: JavaCompile, group: 'build') {
     options.annotationProcessorPath = configurations.annotationProcessor
