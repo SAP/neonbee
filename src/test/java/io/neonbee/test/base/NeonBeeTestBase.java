@@ -113,9 +113,9 @@ public class NeonBeeTestBase {
         }
 
         NeonBeeOptions.Mutable options = buildNeonBeeOptions(testContext, testInfo);
-        if (options == null)
+        if (options == null) {
             return;
-
+        }
         neonBeeSetup(vertx, testContext, testInfo, options, new CompositeMeterRegistry());
     }
 

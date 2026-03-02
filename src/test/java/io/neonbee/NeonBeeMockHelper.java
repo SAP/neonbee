@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.NeonBeeInstanceConfiguration.ClusterManager;
 import io.neonbee.config.NeonBeeConfig;
 import io.vertx.core.Closeable;
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Verticle;
@@ -55,15 +54,18 @@ public final class NeonBeeMockHelper {
 
         // mock deployment and undeployment of verticles
         when(vertxMock.deployVerticle((Verticle) any())).thenReturn(succeededFuture());
-        when(vertxMock.deployVerticle((Verticle) any(), (DeploymentOptions) any())).thenReturn(succeededFuture());
-        when(vertxMock.deployVerticle((Class<? extends Verticle>) any(), (DeploymentOptions) any()))
+        when(vertxMock.deployVerticle((Verticle) any(), any())).thenReturn(succeededFuture());
+        when(vertxMock.deployVerticle((Class<? extends Verticle>) any(), any()))
                 .thenReturn(succeededFuture());
+
         doAnswer(invocation -> {
             ((Supplier<Verticle>) invocation.getArgument(0)).get();
             return succeededFuture();
-        }).when(vertxMock).deployVerticle((Supplier<Verticle>) any(), (DeploymentOptions) any());
+        }).when(vertxMock).deployVerticle((Supplier<Verticle>) any(), any());
+
         when(vertxMock.deployVerticle((String) any())).thenReturn(succeededFuture());
-        when(vertxMock.deployVerticle((String) any(), (DeploymentOptions) any())).thenReturn(succeededFuture());
+        when(vertxMock.deployVerticle((String) any(), any())).thenReturn(succeededFuture());
+        when(vertxMock.deployVerticle((String) any())).thenReturn(succeededFuture("any-deployment-guid"));
         when(vertxMock.undeploy((String) any())).thenReturn(succeededFuture());
 
         // mock context creation

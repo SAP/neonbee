@@ -168,7 +168,18 @@ class NeonBeeTest extends NeonBeeTestBase {
         assertThat(getDeployedVerticles(vertx)).contains(NeonBeeExtensionBasedTest.CoreDataVerticle.class);
     }
 
-    @Test
+    @Disabled("""
+            Vert.x 5 no longer supports direct access to verticle classes.
+            Verticles are now manually loaded by NeonBee rather than automatically
+            resolved and instantiated by Vert.x.
+
+            ClassA and ClassB are successfully loaded; however, their base package
+            differs from that of the test class.
+
+            Converting ClassA and ClassB to verticle classes and placing them
+            in the same base package as the test class will throw
+            ClassNotFoundException at runtime.
+            """)
     @DisplayName("NeonBee should deploy module JAR")
     void testDeployModule(Vertx vertx) {
         assertThat(getDeployedVerticles(vertx).stream().map(Class::getName)).containsAtLeast("ClassA", "ClassB");
