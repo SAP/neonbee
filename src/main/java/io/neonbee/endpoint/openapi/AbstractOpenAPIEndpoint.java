@@ -16,6 +16,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.openapi.router.RouterBuilder;
 import io.vertx.openapi.contract.OpenAPIContract;
+import io.vertx.openapi.contract.impl.OperationImpl;
 import io.vertx.openapi.validation.ResponseValidator;
 import io.vertx.openapi.validation.ValidatableResponse;
 import io.vertx.openapi.validation.ValidatedRequest;
@@ -93,7 +94,8 @@ public abstract class AbstractOpenAPIEndpoint implements Endpoint {
             BiConsumer<ValidatorException, RoutingContext> exceptionHandler) {
         return routingContext -> {
             ValidatedRequest validatedRequest = routingContext.get(KEY_META_DATA_VALIDATED_REQUEST);
-            String operationId = routingContext.currentRoute().getMetadata(KEY_META_DATA_OPERATION);
+            Object metadata = routingContext.currentRoute().getMetadata(KEY_META_DATA_OPERATION);
+            String operationId = ((OperationImpl) metadata).getOperationId();
 
             requestProcessor.apply(validatedRequest, routingContext)
                     .compose(validatableResponse -> responseValidator.validate(validatableResponse, operationId))
