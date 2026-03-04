@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.NeonBeeInstanceConfiguration.ClusterManager;
 import io.neonbee.config.NeonBeeConfig;
 import io.vertx.core.Closeable;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Verticle;
@@ -54,19 +55,32 @@ public final class NeonBeeMockHelper {
 
         // mock deployment and undeployment of verticles
         when(vertxMock.deployVerticle((Verticle) any())).thenReturn(succeededFuture());
-        when(vertxMock.deployVerticle((Verticle) any(), any())).thenReturn(succeededFuture());
-        when(vertxMock.deployVerticle((Class<? extends Verticle>) any(), any()))
+        when(vertxMock.deployVerticle((Verticle) any(), (DeploymentOptions) any())).thenReturn(succeededFuture());
+        when(vertxMock.deployVerticle((Class<? extends Verticle>) any(), (DeploymentOptions) any()))
                 .thenReturn(succeededFuture());
-
         doAnswer(invocation -> {
             ((Supplier<Verticle>) invocation.getArgument(0)).get();
             return succeededFuture();
-        }).when(vertxMock).deployVerticle((Supplier<Verticle>) any(), any());
-
+        }).when(vertxMock).deployVerticle((Supplier<Verticle>) any(), (DeploymentOptions) any());
         when(vertxMock.deployVerticle((String) any())).thenReturn(succeededFuture());
-        when(vertxMock.deployVerticle((String) any(), any())).thenReturn(succeededFuture());
-        when(vertxMock.deployVerticle((String) any())).thenReturn(succeededFuture("any-deployment-guid"));
+        when(vertxMock.deployVerticle((String) any(), (DeploymentOptions) any())).thenReturn(succeededFuture());
         when(vertxMock.undeploy((String) any())).thenReturn(succeededFuture());
+
+        Answer<?> handleAnswer = invocation -> {
+            invocation.getArgument(invocation.getArguments().length - 1);
+            return succeededFuture();
+        };
+        doAnswer(handleAnswer).when(vertxMock).deployVerticle((Verticle) any());
+        doAnswer(handleAnswer).when(vertxMock).deployVerticle((Verticle) any(), (DeploymentOptions) any());
+        doAnswer(handleAnswer).when(vertxMock).deployVerticle((Class<? extends Verticle>) any(),
+                (DeploymentOptions) any());
+        doAnswer(invocation -> {
+            ((Supplier<Verticle>) invocation.getArgument(0)).get();
+            return handleAnswer.answer(invocation);
+        }).when(vertxMock).deployVerticle((Supplier<Verticle>) any(), (DeploymentOptions) any());
+        doAnswer(handleAnswer).when(vertxMock).deployVerticle((String) any());
+        doAnswer(handleAnswer).when(vertxMock).deployVerticle((String) any(), (DeploymentOptions) any());
+        doAnswer(handleAnswer).when(vertxMock).undeploy((String) any());
 
         // mock context creation
         ContextInternal contextMock = mock(ContextInternal.class);
