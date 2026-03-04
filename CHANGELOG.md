@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.37.26 (2026-02-27)
+
+### Bug Fixes
+
+- fix regex vulnerability ([2bede2b3](https://github.com/SAP/neonbee/commit/2bede2b37a87d40195aa24c400ca4bb3b9ccd529))
+
+
+### Chores
+
+- bump version to 0.37.26-SNAPSHOT ([f57e1d70](https://github.com/SAP/neonbee/commit/f57e1d70db751ed223da53e487e54be2e1be2531))
+- publish to maven central ([78b960e6](https://github.com/SAP/neonbee/commit/78b960e656b16ef6a316d5c8f06f5e2029744674))
+- publish to maven central ([da8fd732](https://github.com/SAP/neonbee/commit/da8fd732ca78f82daf191c08344ae80eb3f7ec88))
+
+
 ## 0.37.24 (2026-01-23)
 
 ### Bug Fixes
