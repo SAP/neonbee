@@ -4,27 +4,40 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.shareddata.Shareable;
 
 public final class CollectionHelper {
+
+    /**
+     * The default load factor used in hash-based collections (e.g., HashMap, HashSet).
+     * <p>
+     * This matches the default load factor used internally by Java's standard library, and is used to calculate initial
+     * capacity to minimize rehashing.
+     */
+    public static final float LOAD_FACTOR = 0.75f;
+
+    /**
+     * The default initial capacity for hash-based collections.
+     * <p>
+     * This value aligns with Java's default initial capacity for HashMap and HashSet when no explicit size is provided.
+     */
+    public static final int DEFAULT_CAPACITY = 16;
+
     /**
      * This helper class cannot be instantiated.
      */
@@ -38,8 +51,14 @@ public final class CollectionHelper {
      * @return a mutable deep copy of the given list
      */
     public static <T> List<T> mutableCopyOf(List<T> list) {
-        return Optional.ofNullable(list).map(List::stream).orElseGet(Stream::empty).map(CollectionHelper::copyOf)
-                .collect(Collectors.toCollection(ArrayList::new));
+        if (list == null) {
+            return new ArrayList<>();
+        }
+        List<T> copy = new ArrayList<>(list.size());
+        for (T item : list) {
+            copy.add(copyOf(item));
+        }
+        return copy;
     }
 
     /**
@@ -50,8 +69,17 @@ public final class CollectionHelper {
      * @return a mutable deep copy of the given set
      */
     public static <T> Set<T> mutableCopyOf(Set<T> set) {
-        return Optional.ofNullable(set).map(Set::stream).orElseGet(Stream::empty).map(CollectionHelper::copyOf)
-                .collect(Collectors.toCollection(HashSet::new));
+        if (set == null) {
+            return new HashSet<>();
+        }
+
+        int initialCapacity = Math.max((int) (set.size() / LOAD_FACTOR) + 1, DEFAULT_CAPACITY);
+
+        Set<T> copy = new HashSet<>(initialCapacity);
+        for (T item : set) {
+            copy.add(copyOf(item));
+        }
+        return copy;
     }
 
     /**
@@ -65,8 +93,14 @@ public final class CollectionHelper {
      * @return a mutable deep copy of the given collection
      */
     public static <T, C extends Collection<T>> C mutableCopyOf(C collection, Supplier<C> collectionFactory) {
-        return Optional.ofNullable(collection).map(Collection::stream).orElseGet(Stream::empty)
-                .map(CollectionHelper::copyOf).collect(Collectors.toCollection(collectionFactory));
+        C copy = collectionFactory.get();
+        if (collection == null) {
+            return copy;
+        }
+        for (T item : collection) {
+            copy.add(copyOf(item));
+        }
+        return copy;
     }
 
     /**
@@ -78,9 +112,16 @@ public final class CollectionHelper {
      * @return a mutable deep copy of the given map
      */
     public static <K, V> Map<K, V> mutableCopyOf(Map<K, V> map) {
-        return Optional.ofNullable(map).map(Map::entrySet).map(Set::stream).orElseGet(Stream::empty)
-                .collect(Collectors.toMap(entry -> copyOf(entry.getKey()), entry -> copyOf(entry.getValue()),
-                        (valueA, valueB) -> valueB, NullLiberalMergingHashMap::new));
+        Map<K, V> copy = new NullLiberalMergingHashMap<>();
+        if (map == null) {
+            return copy;
+        }
+        for (Map.Entry<K, V> entry : map.entrySet()) {
+            K keyCopy = copyOf(entry.getKey());
+            V valueCopy = copyOf(entry.getValue());
+            copy.put(keyCopy, valueCopy);
+        }
+        return copy;
     }
 
     /**
@@ -150,10 +191,16 @@ public final class CollectionHelper {
      * @return a new case-insensitive treemap as mutable deep copy of the given map
      */
     public static <K extends String, V> Map<K, V> mapToCaseInsensitiveTreeMap(Map<K, V> map) {
-        return Optional.ofNullable(map).map(Map::entrySet).map(Set::stream).orElseGet(Stream::empty)
-                .collect(Collectors.toMap(entry -> copyOf(entry.getKey()), entry -> copyOf(entry.getValue()),
-                        (valueA, valueB) -> valueB,
-                        () -> new NullLiberalMergingTreeMap<>(String.CASE_INSENSITIVE_ORDER)));
+        Map<K, V> copy = new NullLiberalMergingTreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        if (map == null) {
+            return copy;
+        }
+        for (Map.Entry<K, V> entry : map.entrySet()) {
+            K keyCopy = copyOf(entry.getKey());
+            V valueCopy = copyOf(entry.getValue());
+            copy.put(keyCopy, valueCopy);
+        }
+        return copy;
     }
 
     /**
@@ -163,10 +210,14 @@ public final class CollectionHelper {
      * @return a flat list mapping the key to a list of values
      */
     public static Map<String, List<String>> multiMapToMap(MultiMap multiMap) {
-        return multiMap.entries().stream()
-                .collect(Collectors.<Map.Entry<String, String>, String, List<String>>toMap(Map.Entry::getKey,
-                        entry -> Collections.singletonList(entry.getValue()),
-                        (listA, listB) -> Stream.concat(listA.stream(), listB.stream()).toList()));
+        Map<String, List<String>> result = new HashMap<>();
+        if (multiMap == null) {
+            return result;
+        }
+        for (Map.Entry<String, String> entry : multiMap.entries()) {
+            result.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).add(entry.getValue());
+        }
+        return result;
     }
 
     /**
