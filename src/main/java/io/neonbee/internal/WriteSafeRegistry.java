@@ -1,5 +1,7 @@
 package io.neonbee.internal;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import io.neonbee.NeonBee;
@@ -27,10 +29,13 @@ public class WriteSafeRegistry<T> implements Registry<T> {
 
     private final String registryName;
 
+    // Per-key write queue
+    private final Map<String, Future<Void>> queues = new ConcurrentHashMap<>();
+
     /**
-     * Create a new {@link WriteSafeRegistry}.
+     * Create a new {@link WriteSafeRegistry} with a default {@link SharedDataAccessor}.
      *
-     * @param vertx        the {@link Vertx} instance
+     * @param vertx        the Vert.x instance used to access shared data
      * @param registryName the name of the map registry
      */
     public WriteSafeRegistry(Vertx vertx, String registryName) {
@@ -70,8 +75,13 @@ public class WriteSafeRegistry<T> implements Registry<T> {
     @Override
     public Future<Void> register(String sharedMapKey, T value) {
         logger.info("register value: \"{}\" in shared map: \"{}\"", sharedMapKey, value);
-
         return lock(sharedMapKey, () -> sharedRegistry.register(sharedMapKey, value));
+    }
+
+    @Override
+    public Future<Void> unregister(String sharedMapKey, T value) {
+        logger.debug("unregister value: \"{}\" from shared map: \"{}\"", sharedMapKey, value);
+        return lock(sharedMapKey, () -> sharedRegistry.unregister(sharedMapKey, value));
     }
 
     @Override
@@ -80,35 +90,38 @@ public class WriteSafeRegistry<T> implements Registry<T> {
     }
 
     /**
-     * Unregister the value in the {@link NeonBee} async shared map from the sharedMapKey.
+     * Serializes write operations per key to prevent concurrent map updates.
      *
-     * @param sharedMapKey the shared map key
-     * @param value        the value to unregister
-     * @return the future
+     * @param key       the key identifying the per-key operation queue and lock
+     * @param operation the write operation to run while holding the shared-data lock
+     * @return a future that completes when the operation has finished
      */
-    @Override
-    public Future<Void> unregister(String sharedMapKey, T value) {
-        logger.debug("unregister value: \"{}\" from shared map: \"{}\"", sharedMapKey, value);
+    protected Future<Void> lock(String key, Supplier<Future<Void>> operation) {
 
-        return lock(sharedMapKey, () -> sharedRegistry.unregister(sharedMapKey, value));
-    }
+        return queues.compute(key, (k, tail) -> {
 
-    /**
-     * Method that acquires a lock for the sharedMapKey and released the lock after the futureSupplier is executed.
-     *
-     * @param sharedMapKey   the shared map key
-     * @param futureSupplier supplier for the future to be secured by the lock
-     * @return the futureSupplier
-     */
-    protected Future<Void> lock(String sharedMapKey, Supplier<Future<Void>> futureSupplier) {
-        logger.debug("Get lock for {}", sharedMapKey);
-        return sharedData.getLock(sharedMapKey).onFailure(throwable -> {
-            logger.error("Error acquiring lock for {}", sharedMapKey, throwable);
-        }).compose(lock -> Future.<Void>future(event -> futureSupplier.get().onComplete(event))
-                .onComplete(anyResult -> {
-                    logger.debug("Releasing lock for {}", sharedMapKey);
-                    lock.release();
-                }));
+            Future<Void> start = tail == null
+                    ? Future.succeededFuture()
+                    : tail.recover(err -> {
+                        logger.warn("Previous operation failed for {}, continuing", key, err);
+                        return Future.succeededFuture();
+                    });
+
+            Future<Void> next = start
+                    .compose(v -> {
+                        logger.debug("Acquiring lock for {}", key);
+                        return sharedData.getLock(key);
+                    })
+                    .compose(lock -> operation.get()
+                            .onComplete(ar -> {
+                                logger.debug("Releasing lock for {}", key);
+                                lock.release();
+                            }));
+
+            next.onComplete(ar -> queues.computeIfPresent(key, (kk, current) -> current == next ? null : current));
+
+            return next;
+        });
     }
 
     /**
