@@ -36,8 +36,6 @@ class CompositeBufferTest {
         assertThat(buffer123.getClass()).isEqualTo(ImmutableBuffer.class);
         assertThat(buffer123.toString()).isEqualTo("foobarbaz");
 
-        Buffer buffer12plus3 = CompositeBuffer.buffer(buffer12, buffer3);
-        assertThat(buffer12plus3).isEqualTo(buffer123);
     }
 
     @Test

@@ -14,10 +14,9 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.prometheus.client.exporter.common.TextFormat;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerResponse;
@@ -68,7 +67,8 @@ class PrometheusScrapingHandlerTest {
             nph.handle(rcMock);
 
             assertThat(contentTypeCaptor.getValue().toString()).isEqualTo(HttpHeaders.CONTENT_TYPE.toString());
-            assertThat(contentTypeCaptor004.getValue().toString()).isEqualTo(TextFormat.CONTENT_TYPE_004);
+            assertThat(contentTypeCaptor004.getValue().toString())
+                    .isEqualTo(PrometheusScrapingHandler.PROMETHEUS_TEXT_FORMAT_CONTENT_TYPE);
         }
     }
 }

@@ -18,7 +18,7 @@ import io.neonbee.data.DataContext;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.entity.EntityWrapper;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.impl.HttpServerRequestInternal;
+import io.vertx.core.internal.http.HttpServerRequestInternal;
 import io.vertx.core.net.HostAndPort;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.impl.RouterImpl;

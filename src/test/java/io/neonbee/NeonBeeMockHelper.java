@@ -20,7 +20,6 @@ import org.mockito.stubbing.Answer;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.NeonBeeInstanceConfiguration.ClusterManager;
 import io.neonbee.config.NeonBeeConfig;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Closeable;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -30,11 +29,11 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.file.FileSystem;
-import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.ContextInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.shareddata.Lock;
 import io.vertx.core.shareddata.SharedData;
-import io.vertx.micrometer.impl.VertxMetricsFactoryImpl;
+import io.vertx.micrometer.MicrometerMetricsFactory;
 
 public final class NeonBeeMockHelper {
     /**
@@ -68,24 +67,20 @@ public final class NeonBeeMockHelper {
         when(vertxMock.undeploy((String) any())).thenReturn(succeededFuture());
 
         Answer<?> handleAnswer = invocation -> {
-            invocation.<Handler<AsyncResult<?>>>getArgument(invocation.getArguments().length - 1)
-                    .handle(succeededFuture());
-            return null;
+            invocation.getArgument(invocation.getArguments().length - 1);
+            return succeededFuture();
         };
-        doAnswer(handleAnswer).when(vertxMock).deployVerticle((Verticle) any(), (Handler<AsyncResult<String>>) any());
-        doAnswer(handleAnswer).when(vertxMock).deployVerticle((Verticle) any(), (DeploymentOptions) any(),
-                (Handler<AsyncResult<String>>) any());
+        doAnswer(handleAnswer).when(vertxMock).deployVerticle((Verticle) any());
+        doAnswer(handleAnswer).when(vertxMock).deployVerticle((Verticle) any(), (DeploymentOptions) any());
         doAnswer(handleAnswer).when(vertxMock).deployVerticle((Class<? extends Verticle>) any(),
-                (DeploymentOptions) any(), (Handler<AsyncResult<String>>) any());
+                (DeploymentOptions) any());
         doAnswer(invocation -> {
             ((Supplier<Verticle>) invocation.getArgument(0)).get();
             return handleAnswer.answer(invocation);
-        }).when(vertxMock).deployVerticle((Supplier<Verticle>) any(), (DeploymentOptions) any(),
-                (Handler<AsyncResult<String>>) any());
-        doAnswer(handleAnswer).when(vertxMock).deployVerticle((String) any(), (Handler<AsyncResult<String>>) any());
-        doAnswer(handleAnswer).when(vertxMock).deployVerticle((String) any(), (DeploymentOptions) any(),
-                (Handler<AsyncResult<String>>) any());
-        doAnswer(handleAnswer).when(vertxMock).undeploy((String) any(), (Handler<AsyncResult<Void>>) any());
+        }).when(vertxMock).deployVerticle((Supplier<Verticle>) any(), (DeploymentOptions) any());
+        doAnswer(handleAnswer).when(vertxMock).deployVerticle((String) any());
+        doAnswer(handleAnswer).when(vertxMock).deployVerticle((String) any(), (DeploymentOptions) any());
+        doAnswer(handleAnswer).when(vertxMock).undeploy((String) any());
 
         // mock context creation
         ContextInternal contextMock = mock(ContextInternal.class);
@@ -101,26 +96,12 @@ public final class NeonBeeMockHelper {
         // e.g. when the NeonBeeConfig object is initialized. If other strings are needed, a more
         // sophisticated implementation of this answer is needed.
         when(fileSystemMock.exists(any())).thenReturn(succeededFuture(true));
-        when(fileSystemMock.exists(any(), any())).thenAnswer(invocation -> {
-            invocation.<Handler<AsyncResult<?>>>getArgument(invocation.getArguments().length - 1)
-                    .handle(succeededFuture(true));
-            return fileSystemMock;
-        });
         when(fileSystemMock.existsBlocking(any())).thenReturn(true);
         Buffer dummyBuffer = Buffer.buffer("{}");
         when(fileSystemMock.readFile(any())).thenReturn(succeededFuture(dummyBuffer));
-        when(fileSystemMock.readFile(any(), any())).thenAnswer(invocation -> {
-            invocation.<Handler<AsyncResult<?>>>getArgument(invocation.getArguments().length - 1)
-                    .handle(succeededFuture(dummyBuffer));
-            return fileSystemMock;
-        });
+
         when(fileSystemMock.readFileBlocking(any())).thenReturn(dummyBuffer);
         when(fileSystemMock.readDir(any())).thenReturn(succeededFuture(List.of()));
-        when(fileSystemMock.readDir(any(), any(Handler.class))).thenAnswer(invocation -> {
-            invocation.<Handler<AsyncResult<?>>>getArgument(invocation.getArguments().length - 1)
-                    .handle(succeededFuture(List.of()));
-            return fileSystemMock;
-        });
         when(fileSystemMock.readDirBlocking(any())).thenReturn(List.of());
 
         // mock event bus
@@ -148,11 +129,6 @@ public final class NeonBeeMockHelper {
 
         // mock local locks (and always grant them)
         when(sharedDataMock.getLocalLock(any())).thenReturn(succeededFuture(mock(Lock.class)));
-        doAnswer(invocation -> {
-            invocation.<Handler<AsyncResult<Lock>>>getArgument(1).handle(succeededFuture(mock(Lock.class)));
-            return null;
-        }).when(sharedDataMock).getLocalLock(any(), any());
-
         return vertxMock;
     }
 
@@ -192,12 +168,29 @@ public final class NeonBeeMockHelper {
      * @return the mocked NeonBee instance
      */
     public static Future<NeonBee> createNeonBee(Vertx vertx, NeonBeeOptions options) {
+        return createNeonBee(vertx, options, new CompositeMeterRegistry());
+    }
+
+    /**
+     * Convenience method for creating a new NeonBee instance for an (existing) Vert.x mock or instance.
+     *
+     * Attention: This method actually does NOT care whether the provided Vert.x instance is actually a mock or not. In
+     * case you pass a "real" Vert.x instance, NeonBee will more or less start normally with the options / config
+     * provided. This includes, among other things, deployment of all system verticles.
+     *
+     * @param vertx   the Vert.x instance
+     * @param options the NeonBee options
+     * @param cmr     the CompositeMeterRegistry to use for the NeonBee instance. If null, a new instance will be
+     *                created.
+     * @return the mocked NeonBee instance
+     */
+    public static Future<NeonBee> createNeonBee(Vertx vertx, NeonBeeOptions options, CompositeMeterRegistry cmr) {
         return NeonBee.create((vertxOptions, clusterManager) -> {
             if (vertxOptions.getMetricsOptions() != null) {
-                new VertxMetricsFactoryImpl().metrics(vertxOptions);
+                new MicrometerMetricsFactory().metrics(vertxOptions);
             }
             return succeededFuture(vertx);
-        }, ClusterManager.FAKE.factory(), options, null);
+        }, ClusterManager.FAKE.factory(), options, null, cmr);
     }
 
     /**

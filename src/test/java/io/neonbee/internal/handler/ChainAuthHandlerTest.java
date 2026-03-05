@@ -2,9 +2,11 @@ package io.neonbee.internal.handler;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.handler.ChainAuthHandler.NOOP_AUTHENTICATION_HANDLER;
+import static io.vertx.core.Future.failedFuture;
+import static io.vertx.core.Future.succeededFuture;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,13 +20,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.neonbee.config.AuthHandlerConfig;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.HttpException;
 import io.vertx.ext.web.handler.impl.AuthenticationHandlerInternal;
+import io.vertx.ext.web.impl.UserContextInternal;
 import io.vertx.junit5.VertxExtension;
 
 @ExtendWith(VertxExtension.class)
@@ -56,27 +59,48 @@ class ChainAuthHandlerTest {
     @SuppressWarnings("unchecked")
     void testChainAuthHandler(Vertx vertx) throws IOException {
         AtomicBoolean firstHandlerCalled = new AtomicBoolean();
+
+        // ---- First handler (fails) ----
         AuthenticationHandlerInternal handler1 = mock(AuthenticationHandlerInternal.class);
         AuthHandlerConfig config1 = mock(AuthHandlerConfig.class);
         when(config1.createAuthHandler(any())).thenReturn(handler1);
-        doAnswer(invocation -> {
-            firstHandlerCalled.set(true);
-            ((Handler<Future<Void>>) invocation.getArgument(1)).handle(Future.failedFuture(new HttpException(401)));
-            return null;
-        }).when(handler1).authenticate(any(), any());
 
+        when(handler1.authenticate(any())).thenAnswer(invocation -> {
+            firstHandlerCalled.set(true);
+            return failedFuture(new HttpException(401));
+        });
+
+        // ---- Second handler (succeeds) ----
         AuthenticationHandlerInternal handler2 = mock(AuthenticationHandlerInternal.class);
         AuthHandlerConfig config2 = mock(AuthHandlerConfig.class);
         when(config2.createAuthHandler(any())).thenReturn(handler2);
 
+        User user = User.create(new JsonObject());
+
+        when(handler2.authenticate(any()))
+                .thenReturn(succeededFuture(user));
+
+        // ---- Routing context & user context mocks ----
         RoutingContext routingContextMock = mock(RoutingContext.class);
         HttpServerRequest requestMock = mock(HttpServerRequest.class);
-        when(requestMock.isEnded()).thenReturn(true);
-        when(routingContextMock.request()).thenReturn(requestMock);
+        UserContextInternal userContextInternal = mock(UserContextInternal.class);
 
-        ChainAuthHandler handler = ChainAuthHandler.create(vertx, List.of(config1, config2));
+        when(requestMock.isEnded()).thenReturn(false);
+        when(routingContextMock.request()).thenReturn(requestMock);
+        when(routingContextMock.userContext()).thenReturn(userContextInternal);
+
+        // IMPORTANT: this is what Vert.x 5 calls internally
+        doNothing().when(userContextInternal).setUser(any());
+
+        // ---- Create chain ----
+        ChainAuthHandler handler =
+                ChainAuthHandler.create(vertx, List.of(config1, config2));
+
         handler.handle(routingContextMock);
+
+        // ---- Assertions ----
         assertThat(firstHandlerCalled.get()).isTrue();
-        verify(handler2).authenticate(eq(routingContextMock), any());
+        verify(handler2).authenticate(eq(routingContextMock));
+        verify(userContextInternal).setUser(user);
     }
 }
