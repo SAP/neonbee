@@ -98,30 +98,34 @@ public class WriteSafeRegistry<T> implements Registry<T> {
      */
     protected Future<Void> lock(String key, Supplier<Future<Void>> operation) {
 
-        return queues.compute(key, (k, tail) -> {
-
+        Future<Void> result = queues.compute(key, (k, tail) -> {
             Future<Void> start = tail == null
                     ? Future.succeededFuture()
                     : tail.recover(err -> {
-                        logger.warn("Previous operation failed for {}, continuing", key, err);
+                        logger.warn("Previous operation failed for {}", key, err);
                         return Future.succeededFuture();
                     });
 
-            Future<Void> next = start
+            return start
                     .compose(v -> {
                         logger.debug("Acquiring lock for {}", key);
                         return sharedData.getLock(key);
                     })
-                    .compose(lock -> operation.get()
-                            .onComplete(ar -> {
-                                logger.debug("Releasing lock for {}", key);
-                                lock.release();
-                            }));
-
-            next.onComplete(ar -> queues.computeIfPresent(key, (kk, current) -> current == next ? null : current));
-
-            return next;
+                    .compose(lock -> Future.<Void>future(promise -> {
+                        try {
+                            operation.get().onComplete(promise);
+                        } catch (Exception t) {
+                            promise.fail(t);
+                        }
+                    }).onComplete(ar -> {
+                        logger.debug("Releasing lock for {}", key);
+                        lock.release();
+                    }));
         });
+
+        result.onComplete(ar -> queues.computeIfPresent(key, (k, current) -> current == result ? null : current));
+
+        return result;
     }
 
     /**
