@@ -34,20 +34,21 @@ class HealthEndpointTest extends NeonBeeTestBase {
     @Test
     @DisplayName("should return health info of the default checks")
     void testHealthEndpointAll(VertxTestContext testContext) {
-        createRequest(HttpMethod.GET, "/health/").send(testContext.succeeding(response -> testContext.verify(() -> {
-            JsonObject body = validateResponse.apply(response);
-            List<String> ids = getIds.apply(body);
-            assertThat(ids.size()).isGreaterThan(1);
-            assertThat(ids).contains(String.format("node.%s.os.memory", getNeonBee().getNodeId()));
-            testContext.completeNow();
-        })));
+        createRequest(HttpMethod.GET, "/health/").send()
+                .onComplete(testContext.succeeding(httpResponse -> testContext.verify(() -> {
+                    JsonObject body = validateResponse.apply(httpResponse);
+                    List<String> ids = getIds.apply(body);
+                    assertThat(ids.size()).isGreaterThan(1);
+                    assertThat(ids).contains(String.format("node.%s.os.memory", getNeonBee().getNodeId()));
+                    testContext.completeNow();
+                })));
     }
 
     @Test
     @DisplayName("should only return health info of passed check")
     void testHealthEndpointSingle(VertxTestContext testContext) {
         createRequest(HttpMethod.GET, "/health/os.memory")
-                .send(testContext.succeeding(response -> testContext.verify(() -> {
+                .send().onComplete(testContext.succeeding(response -> testContext.verify(() -> {
                     JsonObject body = validateResponse.apply(response);
                     assertThat(getIds.apply(body))
                             .containsExactly(String.format("node.%s.os.memory", getNeonBee().getNodeId()));
