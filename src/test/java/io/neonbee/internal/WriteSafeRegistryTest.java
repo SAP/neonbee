@@ -1,7 +1,11 @@
 package io.neonbee.internal;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.vertx.core.Future.all;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
@@ -81,32 +85,38 @@ class WriteSafeRegistryTest {
     // The used timeout for the lock is set to 10 seconds
     // @see io.vertx.core.shareddata.impl.SharedDataImpl#DEFAULT_LOCK_TIMEOUT
     @Timeout(value = 12, timeUnit = TimeUnit.SECONDS)
-    @DisplayName("test acquire lock twice")
+    @DisplayName("test acquire lock three times")
     void acquireLockTwice(Vertx vertx, VertxTestContext context) {
-        WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, REGISTRY_NAME);
+        WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, "test-registry");
+        String key = "test-lock-key";
 
-        Checkpoint checkpoints = context.checkpoint(5);
+        List<String> executed = Collections.synchronizedList(new ArrayList<>());
 
-        String lockedname = "test-lock-key2";
-        registry.lock(lockedname, () -> {
-            checkpoints.flag();
-            // try to acquire the lock to make sure that it is locked
-            return registry.lock(lockedname, () -> {
-                context.failNow("should not be called because lock cannot be acquired");
-                return Future.succeededFuture();
-            })
-                    .onSuccess(unused -> context.failNow("should not be successful"))
-                    .onFailure(cause -> context.verify(() -> {
-                        // assertThat(cause).isInstanceOf(NoStackTraceThrowable.class);
-                        assertThat(cause).hasMessageThat().isEqualTo("Timed out waiting to get lock");
-                        checkpoints.flag();
-                    }))
-                    .recover(throwable -> Future.succeededFuture());
-        })
-                .onSuccess(unused -> checkpoints.flag())
-                .onFailure(context::failNow)
-                // execute the lockTest to make sure that you can acquire the lock again
-                .compose(unused -> lockTest(lockedname, context, registry, checkpoints));
+        Checkpoint checkpoint = context.checkpoint();
+
+        // submit all three locks concurrently (no compose)
+        Future<Void> lock1 = registry.lock(key, () -> {
+            executed.add("first");
+            return Future.succeededFuture();
+        });
+
+        Future<Void> lock2 = registry.lock(key, () -> {
+            executed.add("second");
+            return Future.succeededFuture();
+        });
+
+        Future<Void> lock3 = registry.lock(key, () -> {
+            executed.add("third");
+            return Future.succeededFuture();
+        });
+
+        // combine all futures to detect completion
+        all(lock1, lock2, lock3)
+                .onComplete(ar -> context.verify(() -> {
+                    // assert that execution order matches submission order
+                    assertThat(executed).containsExactly("first", "second", "third").inOrder();
+                    checkpoint.flag();
+                }));
     }
 
     private static Future<Void> lockTest(String lockName, VertxTestContext context, WriteSafeRegistry<String> registry,
