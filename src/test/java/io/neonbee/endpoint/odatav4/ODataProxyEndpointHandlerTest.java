@@ -156,13 +156,13 @@ class ODataProxyEndpointHandlerTest {
                 serviceMetadata,
                 ODataV4Endpoint.UriConversion.STRICT);
 
-        handler.handleMetadataRequest(routingContext)
-                .onSuccess(odr -> vertxTestContext.verify(() -> {
-                    // verify that status code and headers were set and response was ended
-                    verify(response).setStatusCode(200);
-                    verify(response).putHeader("OData-Version", "4.0");
-                    verify(response).putHeader("Content-Type", "application/xml");
-                    verify(response).end(any(Buffer.class));
+        DataContext context = new DataContextImpl(routingContext);
+        handler.handleMetadataRequest(routingContext, context)
+                .onSuccess(buffer -> vertxTestContext.verify(() -> {
+                    assertThat(buffer).isNotNull();
+                    assertThat(context.responseData()).containsEntry(DataContext.STATUS_CODE_HINT, 200);
+                    assertThat(context.responseData()).containsKey("Content-Type");
+                    assertThat(buffer.length()).isGreaterThan(0);
                     vertxTestContext.completeNow();
                 }))
                 .onFailure(vertxTestContext::failNow);

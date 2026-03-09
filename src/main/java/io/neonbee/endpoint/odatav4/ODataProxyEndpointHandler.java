@@ -1,7 +1,10 @@
 package io.neonbee.endpoint.odatav4;
 
+import static io.neonbee.data.DataVerticle.requestData;
 import static io.neonbee.endpoint.HttpMethodToDataActionMapper.mapMethodToAction;
 import static io.neonbee.endpoint.odatav4.internal.olingo.OlingoEndpointHandler.mapToODataRequest;
+import static io.neonbee.internal.helper.BufferHelper.inputStreamToBuffer;
+import static io.neonbee.internal.helper.CollectionHelper.multiMapToMap;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -23,6 +26,7 @@ import org.apache.olingo.commons.api.format.ContentType;
 import org.apache.olingo.commons.api.http.HttpHeader;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.OData;
+import org.apache.olingo.server.api.ODataLibraryException;
 import org.apache.olingo.server.api.ODataRequest;
 import org.apache.olingo.server.api.ODataResponse;
 import org.apache.olingo.server.api.ServiceMetadata;
@@ -40,6 +44,8 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.endpoint.odatav4.internal.olingo.OlingoEndpointHandler;
+import io.neonbee.endpoint.odatav4.rawbatch.RawBatchDecision;
+import io.neonbee.endpoint.odatav4.rawbatch.RawBatchResult;
 import io.neonbee.entity.AbstractEntityVerticle;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
@@ -52,7 +58,14 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 
+@SuppressWarnings("PMD.GodClass")
 public final class ODataProxyEndpointHandler implements Handler<RoutingContext> {
+    /**
+     * Context key for the stored request body when a raw batch request is intercepted (for re-entry via
+     * handleDefaultODataProxyProcessing).
+     */
+    public static final String CONTEXT_KEY_RAW_BATCH_BODY =
+            ODataProxyEndpointHandler.class.getName() + ".rawBatchBody";
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
 
@@ -62,6 +75,8 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
 
     private static final String BASE_PATH_SEGMENT = "odataproxy";
 
+    private static final String ENTITY_CONTAINER_SUFFIX = ".Service";
+
     private final ServiceMetadata serviceMetadata;
 
     /**
@@ -70,14 +85,16 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
     private final String availableResourcesPath;
 
     /**
-     * Multiple operations in one request.
-     */
-    private final String batchRequestPath;
-
-    /**
      * EDM model.
      */
     private final String metadataRequestPath;
+
+    /**
+     * Optional map: schema namespace -> DataVerticle qualified name. Key is full EDM entity container namespace (e.g.
+     * customerengagement.Service) or short form without ".Service" (fallback). Empty map means no raw batch
+     * interception.
+     */
+    private final Map<String, String> rawBatchProcessing;
 
     /**
      * Returns the ODataProxyEndpointHandler.
@@ -86,64 +103,211 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
      * @param uriConversion   The URI conversion strategy
      */
     public ODataProxyEndpointHandler(ServiceMetadata serviceMetadata, ODataV4Endpoint.UriConversion uriConversion) {
-        this.serviceMetadata = serviceMetadata;
-        String requestNamespace = uriConversion.apply(serviceMetadata.getEdm().getEntityContainer().getNamespace());
-        this.availableResourcesPath = requestPath(requestNamespace, "");
-        this.batchRequestPath = requestPath(requestNamespace, "$batch");
-        this.metadataRequestPath = requestPath(requestNamespace, "$metadata");
+        this(serviceMetadata, uriConversion, Map.of());
     }
 
-    private static String requestPath(String requestNamespace, String function) {
-        return String.format("/%s/%s/%s", BASE_PATH_SEGMENT, requestNamespace, function);
+    /**
+     * Returns the ODataProxyEndpointHandler with optional raw batch processing config.
+     *
+     * @param serviceMetadata    The metadata of the service
+     * @param uriConversion      The URI conversion strategy
+     * @param rawBatchProcessing Map of schema namespace to DataVerticle qualified name for raw batch interception (may
+     *                           be null or empty)
+     */
+    public ODataProxyEndpointHandler(ServiceMetadata serviceMetadata, ODataV4Endpoint.UriConversion uriConversion,
+            Map<String, String> rawBatchProcessing) {
+        this.serviceMetadata = serviceMetadata;
+        this.rawBatchProcessing = rawBatchProcessing != null ? rawBatchProcessing : Map.of();
+        String requestNamespace = uriConversion.apply(serviceMetadata.getEdm().getEntityContainer().getNamespace());
+        this.availableResourcesPath = requestPath(requestNamespace, "");
+        this.metadataRequestPath = requestPath(requestNamespace, "$metadata");
     }
 
     @SuppressWarnings("unused") // normale Java-Warnung
     @Override
     public void handle(RoutingContext routingContext) {
-
-        HttpServerRequest request = routingContext.request();
-        String path = request.path();
-
-        if (availableResourcesPath.equals(path)
-                || metadataRequestPath.equals(path)) {
-            handleMetadataRequest(routingContext);
-            return;
-        }
-
-        DataQuery dataQuery;
-        ODataRequest odataRequest;
-
-        try {
-            DataAction action = mapMethodToAction(request.method());
-            Buffer body = Optional.ofNullable(routingContext.body())
-                    .map(RequestBody::buffer)
-                    .orElse(Buffer.buffer());
-            String namespace = serviceMetadata.getEdm().getEntityContainer().getNamespace();
-            odataRequest = mapToODataRequest(routingContext, namespace);
-            dataQuery = odataRequestToQuery(odataRequest, action, body);
-        } catch (Exception cause) {
-            routingContext.fail(getStatusCode(cause), cause);
-            return;
-        }
-
         DataContext context = new DataContextImpl(routingContext);
-        Future<Buffer> bufferFuture;
-        if (HttpMethod.POST.equals(request.method()) && batchRequestPath.equals(path)) {
-            bufferFuture = handleBatchRequest(routingContext, context, odataRequest, dataQuery);
+        HttpServerRequest request = routingContext.request();
+
+        Future<Buffer> result;
+        if (isMetadataRequest(request.path())) {
+            result = handleMetadataRequest(routingContext, context);
+        } else if (isBatchRequest(request)) {
+            result = handleBatchRouting(routingContext, context);
         } else {
-            bufferFuture = handleEntityRequest(routingContext, context, odataRequest, dataQuery);
+            result = handleEntityRequest(routingContext, context);
         }
 
-        bufferFuture.onSuccess(buffer -> {
-            HttpServerResponse response = routingContext.response();
+        completeResponse(routingContext, context, result);
+    }
+
+    private boolean isMetadataRequest(String path) {
+        return availableResourcesPath.equals(path) || metadataRequestPath.equals(path);
+    }
+
+    private boolean isBatchRequest(HttpServerRequest request) {
+        return HttpMethod.POST.equals(request.method()) && request.path().contains("$batch");
+    }
+
+    private boolean isRawBatchEnabled() {
+        return !rawBatchProcessing.isEmpty();
+    }
+
+    private Future<Buffer> handleBatchRouting(RoutingContext routingContext, DataContext context) {
+        if (!isRawBatchEnabled()) {
+            return executeDefaultBatch(routingContext, context);
+        }
+
+        DataRequest dataRequest = mapRawBatchRequest(routingContext);
+        if (dataRequest == null) {
+            return executeDefaultBatch(routingContext, context);
+        }
+
+        routingContext.put(CONTEXT_KEY_RAW_BATCH_BODY, getBody(routingContext));
+        return requestData(routingContext.vertx(), dataRequest, context)
+                .compose(result -> {
+                    if (result == null) {
+                        return Future.failedFuture("Raw batch verticle returned null");
+                    }
+                    if (!(result instanceof RawBatchResult rawResult)) {
+                        return Future.failedFuture("Unsupported raw batch response type: " + result);
+                    }
+                    return processRawBatchDecision(routingContext, context, rawResult);
+                });
+    }
+
+    /**
+     * Maps the current batch request to a DataRequest for the configured raw batch verticle, or null if none.
+     */
+    private DataRequest mapRawBatchRequest(RoutingContext routingContext) {
+        String verticleName = resolveRawBatchVerticle();
+        if (verticleName == null) {
+            return null;
+        }
+        Map<String, List<String>> queryParams;
+        HttpServerRequest request = routingContext.request();
+        try {
+            queryParams = DataQuery.parseEncodedQueryString(request.query());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        String path = request.path();
+        DataAction action = mapMethodToAction(request.method());
+        Map<String, List<String>> headers = multiMapToMap(request.headers());
+        Buffer body = getBody(routingContext);
+        DataQuery dataQuery = new DataQuery(action, path, queryParams, headers, body)
+                .addHeader("X-HTTP-Method", request.method().name());
+        return new DataRequest(verticleName, dataQuery);
+    }
+
+    private Future<Buffer> processRawBatchDecision(RoutingContext routingContext, DataContext context,
+            RawBatchResult result) {
+        if (result.hasBuffer()) {
+            return Future.succeededFuture(result.buffer());
+        }
+
+        RawBatchDecision decision = result.decision();
+
+        if (decision == RawBatchDecision.HANDLED_RAW) {
+            return Future.succeededFuture(Buffer.buffer());
+        }
+
+        if (decision == RawBatchDecision.DELEGATE_TO_DEFAULT) {
+            return executeDefaultBatch(routingContext, context);
+        }
+
+        return Future.failedFuture("Unsupported raw batch result: " + decision);
+    }
+
+    private Future<Buffer> executeDefaultBatch(RoutingContext routingContext, DataContext context) {
+        String namespace = serviceMetadata.getEdm().getEntityContainer().getNamespace();
+        Buffer bodyOverride = routingContext.get(CONTEXT_KEY_RAW_BATCH_BODY);
+        ODataRequest odataRequest;
+        try {
+            odataRequest = bodyOverride != null
+                    ? mapToODataRequest(routingContext, namespace, bodyOverride)
+                    : mapToODataRequest(routingContext, namespace);
+        } catch (ODataLibraryException e) {
+            return Future.failedFuture(e);
+        }
+        return handleBatchRequest(routingContext, context, odataRequest, null);
+    }
+
+    /**
+     * Resolves the DataVerticle name for raw batch processing by mapping the current service's EDM entity container
+     * namespace to the configured verticle name. Lookup order: full namespace (e.g.
+     * {@code customerengagement.Service}), then fallback without trailing {@value #ENTITY_CONTAINER_SUFFIX} (e.g.
+     * {@code customerengagement}).
+     *
+     * @return The DataVerticle qualified name, or null if not configured for raw batch
+     */
+    private String resolveRawBatchVerticle() {
+        if (rawBatchProcessing.isEmpty()) {
+            return null;
+        }
+
+        String schemaNamespace = serviceMetadata.getEdm().getEntityContainer().getNamespace();
+        String verticleName = rawBatchProcessing.get(schemaNamespace);
+        if (verticleName != null) {
+            return verticleName;
+        }
+        if (schemaNamespace.endsWith(ENTITY_CONTAINER_SUFFIX)) {
+            String fallbackKey =
+                    schemaNamespace.substring(0, schemaNamespace.length() - ENTITY_CONTAINER_SUFFIX.length());
+            return rawBatchProcessing.get(fallbackKey);
+        }
+        return null;
+    }
+
+    private Buffer getBody(RoutingContext ctx) {
+        return Optional.ofNullable(ctx.body())
+                .map(RequestBody::buffer)
+                .orElse(Buffer.buffer());
+    }
+
+    private void completeResponse(RoutingContext ctx, DataContext context, Future<Buffer> future) {
+        future.onSuccess(buffer -> {
+            HttpServerResponse response = ctx.response();
+            if (response.ended()) {
+                return; // e.g. verticle called handleDefaultODataProxyProcessing and already sent the response
+            }
             setHeaderValues(context.responseData(), response::putHeader);
             response.putHeader("OData-Version", "4.0");
             response.setStatusCode(getStatusCode(context.responseData(), HttpStatusCode.OK.getStatusCode()));
             response.end(buffer);
         }).onFailure(cause -> {
-            LOGGER.correlateWith(routingContext).error("Error processing OData request", cause);
-            routingContext.fail(getStatusCode(cause), cause);
+            LOGGER.correlateWith(ctx).error("Error processing OData request", cause);
+            ctx.fail(getStatusCode(cause), cause);
         });
+    }
+
+    /**
+     * Maps the routing context to an OData request and data query for entity handling.
+     *
+     * @param routingContext The routing context
+     * @return The OData request and data query
+     * @throws ODataLibraryException if the request cannot be mapped
+     */
+    private EntityRequestParams mapEntityRequest(RoutingContext routingContext) throws ODataLibraryException {
+        HttpServerRequest request = routingContext.request();
+        DataAction action = mapMethodToAction(request.method());
+        Buffer body = getBody(routingContext);
+        String namespace = serviceMetadata.getEdm().getEntityContainer().getNamespace();
+        ODataRequest odataRequest = mapToODataRequest(routingContext, namespace);
+        DataQuery dataQuery = odataRequestToQuery(odataRequest, action, body);
+        return new EntityRequestParams(odataRequest, dataQuery);
+    }
+
+    /**
+     * Handles an entity request by mapping the context and delegating to the static handler.
+     */
+    private Future<Buffer> handleEntityRequest(RoutingContext routingContext, DataContext context) {
+        try {
+            EntityRequestParams params = mapEntityRequest(routingContext);
+            return handleEntityRequest(routingContext, context, params.odataRequest(), params.dataQuery());
+        } catch (Exception e) {
+            return Future.failedFuture(e);
+        }
     }
 
     static Future<Buffer> handleEntityRequest(
@@ -219,36 +383,6 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
                 });
     }
 
-    /**
-     * Handles the $metadata request.
-     *
-     * @param routingContext The routing context
-     * @return A future with the OData response
-     */
-    Future<ODataResponse> handleMetadataRequest(RoutingContext routingContext) {
-        Vertx vertx = routingContext.vertx();
-        return vertx.executeBlocking(() -> {
-            OData odata = OData.newInstance();
-            String namespace = serviceMetadata.getEdm().getEntityContainer().getNamespace();
-            return odata.createRawHandler(serviceMetadata)
-                    .process(mapToODataRequest(routingContext, namespace));
-        }).onComplete(asyncResult -> {
-            if (asyncResult.failed()) {
-                Throwable cause = asyncResult.cause();
-                routingContext.fail(getStatusCode(cause), cause);
-                return;
-            }
-
-            ODataResponse odataResponse = asyncResult.result();
-            try {
-                // map the odataResponse to the routingContext.response
-                OlingoEndpointHandler.mapODataResponse(odataResponse, routingContext.response());
-            } catch (IOException | ODataRuntimeException e) {
-                routingContext.fail(-1, e);
-            }
-        });
-    }
-
     static Future<ODataResponsePart> createBatchResponsePart(
             RoutingContext routingContext,
             DataContext context,
@@ -311,6 +445,47 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
         }
         response.addHeader(HttpHeader.CONTENT_ID, contentId);
         return response;
+    }
+
+    /**
+     * Handles the $metadata request.
+     *
+     * @param routingContext The routing context
+     * @param context        The data context to receive status and headers
+     * @return A future with the response buffer for completeResponse to write
+     */
+    Future<Buffer> handleMetadataRequest(RoutingContext routingContext, DataContext context) {
+        Vertx vertx = routingContext.vertx();
+        String namespace = serviceMetadata.getEdm().getEntityContainer().getNamespace();
+        return vertx.executeBlocking(() -> {
+            OData odata = OData.newInstance();
+            return odata.createRawHandler(serviceMetadata)
+                    .process(mapToODataRequest(routingContext, namespace));
+        }).compose(odataResponse -> {
+            context.responseData().put(DataContext.STATUS_CODE_HINT, odataResponse.getStatusCode());
+            for (Map.Entry<String, List<String>> entry : odataResponse.getAllHeaders().entrySet()) {
+                context.responseData().put(entry.getKey(), entry.getValue());
+            }
+            Buffer buffer;
+            try {
+                if (odataResponse.getContent() != null) {
+                    buffer = inputStreamToBuffer(odataResponse.getContent());
+                } else if (odataResponse.getODataContent() != null) {
+                    java.io.ByteArrayOutputStream byteArrayOutput = new java.io.ByteArrayOutputStream();
+                    odataResponse.getODataContent().write(byteArrayOutput);
+                    buffer = Buffer.buffer(byteArrayOutput.toByteArray());
+                } else {
+                    buffer = Buffer.buffer();
+                }
+            } catch (IOException | ODataRuntimeException e) {
+                return Future.failedFuture(e);
+            }
+            return Future.succeededFuture(buffer);
+        });
+    }
+
+    private static String requestPath(String requestNamespace, String function) {
+        return String.format("/%s/%s/%s", BASE_PATH_SEGMENT, requestNamespace, function);
     }
 
     /**
@@ -413,5 +588,8 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
      */
     static int getStatusCode(Throwable cause) {
         return OlingoEndpointHandler.getStatusCode(cause);
+    }
+
+    private record EntityRequestParams(ODataRequest odataRequest, DataQuery dataQuery) {
     }
 }
