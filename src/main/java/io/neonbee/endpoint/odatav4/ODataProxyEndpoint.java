@@ -2,6 +2,10 @@ package io.neonbee.endpoint.odatav4;
 
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.UriConversion.STRICT;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.apache.olingo.server.api.ServiceMetadata;
 
 import com.sap.cds.reflect.CdsService;
@@ -13,6 +17,12 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 public class ODataProxyEndpoint extends ODataV4Endpoint {
+
+    /**
+     * The key for the optional raw batch processing map in the endpoint config. Map key: EntityTypeName (e.g.
+     * example/Birds), value: DataVerticle qualified name (e.g. example/_BirdsVerticle).
+     */
+    public static final String CONFIG_RAW_BATCH_PROCESSING = "rawBatchProcessing";
 
     private static final String BASE_PATH_SEGMENT = "odataproxy";
 
@@ -39,7 +49,33 @@ public class ODataProxyEndpoint extends ODataV4Endpoint {
      */
     @Override
     protected Handler<RoutingContext> getRequestHandler(ServiceMetadata edmxModel, UriConversion uriConversion) {
-        return new ODataProxyEndpointHandler(edmxModel, uriConversion);
+        return getRequestHandler(edmxModel, uriConversion, null);
+    }
+
+    /**
+     * Creates a new OData Proxy Endpoint with optional endpoint config (e.g. rawBatchProcessing).
+     *
+     * @param edmxModel     The EDMX model to be used by the handler.
+     * @param uriConversion The URI conversion strategy.
+     * @param config        The endpoint configuration (may be null).
+     * @return The request handler.
+     */
+    @Override
+    protected Handler<RoutingContext> getRequestHandler(ServiceMetadata edmxModel, UriConversion uriConversion,
+            JsonObject config) {
+        Map<String, String> rawBatchProcessing = parseRawBatchProcessing(config);
+        return new ODataProxyEndpointHandler(edmxModel, uriConversion, rawBatchProcessing);
+    }
+
+    private static Map<String, String> parseRawBatchProcessing(JsonObject config) {
+        if (config == null) {
+            return Collections.emptyMap();
+        }
+        JsonObject map = config.getJsonObject(CONFIG_RAW_BATCH_PROCESSING);
+        if (map == null) {
+            return Collections.emptyMap();
+        }
+        return map.stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue()));
     }
 
     /**
