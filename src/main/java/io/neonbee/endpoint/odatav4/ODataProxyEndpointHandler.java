@@ -58,6 +58,7 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 
+@SuppressWarnings("PMD.GodClass")
 public final class ODataProxyEndpointHandler implements Handler<RoutingContext> {
     /**
      * Context key for the stored request body when a raw batch request is intercepted (for re-entry via
@@ -239,11 +240,11 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
         if (rawBatchProcessing.isEmpty()) {
             return null;
         }
-        String schemaNamespace = serviceMetadata.getEdm().getEntityContainer().getNamespace();
         String verticleName = rawBatchProcessing.get(path);
         if (verticleName != null) {
             return verticleName;
         }
+        String schemaNamespace = serviceMetadata.getEdm().getEntityContainer().getNamespace();
         verticleName = rawBatchProcessing.get(schemaNamespace);
         if (verticleName != null) {
             return verticleName;
