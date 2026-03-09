@@ -5,7 +5,7 @@ import io.vertx.core.buffer.Buffer;
 /**
  * Result of raw batch processing: either a response buffer or a decision to delegate / signal handled.
  */
-public class RawBatchResult {
+public final class RawBatchResult {
 
     private final Buffer buffer;
 
