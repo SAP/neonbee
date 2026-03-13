@@ -48,39 +48,29 @@ This section describes the **new raw batch processing** for the **OData Proxy** 
 ### Configuration
 
 - **Scope**: OData Proxy endpoint config only (see [ServerVerticle](verticles/ServerVerticle.md)). Other endpoints (e.g. `/odata/`) are unchanged.
-- **Parameter**: `rawBatchProcessing` — an optional **map** for `/odataproxy/` only. Key: full request path (e.g. `/odataproxy/customerengagement/ContactSet/$batch`) or schema namespace (dot or slash form). Value: DataVerticle qualified name (e.g. `test/_RawBatchVerticle`).
+- **Parameter**: `rawBatchProcessing` — an optional **map** for `/odataproxy/` only. Key: **schema namespace**. The EDM entity container namespace is typically like `customerengagement.Service`. You can use that full value as the key, or the short form without `.Service` (e.g. `customerengagement`). Lookup tries the full namespace first, then falls back to the namespace with `.Service` stripped. Value: DataVerticle qualified name (e.g. `test/_RawBatchVerticle`). One verticle per service/namespace.
 
 Example (ServerVerticle endpoint config):
 
 ```yaml
 # provides the odataproxy endpoint
 - type: io.neonbee.endpoint.odatav4.ODataProxyEndpoint
-  # enable the odataproxy endpoint, defaults to true
   enabled: true
-  # the base path to map this endpoint to, defaults to /odataproxy/
   basePath: /odataproxy/
-  # endpoint specific authentication chain, defaults to null and using the default authentication chain
   authenticationChain: []
-  # namespace and service name URI mapping (STRICT, or LOOSE based on CDS)
   uriConversion: LOOSE
   rawBatchProcessing:
-    "/odataproxy/customerengagement/ContactSet/$batch": "test/_RawBatchVerticle"
-    "/odataproxy/customerengagement/SolutionVHSet/$batch": "test/_RawBatchDelegateVerticle"
-```
-
-Alternative key style using schema namespace only (one verticle per service):
-
-```yaml
-  rawBatchProcessing:
-    "example/Birds": "example/_BirdsVerticle"
-    "my.service/Orders": "my.service/_OrdersBatchVerticle"
+    # full namespace (EDM entity container namespace)
+    test.Service: "test/_RawBatchVerticle"
+    # short form: matches customerengagement.Service via fallback
+    customerengagement: "test/_RawBatchDelegateVerticle"
 ```
 
 ### Behavior when a $batch request matches rawBatchProcessing
 
 (Applies only to `/odataproxy/`.)
 
-1. **Interception**: POST to `.../$batch` with path or service in `rawBatchProcessing` → framework does **not** run normal batch parsing or decomposition.
+1. **Interception**: POST to `.../$batch` when the request's service namespace is a key in `rawBatchProcessing` → framework does **not** run normal batch parsing or decomposition.
 2. **Single data request**: The HTTP request is forwarded 1:1 to the mapped DataVerticle via one `DataRequest` (same pattern as the [raw endpoint](raw-endpoint.md)).
 3. **Response**: The DataVerticle returns `**RawBatchResult`**: either a buffer (sent to client) or a `**RawBatchDecision**` (delegate to default batch or handled).
 
@@ -96,7 +86,7 @@ The endpoint keeps ownership of `RoutingContext` and response lifecycle.
 
 ### Example: Raw batch verticles (/odataproxy/)
 
-Register the verticle qualified name (e.g. `test/_RawBatchVerticle`) under `rawBatchProcessing` in the OData Proxy endpoint config. Verticles must be `DataVerticle<RawBatchResult>` and return `RawBatchResult.buffer(...)` or `RawBatchResult.decision(...)`.
+Register the verticle qualified name (e.g. `test/_RawBatchVerticle`) under `rawBatchProcessing` in the OData Proxy endpoint config, using the service's EDM entity container **namespace** as the map key. Verticles must be `DataVerticle<RawBatchResult>` and return `RawBatchResult.buffer(...)` or `RawBatchResult.decision(...)`.
 
 **Verticle that returns a fixed buffer (raw handling):**
 
@@ -161,7 +151,7 @@ The same verticle can choose per request: return `RawBatchResult.buffer(...)` fo
 ### Flow summary (raw batch on /odataproxy/)
 
 ```
-POST /odataproxy/.../$batch → path/service in rawBatchProcessing map
+POST /odataproxy/.../$batch → service namespace in rawBatchProcessing map
     → skip default batch parsing
     → one DataRequest to mapped DataVerticle (raw-endpoint style)
     → DataVerticle.createData(...) returns RawBatchResult
@@ -182,7 +172,7 @@ sequenceDiagram
     participant DefaultOData as Default batch pipeline
 
     Client->>ODataEndpoint: POST /odataproxy/.../$batch
-    ODataEndpoint->>EndpointConfig: Path in rawBatchProcessing?
+    ODataEndpoint->>EndpointConfig: Namespace in rawBatchProcessing?
 
     alt Not in map
         ODataEndpoint->>DefaultOData: Run default batch processing
