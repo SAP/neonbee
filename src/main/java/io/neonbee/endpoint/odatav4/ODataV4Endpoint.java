@@ -202,7 +202,7 @@ public class ODataV4Endpoint implements Endpoint {
         vertx.eventBus().consumer(EVENT_BUS_MODELS_LOADED_ADDRESS, message -> {
             // do not refresh the router if it wasn't even initialized
             if (initialized.get()) {
-                refreshRouter(vertx, router, basePath, uriConversion, exposedEntities, models);
+                refreshRouter(vertx, router, basePath, uriConversion, exposedEntities, models, config);
             }
         });
 
@@ -216,7 +216,7 @@ public class ODataV4Endpoint implements Endpoint {
                 .getLocalLock(asyncLock ->
                 // immediately initialize the router, this will also "arm" the event bus listener
                 (!initialized.getAndSet(true)
-                        ? refreshRouter(vertx, router, basePath, uriConversion, exposedEntities, models)
+                        ? refreshRouter(vertx, router, basePath, uriConversion, exposedEntities, models, config)
                         : succeededFuture()).onComplete(handler -> {
                             // wait for the refresh to finish (the result doesn't matter), remove the initial route, as
                             // this will redirect all requests to the registered service endpoint handlers (if non have
@@ -247,10 +247,12 @@ public class ODataV4Endpoint implements Endpoint {
      * @param uriConversion   The URI conversion to use.
      * @param exposedEntities The block / allow list of entities to be exposed.
      * @param currentModels   The current models reference.
+     * @param config          The endpoint configuration (may be null).
      * @return A future indicating when the refresh is complete.
      */
     protected Future<Void> refreshRouter(Vertx vertx, Router router, String basePath, UriConversion uriConversion,
-            RegexBlockList exposedEntities, AtomicReference<Map<String, EntityModel>> currentModels) {
+            RegexBlockList exposedEntities, AtomicReference<Map<String, EntityModel>> currentModels,
+            JsonObject config) {
         return NeonBee.get(vertx).getModelManager().getSharedModels().compose(models -> {
             if (models == currentModels.get()) {
                 return succeededFuture(); // no update needed
@@ -292,7 +294,7 @@ public class ODataV4Endpoint implements Endpoint {
                                     routingContext.next();
                                 })
                                 // TODO depending on the config either create Olingo or CDS based OData V4 handlers here
-                                .handler(getRequestHandler(edmxModel, uriConversion));
+                                .handler(getRequestHandler(edmxModel, uriConversion, config));
                         if (LOGGER.isInfoEnabled()) {
                             LOGGER.info("Serving OData service endpoint for {} at {}{} ({} URI mapping)",
                                     schemaNamespace, basePath, uriPath,
@@ -316,10 +318,23 @@ public class ODataV4Endpoint implements Endpoint {
      *
      * @param edmxModel     The EDMX model to be used by the handler.
      * @param uriConversion The URI that is used.
+     * @param config        The endpoint configuration (may be null).
+     * @return The request handler.
+     */
+    protected Handler<RoutingContext> getRequestHandler(ServiceMetadata edmxModel, UriConversion uriConversion,
+            JsonObject config) {
+        return new OlingoEndpointHandler(edmxModel);
+    }
+
+    /**
+     * Creates the request handler for the OData V4 endpoint.
+     *
+     * @param edmxModel     The EDMX model to be used by the handler.
+     * @param uriConversion The URI that is used.
      * @return The request handler.
      */
     protected Handler<RoutingContext> getRequestHandler(ServiceMetadata edmxModel, UriConversion uriConversion) {
-        return new OlingoEndpointHandler(edmxModel);
+        return getRequestHandler(edmxModel, uriConversion, null);
     }
 
     /**

@@ -125,12 +125,28 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
      */
     public static ODataRequest mapToODataRequest(RoutingContext routingContext, String schemaNamespace)
             throws ODataLibraryException {
+        return mapToODataRequest(routingContext, schemaNamespace, null);
+    }
+
+    /**
+     * Maps a Vert.x RoutingContext into a new ODataRequest, with an optional body override (e.g. when the request body
+     * was already consumed and stored for re-entry).
+     *
+     * @param routingContext  the context for the handling of the HTTP request
+     * @param schemaNamespace the name of the service namespace
+     * @param bodyOverride    optional body to use instead of reading from the request (may be null)
+     * @return A new ODataRequest
+     * @throws ODataLibraryException ODataLibraryException
+     */
+    public static ODataRequest mapToODataRequest(RoutingContext routingContext, String schemaNamespace,
+            Buffer bodyOverride) throws ODataLibraryException {
         HttpServerRequest request = routingContext.request();
 
         ODataRequest odataRequest = new ODataRequest();
         odataRequest.setProtocol(request.scheme());
         odataRequest.setMethod(mapODataRequestMethod(request));
-        odataRequest.setBody(new BufferInputStream(routingContext.body().buffer()));
+        Buffer body = bodyOverride != null ? bodyOverride : routingContext.body().buffer();
+        odataRequest.setBody(new BufferInputStream(body));
         for (String header : request.headers().names()) {
             odataRequest.addHeader(header, request.headers().getAll(header));
         }
