@@ -19,8 +19,10 @@ import io.vertx.ext.web.RoutingContext;
 public class ODataProxyEndpoint extends ODataV4Endpoint {
 
     /**
-     * The key for the optional raw batch processing map in the endpoint config. Map key: EntityTypeName (e.g.
-     * example/Birds), value: DataVerticle qualified name (e.g. example/_BirdsVerticle).
+     * The key for the optional raw batch processing map in the endpoint config. Map key: schema namespace (full EDM
+     * entity container namespace e.g. customerengagement.Service, or short form without .Service e.g.
+     * customerengagement; lookup tries full first, then fallback). Value: DataVerticle qualified name (e.g.
+     * test/_RawBatchVerticle).
      */
     public static final String CONFIG_RAW_BATCH_PROCESSING = "rawBatchProcessing";
 
