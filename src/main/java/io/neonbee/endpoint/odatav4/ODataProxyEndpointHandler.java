@@ -75,6 +75,8 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
 
     private static final String BASE_PATH_SEGMENT = "odataproxy";
 
+    private static final String ENTITY_CONTAINER_SUFFIX = ".Service";
+
     private final ServiceMetadata serviceMetadata;
 
     /**
@@ -88,8 +90,9 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
     private final String metadataRequestPath;
 
     /**
-     * Optional map: entity type name (e.g. example/Birds) -> DataVerticle qualified name (e.g. example/_BirdsVerticle).
-     * Empty map means no raw batch interception.
+     * Optional map: schema namespace -> DataVerticle qualified name. Key is full EDM entity container namespace (e.g.
+     * customerengagement.Service) or short form without ".Service" (fallback). Empty map means no raw batch
+     * interception.
      */
     private final Map<String, String> rawBatchProcessing;
 
@@ -108,7 +111,7 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
      *
      * @param serviceMetadata    The metadata of the service
      * @param uriConversion      The URI conversion strategy
-     * @param rawBatchProcessing Map of entity type name to DataVerticle qualified name for raw batch interception (may
+     * @param rawBatchProcessing Map of schema namespace to DataVerticle qualified name for raw batch interception (may
      *                           be null or empty)
      */
     public ODataProxyEndpointHandler(ServiceMetadata serviceMetadata, ODataV4Endpoint.UriConversion uriConversion,
@@ -179,7 +182,7 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
     private DataRequest mapRawBatchRequest(RoutingContext routingContext) {
         HttpServerRequest request = routingContext.request();
         String path = request.path();
-        String verticleName = resolveRawBatchVerticle(path);
+        String verticleName = resolveRawBatchVerticle();
         if (verticleName == null) {
             return null;
         }
@@ -231,26 +234,29 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
     }
 
     /**
-     * Resolves the DataVerticle name for raw batch processing if the current service is in the rawBatchProcessing map.
-     * Supports path, schema namespace (e.g. example.Birds), and slash form (e.g. example/Birds).
+     * Resolves the DataVerticle name for raw batch processing by mapping the current service's EDM entity container
+     * namespace to the configured verticle name. Lookup order: full namespace (e.g.
+     * {@code customerengagement.Service}), then fallback without trailing {@value #ENTITY_CONTAINER_SUFFIX} (e.g.
+     * {@code customerengagement}).
      *
      * @return The DataVerticle qualified name, or null if not configured for raw batch
      */
-    private String resolveRawBatchVerticle(String path) {
+    private String resolveRawBatchVerticle() {
         if (rawBatchProcessing.isEmpty()) {
             return null;
         }
-        String verticleName = rawBatchProcessing.get(path);
-        if (verticleName != null) {
-            return verticleName;
-        }
+
         String schemaNamespace = serviceMetadata.getEdm().getEntityContainer().getNamespace();
-        verticleName = rawBatchProcessing.get(schemaNamespace);
+        String verticleName = rawBatchProcessing.get(schemaNamespace);
         if (verticleName != null) {
             return verticleName;
         }
-        String slashForm = schemaNamespace.replace('.', '/');
-        return rawBatchProcessing.get(slashForm);
+        if (schemaNamespace.endsWith(ENTITY_CONTAINER_SUFFIX)) {
+            String fallbackKey =
+                    schemaNamespace.substring(0, schemaNamespace.length() - ENTITY_CONTAINER_SUFFIX.length());
+            return rawBatchProcessing.get(fallbackKey);
+        }
+        return null;
     }
 
     private Buffer getBody(RoutingContext ctx) {
@@ -392,10 +398,8 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
                 Optional<ODataResponse> errorResponse = responses.stream()
                         .filter(response -> response.getStatusCode() >= HttpStatusCode.BAD_REQUEST.getStatusCode())
                         .findFirst();
-                if (errorResponse.isPresent()) {
-                    return new ODataResponsePart(errorResponse.get(), false);
-                }
-                return new ODataResponsePart(responses, true);
+                return errorResponse.map(oDataResponse -> new ODataResponsePart(oDataResponse, false))
+                    .orElseGet(() -> new ODataResponsePart(responses, true));
             });
         }
 
