@@ -181,7 +181,6 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
      */
     private DataRequest mapRawBatchRequest(RoutingContext routingContext) {
         HttpServerRequest request = routingContext.request();
-        String path = request.path();
         String verticleName = resolveRawBatchVerticle();
         if (verticleName == null) {
             return null;
@@ -192,6 +191,7 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
         } catch (IllegalArgumentException e) {
             return null;
         }
+        String path = request.path();
         DataAction action = mapMethodToAction(request.method());
         Map<String, List<String>> headers = multiMapToMap(request.headers());
         Buffer body = getBody(routingContext);
@@ -398,8 +398,10 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
                 Optional<ODataResponse> errorResponse = responses.stream()
                         .filter(response -> response.getStatusCode() >= HttpStatusCode.BAD_REQUEST.getStatusCode())
                         .findFirst();
-                return errorResponse.map(oDataResponse -> new ODataResponsePart(oDataResponse, false))
-                        .orElseGet(() -> new ODataResponsePart(responses, true));
+                if (errorResponse.isPresent()) {
+                    return new ODataResponsePart(errorResponse.get(), false);
+                }
+                return new ODataResponsePart(responses, true);
             });
         }
 
