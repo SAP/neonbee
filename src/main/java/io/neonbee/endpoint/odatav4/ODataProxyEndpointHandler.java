@@ -180,12 +180,12 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
      * Maps the current batch request to a DataRequest for the configured raw batch verticle, or null if none.
      */
     private DataRequest mapRawBatchRequest(RoutingContext routingContext) {
-        HttpServerRequest request = routingContext.request();
         String verticleName = resolveRawBatchVerticle();
         if (verticleName == null) {
             return null;
         }
         Map<String, List<String>> queryParams;
+        HttpServerRequest request = routingContext.request();
         try {
             queryParams = DataQuery.parseEncodedQueryString(request.query());
         } catch (IllegalArgumentException e) {
