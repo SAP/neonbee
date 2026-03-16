@@ -399,7 +399,7 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
                         .filter(response -> response.getStatusCode() >= HttpStatusCode.BAD_REQUEST.getStatusCode())
                         .findFirst();
                 return errorResponse.map(oDataResponse -> new ODataResponsePart(oDataResponse, false))
-                    .orElseGet(() -> new ODataResponsePart(responses, true));
+                        .orElseGet(() -> new ODataResponsePart(responses, true));
             });
         }
 
