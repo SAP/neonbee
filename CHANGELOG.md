@@ -1,6 +1,13 @@
 # Changelog
 
-## 0.37.26 (2026-02-27)
+## 0.37.27 (2026-03-19)
+
+### Features
+
+- batch processing ([0e41a7db](https://github.com/SAP/neonbee/commit/0e41a7db2abc5f3e9de2cc278935cd0821747678))
+
+
+## 0.37.26 (2026-03-04)
 
 ### Bug Fixes
 
