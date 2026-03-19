@@ -24,7 +24,7 @@ public class RawBatchResultMessageCodec implements MessageCodec<RawBatchResult, 
     @Override
     public void encodeToWire(Buffer buffer, RawBatchResult result) {
         Buffer payload = result.buffer();
-        if (result.hasBuffer() && payload != null) {
+        if (result.hasBuffer()) {
             buffer.appendInt(payload.length());
             buffer.appendBuffer(payload);
         } else {
