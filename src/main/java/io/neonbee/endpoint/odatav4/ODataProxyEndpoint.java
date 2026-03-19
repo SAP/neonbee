@@ -73,10 +73,11 @@ public class ODataProxyEndpoint extends ODataV4Endpoint {
         if (config == null) {
             return Collections.emptyMap();
         }
-        JsonObject map = config.getJsonObject(CONFIG_RAW_BATCH_PROCESSING);
-        if (map == null) {
+        Object rawBatchValue = config.getValue(CONFIG_RAW_BATCH_PROCESSING);
+        if (!(rawBatchValue instanceof JsonObject)) {
             return Collections.emptyMap();
         }
+        JsonObject map = (JsonObject) rawBatchValue;
         return map.stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue()));
     }
 
