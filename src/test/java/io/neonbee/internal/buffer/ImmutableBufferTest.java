@@ -139,4 +139,58 @@ class ImmutableBufferTest {
         assertThat(immutableBuffer).isEqualTo(new ImmutableBuffer(Buffer.buffer(new byte[] { 1, 2, 3, 4, 5 })));
         assertThat(immutableBuffer).isNotEqualTo(EMPTY);
     }
+
+    @Test
+    void testImmutableFloatLE() {
+        assertThrows(UnsupportedOperationException.class, () -> new ImmutableBuffer().setFloatLE(0, 1.0f));
+        assertThrows(UnsupportedOperationException.class,
+                () -> new ImmutableBuffer(Buffer.buffer("test")).setFloatLE(0, 2.0f));
+    }
+
+    @Test
+    void testImmutableDoubleLE() {
+        assertThrows(UnsupportedOperationException.class, () -> new ImmutableBuffer().setDoubleLE(0, 1.0));
+        assertThrows(UnsupportedOperationException.class,
+                () -> new ImmutableBuffer(Buffer.buffer("test")).setDoubleLE(0, 2.0));
+    }
+
+    @Test
+    void testImmutableAppendFloatLE() {
+        assertThrows(UnsupportedOperationException.class, () -> new ImmutableBuffer().appendFloatLE(1.0f));
+        assertThrows(UnsupportedOperationException.class,
+                () -> new ImmutableBuffer(Buffer.buffer("test")).appendFloatLE(2.0f));
+    }
+
+    @Test
+    void testToStringWithNonAsciiCharacters() {
+        String nonAsciiString = "Hello é, ñ"; // "Hello World" in Chinese
+        Buffer buffer = Buffer.buffer(nonAsciiString);
+        ImmutableBuffer immutableBuffer = new ImmutableBuffer(buffer);
+        assertThat(immutableBuffer.toString()).isEqualTo(nonAsciiString);
+    }
+
+    @Test
+    void testToStringWithMultiByteCharacters() {
+        String multiByteString = "Hello 𐍈"; // "Hello" followed by a character that requires 4 bytes in UTF-8
+        Buffer buffer = Buffer.buffer(multiByteString);
+        ImmutableBuffer immutableBuffer = new ImmutableBuffer(buffer);
+        assertThat(immutableBuffer.toString()).isEqualTo(multiByteString);
+    }
+
+    @Test
+    void testGetByteBuf() {
+        Buffer buffer = Buffer.buffer(new byte[] { 1, 2, 3, 4, 5 });
+        ImmutableBuffer immutableBuffer = new ImmutableBuffer(buffer);
+        assertThat(immutableBuffer.getByteBuf()).isEqualTo(((BufferInternal) buffer).getByteBuf());
+    }
+
+    // write unit test for slice method
+    @Test
+    void testSlice() {
+        Buffer buffer = Buffer.buffer(new byte[] { 1, 2, 3, 4, 5 });
+        ImmutableBuffer immutableBuffer = new ImmutableBuffer(buffer);
+        Buffer slicedBuffer = immutableBuffer.slice(1, 4);
+        assertThat(slicedBuffer).isEqualTo(Buffer.buffer(new byte[] { 2, 3, 4 }));
+    }
+
 }

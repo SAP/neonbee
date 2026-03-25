@@ -377,7 +377,7 @@ public final class ImmutableBuffer implements Buffer {
 
     @Override
     public Buffer appendFloatLE(float f) {
-        return buffer.appendFloatLE(f);
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -387,7 +387,7 @@ public final class ImmutableBuffer implements Buffer {
 
     @Override
     public Buffer appendDoubleLE(double d) {
-        return buffer.appendDoubleLE(d);
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -457,7 +457,7 @@ public final class ImmutableBuffer implements Buffer {
 
     @Override
     public Buffer setDoubleLE(int pos, double d) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -467,7 +467,7 @@ public final class ImmutableBuffer implements Buffer {
 
     @Override
     public Buffer setFloatLE(int pos, float f) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override

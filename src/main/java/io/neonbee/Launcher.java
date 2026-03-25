@@ -16,7 +16,6 @@ import io.neonbee.config.NeonBeeConfig;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.cli.CLI;
 import io.vertx.core.cli.CLIException;
@@ -125,15 +124,7 @@ public class Launcher {
     }
 
     private static Future<Void> closeVertx(Vertx launcherVertx) {
-        Promise<Void> promise = Promise.promise();
-        launcherVertx.close().onComplete(closeResult -> {
-            if (closeResult.succeeded()) {
-                promise.complete();
-            } else {
-                promise.fail("Failed to close launcher Vert.x instance");
-            }
-        });
-        return promise.future();
+        return launcherVertx.close();
     }
 
     @VisibleForTesting

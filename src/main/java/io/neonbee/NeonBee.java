@@ -19,7 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -187,7 +186,7 @@ public class NeonBee {
 
     private AsyncMap<String, Object> sharedAsyncMap;
 
-    private final Set<String> localConsumers = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<String> localConsumers = ConcurrentHashMap.newKeySet();
 
     private final EntityModelManager modelManager;
 
