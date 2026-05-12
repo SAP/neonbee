@@ -9,6 +9,7 @@ import static org.apache.olingo.server.core.ODataHandlerException.MessageKeys.IN
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -236,7 +237,9 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
         }
         // OData response content
         if (odataResponse.getContent() != null) {
-            response.end(inputStreamToBuffer(odataResponse.getContent()));
+            try (InputStream content = odataResponse.getContent()) {
+                response.end(inputStreamToBuffer(content));
+            }
         } else if (odataResponse.getODataContent() != null) {
             ByteArrayOutputStream byteArrayOutput = new ByteArrayOutputStream();
             odataResponse.getODataContent().write(byteArrayOutput);

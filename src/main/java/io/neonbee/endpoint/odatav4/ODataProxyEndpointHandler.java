@@ -469,7 +469,9 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
             Buffer buffer;
             try {
                 if (odataResponse.getContent() != null) {
-                    buffer = inputStreamToBuffer(odataResponse.getContent());
+                    try (InputStream content = odataResponse.getContent()) {
+                        buffer = inputStreamToBuffer(content);
+                    }
                 } else if (odataResponse.getODataContent() != null) {
                     java.io.ByteArrayOutputStream byteArrayOutput = new java.io.ByteArrayOutputStream();
                     odataResponse.getODataContent().write(byteArrayOutput);
