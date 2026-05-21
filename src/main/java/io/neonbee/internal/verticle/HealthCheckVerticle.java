@@ -43,7 +43,9 @@ public class HealthCheckVerticle extends DataVerticle<JsonArray> {
     @Override
     public void start(Promise<Void> promise) {
         Future.<Void>future(super::start).compose(v -> {
-            if (NeonBee.get(vertx).getOptions().isClustered()) {
+            NeonBee neonBee = NeonBee.get(vertx);
+            if (neonBee.getOptions().isClustered()
+                    && neonBee.getConfig().getHealthConfig().doCollectClusteredResults()) {
                 return register(vertx);
             }
             return Future.succeededFuture();
