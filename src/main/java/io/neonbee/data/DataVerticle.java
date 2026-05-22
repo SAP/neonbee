@@ -465,7 +465,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                 LOGGER.correlateWith(context).error("Processing of message failed", e);
                 message.fail(e.failureCode(), e.getMessage());
             }
-        }).completionHandler(registerDataVerticlePromise);
+        }).completion().onComplete(registerDataVerticlePromise);
 
         registerDataVerticlePromise.future().compose(v -> {
             try {

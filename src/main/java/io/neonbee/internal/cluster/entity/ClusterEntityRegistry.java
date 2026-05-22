@@ -3,6 +3,7 @@ package io.neonbee.internal.cluster.entity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -117,6 +118,22 @@ public class ClusterEntityRegistry implements Registry<String> {
      */
     Future<Void> removeClusteringInformation(String clusterNodeId) {
         return clusteringInformation.getSharedMap().compose(map -> map.remove(clusterNodeId)).mapEmpty();
+    }
+
+    /**
+     * Retrieves all node IDs currently registered in the cluster entity registry.
+     * <p>
+     * This method accesses the shared {@link AsyncMap} that stores clustering information about registered nodes and
+     * returns the set of all keys, where each key represents a unique node ID participating in the cluster.
+     * <p>
+     * The operation is asynchronous and completes with the set of node IDs currently known to the registry.
+     *
+     * @return a {@link Future} that completes successfully with a {@link Set} of node IDs registered in the cluster, or
+     *         fails if the shared map cannot be accessed
+     */
+    public Future<Set<String>> getAllNodeIds() {
+        return clusteringInformation.getSharedMap()
+                .compose(AsyncMap::keys);
     }
 
     /**

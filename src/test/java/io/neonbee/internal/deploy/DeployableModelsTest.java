@@ -60,7 +60,7 @@ class DeployableModelsTest {
         NeonBee neonBeeMock = newNeonBeeMockForDeployment(new NeonBeeOptions.Mutable().setIgnoreClassPath(true));
 
         PendingDeployment deployment = deployable.deploy(neonBeeMock);
-        assertThat(deployment.succeeded()).isTrue();
+        assertThat(deployment.getDeployment().succeeded()).isTrue();
         Set<EntityModelDefinition> definitions =
                 ReflectionHelper.getValueOfPrivateField(neonBeeMock.getModelManager(), "externalModelDefinitions");
         assertThat(definitions).contains(definition);
@@ -80,8 +80,8 @@ class DeployableModelsTest {
         when(vertxMock.fileSystem().readDir(any())).thenReturn(failedFuture("any failure"));
 
         PendingDeployment deployment = deployable.deploy(neonBeeMock);
-        assertThat(deployment.failed()).isTrue();
-        assertThat(deployment.cause()).hasMessageThat().isEqualTo("any failure");
+        assertThat(deployment.getDeployment().failed()).isTrue();
+        assertThat(deployment.getDeployment().cause()).hasMessageThat().isEqualTo("any failure");
         assertThat(deployment.undeploy().succeeded()).isTrue();
     }
 

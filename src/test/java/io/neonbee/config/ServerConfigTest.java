@@ -32,7 +32,6 @@ import io.vertx.core.net.JdkSSLEngineOptions;
 import io.vertx.core.net.JksOptions;
 import io.vertx.core.net.KeyCertOptions;
 import io.vertx.core.net.OpenSSLEngineOptions;
-import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.core.net.PemTrustOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.core.net.SSLEngineOptions;
@@ -277,10 +276,6 @@ class ServerConfigTest {
         OpenSSLEngineOptions openSSLEngineOptions = new OpenSSLEngineOptions();
         assertThat(sc.setSslEngineOptions(openSSLEngineOptions)).isSameInstanceAs(sc);
         assertThat(sc.getSslEngineOptions()).isEqualTo(openSSLEngineOptions);
-
-        PemKeyCertOptions pemKeyCertOptions = new PemKeyCertOptions();
-        assertThat(sc.setPemKeyCertOptions(pemKeyCertOptions)).isSameInstanceAs(sc);
-        assertThat(sc.getKeyCertOptions()).isEqualTo(pemKeyCertOptions);
 
         PemTrustOptions pemTrustOptions = new PemTrustOptions();
         assertThat(sc.setTrustOptions(pemTrustOptions)).isSameInstanceAs(sc);

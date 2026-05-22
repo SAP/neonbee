@@ -14,7 +14,7 @@ import io.neonbee.NeonBee;
 import io.neonbee.config.ServerConfig;
 import io.neonbee.config.ServerConfig.SessionHandling;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.shareddata.SharedData;
 import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.sstore.ClusteredSessionStore;

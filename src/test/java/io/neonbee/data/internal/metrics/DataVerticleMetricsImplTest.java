@@ -8,17 +8,40 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.parallel.Isolated;
 
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.neonbee.NeonBeeOptions;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.test.base.DataVerticleTestBase;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
+import io.vertx.micrometer.MicrometerMetricsFactory;
+import io.vertx.micrometer.MicrometerMetricsOptions;
 
 @Isolated
 class DataVerticleMetricsImplTest extends DataVerticleTestBase {
+
+    @Override
+    public void neonBeeSetup(Vertx vertx, VertxTestContext testContext, TestInfo testInfo,
+            NeonBeeOptions.Mutable options, CompositeMeterRegistry compositeMeterRegistry) throws Exception {
+
+        VertxOptions vertxOptions = new VertxOptions()
+                .setMetricsOptions(
+                        new MicrometerMetricsOptions()
+                                .setRegistryName(options.getMetricsRegistryName())
+                                .setEnabled(true));
+
+        Vertx vertxInstance = Vertx.builder().with(vertxOptions)
+                .withMetrics(new MicrometerMetricsFactory(compositeMeterRegistry))
+                .build();
+
+        super.neonBeeSetup(vertxInstance, testContext, testInfo, options, compositeMeterRegistry);
+    }
 
     @Override
     protected WorkingDirectoryBuilder provideWorkingDirectoryBuilder(TestInfo testInfo, VertxTestContext testContext) {
@@ -46,41 +69,41 @@ class DataVerticleMetricsImplTest extends DataVerticleTestBase {
                 .onSuccess(resp -> testContext.verify(() -> {
                     assertThat(resp.statusCode()).isEqualTo(200);
                     assertThat(resp.bodyAsString())
-                            .contains("request_data_timer_test_TestSourceDataVerticle_seconds_count ");
+                            .contains("request_data_timer_test_TestSourceDataVerticle_seconds_count 1");
                     assertThat(resp.bodyAsString())
-                            .contains("request_data_timer_test_TestSourceDataVerticle_seconds_sum ");
+                            .containsMatch("request_data_timer_test_TestSourceDataVerticle_seconds_sum.*");
                     assertThat(resp.bodyAsString())
-                            .contains("request_data_timer_test_TestSourceDataVerticle_seconds_max ");
+                            .contains("request_data_timer_test_TestSourceDataVerticle_seconds_max gauge");
 
                     assertThat(resp.bodyAsString()).contains(
-                            "request_data_counter_test_TestSourceDataVerticle_total{succeeded=\"true\",} 1.0");
+                            "request_data_counter_test_TestSourceDataVerticle_total{succeeded=\"true\"} 1.0");
                     assertThat(resp.bodyAsString())
                             .contains("request_data_active_requests_test_TestSourceDataVerticle 0.0");
                     assertThat(resp.bodyAsString())
                             .contains("request_counter_test_TestSourceDataVerticle_total 1.0");
 
                     assertThat(resp.bodyAsString()).contains(
-                            "retrieve_data_timer_DataVerticle_test_TestSourceDataVerticle__seconds_max{name=\"TestSourceDataVerticle\",namespace=\"test\",} ");
+                            "retrieve_data_timer_DataVerticle_test_TestSourceDataVerticle__seconds_max Time to retrieve data");
                     assertThat(resp.bodyAsString()).contains(
-                            "retrieve_data_counter_DataVerticle_test_TestSourceDataVerticle__total{name=\"TestSourceDataVerticle\",namespace=\"test\",succeeded=\"true\",} 1.0");
+                            "retrieve_data_counter_DataVerticle_test_TestSourceDataVerticle__total{name=\"TestSourceDataVerticle\",namespace=\"test\",succeeded=\"true\"} 1.0");
                     assertThat(resp.bodyAsString()).contains(
-                            "retrieve_data_active_requests_DataVerticle_test_TestSourceDataVerticle_{name=\"TestSourceDataVerticle\",namespace=\"test\",} 0.0");
+                            "retrieve_data_active_requests_DataVerticle_test_TestSourceDataVerticle_{name=\"TestSourceDataVerticle\",namespace=\"test\"} 0.0");
                     assertThat(resp.bodyAsString()).contains(
-                            "retrieve_counter_DataVerticle_test_TestSourceDataVerticle__total{name=\"TestSourceDataVerticle\",namespace=\"test\",} 1.0");
+                            "retrieve_counter_DataVerticle_test_TestSourceDataVerticle__total{name=\"TestSourceDataVerticle\",namespace=\"test\"} 1.0");
 
                     assertThat(resp.bodyAsString()).contains(
-                            "retrieve_data_timer_DataVerticle_test_TestRequireDataVerticle__seconds_count{name=\"TestRequireDataVerticle\",namespace=\"test\",} ");
-                    assertThat(resp.bodyAsString()).contains(
-                            "retrieve_data_timer_DataVerticle_test_TestRequireDataVerticle__seconds_sum{name=\"TestRequireDataVerticle\",namespace=\"test\",} ");
-                    assertThat(resp.bodyAsString()).contains(
-                            "retrieve_data_timer_DataVerticle_test_TestRequireDataVerticle__seconds_max{name=\"TestRequireDataVerticle\",namespace=\"test\",} ");
+                            "retrieve_data_timer_DataVerticle_test_TestRequireDataVerticle__seconds_count{name=\"TestRequireDataVerticle\",namespace=\"test\"} 1");
+                    assertThat(resp.bodyAsString()).isAtMost(
+                            "retrieve_data_timer_DataVerticle_test_TestRequireDataVerticle__seconds_sum{name=\"TestRequireDataVerticle\",namespace=\"test\"}");
+                    assertThat(resp.bodyAsString()).isAtMost(
+                            "retrieve_data_timer_DataVerticle_test_TestRequireDataVerticle__seconds_max{name=\"TestRequireDataVerticle\",namespace=\"test\"}");
 
                     assertThat(resp.bodyAsString()).contains(
-                            "retrieve_data_counter_DataVerticle_test_TestRequireDataVerticle__total{name=\"TestRequireDataVerticle\",namespace=\"test\",succeeded=\"true\",} 1.0");
+                            "retrieve_data_counter_DataVerticle_test_TestRequireDataVerticle__total{name=\"TestRequireDataVerticle\",namespace=\"test\",succeeded=\"true\"} 1.0");
                     assertThat(resp.bodyAsString()).contains(
-                            "retrieve_data_active_requests_DataVerticle_test_TestRequireDataVerticle_{name=\"TestRequireDataVerticle\",namespace=\"test\",} 0.0");
+                            "retrieve_data_active_requests_DataVerticle_test_TestRequireDataVerticle_{name=\"TestRequireDataVerticle\",namespace=\"test\"} 0.0");
                     assertThat(resp.bodyAsString()).contains(
-                            "retrieve_counter_DataVerticle_test_TestRequireDataVerticle__total{name=\"TestRequireDataVerticle\",namespace=\"test\",} 1.0");
+                            "retrieve_counter_DataVerticle_test_TestRequireDataVerticle__total{name=\"TestRequireDataVerticle\",namespace=\"test\"} 1.0");
                     testContext.completeNow();
                 }));
     }

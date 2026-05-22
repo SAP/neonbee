@@ -27,6 +27,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.neonbee.internal.helper.FileSystemHelper;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -92,11 +93,18 @@ class FileSystemHelperTest {
     void testOpenFile(Vertx vertx, VertxTestContext testContext) throws IOException {
         Path subFile = tempDir.resolve("subFile");
         Buffer expectedContent = Buffer.buffer("lord citrange".getBytes(UTF_8));
-        Files.write(subFile, "lord citrange".getBytes(UTF_8));
+        Files.writeString(subFile, "lord citrange");
         Buffer gotBuffer = Buffer.buffer();
         openFile(vertx, new OpenOptions(), subFile)
                 .compose(asyncFile -> Future
-                        .<Buffer>future(promise -> asyncFile.read(gotBuffer, 0, 0L, expectedContent.length(), promise)))
+                        .<Buffer>future(promise -> asyncFile.read(gotBuffer, 0, 0L, expectedContent.length())
+                                .onComplete(rFile -> {
+                                    if (rFile.succeeded()) {
+                                        promise.complete(rFile.result());
+                                    } else {
+                                        promise.fail(rFile.cause());
+                                    }
+                                })))
                 .onComplete(testContext.succeeding(buffer -> testContext.verify(() -> {
                     assertThat(buffer).isEqualTo(expectedContent);
                     testContext.completeNow();
@@ -109,7 +117,7 @@ class FileSystemHelperTest {
         Path subFile = tempDir.resolve("subFile");
         Buffer expectedContent = Buffer.buffer("lord citrange".getBytes(UTF_8));
 
-        Files.write(subFile, "lord citrange".getBytes(UTF_8));
+        Files.writeString(subFile, "lord citrange");
         readFile(vertx, subFile).onComplete(testContext.succeeding(buffer -> {
             testContext.verify(() -> assertThat(buffer).isEqualTo(expectedContent));
             testContext.completeNow();
@@ -196,4 +204,38 @@ class FileSystemHelperTest {
         assertThat(getPathFromMap(Map.of("test\\test.txt", true), "test" + File.separator + "test.txt")).isTrue();
         assertThat(getPathFromMap(Map.of("test/test.txt", true), "testtest.txt")).isNull();
     }
+
+    @Test
+    @DisplayName("Test should not instantiate FileSystemHelper")
+    void testFileSystemHelperNotInstantiable() {
+        try {
+            FileSystemHelper.class.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).isEqualTo(
+                    "class io.neonbee.helper.FileSystemHelperTest cannot access a member of class io.neonbee.internal.helper.FileSystemHelper with modifiers \"private\"");
+        }
+    }
+
+    @Test
+    void testReadJSON(Vertx vertx, VertxTestContext testContext) throws IOException {
+        Path subFile = tempDir.resolve("hodor");
+        String jsonContent = "{\"hodor\":\"test\"}";
+        Files.writeString(subFile, jsonContent);
+        FileSystemHelper.readJSON(vertx, subFile).onComplete(testContext.succeeding(json -> {
+            testContext.verify(() -> assertThat(json.getString("hodor")).isEqualTo("test"));
+            testContext.completeNow();
+        }));
+    }
+
+    @Test
+    void testReadYAML(Vertx vertx, VertxTestContext testContext) throws IOException {
+        Path subFile = tempDir.resolve("hodor.yaml");
+        String yamlContent = "yaml: contentYaml";
+        Files.writeString(subFile, yamlContent);
+        FileSystemHelper.readYAML(vertx, subFile).onComplete(testContext.succeeding(json -> {
+            testContext.verify(() -> assertThat(json.getString("yaml")).isEqualTo("contentYaml"));
+            testContext.completeNow();
+        }));
+    }
+
 }

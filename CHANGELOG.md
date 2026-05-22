@@ -1,5 +1,175 @@
 # Changelog
 
+## 0.37.27 (2026-03-19)
+
+### Features
+
+- batch processing ([0e41a7db](https://github.com/SAP/neonbee/commit/0e41a7db2abc5f3e9de2cc278935cd0821747678))
+
+
+## 0.37.26 (2026-03-04)
+
+### Bug Fixes
+
+- fix regex vulnerability ([2bede2b3](https://github.com/SAP/neonbee/commit/2bede2b37a87d40195aa24c400ca4bb3b9ccd529))
+
+
+### Chores
+
+- bump version to 0.37.26-SNAPSHOT ([f57e1d70](https://github.com/SAP/neonbee/commit/f57e1d70db751ed223da53e487e54be2e1be2531))
+- publish to maven central ([78b960e6](https://github.com/SAP/neonbee/commit/78b960e656b16ef6a316d5c8f06f5e2029744674))
+- publish to maven central ([da8fd732](https://github.com/SAP/neonbee/commit/da8fd732ca78f82daf191c08344ae80eb3f7ec88))
+
+
+## 0.37.24 (2026-01-23)
+
+### Bug Fixes
+
+- enable brotli to be available at runtime ([62c27e7c](https://github.com/SAP/neonbee/commit/62c27e7c0a1224bb965980e8e7e4436b5a788eaa))
+- add change set support for OData proxy ([e4a17c38](https://github.com/SAP/neonbee/commit/e4a17c3868ae7078f941b491b2cfa5635959fbd2))
+
+
+## 0.37.23 (2025-12-19)
+
+### Bug Fixes
+
+- parseUriInfo ([a8f068ee](https://github.com/SAP/neonbee/commit/a8f068ee635227b597226a08eb99f7dcc5ed9e37))
+
+
+## 0.37.22 (2025-12-01)
+
+### Reverts
+
+- release commits ([28d342af](https://github.com/SAP/neonbee/commit/28d342afeddf00b23704354af650f48f91dddc35))
+
+
+## 0.37.21 (2025-12-01)
+
+### Bug Fixes
+
+- set header odata-version: 4.0 ([e74a82a5](https://github.com/SAP/neonbee/commit/e74a82a51b011d3313b5949943c194a0226149ce))
+- set default status code ([e25d993c](https://github.com/SAP/neonbee/commit/e25d993c1936740277fccaa39347ff4b90fa2414))
+
+
+## 0.37.20 (2025-11-25)
+
+### Bug Fixes
+
+- release(snapshot) 0.37.20-SNAPSHOT ([765f6a8f](https://github.com/SAP/neonbee/commit/765f6a8f0721b8cb599d986ad0f6df813add28bc))
+- odataproxy datacontext ([df3fdcbc](https://github.com/SAP/neonbee/commit/df3fdcbcd0fc4c2168bef5ada6484d46838d965e))
+
+
+## 0.37.19 (2025-11-25)
+
+### Reverts
+
+- release: 0.37.19 commits ([94988ea3](https://github.com/SAP/neonbee/commit/94988ea3c37388a558c1673cc56dbd820b79d285))
+
+
+### Bug Fixes
+
+- treat null query name/value as empty ([78d7abb7](https://github.com/SAP/neonbee/commit/78d7abb796cc7b5b51579340366da4cdb598d8c8))
+- odataproxy metadata ([55621594](https://github.com/SAP/neonbee/commit/55621594fc5ad1a44bed8f2bb763d263db04b7bf))
+
+
+### Features
+
+- odataproxy batch handling and test ([ad857cd6](https://github.com/SAP/neonbee/commit/ad857cd6828c73e4dd428a7acc3e98681c672d86))
+
+
+## 0.37.18 (2025-11-17)
+
+## 0.37.17 (2025-11-17)
+
+### Bug Fixes
+
+- odataproxy metadata request ([853ebf48](https://github.com/SAP/neonbee/commit/853ebf48a6d96d2c3db53e5a129cdf718be406a0))
+- revert release attempts: ([acf39499](https://github.com/SAP/neonbee/commit/acf39499a1f7f2bd55f872a57b8d44c94acc9298))
+- set version 0.37.17-SNAPSHOT ([732b3d6d](https://github.com/SAP/neonbee/commit/732b3d6d92c76d630d4425bd0639d44ebffcb2c6))
+
+
+## 0.37.12 (2025-11-06)
+
+### Bug Fixes
+
+- tests for hook ([f4b057dd](https://github.com/SAP/neonbee/commit/f4b057ddcc49cb938e8b0421425977457fd7ce2d))
+- tests for hook ([f1a2de59](https://github.com/SAP/neonbee/commit/f1a2de593456c22181c04af7a7ab207c92b7de15))
+- pmd ([e12e36fc](https://github.com/SAP/neonbee/commit/e12e36fc72152a957bc37fd07c3b4be6df101c84))
+- use hook to init coordinator ([cb2e025c](https://github.com/SAP/neonbee/commit/cb2e025c0a04f1a99094a661c367637990210ab8))
+- tests for hook ([b7c1f552](https://github.com/SAP/neonbee/commit/b7c1f552f2eb663e6b7c8743c05fbb59205037a4))
+- spotless apply ([ab21ed40](https://github.com/SAP/neonbee/commit/ab21ed4054d55573083eb77051010157b200e204))
+- tests for hook ([9f3bab36](https://github.com/SAP/neonbee/commit/9f3bab36cb2b9e22c6701db2bf4b8c08b986e4b6))
+- tests for hook ([8722b3dd](https://github.com/SAP/neonbee/commit/8722b3dd00d29cbbd3b337046a0ccf94d82773b8))
+- draft 1 ([7e38dda9](https://github.com/SAP/neonbee/commit/7e38dda9765e98a0dd1096d7116bdca2e12f5ab7))
+- tests for hook ([7c17a05a](https://github.com/SAP/neonbee/commit/7c17a05a2eb0743d8e59f7148e652e4178b6e22c))
+- tests for hook ([70a5a90e](https://github.com/SAP/neonbee/commit/70a5a90e275756842e4904afeef3f126b5ac5e21))
+- tests for hook ([6e8af74f](https://github.com/SAP/neonbee/commit/6e8af74f6d7b3cda004118923a2e6d65212e5e7e))
+- tests ([690a998f](https://github.com/SAP/neonbee/commit/690a998f32dd4e2bbff31b68c87978e38d696dc4))
+- cleanup cluster information ([67c3f2f4](https://github.com/SAP/neonbee/commit/67c3f2f4acf3e8f572b39a84c3f870189b7e3ccb))
+- tests for hook ([63e1c69d](https://github.com/SAP/neonbee/commit/63e1c69dd1ca65513c13d3e98ac0ec9fdb7135c6))
+- tests for hook ([5b781ef2](https://github.com/SAP/neonbee/commit/5b781ef2aba55210c2dbf80cfa734a0fb97c79ef))
+- tests for hook ([53558dfe](https://github.com/SAP/neonbee/commit/53558dfeaf80f02cb4807b982e83227516aaeb27))
+- tests ([4d88c1e1](https://github.com/SAP/neonbee/commit/4d88c1e19debf5a92d663b4f8be4c9b262fd5aef))
+- pmd constructor ([43c0b999](https://github.com/SAP/neonbee/commit/43c0b999342576d1bf781ffcf0ae20cca187b2da))
+- tests ([3ab2e0b5](https://github.com/SAP/neonbee/commit/3ab2e0b51e6118db384e7357c174535c31971516))
+- pmd ([22c864fc](https://github.com/SAP/neonbee/commit/22c864fcc088743f68ef286b2202ef88fa625a93))
+- tests ([1a362987](https://github.com/SAP/neonbee/commit/1a3629875aa06f2c1c3e380da8738feafc214ca6))
+- tests for hook ([12412643](https://github.com/SAP/neonbee/commit/124126434d064c8ffa52a8bc3e3d99b41af34253))
+- tests for hook ([0a4fad10](https://github.com/SAP/neonbee/commit/0a4fad1002c7bd16f5cacc60f1df8f57a5c7e243))
+- tests for hook ([091fcab5](https://github.com/SAP/neonbee/commit/091fcab5cd0739da6d7690faba8f10b4c3b350b7))
+- tests for hook ([0156ec9b](https://github.com/SAP/neonbee/commit/0156ec9bfb8470601a55723a4318db25ba69bc99))
+- configure leader ([d0304501](https://github.com/SAP/neonbee/commit/d03045018ae4448b2b1b74b49ec3202570cf2c31))
+- configuration support for coordinator ([83d90015](https://github.com/SAP/neonbee/commit/83d9001556910cc5f059261f082a23e33721942d))
+- pmd ([5288f1a9](https://github.com/SAP/neonbee/commit/5288f1a96351b0dc8cd422482bf2e130a2b41c32))
+- simplify cleanup ([281cace0](https://github.com/SAP/neonbee/commit/281cace06d7151a00fd0d0003b7e78e94e136327))
+- updated trigger method ([b59e45b2](https://github.com/SAP/neonbee/commit/b59e45b26c5848a6a9a1bc59f0e23a4d8ec397c1))
+- refactor odata handler ([dec45325](https://github.com/SAP/neonbee/commit/dec453250356c2a769f263cf433a44659f705308))
+- first working implementation ([c1140fe7](https://github.com/SAP/neonbee/commit/c1140fe7e6cc259b77a64c6deb8514796dd940f7))
+- set response status code ([7daebd4b](https://github.com/SAP/neonbee/commit/7daebd4bdfa4330d6733264215aed8fa38ea600f))
+- copy odata ([613ee556](https://github.com/SAP/neonbee/commit/613ee55645d1f6fb6184c1d1cfac7a30eb15ef6b))
+- vulnerable to polynomial runtime due to backtracking ([5e34dd15](https://github.com/SAP/neonbee/commit/5e34dd156f368f2dae59b0a320ea6710fc9edde4))
+- checkstyle ([3c30428b](https://github.com/SAP/neonbee/commit/3c30428bccc603e83eb3a2782486ef35deaed87b))
+- refactor odata endpoints ([20ef9804](https://github.com/SAP/neonbee/commit/20ef98046d715be0b8e12b26e37cf459340680a8))
+- move requestEntity to AbstractEntityVerticle ([18667d0f](https://github.com/SAP/neonbee/commit/18667d0f2ca81e1d9252417e6ad46819dc46c1e4))
+- response headers and FullQualifiedName ([02516305](https://github.com/SAP/neonbee/commit/02516305ab39edebc0de0cc6e1d5ea42ed8b03cc))
+- brotli ([21948026](https://github.com/SAP/neonbee/commit/2194802639304c3b9177d846c54ac5052976eb4d))
+
+
+### Features
+
+- add ODataProxyEndpoint ([65fa9d65](https://github.com/SAP/neonbee/commit/65fa9d65f7a0e8bf6ce3b59c89af1bd6206912ab))
+- introduce abstract entity verticle ([331d5cee](https://github.com/SAP/neonbee/commit/331d5cee1e6ea55df9bd68ce81301deb78e2db67))
+- add Brotli compression library ([e469ab11](https://github.com/SAP/neonbee/commit/e469ab1131caaad0da9ce533b795a7093f615229))
+
+
+## 0.37.11 (2025-09-03)
+
+### Features
+
+- change to ossrh-staging-api ([10d4fa6f](https://github.com/SAP/neonbee/commit/10d4fa6fa0b1b761e492da5d98df421e9374a92c))
+
+
+## 0.37.10 (2025-09-02)
+
+### Features
+
+- change to ossrh-staging-api ([b09df57c](https://github.com/SAP/neonbee/commit/b09df57c02b9a9b533d6cc8eca03959b7378ef38))
+
+
+## 0.37.9 (2025-09-02)
+
+### Features
+
+- use body from routing context ([d8103585](https://github.com/SAP/neonbee/commit/d8103585dcc18dde1b146998e67a98a8280030b4))
+- put string into data context ([c92369e2](https://github.com/SAP/neonbee/commit/c92369e20eb2aa2ee4c3fcc4132ab2b50ca0b23d))
+- add raw body to data context ([18f1d590](https://github.com/SAP/neonbee/commit/18f1d590d307e111383b509cd11d890e8fb1aae7))
+- use body from routing context ([12c73953](https://github.com/SAP/neonbee/commit/12c739534f36edd122cde1df70a112aa0aa08f7f))
+- use body from routing context ([028e5d5a](https://github.com/SAP/neonbee/commit/028e5d5a8bb250ded36c0d271740c49ac7c1fba6))
+- update maven central url ([8945d512](https://github.com/SAP/neonbee/commit/8945d5124c374b4e72bde07252f8f54dd4f46be2))
+- change to ossrh-staging-api ([3ed765c3](https://github.com/SAP/neonbee/commit/3ed765c3bb0217ccde72f77816ac353f1eb6d5b9))
+- change to ossrh-staging-api ([bd14f3f5](https://github.com/SAP/neonbee/commit/bd14f3f5cdce6b85f61289c3657c9472c71c8e89))
+
+
 ## 0.37.7 (2025-06-18)
 
 ### Bug Fixes

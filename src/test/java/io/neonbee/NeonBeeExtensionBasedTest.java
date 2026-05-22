@@ -20,7 +20,7 @@ import io.neonbee.test.helper.DeploymentHelper;
 import io.neonbee.test.helper.ReflectionHelper;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.test.fakecluster.FakeClusterManager;
 
@@ -48,7 +48,7 @@ class NeonBeeExtensionBasedTest extends NeonBeeExtension.TestBase {
         assertThat(neonBee).isNotNull();
         assertThat(neonBee.getOptions().getActiveProfiles()).containsExactly(CORE);
         Vertx vertx = neonBee.getVertx();
-        vertx.deployVerticle(new CoreDataVerticle(), testContext.succeeding(id -> {
+        vertx.deployVerticle(new CoreDataVerticle()).onComplete(testContext.succeeding(id -> {
             assertThat(DeploymentHelper.isVerticleDeployed(vertx, CoreDataVerticle.class)).isTrue();
             testContext.completeNow();
         }));
@@ -62,7 +62,7 @@ class NeonBeeExtensionBasedTest extends NeonBeeExtension.TestBase {
         assertThat(neonBee.getOptions().getActiveProfiles()).isEmpty();
         Vertx vertx = neonBee.getVertx();
 
-        vertx.deployVerticle(new CoreDataVerticle(), testContext.succeeding(id -> {
+        vertx.deployVerticle(new CoreDataVerticle()).onComplete(testContext.succeeding(id -> {
             assertThat(DeploymentHelper.isVerticleDeployed(vertx, CoreDataVerticle.class)).isTrue();
             testContext.completeNow();
         }));
@@ -109,6 +109,6 @@ class NeonBeeExtensionBasedTest extends NeonBeeExtension.TestBase {
     }
 
     private boolean isClustered(NeonBee neonBee) {
-        return ((VertxInternal) neonBee.getVertx()).getClusterManager() != null;
+        return ((VertxInternal) neonBee.getVertx()).clusterManager() != null;
     }
 }

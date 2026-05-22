@@ -1,0 +1,26 @@
+# ClusterCleanupCoordinator Configuration
+#
+# This configuration controls the behavior of the ClusterCleanupCoordinator,
+# which is responsible for cleaning up stale cluster nodes in a distributed environment.
+#
+# The coordinator uses a reconciliation-only approach:
+# - No persistent "pending removals" map is maintained
+# - Each cleanup cycle: acquires a distributed lock, computes stale nodes, and cleans them up in batches
+# - Uses an adaptive scheduling mechanism that backs off on errors and speeds up on success
+# - Applies jitter to avoid synchronization between multiple coordinators
+#
+# NOTE: The coordinator is enabled/disabled per-node via the NEONBEE_CLUSTER_CLEANUP_ENABLED
+# system property or environment variable (default: true). This allows different nodes in the
+# cluster to have different settings. For example:
+#   -DNEONBEE_CLUSTER_CLEANUP_ENABLED=true   (system property)
+#   export NEONBEE_CLUSTER_CLEANUP_ENABLED=false  (environment variable)
+
+# Timeout for acquiring the cleanup lock in milliseconds.
+# If the lock cannot be acquired within this timeout, the cleanup cycle is skipped.
+# Default: 2000
+lockTimeoutMs: 2000
+
+# Maximum number of nodes to clean up in a single batch.
+# The coordinator processes stale nodes in batches to avoid overwhelming the system.
+# Default: 10
+maxNodesPerBatch: 10

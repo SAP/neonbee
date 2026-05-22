@@ -9,6 +9,7 @@ import static org.apache.olingo.server.core.ODataHandlerException.MessageKeys.IN
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -105,9 +106,14 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
         });
     }
 
-    private static int getStatusCode(Throwable throwable) {
-        return throwable instanceof ODataApplicationException ? ((ODataApplicationException) throwable).getStatusCode()
-                : -1;
+    /**
+     * Returns the status code of the ODataApplicationException or -1 if the throwable is of another type.
+     *
+     * @param throwable The throwable to get the status code from
+     * @return The status code or -1
+     */
+    public static int getStatusCode(Throwable throwable) {
+        return throwable instanceof ODataApplicationException odae ? odae.getStatusCode() : -1;
     }
 
     /**
@@ -118,15 +124,30 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
      * @return A new ODataRequest
      * @throws ODataLibraryException ODataLibraryException
      */
-    @VisibleForTesting
-    static ODataRequest mapToODataRequest(RoutingContext routingContext, String schemaNamespace)
+    public static ODataRequest mapToODataRequest(RoutingContext routingContext, String schemaNamespace)
             throws ODataLibraryException {
+        return mapToODataRequest(routingContext, schemaNamespace, null);
+    }
+
+    /**
+     * Maps a Vert.x RoutingContext into a new ODataRequest, with an optional body override (e.g. when the request body
+     * was already consumed and stored for re-entry).
+     *
+     * @param routingContext  the context for the handling of the HTTP request
+     * @param schemaNamespace the name of the service namespace
+     * @param bodyOverride    optional body to use instead of reading from the request (may be null)
+     * @return A new ODataRequest
+     * @throws ODataLibraryException ODataLibraryException
+     */
+    public static ODataRequest mapToODataRequest(RoutingContext routingContext, String schemaNamespace,
+            Buffer bodyOverride) throws ODataLibraryException {
         HttpServerRequest request = routingContext.request();
 
         ODataRequest odataRequest = new ODataRequest();
         odataRequest.setProtocol(request.scheme());
         odataRequest.setMethod(mapODataRequestMethod(request));
-        odataRequest.setBody(new BufferInputStream(routingContext.body().buffer()));
+        Buffer body = bodyOverride != null ? bodyOverride : routingContext.body().buffer();
+        odataRequest.setBody(new BufferInputStream(body));
         for (String header : request.headers().names()) {
             odataRequest.addHeader(header, request.headers().getAll(header));
         }
@@ -206,8 +227,7 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
      * @param response      The HttpServerResponse to map to
      * @throws IOException IOException
      */
-    @VisibleForTesting
-    static void mapODataResponse(ODataResponse odataResponse, HttpServerResponse response) throws IOException {
+    public static void mapODataResponse(ODataResponse odataResponse, HttpServerResponse response) throws IOException {
         // status code and headers
         response.setStatusCode(odataResponse.getStatusCode());
         for (Map.Entry<String, List<String>> entry : odataResponse.getAllHeaders().entrySet()) {
@@ -217,7 +237,9 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
         }
         // OData response content
         if (odataResponse.getContent() != null) {
-            response.end(inputStreamToBuffer(odataResponse.getContent()));
+            try (InputStream content = odataResponse.getContent()) {
+                response.end(inputStreamToBuffer(content));
+            }
         } else if (odataResponse.getODataContent() != null) {
             ByteArrayOutputStream byteArrayOutput = new ByteArrayOutputStream();
             odataResponse.getODataContent().write(byteArrayOutput);

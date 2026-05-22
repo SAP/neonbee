@@ -7,6 +7,7 @@ import static io.vertx.core.Future.succeededFuture;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -316,19 +317,20 @@ class EntityModelLoader {
      *         a ServiceMetadata instance
      */
     private ServiceMetadata createServiceMetadataWithSchema(Buffer csdl, String schemaNamespace)
-            throws XMLStreamException {
+            throws IOException, XMLStreamException {
         synchronized (this) {
             // Create a metadata parser instance for the schema namespace if it is not existing
             MetadataParser parser = metadataParsers.computeIfAbsent(schemaNamespace,
                     newSchemaNamespace -> new MetadataParser().referenceResolver(null).parseAnnotations(true));
 
-            Reader csdlReader = new InputStreamReader(new BufferInputStream(csdl), UTF_8);
             // does NOT to be a ConcurrentHashMap, as only get / put access! so no iteration is done!
             SchemaBasedEdmProvider provider = edmProviders.get(schemaNamespace);
-            if (provider == null) {
-                edmProviders.put(schemaNamespace, provider = parser.buildEdmProvider(csdlReader));
-            } else {
-                parser.addToEdmProvider(provider, csdlReader);
+            try (Reader csdlReader = new InputStreamReader(new BufferInputStream(csdl), UTF_8)) {
+                if (provider == null) {
+                    edmProviders.put(schemaNamespace, provider = parser.buildEdmProvider(csdlReader));
+                } else {
+                    parser.addToEdmProvider(provider, csdlReader);
+                }
             }
 
             return getBufferedOData().createServiceMetadata(provider, Collections.emptyList(),
@@ -344,9 +346,11 @@ class EntityModelLoader {
      * ATTENTION: This method contains BLOCKING code and thus should only be called in a Vert.x worker thread!
      */
     @VisibleForTesting
-    static ServiceMetadata createServiceMetadata(Buffer csdl) throws XMLStreamException {
-        InputStreamReader reader = new InputStreamReader(new BufferInputStream(csdl), UTF_8);
-        SchemaBasedEdmProvider edmProvider = new MetadataParser().referenceResolver(null).buildEdmProvider(reader);
+    static ServiceMetadata createServiceMetadata(Buffer csdl) throws IOException, XMLStreamException {
+        SchemaBasedEdmProvider edmProvider;
+        try (Reader reader = new InputStreamReader(new BufferInputStream(csdl), UTF_8)) {
+            edmProvider = new MetadataParser().referenceResolver(null).buildEdmProvider(reader);
+        }
         return getBufferedOData().createServiceMetadata(edmProvider, Collections.emptyList());
     }
 

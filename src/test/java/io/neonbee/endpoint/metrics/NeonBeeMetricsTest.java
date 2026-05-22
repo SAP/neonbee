@@ -9,7 +9,9 @@ import org.junit.jupiter.api.TestInfo;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.NeonBee;
+import io.neonbee.NeonBeeOptions;
 import io.neonbee.NeonBeeOptions.Mutable;
 import io.neonbee.NeonBeeProfile;
 import io.neonbee.config.EndpointConfig;
@@ -23,11 +25,14 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.junit5.VertxTestContext;
+import io.vertx.micrometer.MicrometerMetricsFactory;
+import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.backends.BackendRegistries;
 
 @SuppressWarnings("PMD.AvoidUnnecessaryTestClassesModifier")
@@ -35,6 +40,23 @@ public class NeonBeeMetricsTest extends NeonBeeTestBase {
     private static final String TEST_ENDPOINT_URI = "/testendpoint/";
 
     private static final String METRICS_ENDPOINT_URI = "/metrics/";
+
+    @Override
+    public void neonBeeSetup(Vertx vertx, VertxTestContext testContext, TestInfo testInfo,
+            NeonBeeOptions.Mutable options, CompositeMeterRegistry compositeMeterRegistry) throws Exception {
+
+        VertxOptions vertxOptions = new VertxOptions()
+                .setMetricsOptions(
+                        new MicrometerMetricsOptions()
+                                .setRegistryName(options.getMetricsRegistryName())
+                                .setEnabled(true));
+
+        Vertx vertxInstance = Vertx.builder().with(vertxOptions)
+                .withMetrics(new MicrometerMetricsFactory(compositeMeterRegistry))
+                .build();
+
+        super.neonBeeSetup(vertxInstance, testContext, testInfo, options, compositeMeterRegistry);
+    }
 
     @Override
     protected void adaptOptions(TestInfo testInfo, Mutable options) {
@@ -54,7 +76,7 @@ public class NeonBeeMetricsTest extends NeonBeeTestBase {
     }
 
     @Test
-    void testCustomMetric(Vertx vertx, VertxTestContext testContext) {
+    void testCustomMetric(VertxTestContext testContext) {
         createRequest(HttpMethod.GET, TEST_ENDPOINT_URI).send()
                 .onComplete(testContext.succeeding(httpResponse -> testContext
                         .verify(() -> assertThat(httpResponse.statusCode()).isEqualTo(HttpResponseStatus.OK.code()))))
@@ -63,7 +85,8 @@ public class NeonBeeMetricsTest extends NeonBeeTestBase {
                             testContext.verify(() -> assertThat(httpResponse.statusCode())
                                     .isEqualTo(HttpResponseStatus.OK.code()));
                             assertThat(httpResponse.bodyAsString())
-                                    .contains("TestEndpointCounter_total{TestTag1=\"TestValue\",} 1.0");
+                                    .contains(
+                                            "TestEndpointCounter_total{TestTag1=\"TestValue\"} 1.0");
                             testContext.completeNow();
                         })));
     }

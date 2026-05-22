@@ -79,17 +79,14 @@ class EntityVerticleTest extends EntityVerticleTestBase {
         Checkpoint checkpoint = testContext.checkpoint(2);
         registry.get(sharedEntityMapName(new FullQualifiedName("ERP.Customers")))
                 .onComplete(testContext.succeeding(result -> {
-                    testContext.verify(() -> {
-                        assertThat((JsonArray) result).containsExactly(entityVerticleImpl1.getQualifiedName(),
-                                entityVerticleImpl2.getQualifiedName());
-                    });
+                    testContext.verify(() -> assertThat(result).containsExactly(entityVerticleImpl1.getQualifiedName(),
+                            entityVerticleImpl2.getQualifiedName()));
                     checkpoint.flag();
                 }));
         registry.get(sharedEntityMapName(new FullQualifiedName("Sales.Orders")))
                 .onComplete(testContext.succeeding(result -> {
-                    testContext.verify(() -> {
-                        assertThat((JsonArray) result).containsExactly(entityVerticleImpl1.getQualifiedName());
-                    });
+                    testContext
+                            .verify(() -> assertThat(result).containsExactly(entityVerticleImpl1.getQualifiedName()));
                     checkpoint.flag();
                 }));
     }
@@ -116,13 +113,6 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     void testEntityURIPathRegex() {
         Matcher matcher;
 
-        assertThat((matcher = URI_PATH_PATTERN.matcher("my.very/own.Service/Entity")).find()).isTrue();
-        assertThat(matcher.group()).isEqualTo("my.very/own.Service/Entity");
-        assertThat(matcher.group(SERVICE_NAMESPACE_GROUP)).isEqualTo("my.very/own.Service");
-        assertThat(matcher.group(CDS_NAMESPACE_GROUP)).isEqualTo("my.very/own");
-        assertThat(matcher.group(CDS_SERVICE_NAME_GROUP)).isEqualTo("Service");
-        assertThat(matcher.group(ENTITY_SET_NAME_GROUP)).isEqualTo("Entity");
-
         assertThat((matcher = URI_PATH_PATTERN.matcher("my.Service/Entity")).find()).isTrue();
         assertThat(matcher.group()).isEqualTo("my.Service/Entity");
         assertThat(matcher.group(SERVICE_NAMESPACE_GROUP)).isEqualTo("my.Service");
@@ -148,6 +138,13 @@ class EntityVerticleTest extends EntityVerticleTestBase {
 
         assertThat((matcher = URI_PATH_PATTERN.matcher("Service/Entity/$count")).find()).isTrue();
         assertThat(matcher.group(ENTITY_SET_NAME_GROUP)).isEqualTo("Entity");
+
+        assertThat((matcher = URI_PATH_PATTERN.matcher("my.very/own.Service/Entity")).find()).isTrue();
+        assertThat(matcher.group()).isEqualTo("my.very/own.Service/Entity");
+        assertThat(matcher.group(SERVICE_NAMESPACE_GROUP)).isEqualTo("my.very/own.Service");
+        assertThat(matcher.group(CDS_NAMESPACE_GROUP)).isEqualTo("my.very/own");
+        assertThat(matcher.group(CDS_SERVICE_NAME_GROUP)).isEqualTo("Service");
+        assertThat(matcher.group(ENTITY_SET_NAME_GROUP)).isEqualTo("Entity");
     }
 
     @Test
@@ -155,7 +152,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     void parseUriInfoTest(Vertx vertx, VertxTestContext testContext) {
         Checkpoint checkpoint = testContext.checkpoint(3);
 
-        EntityVerticle
+        entityVerticleImpl1
                 .parseUriInfo(vertx,
                         new DataQuery().setUriPath("/io.neonbee.test1.TestService1/AllPropertiesNullable")
                                 .addParameter("$format", "json"))
@@ -169,7 +166,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
                     checkpoint.flag();
                 })));
 
-        EntityVerticle
+        entityVerticleImpl1
                 .parseUriInfo(vertx,
                         new DataQuery().setUriPath("/io.neonbee.test1.TestService1/AllPropertiesNullable('123')"))
                 .onComplete(testContext.succeeding(uriInfo -> testContext.verify(() -> {
@@ -181,7 +178,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
         DataQuery query = new DataQuery(DataAction.READ, "/io.neonbee.test1.TestService1/AllPropertiesNullable");
         query.addParameter("$orderby", "KeyPropertyString").addParameter("$filter", "KeyPropertyString eq 'Test123'");
 
-        EntityVerticle.parseUriInfo(vertx, query)
+        entityVerticleImpl1.parseUriInfo(vertx, query)
                 .onComplete(testContext.succeeding(uriInfo -> testContext.verify(() -> {
                     assertThat(uriInfo.getUriResourceParts().stream().map(UriResource::getSegmentValue)
                             .toList()).contains("AllPropertiesNullable");
@@ -229,9 +226,8 @@ class EntityVerticleTest extends EntityVerticleTestBase {
             }
         };
 
-        deployVerticle(dummyEntityVerticle).onComplete(testContext.succeeding(nextHandler -> {
-            testVertx.eventBus().publish(EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS, null);
-        }));
+        deployVerticle(dummyEntityVerticle).onComplete(testContext.succeeding(
+                nextHandler -> testVertx.eventBus().publish(EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS, null)));
     }
 
     @Test
@@ -242,10 +238,10 @@ class EntityVerticleTest extends EntityVerticleTestBase {
         var parameters = dataQuery.getParameters();
         assertThat(parameters).isNotNull();
 
-        EntityVerticle.parseUriInfo(vertx, dataQuery).onSuccess(uriInfo -> {
+        entityVerticleImpl1.parseUriInfo(vertx, dataQuery).onSuccess(uriInfo -> {
             assertThat(uriInfo).isNotNull();
             testContext.completeNow();
-        }).onFailure(t -> testContext.failNow(t));
+        }).onFailure(testContext::failNow);
     }
 }
 

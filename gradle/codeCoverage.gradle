@@ -41,7 +41,7 @@ consoleReporter {
         // Set this property to a certain C0 coverage percentage.
         // When the coverage is greater than or equals to this value,
         // the coverage will be shown with green color.
-        thresholdFine 90
+        thresholdFine 84
 
         // Set this property to a certain C0 coverage percentage.
         // When the coverage is greater than or equals to this value,

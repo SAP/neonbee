@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.jgroups.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -34,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.io.Resources;
 
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeInstanceConfiguration;
 import io.neonbee.NeonBeeMockHelper;
@@ -63,7 +65,7 @@ import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
@@ -72,6 +74,7 @@ import io.vertx.ext.web.Session;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.ext.web.impl.UserContextInternal;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.micrometer.backends.BackendRegistries;
@@ -100,12 +103,7 @@ public class NeonBeeTestBase {
     private String randomMetricsRegistryName;
 
     @BeforeEach
-    @SuppressWarnings("ReferenceEquality")
-    public void setUp(Vertx vertx, VertxTestContext testContext, TestInfo testInfo) throws Exception {
-        // associate the Vert.x instance to the current test (unfortunately the only "identifier" that is shared between
-        // TestInfo and TestIdentifier is the display name)
-        StaleVertxChecker.VERTX_TEST_MAP.put(vertx, testInfo.getDisplayName());
-
+    void setUp(Vertx vertx, VertxTestContext testContext, TestInfo testInfo) throws Exception {
         // for some tests, even in a NeonBeeTestBase you might not want to have a NeonBee instance created. use a @Tag
         // to disable creation of a NeonBee instance for the specific test only
         if (testInfo.getTags().contains(DOESNT_REQUIRE_NEONBEE)) {
@@ -114,12 +112,21 @@ public class NeonBeeTestBase {
             return;
         }
 
+        NeonBeeOptions.Mutable options = buildNeonBeeOptions(testContext, testInfo);
+        if (options == null) {
+            return;
+        }
+        neonBeeSetup(vertx, testContext, testInfo, options, new CompositeMeterRegistry());
+    }
+
+    private NeonBeeOptions.@Nullable Mutable buildNeonBeeOptions(VertxTestContext testContext, TestInfo testInfo)
+            throws IOException {
+        // create a default set of options for NeonBee
+        NeonBeeOptions.Mutable options = defaultOptions();
+
         // build working directory
         workingDirPath = FileSystemHelper.createTempDirectory();
         provideWorkingDirectoryBuilder(testInfo, testContext).build(workingDirPath);
-
-        // create a default set of options for NeonBee
-        NeonBeeOptions.Mutable options = defaultOptions();
 
         // by default use a random metrics registry name in tests
         randomMetricsRegistryName = UUID.randomUUID().toString();
@@ -128,6 +135,20 @@ public class NeonBeeTestBase {
         // adapt the options in tests if necessary
         adaptOptions(testInfo, options);
         options.setWorkingDirectory(workingDirPath);
+
+        URL defaultLogbackConfig = Resources.getResource(NeonBeeTestBase.class, "NeonBeeTestBase-Logback.xml");
+        try (InputStream is = Resources.asByteSource(defaultLogbackConfig).openStream()) {
+            Files.copy(is, options.getConfigDirectory().resolve("logback.xml"));
+        }
+        return options;
+    }
+
+    @SuppressWarnings("ReferenceEquality")
+    protected void neonBeeSetup(Vertx vertx, VertxTestContext testContext, TestInfo testInfo,
+            NeonBeeOptions.Mutable options, CompositeMeterRegistry crm) throws Exception {
+        // associate the Vert.x instance to the current test (unfortunately the only "identifier" that is shared between
+        // TestInfo and TestIdentifier is the display name)
+        StaleVertxChecker.VERTX_TEST_MAP.put(vertx, testInfo.getDisplayName());
 
         // probe for a custom user principal
         AtomicBoolean customUserPrincipal = new AtomicBoolean(false);
@@ -144,12 +165,7 @@ public class NeonBeeTestBase {
             customUserPrincipal.set(true);
         }
 
-        URL defaultLogbackConfig = Resources.getResource(NeonBeeTestBase.class, "NeonBeeTestBase-Logback.xml");
-        try (InputStream is = Resources.asByteSource(defaultLogbackConfig).openStream()) {
-            Files.copy(is, options.getConfigDirectory().resolve("logback.xml"));
-        }
-
-        Future<NeonBee> future = NeonBeeMockHelper.createNeonBee(vertx, options);
+        Future<NeonBee> future = NeonBeeMockHelper.createNeonBee(vertx, options, crm);
 
         // as documented here [1] in case there are multiple @BeforeEach methods (like in this test base and in
         // sub-classes of this test base) asynchronous operations will be executed in parallel, because other
@@ -212,7 +228,7 @@ public class NeonBeeTestBase {
 
         // in case we had run in clustered mode and used a FakeClusterManager, we will have to reset it
         if (neonBee.getOptions().isClustered() && vertx instanceof VertxInternal
-                && ((VertxInternal) vertx).getClusterManager() instanceof FakeClusterManager) {
+                && ((VertxInternal) vertx).clusterManager() instanceof FakeClusterManager) {
             FakeClusterManager.reset();
         }
 
@@ -300,7 +316,7 @@ public class NeonBeeTestBase {
      */
     public Future<Deployment> deployVerticle(Verticle verticle) {
         return DeployableVerticle.fromVerticle(neonBee.getVertx(), verticle, null)
-                .compose(deployable -> deployable.deploy(neonBee))
+                .compose(deployable -> deployable.deploy(neonBee).getDeployment())
                 .onSuccess(result -> LOGGER.info("Successfully deployed verticle {}", verticle))
                 .onFailure(throwable -> LOGGER.error("Failed to deploy verticle {}", verticle, throwable));
     }
@@ -313,7 +329,7 @@ public class NeonBeeTestBase {
      * @return A succeeded future with the Deployment, or a failed future with the cause.
      */
     public Future<Deployment> deployVerticle(Verticle verticle, DeploymentOptions options) {
-        return new DeployableVerticle(verticle, options).deploy(neonBee)
+        return new DeployableVerticle(verticle, options).deploy(neonBee).getDeployment()
                 .onSuccess(result -> LOGGER.info("Successfully deployed verticle {}", verticle))
                 .onFailure(throwable -> LOGGER.error("Failed to deploy verticle {}", verticle, throwable));
     }
@@ -326,7 +342,7 @@ public class NeonBeeTestBase {
      */
     public Future<Deployment> deployVerticle(Class<? extends Verticle> verticleClass) {
         return DeployableVerticle.fromClass(neonBee.getVertx(), verticleClass, null)
-                .compose(deployable -> deployable.deploy(neonBee))
+                .compose(deployable -> deployable.deploy(neonBee).getDeployment())
                 .onSuccess(
                         result -> LOGGER.info("Successfully deployed verticle with class {}", verticleClass.getName()))
                 .onFailure(throwable -> LOGGER.error("Failed to deploy verticle with class {}", verticleClass.getName(),
@@ -341,7 +357,7 @@ public class NeonBeeTestBase {
      * @return A succeeded future with the Deployment, or a failed future with the cause.
      */
     public Future<Deployment> deployVerticle(Class<? extends Verticle> verticleClass, DeploymentOptions options) {
-        return new DeployableVerticle(verticleClass, options).deploy(neonBee)
+        return new DeployableVerticle(verticleClass, options).deploy(neonBee).getDeployment()
                 .onSuccess(
                         result -> LOGGER.info("Successfully deployed verticle with class {}", verticleClass.getName()))
                 .onFailure(throwable -> LOGGER.error("Failed to deploy verticle with class {}", verticleClass.getName(),
@@ -450,7 +466,8 @@ public class NeonBeeTestBase {
 
     private ServerVerticle createDummyServerVerticle(TestInfo testInfo) {
         ChainAuthHandler dummyAuthHandler = ctx -> {
-            ctx.setUser(User.create(provideUserPrincipal(testInfo)));
+            ((UserContextInternal) ctx.userContext())
+                    .setUser(User.create(provideUserPrincipal(testInfo)));
             Session session = ctx.session();
             if (session != null) {
                 // the user has upgraded from unauthenticated to authenticated
@@ -470,4 +487,5 @@ public class NeonBeeTestBase {
             }
         };
     }
+
 }
