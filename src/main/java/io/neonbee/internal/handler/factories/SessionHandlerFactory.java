@@ -1,10 +1,14 @@
 package io.neonbee.internal.handler.factories;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import io.micrometer.core.instrument.Gauge;
 import io.neonbee.NeonBee;
 import io.neonbee.config.ServerConfig;
 import io.vertx.core.Future;
@@ -26,6 +30,12 @@ import io.vertx.ext.web.sstore.SessionStore;
 public class SessionHandlerFactory implements RoutingHandlerFactory {
 
     @VisibleForTesting
+    static final String METRIC_NAME = "neonbee.web.sessions.active";
+
+    @VisibleForTesting
+    static final long SESSION_COUNT_POLL_INTERVAL_MS = 5000;
+
+    @VisibleForTesting
     static final class NoOpHandler implements PlatformHandler {
         @Override
         public void handle(RoutingContext routingContext) {
@@ -35,9 +45,15 @@ public class SessionHandlerFactory implements RoutingHandlerFactory {
 
     @Override
     public Future<Handler<RoutingContext>> createHandler() {
-        ServerConfig config = NeonBee.get().getServerConfig();
+        NeonBee neonBee = NeonBee.get();
+        ServerConfig config = neonBee.getServerConfig();
+        Vertx vertx = neonBee.getVertx();
+
         Handler<RoutingContext> sh =
-                createSessionStore(NeonBee.get().getVertx(), config.getSessionHandling()).map(SessionHandler::create)
+                createSessionStore(vertx, config.getSessionHandling()).map(store -> {
+                    registerSessionCountMetric(vertx, store, neonBee);
+                    return store;
+                }).map(SessionHandler::create)
                         .map(sessionHandler -> sessionHandler
                                 .setSessionTimeout(TimeUnit.SECONDS.toMillis(config.getSessionTimeout()))
                                 .setSessionCookieName(config.getSessionCookieName())
@@ -48,6 +64,30 @@ public class SessionHandlerFactory implements RoutingHandlerFactory {
                                 .setMinLength(config.getMinSessionIdLength()))
                         .map(sessionHandler -> (Handler<RoutingContext>) sessionHandler).orElseGet(NoOpHandler::new);
         return Future.succeededFuture(sh);
+    }
+
+    @VisibleForTesting
+    static void registerSessionCountMetric(Vertx vertx, SessionStore store, NeonBee neonBee) {
+        AtomicInteger sessionCount = new AtomicInteger(0);
+        vertx.setPeriodic(SESSION_COUNT_POLL_INTERVAL_MS, id -> store.size().onSuccess(sessionCount::set));
+        Gauge.builder(METRIC_NAME, sessionCount, AtomicInteger::doubleValue)
+                .description("Number of active web sessions")
+                .tag("node.id", neonBee.getNodeId())
+                .tag("hostname", getHostname())
+                .register(neonBee.getCompositeMeterRegistry());
+    }
+
+    @VisibleForTesting
+    static String getHostname() {
+        String hostname = System.getenv("HOSTNAME");
+        if (hostname != null && !hostname.isBlank()) {
+            return hostname;
+        }
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            return "unknown";
+        }
     }
 
     /**
