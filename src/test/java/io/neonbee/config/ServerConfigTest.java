@@ -65,6 +65,7 @@ class ServerConfigTest {
         sc.setEndpointConfigs(endpointConfigs).setAuthChainConfig(authHandlerConfig);
         sc.setErrorHandlerClassName(ERROR_HANDLER).setErrorHandlerTemplate(ERROR_TEMPLATE);
         sc.setHandlerFactoriesClassNames(FACTORY_CLASS_NAME_LIST);
+        sc.setLazySession(true);
 
         JsonObject expected = new JsonObject().put("timeout", timeout).put("sessionHandling", sessionHandling.name());
         expected.put("sessionCookieName", sessionCookieName).put("correlationStrategy", correlationStrategy.name());
@@ -75,6 +76,7 @@ class ServerConfigTest {
         JsonArray expectedHandlerFactories = new JsonArray();
         FACTORY_CLASS_NAME_LIST.forEach(expectedHandlerFactories::add);
         expected.put("handlerFactories", expectedHandlerFactories);
+        expected.put("lazySession", true);
 
         assertThat(sc.toJson()).containsAtLeastElementsIn(expected);
     }
@@ -102,6 +104,7 @@ class ServerConfigTest {
         JsonArray handlerFactories = new JsonArray();
         FACTORY_CLASS_NAME_LIST.forEach(handlerFactories::add);
         json.put("handlerFactories", handlerFactories);
+        json.put("lazySession", true);
 
         ServerConfig sc = new ServerConfig(json);
         assertThat(sc.getTimeout()).isEqualTo(timeout);
@@ -114,6 +117,7 @@ class ServerConfigTest {
         assertThat(sc.getErrorHandlerClassName()).isEqualTo(ERROR_HANDLER);
         assertThat(sc.getErrorHandlerTemplate()).isEqualTo(ERROR_TEMPLATE);
         assertThat(sc.getCorsConfig()).isEqualTo(corsConfig);
+        assertThat(sc.isLazySession()).isTrue();
     }
 
     @Test
@@ -167,6 +171,10 @@ class ServerConfigTest {
 
         assertThat(sc.setHandlerFactoriesClassNames(FACTORY_CLASS_NAME_LIST)).isSameInstanceAs(sc);
         assertThat(sc.getHandlerFactoriesClassNames()).isEqualTo(FACTORY_CLASS_NAME_LIST);
+
+        assertThat(sc.isLazySession()).isFalse();
+        assertThat(sc.setLazySession(true)).isSameInstanceAs(sc);
+        assertThat(sc.isLazySession()).isTrue();
     }
 
     @Test
