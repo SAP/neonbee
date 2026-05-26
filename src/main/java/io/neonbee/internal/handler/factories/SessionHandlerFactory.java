@@ -61,6 +61,7 @@ public class SessionHandlerFactory implements RoutingHandlerFactory {
                                 .setCookieSecureFlag(config.useSecureSessionCookie())
                                 .setCookieHttpOnlyFlag(config.useHttpOnlySessionCookie())
                                 .setCookieSameSite(config.getSessionCookieSameSitePolicy())
+                                .setLazySession(config.isLazySession())
                                 .setMinLength(config.getMinSessionIdLength()))
                         .map(sessionHandler -> (Handler<RoutingContext>) sessionHandler).orElseGet(NoOpHandler::new);
         return Future.succeededFuture(sh);

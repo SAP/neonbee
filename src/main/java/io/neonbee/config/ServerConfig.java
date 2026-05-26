@@ -268,6 +268,8 @@ public class ServerConfig extends HttpServerOptions {
 
     private int minSessionIdLength = DEFAULT_SESSIONID_MIN_LENGTH;
 
+    private boolean lazySession;
+
     private CorrelationStrategy correlationStrategy = CorrelationStrategy.REQUEST_HEADER;
 
     private List<EndpointConfig> endpointConfigs = new ArrayList<>(DEFAULT_ENDPOINT_CONFIGS);
@@ -552,6 +554,27 @@ public class ServerConfig extends HttpServerOptions {
     @Fluent
     public ServerConfig setMinSessionIdLength(int minSessionIdLength) {
         this.minSessionIdLength = minSessionIdLength;
+        return this;
+    }
+
+    /**
+     * Get whether lazy session creation is enabled.
+     *
+     * @return true if sessions are created lazily
+     */
+    public boolean isLazySession() {
+        return lazySession;
+    }
+
+    /**
+     * Set whether sessions should be created lazily. When enabled, sessions are only created when explicitly accessed.
+     *
+     * @param lazySession true to enable lazy session creation
+     * @return the {@link ServerConfig} for chaining
+     */
+    @Fluent
+    public ServerConfig setLazySession(boolean lazySession) {
+        this.lazySession = lazySession;
         return this;
     }
 

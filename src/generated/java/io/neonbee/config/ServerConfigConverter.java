@@ -65,6 +65,11 @@ public class ServerConfigConverter {
                     obj.setMinSessionIdLength(((Number) member.getValue()).intValue());
                 }
                 break;
+            case "lazySession":
+                if (member.getValue() instanceof Boolean) {
+                    obj.setLazySession((Boolean) member.getValue());
+                }
+                break;
             case "correlationStrategy":
                 if (member.getValue() instanceof String) {
                     obj.setCorrelationStrategy(
@@ -145,6 +150,7 @@ public class ServerConfigConverter {
             json.put("sessionCookieSameSitePolicy", obj.getSessionCookieSameSitePolicy().name());
         }
         json.put("minSessionIdLength", obj.getMinSessionIdLength());
+        json.put("lazySession", obj.isLazySession());
         if (obj.getCorrelationStrategy() != null) {
             json.put("correlationStrategy", obj.getCorrelationStrategy().name());
         }
