@@ -45,7 +45,7 @@ jobs:
         env:
           LATEST_TAG: ${{ startsWith(github.event.head_commit.message, 'release:') && (endsWith(needs.publishToMavenCentral.outputs.releaseVersion, '-SNAPSHOT') == false) }}
         id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
