@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
 
       - name: Get new version
         id: getVersion
@@ -73,13 +73,13 @@ jobs:
       releaseVersion: ${{ steps.getVersion.outputs.releaseVersion }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           distribution: 'temurin'
           java-version: '21.0'
@@ -114,13 +114,13 @@ jobs:
     if: startsWith(github.event.head_commit.message, 'release:') && (endsWith(needs.publishToMavenCentral.outputs.releaseVersion, '-SNAPSHOT') == false)
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           distribution: 'temurin'
           java-version: '21.0'
@@ -230,7 +230,7 @@ jobs:
           echo ::set-output name=releaseBody::"$( jq -rRs 'gsub("\r";"%0D")|gsub("\n";"%0A")' < ./body.md )"
 
       - name: Push changes
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@881a6320fdb16eb5318c5054f31c218aec2b324c # master
         with:
           github_token: ${{ secrets.GH_PUSH_TOKEN }}
           branch: ${{ github.ref }}
@@ -247,7 +247,7 @@ jobs:
 
       - name: Create GitHub Release
         id: create_release
-        uses: actions/create-release@master
+        uses: actions/create-release@89e8dc236279a907f495cdc4ebff2056b7036b3d # master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

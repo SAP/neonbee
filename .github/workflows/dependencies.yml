@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -114,7 +114,7 @@ jobs:
             echo ::set-output name=pr_body::"$(cat "${BODY}")"
 
       - name: Push changes
-        uses: ad-m/github-push-action@v1.3.0
+        uses: ad-m/github-push-action@881a6320fdb16eb5318c5054f31c218aec2b324c # v1.3.0
         with:
             github_token: ${{ secrets.GH_PUSH_TOKEN }}
             branch: ci/auto-upgrade
@@ -123,7 +123,7 @@ jobs:
       - name: Create Pull Request
         id: cpr
         if: steps.summary.outputs.pr_body != ''
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@18f7dc018cc2cd597073088f7c7591b9d1c02672 # v3
         with:
             token: ${{ secrets.GH_PUSH_TOKEN }}
             author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
