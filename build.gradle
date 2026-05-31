@@ -403,24 +403,40 @@ sonarqube {
 
 // ############ Violations Plugin
 
+// ############ Violations Plugin
+
 task violations(type: se.bjurr.violations.gradle.plugin.ViolationsTask) {
     maxReporterColumnWidth.set(10) // 0 means "no limit"
     maxRuleColumnWidth.set(50)
     maxSeverityColumnWidth.set(10)
     maxLineColumnWidth.set(10)
     maxMessageColumnWidth.set(200)
-    minSeverity.set('INFO') // INFO, WARN or ERROR
-    detailLevel.set('VERBOSE') // PER_FILE_COMPACT, COMPACT or VERBOSE
+    minSeverity.set(se.bjurr.violations.lib.model.SEVERITY.INFO) // INFO, WARN or ERROR
+    detailLevel.set(se.bjurr.violations.git.ViolationsReporterDetailLevel.VERBOSE) // PER_FILE_COMPACT, COMPACT or VERBOSE
     maxViolations.set(0) // Fail the build if total number of found violations is higher
     printViolations.set(true)
 
     // Formats are listed here: https://github.com/tomasbjerre/violations-lib
-    violations.set([
-        ['FINDBUGS', buildDir.path, ".*/build/reports/spotbugs/.*\\.xml\$",'Spotbugs'],
-        ['JUNIT', buildDir.path, ".*/build/reports/junit/xml/.*\\.xml\$",'JUnit'],
-        ['PMD', buildDir.path, ".*/build/reports/pmd/.*\\.xml\$", 'PMD'],
-        ['CHECKSTYLE', buildDir.path, ".*/build/reports/checkstyle/.*\\.xml\$", 'Checkstyle']
-    ])
+    violationConfig()
+        .setFolder(buildDir.path)
+        .setParser(se.bjurr.violations.lib.reports.Parser.FINDBUGS)
+        .setPattern(".*/build/reports/spotbugs/.*\\.xml\$")
+        .setReporter("Spotbugs")
+    violationConfig()
+        .setFolder(buildDir.path)
+        .setParser(se.bjurr.violations.lib.reports.Parser.JUNIT)
+        .setPattern(".*/build/reports/junit/xml/.*\\.xml\$")
+        .setReporter("JUnit")
+    violationConfig()
+        .setFolder(buildDir.path)
+        .setParser(se.bjurr.violations.lib.reports.Parser.PMD)
+        .setPattern(".*/build/reports/pmd/.*\\.xml\$")
+        .setReporter("PMD")
+    violationConfig()
+        .setFolder(buildDir.path)
+        .setParser(se.bjurr.violations.lib.reports.Parser.CHECKSTYLE)
+        .setPattern(".*/build/reports/checkstyle/.*\\.xml\$")
+        .setReporter("Checkstyle")
 }
 
 check.finalizedBy violations
