@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.olingo.server.api.ODataContent;
 import org.apache.olingo.server.api.ODataRequest;
@@ -20,8 +21,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
-
-import com.google.common.base.Charsets;
 
 import io.neonbee.internal.handler.CorrelationIdHandler;
 import io.vertx.core.MultiMap;
@@ -41,7 +40,7 @@ class OlingoEndpointHandlerTest {
         odataResponse.setStatusCode(200);
         odataResponse.setHeader("expected1", "value1");
         odataResponse.setHeader("expected2", "value2");
-        odataResponse.setContent(new ByteArrayInputStream("expected data".getBytes(Charsets.UTF_8)));
+        odataResponse.setContent(new ByteArrayInputStream("expected data".getBytes(StandardCharsets.UTF_8)));
 
         HttpServerResponse responseMock = mock(HttpServerResponse.class);
         assertDoesNotThrow(() -> mapODataResponse(odataResponse, responseMock));
@@ -61,7 +60,7 @@ class OlingoEndpointHandlerTest {
         ODataResponse odataResponse = new ODataResponse();
         ODataContent odataContentMock = mock(ODataContent.class);
         doAnswer((Answer<ODataContent>) invocation -> {
-            invocation.<OutputStream>getArgument(0).write("expected data".getBytes(Charsets.UTF_8));
+            invocation.<OutputStream>getArgument(0).write("expected data".getBytes(StandardCharsets.UTF_8));
             return null;
         }).when(odataContentMock).write(any(OutputStream.class));
         odataResponse.setODataContent(odataContentMock);
