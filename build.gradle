@@ -175,7 +175,7 @@ dependencies {
     testCompileOnly group: 'io.vertx', name: 'vertx-core', classifier: 'test-sources', version: vertx_version
 
     constraints {
-        implementation('commons-io:commons-io:2.14.0') {
+        implementation('commons-io:commons-io:2.22.0') {
             because 'CVE-2024-47554: Fixes security vulnerability in commons-io 2.13.0 (transitively from org.apache.olingo:odata-server-core)'
         }
     }
