@@ -38,7 +38,7 @@ project.ext {
     distributionLibsDir = file("${distributionDir}/libs")
     generatedTrustStorePassword = UUID.randomUUID().toString()
 
-    brotli4jVersion = '1.20.0' // https://mvnrepository.com/artifact/com.aayushatharva.brotli4j/brotli4
+    brotli4jVersion = '1.23.0' // https://mvnrepository.com/artifact/com.aayushatharva.brotli4j/brotli4
     brotli4jArchitecture = {
         def os = DefaultNativePlatform.currentOperatingSystem
         def arch = DefaultNativePlatform.currentArchitecture
