@@ -10,6 +10,8 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened]
 
+permissions: {}
+
 jobs:
   build:
     name: Test Java ${{ matrix.java }} on ${{ matrix.platform }}
