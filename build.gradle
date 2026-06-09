@@ -12,14 +12,14 @@ plugins {
 
 
     // community plugins
-    id 'com.diffplug.spotless' version '6.25.0'
-    id 'net.ltgt.errorprone' version '4.0.1'
-    id 'com.github.spotbugs' version '6.0.19'
-    id 'org.ajoberstar.grgit' version '5.2.2'
+    id 'com.diffplug.spotless' version '8.6.0'
+    id 'net.ltgt.errorprone' version '5.1.0'
+    id 'com.github.spotbugs' version '6.5.5'
+    id 'org.ajoberstar.grgit' version '5.3.3'
     id 'com.github.ksoichiro.console.reporter' version '0.6.3'
-    id 'se.bjurr.violations.violations-gradle-plugin' version '2.1.0'
+    id 'se.bjurr.violations.violations-gradle-plugin' version '4.1.2'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id 'org.sonarqube' version '5.1.0.4882'
+    id 'org.sonarqube' version '7.3.1.8318'
     id 'team.yi.semantic-gitlog' version '0.6.12'
     id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
 }
@@ -38,7 +38,7 @@ project.ext {
     distributionLibsDir = file("${distributionDir}/libs")
     generatedTrustStorePassword = UUID.randomUUID().toString()
 
-    brotli4jVersion = '1.20.0' // https://mvnrepository.com/artifact/com.aayushatharva.brotli4j/brotli4
+    brotli4jVersion = '1.23.0' // https://mvnrepository.com/artifact/com.aayushatharva.brotli4j/brotli4
     brotli4jArchitecture = {
         def os = DefaultNativePlatform.currentOperatingSystem
         def arch = DefaultNativePlatform.currentArchitecture
@@ -123,14 +123,14 @@ dependencies {
     }
     implementation group: 'org.apache.olingo', name: 'odata-server-core-ext', version: olingo_version
 
-    implementation group: 'com.sap.cds', name: 'cds4j-core', version: '3.0.0'
-    implementation group: 'org.ow2.asm', name: 'asm', version: '9.7'
+    implementation group: 'com.sap.cds', name: 'cds4j-core', version: '4.9.0'
+    implementation group: 'org.ow2.asm', name: 'asm', version: '9.10.1'
 
-    implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.13'
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.5.19'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.18'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.5.34'
     def guava_version = '33.2.1-jre'
     implementation group: 'com.google.guava', name: 'guava', version: guava_version
-    implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.8.6'
+    implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.10.1'
 
     implementation "com.aayushatharva.brotli4j:brotli4j:$brotli4jVersion"
     api "com.aayushatharva.brotli4j:native-$brotli4jArchitecture:$brotli4jVersion"
@@ -153,7 +153,7 @@ dependencies {
     def mockito_version = '5.2.0'
     testImplementation group: 'org.mockito', name: 'mockito-inline', version: mockito_version
     testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: mockito_version
-    testImplementation group: 'net.bytebuddy', name: 'byte-buddy', version: '1.14.18'
+    testImplementation group: 'net.bytebuddy', name: 'byte-buddy', version: '1.18.10'
 
     def jupiter_version = '5.10.3'
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: jupiter_version
@@ -175,7 +175,7 @@ dependencies {
     testCompileOnly group: 'io.vertx', name: 'vertx-core', classifier: 'test-sources', version: vertx_version
 
     constraints {
-        implementation('commons-io:commons-io:2.14.0') {
+        implementation('commons-io:commons-io:2.22.0') {
             because 'CVE-2024-47554: Fixes security vulnerability in commons-io 2.13.0 (transitively from org.apache.olingo:odata-server-core)'
         }
     }
@@ -403,25 +403,42 @@ sonarqube {
 
 // ############ Violations Plugin
 
+// ############ Violations Plugin
+
 task violations(type: se.bjurr.violations.gradle.plugin.ViolationsTask) {
-    maxReporterColumnWidth = 10 // 0 means "no limit"
-    maxRuleColumnWidth = 50
-    maxSeverityColumnWidth = 10
-    maxLineColumnWidth = 10
-    maxMessageColumnWidth = 200
-    minSeverity = 'INFO' // INFO, WARN or ERROR
-    detailLevel = 'VERBOSE' // PER_FILE_COMPACT, COMPACT or VERBOSE
-    maxViolations = 0 // Fail the build if total number of found violations is higher
-    printViolations = true
+    maxReporterColumnWidth.set(10) // 0 means "no limit"
+    maxRuleColumnWidth.set(50)
+    maxSeverityColumnWidth.set(10)
+    maxLineColumnWidth.set(10)
+    maxMessageColumnWidth.set(200)
+    minSeverity.set(se.bjurr.violations.lib.model.SEVERITY.INFO) // INFO, WARN or ERROR
+    detailLevel.set(se.bjurr.violations.git.ViolationsReporterDetailLevel.VERBOSE) // PER_FILE_COMPACT, COMPACT or VERBOSE
+    maxViolations.set(0) // Fail the build if total number of found violations is higher
+    printViolations.set(true)
 
     // Formats are listed here: https://github.com/tomasbjerre/violations-lib
-    violations = [
-        ['FINDBUGS', buildDir.path, ".*/build/reports/spotbugs/.*\\.xml\$",'Spotbugs'],
-        ['JUNIT', buildDir.path, ".*/build/reports/junit/xml/.*\\.xml\$",'JUnit'],
-        ['PMD', buildDir.path, ".*/build/reports/pmd/.*\\.xml\$", 'PMD'],
-        ['CHECKSTYLE', buildDir.path, ".*/build/reports/checkstyle/.*\\.xml\$", 'Checkstyle']
-    ]
+    violationConfig()
+        .setFolder(buildDir.path)
+        .setParser(se.bjurr.violations.lib.reports.Parser.FINDBUGS)
+        .setPattern(".*/build/reports/spotbugs/.*\\.xml\$")
+        .setReporter("Spotbugs")
+    violationConfig()
+        .setFolder(buildDir.path)
+        .setParser(se.bjurr.violations.lib.reports.Parser.JUNIT)
+        .setPattern(".*/build/reports/junit/xml/.*\\.xml\$")
+        .setReporter("JUnit")
+    violationConfig()
+        .setFolder(buildDir.path)
+        .setParser(se.bjurr.violations.lib.reports.Parser.PMD)
+        .setPattern(".*/build/reports/pmd/.*\\.xml\$")
+        .setReporter("PMD")
+    violationConfig()
+        .setFolder(buildDir.path)
+        .setParser(se.bjurr.violations.lib.reports.Parser.CHECKSTYLE)
+        .setPattern(".*/build/reports/checkstyle/.*\\.xml\$")
+        .setReporter("Checkstyle")
 }
+
 check.finalizedBy violations
 test.finalizedBy violations
 unitTest.finalizedBy violations
