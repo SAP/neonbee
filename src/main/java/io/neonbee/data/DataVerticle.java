@@ -54,6 +54,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -271,6 +272,16 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
         return deliveryOptions;
     }
 
+    @VisibleForTesting
+    static int payloadStringSize(Object payload) {
+        if (payload instanceof JsonArray jsonArray) {
+            return jsonArray.encode().length();
+        } else if (payload instanceof JsonObject jsonObject) {
+            return jsonObject.encode().length();
+        }
+        return 0;
+    }
+
     /**
      * Creates a new data exception for any given throwable cause.
      *
@@ -435,8 +446,23 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                 routine.execute(message.body(), context).onComplete(asyncResult -> {
                     try {
                         if (asyncResult.succeeded()) {
-                            message.reply(asyncResult.result(), deliveryOptions(vertx, getMessageCodec(), context));
-
+                            Object result = asyncResult.result();
+                            if (result instanceof JsonArray || result instanceof JsonObject) {
+                                vertx.executeBlocking(() -> {
+                                    int payloadSize = payloadStringSize(result);
+                                    int threshold = NeonBee.get(vertx).getConfig()
+                                            .getEventBusLargePayloadThreshold();
+                                    if (threshold > 0 && payloadSize > threshold) {
+                                        LOGGER.correlateWith(context).warn(
+                                                "Data verticle {} replying with large payload ({} bytes)",
+                                                getQualifiedName(), payloadSize);
+                                    }
+                                    message.reply(result, deliveryOptions(vertx, getMessageCodec(), context));
+                                    return null;
+                                });
+                            } else {
+                                message.reply(result, deliveryOptions(vertx, getMessageCodec(), context));
+                            }
                         } else {
                             Throwable cause = asyncResult.cause();
                             if (LOGGER.isWarnEnabled()) {
