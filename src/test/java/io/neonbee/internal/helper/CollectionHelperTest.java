@@ -263,6 +263,25 @@ class CollectionHelperTest {
     }
 
     @Test
+    @DisplayName("copyOf handles set with circular reference without StackOverflowError")
+    @SuppressWarnings("unchecked")
+    void testCopyOfSetWithCircularReference() {
+        Map<String, Object> map = new HashMap<>();
+        Set<Object> set = new HashSet<>();
+        set.add("item");
+        set.add(map);
+        map.put("set", set);
+
+        Set<Object> copy = CollectionHelper.copyOf(set);
+
+        assertThat(copy).isNotSameInstanceAs(set);
+        assertThat(copy).contains("item");
+        Map<String, Object> innerMap = (Map<String, Object>) copy.stream()
+                .filter(e -> e instanceof Map).findFirst().orElseThrow();
+        assertThat(innerMap.get("set")).isSameInstanceAs(copy);
+    }
+
+    @Test
     @DisplayName("copyOf handles mutually referencing maps without StackOverflowError")
     @SuppressWarnings("unchecked")
     void testCopyOfMutuallyReferencingMaps() {
