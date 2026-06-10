@@ -93,6 +93,16 @@ class DataQueryTest {
     }
 
     @Test
+    @DisplayName("test that setRawQuery from getRawQuery create equal DataQuery objects")
+    void testgetRawQuery() {
+        ArrayList<String> nullValueList = new ArrayList<>();
+        nullValueList.add(null);
+        query.parameters = Map.of("name", nullValueList);
+
+        assertThat(query.getRawQuery()).isEqualTo("name=");
+    }
+
+    @Test
     @DisplayName("parseQueryString should parse a query string correct")
     void testParseQueryString() {
         Map<String, List<String>> expected = Map.of("Hodor", List.of(""));
@@ -113,8 +123,9 @@ class DataQueryTest {
     @Test
     @DisplayName("setUriPath should not work if it contains a query")
     void testSetUriPathWithQuery() {
+        DataQuery dataQuery = new DataQuery();
         Exception thrownException = assertThrows(IllegalArgumentException.class, () -> {
-            new DataQuery().setUriPath("/raw/MyDataVerticle?param=value");
+            dataQuery.setUriPath("/raw/MyDataVerticle?param=value");
         });
         assertThat(thrownException.getMessage()).isEqualTo("uriPath must not contain a query");
     }

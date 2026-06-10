@@ -22,8 +22,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
@@ -34,7 +36,6 @@ import org.objectweb.asm.ClassReader;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Streams;
 
 import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.helper.JarHelper;
@@ -189,38 +190,52 @@ public class ClassPathScanner {
      * @return a future to a list of resources on the class path
      */
     @SuppressWarnings("PMD.EmptyCatchBlock")
-    public Future<List<String>> scanForAnnotation(Vertx vertx, List<Class<? extends Annotation>> annotationClasses,
+    public Future<List<String>> scanForAnnotation(Vertx vertx,
+            List<Class<? extends Annotation>> annotationClasses,
             ElementType... elementTypes) {
 
         Future<List<String>> classesFromDirectories = scanWithPredicate(vertx, ClassPathScanner::isClassFile);
         Future<List<String>> classesFromJars = scanJarFilesWithPredicate(vertx, ClassPathScanner::isClassFile)
-                .map(classes -> classes.stream().map(JarHelper::extractFilePath).toList());
+                .map(uris -> {
+                    List<String> result = new ArrayList<>(uris.size());
+                    for (URI uri : uris) {
+                        result.add(JarHelper.extractFilePath(uri));
+                    }
+                    return result;
+                });
 
-        return Future.all(classesFromDirectories, classesFromJars)
-                .compose(compositeResult -> vertx.executeBlocking(() -> {
-                    List<AnnotationClassVisitor> classVisitors = annotationClasses.stream()
-                            .map(annotationClass -> new AnnotationClassVisitor(annotationClass, elementTypes))
-                            .toList();
-                    Streams.concat(classesFromDirectories.result().stream(), classesFromJars.result().stream())
-                            .forEach(name -> {
-                                try {
-                                    String resourceName = name.replace(".", "/").replaceFirst("/class$", ".class");
-                                    for (AnnotationClassVisitor acv : classVisitors) {
-                                        ClassReader classReader =
-                                                new ClassReader(classLoader.getResourceAsStream(resourceName));
-                                        classReader.accept(acv, 0);
-                                    }
-                                } catch (IOException e) {
-                                    /*
-                                     * nothing to do here, depending on which part of the reading it failed, deployable
-                                     * could be set or not
-                                     */
-                                }
-                            });
+        return Future.all(classesFromDirectories, classesFromJars).compose(v -> vertx.executeBlocking(() -> {
+            List<AnnotationClassVisitor> classVisitors = new ArrayList<>(annotationClasses.size());
+            for (Class<? extends Annotation> annotationClass : annotationClasses) {
+                classVisitors.add(new AnnotationClassVisitor(annotationClass, elementTypes));
+            }
 
-                    return classVisitors.stream().flatMap(acv -> acv.getClassNames().stream()).distinct()
-                            .toList();
-                }));
+            processClasses(classesFromDirectories.result(), classVisitors);
+            processClasses(classesFromJars.result(), classVisitors);
+
+            Set<String> matchedClassNames = new HashSet<>();
+            for (AnnotationClassVisitor visitor : classVisitors) {
+                matchedClassNames.addAll(visitor.getClassNames());
+            }
+
+            return new ArrayList<>(matchedClassNames);
+        }));
+    }
+
+    @SuppressWarnings("PMD.EmptyCatchBlock")
+    private void processClasses(List<String> classNames, List<AnnotationClassVisitor> classVisitors) {
+        for (String name : classNames) {
+            String resourcePath = name.replace('.', '/').replaceFirst("/class$", ".class");
+            try (InputStream input = classLoader.getResourceAsStream(resourcePath)) {
+                if (input != null) {
+                    ClassReader reader = new ClassReader(input);
+                    for (AnnotationClassVisitor visitor : classVisitors) {
+                        reader.accept(visitor, 0);
+                    }
+                }
+            } catch (IOException e) { // NOPMD - EmptyCatchBlock
+            }
+        }
     }
 
     /**

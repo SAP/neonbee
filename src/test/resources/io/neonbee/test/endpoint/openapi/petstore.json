@@ -13,11 +13,6 @@
             "url": "https://petstore.swagger.io/petstore"
         }
     ],
-    "security": [
-        {
-            "BasicAuth": []
-        }
-    ],
     "paths": {
         "/pets": {
             "get": {

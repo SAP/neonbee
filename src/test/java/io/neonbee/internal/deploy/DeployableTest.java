@@ -35,15 +35,15 @@ class DeployableTest {
     @DisplayName("test deploy/undeploy of Deployable")
     void testDeployUndeploy() {
         DeployableThing deployable = new DeployableThing("foo");
-        assertThat(deployable.deploy().succeeded()).isTrue();
+        assertThat(deployable.deploy().getDeployment().succeeded()).isTrue();
         assertThat(deployable.deploy().undeploy().succeeded()).isTrue();
 
         deployable.undeployFuture = failedFuture("foo");
-        assertThat(deployable.deploy().succeeded()).isTrue();
+        assertThat(deployable.deploy().getDeployment().succeeded()).isTrue();
         assertThat(deployable.deploy().undeploy().failed()).isTrue();
 
         deployable.deployFuture = failedFuture("foo");
-        assertThat(deployable.deploy().failed()).isTrue();
+        assertThat(deployable.deploy().getDeployment().failed()).isTrue();
     }
 
     static class DeployableThing extends Deployable {

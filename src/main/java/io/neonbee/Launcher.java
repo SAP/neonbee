@@ -1,6 +1,7 @@
 package io.neonbee;
 
 import static ch.qos.logback.classic.ClassicConstants.CONFIG_FILE_PROPERTY;
+import static io.vertx.core.Future.succeededFuture;
 import static java.lang.System.setProperty;
 
 import java.util.Collections;
@@ -15,7 +16,6 @@ import io.neonbee.config.NeonBeeConfig;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.cli.CLI;
 import io.vertx.core.cli.CLIException;
@@ -61,7 +61,7 @@ public class Launcher {
         configureLogging(options);
 
         Vertx launcherVertx = Vertx.vertx();
-        Future.succeededFuture().compose(unused -> NeonBeeConfig.load(launcherVertx, options.getConfigDirectory()))
+        succeededFuture().compose(unused -> NeonBeeConfig.load(launcherVertx, options.getConfigDirectory()))
                 .eventually(() -> closeVertx(launcherVertx)).compose(config -> NeonBee.create(options, config))
                 .onSuccess(neonBee -> Launcher.neonBee = neonBee).onFailure(throwable -> LoggerFactory
                         .getLogger(Launcher.class).error("Failed to start NeonBee", throwable));
@@ -124,9 +124,7 @@ public class Launcher {
     }
 
     private static Future<Void> closeVertx(Vertx launcherVertx) {
-        Promise<Void> promise = Promise.promise();
-        launcherVertx.close(promise);
-        return promise.future();
+        return launcherVertx.close();
     }
 
     @VisibleForTesting

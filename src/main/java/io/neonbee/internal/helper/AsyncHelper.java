@@ -6,7 +6,6 @@ import java.util.concurrent.Callable;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 
 /**
@@ -73,50 +72,9 @@ public final class AsyncHelper {
      * @deprecated Use {@link Vertx#executeBlocking(Callable)} instead
      */
     @Deprecated(forRemoval = true)
-    public static <T> Future<T> executeBlocking(Vertx vertx, ThrowingSupplier<T, Exception> blockingSupplier) {
-        return executeBlocking(vertx, promise -> {
-            try {
-                promise.complete(blockingSupplier.get());
-            } catch (Exception e) {
-                promise.fail(e);
-            }
-        });
-    }
-
-    /**
-     * Runs a task and returns the result in an asynchronous fashion. The consumer is responsible for completing the
-     * passed in promise when the execution of the task is completed.
-     *
-     * @param vertx     the underlying Vert.x instance
-     * @param asyncTask the Promise consumer that contains the task logic
-     * @param <T>       the return type of the task
-     * @return a Future representing the asynchronous result of the consumer logic
-     *
-     * @deprecated Use {@link Vertx#executeBlocking(Callable)} instead
-     */
-    @Deprecated(forRemoval = true)
-    public static <T> Future<T> executeBlocking(Vertx vertx, ThrowingConsumer<Promise<T>, Exception> asyncTask) {
-        Promise<T> asyncTaskPromise = Promise.promise();
-        vertx.executeBlocking(promise -> {
-            try {
-                asyncTask.accept(promise);
-            } catch (Exception e) {
-                promise.fail(e);
-            }
-        }, asyncTaskPromise);
-        return asyncTaskPromise.future();
-    }
-
-    @FunctionalInterface
-    @Deprecated(forRemoval = true)
-    public interface ThrowingConsumer<T, E extends Exception> {
-        /**
-         * Performs this operation on the given argument.
-         *
-         * @param t the input argument
-         * @throws E the exception this consumer may throws
-         */
-        void accept(T t) throws E;
+    public static <T> Future<T> executeBlocking(Vertx vertx,
+            ThrowingSupplier<T, Exception> blockingSupplier) {
+        return vertx.executeBlocking(() -> blockingSupplier.get());
     }
 
     @FunctionalInterface

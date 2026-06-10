@@ -10,6 +10,11 @@ import io.vertx.core.json.JsonObject;
 @SuppressWarnings("TypeParameterUnusedInFormals")
 public interface DataContext {
     /**
+     * Status Code Hint.
+     */
+    String STATUS_CODE_HINT = "Status-Code";
+
+    /**
      * Returns the correlation id of this request.
      *
      * @return the correlation id

@@ -28,28 +28,44 @@ import io.vertx.ext.web.RoutingContext;
 
 public final class ProcessorHelper {
 
-    /** Response prefix in routing context. */
+    /**
+     * Response prefix in routing context.
+     */
     public static final String RESPONSE_HEADER_PREFIX = "response.";
 
-    /** OData filter key. */
+    /**
+     * OData filter key.
+     */
     public static final String ODATA_FILTER_KEY = "OData.filter";
 
-    /** OData orderBy key. */
+    /**
+     * OData orderBy key.
+     */
     public static final String ODATA_ORDER_BY_KEY = "OData.orderby";
 
-    /** OData skip key. */
+    /**
+     * OData skip key.
+     */
     public static final String ODATA_SKIP_KEY = "OData.skip";
 
-    /** OData top key. */
+    /**
+     * OData top key.
+     */
     public static final String ODATA_TOP_KEY = "OData.top";
 
-    /** OData expand key. */
+    /**
+     * OData expand key.
+     */
     public static final String ODATA_EXPAND_KEY = "OData.expand";
 
-    /** OData key predicate key. */
+    /**
+     * OData key predicate key.
+     */
     public static final String ODATA_KEY_PREDICATE_KEY = "OData.key";
 
-    /** OData count size key. */
+    /**
+     * OData count size key.
+     */
     public static final String ODATA_COUNT_SIZE_KEY = "OData.count.size";
 
     private ProcessorHelper() {}

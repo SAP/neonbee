@@ -3,6 +3,7 @@ package io.neonbee.internal.deploy;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +62,7 @@ public class Deployables extends Deployable {
      * @return a mapper mapping to a future of deployment, deploying all of the given deployables
      */
     public static Function<Deployables, Future<Deployment>> allTo(NeonBee neonBee) {
-        return deployables -> deployables.deploy(neonBee);
+        return deployables -> deployables.deploy(neonBee).getDeployment();
     }
 
     /**
@@ -75,8 +76,7 @@ public class Deployables extends Deployable {
      */
     public static Function<Deployables, Future<Deployment>> anyTo(NeonBee neonBee) {
         return deployables -> {
-            PendingDeployment pendingDeployment = deployables.keepPartialDeployment().deploy(neonBee);
-            return pendingDeployment.otherwise(pendingDeployment);
+            return deployables.keepPartialDeployment().deploy(neonBee).getDeployment();
         };
     }
 
@@ -140,7 +140,7 @@ public class Deployables extends Deployable {
                 // three possibilities here: pendingDeployment hasn't completed yet, transform will wait for it to
                 // complete and then undeploy it. pending deployment was completed successfully, undeploy will undeploy
                 // it, or otherwise will do nothing because a failed deployment results in a successful undeploy
-                return pendingDeployment.transform(deployResult -> pendingDeployment.undeploy());
+                return pendingDeployment.undeploy();
             }).toList()).transform(undeployResult -> {
                 // call the afterUndeploy mapper function regardless of wether the undeployment succeeded or failed
                 // in case the undeployment succeeded, the future returned by afterUndeploy may succeed or fail the
@@ -171,7 +171,9 @@ public class Deployables extends Deployable {
         // allComposite here, which will fail, when one deployment fails, and thus we can start undeploying all
         // succeeded
         // (or to be succeeded pending deployments) as unfortunately there is no way to cancel active deployments
-        (keepPartialDeployment ? Future.join(pendingDeployments) : Future.all(pendingDeployments))
+        List<Future<Deployment>> deploymentFutures = pendingDeployments.stream()
+                .map(PendingDeployment::getDeployment).collect(toList());
+        (keepPartialDeployment ? Future.join(deploymentFutures) : Future.all(deploymentFutures))
                 .onComplete(deployPromise);
 
         return pendingDeployment;

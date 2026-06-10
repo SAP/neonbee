@@ -15,16 +15,17 @@ class StatusEndpointTest extends NeonBeeTestBase {
     @Test
     @DisplayName("should return health info of the default checks")
     void testHealthEndpointData(VertxTestContext testContext) {
-        createRequest(HttpMethod.GET, "/status").send(testContext.succeeding(response -> testContext.verify(() -> {
-            assertThat(response.statusCode()).isEqualTo(200);
+        createRequest(HttpMethod.GET, "/status").send()
+                .onComplete(testContext.succeeding(response -> testContext.verify(() -> {
+                    assertThat(response.statusCode()).isEqualTo(200);
 
-            JsonObject result = response.bodyAsJsonObject();
-            assertThat(result.containsKey("status")).isTrue();
-            assertThat(result.containsKey("version")).isTrue();
-            assertThat(result.containsKey("outcome")).isFalse();
-            assertThat(result.containsKey("checks")).isFalse();
+                    JsonObject result = response.bodyAsJsonObject();
+                    assertThat(result.containsKey("status")).isTrue();
+                    assertThat(result.containsKey("version")).isTrue();
+                    assertThat(result.containsKey("outcome")).isFalse();
+                    assertThat(result.containsKey("checks")).isFalse();
 
-            testContext.completeNow();
-        })));
+                    testContext.completeNow();
+                })));
     }
 }

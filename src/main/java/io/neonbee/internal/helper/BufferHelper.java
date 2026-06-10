@@ -64,13 +64,15 @@ public final class BufferHelper {
 
         @Override
         public int available() {
-            return buffer.length() - position;
+            // treat a null buffer as empty to avoid NPEs when upstream passes null
+            return buffer == null ? 0 : buffer.length() - position;
         }
 
         @Override
         @SuppressWarnings("checkstyle:magicnumber")
         public int read() {
-            if (position == buffer.length()) {
+            // if buffer is null or already fully consumed, signal end of stream
+            if (buffer == null || position == buffer.length()) {
                 return -1;
             }
 
@@ -80,7 +82,12 @@ public final class BufferHelper {
 
         @Override
         public int read(byte[] data, int offset, int length) {
-            int size = Math.min(data.length, buffer.length() - position);
+            // if buffer is null, there is nothing to read
+            if (buffer == null) {
+                return -1;
+            }
+
+            int size = Math.min(Math.min(data.length, length), buffer.length() - position);
             if (size == 0) {
                 return -1;
             }
