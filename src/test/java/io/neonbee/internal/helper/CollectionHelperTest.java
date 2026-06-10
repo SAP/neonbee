@@ -233,6 +233,52 @@ class CollectionHelperTest {
         assertThat(CollectionHelper.isNullOrEmpty(Map.of("k", "v"))).isFalse();
     }
 
+    @Test
+    @DisplayName("copyOf handles self-referencing map without StackOverflowError")
+    void testCopyOfSelfReferencingMap() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("key", "value");
+        map.put("self", map);
+
+        Map<String, Object> copy = CollectionHelper.copyOf(map);
+
+        assertThat(copy).isNotSameInstanceAs(map);
+        assertThat(copy.get("key")).isEqualTo("value");
+        assertThat(copy.get("self")).isSameInstanceAs(copy);
+    }
+
+    @Test
+    @DisplayName("copyOf handles self-referencing list without StackOverflowError")
+    @SuppressWarnings("unchecked")
+    void testCopyOfSelfReferencingList() {
+        List<Object> list = new ArrayList<>();
+        list.add("item");
+        list.add(list);
+
+        List<Object> copy = CollectionHelper.copyOf(list);
+
+        assertThat(copy).isNotSameInstanceAs(list);
+        assertThat(copy.get(0)).isEqualTo("item");
+        assertThat(copy.get(1)).isSameInstanceAs(copy);
+    }
+
+    @Test
+    @DisplayName("copyOf handles mutually referencing maps without StackOverflowError")
+    @SuppressWarnings("unchecked")
+    void testCopyOfMutuallyReferencingMaps() {
+        Map<String, Object> mapA = new HashMap<>();
+        Map<String, Object> mapB = new HashMap<>();
+        mapA.put("ref", mapB);
+        mapB.put("ref", mapA);
+
+        Map<String, Object> copyA = CollectionHelper.copyOf(mapA);
+        Map<String, Object> copyB = (Map<String, Object>) copyA.get("ref");
+
+        assertThat(copyA).isNotSameInstanceAs(mapA);
+        assertThat(copyB).isNotSameInstanceAs(mapB);
+        assertThat(copyB.get("ref")).isSameInstanceAs(copyA);
+    }
+
     private static class TestShareable implements Shareable {
         final String value;
 
