@@ -29,7 +29,6 @@ public class WriteSafeRegistry<T> implements Registry<T> {
 
     private final String registryName;
 
-    // Per-key write queue
     private final Map<String, Future<Void>> queues = new ConcurrentHashMap<>();
 
     /**
@@ -91,6 +90,10 @@ public class WriteSafeRegistry<T> implements Registry<T> {
 
     /**
      * Serializes write operations per key to prevent concurrent map updates.
+     * <p>
+     * Uses a local per-key queue to avoid reentrant distributed lock acquisition (Hazelcast's IMap locks are
+     * thread-reentrant, and executeBlocking may reuse worker threads) combined with a distributed lock for cross-node
+     * serialization.
      *
      * @param key       the key identifying the per-key operation queue and lock
      * @param operation the write operation to run while holding the shared-data lock
@@ -111,16 +114,19 @@ public class WriteSafeRegistry<T> implements Registry<T> {
                         logger.debug("Acquiring lock for {}", key);
                         return sharedData.getLock(key);
                     })
-                    .compose(lock -> Future.<Void>future(promise -> {
+                    .compose(lock -> {
+                        Future<Void> res;
                         try {
-                            operation.get().onComplete(promise);
-                        } catch (Exception t) {
-                            promise.fail(t);
+                            res = operation.get();
+                        } catch (Exception e) {
+                            lock.release();
+                            return Future.failedFuture(e);
                         }
-                    }).onComplete(ar -> {
-                        logger.debug("Releasing lock for {}", key);
-                        lock.release();
-                    }));
+                        return res.andThen(ar -> {
+                            logger.debug("Releasing lock for {}", key);
+                            lock.release();
+                        });
+                    });
         });
 
         result.onComplete(ar -> queues.computeIfPresent(key, (k, current) -> current == result ? null : current));
