@@ -130,7 +130,7 @@ dependencies {
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.5.34'
     def guava_version = '33.2.1-jre'
     implementation group: 'com.google.guava', name: 'guava', version: guava_version
-    implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.10.1'
+    implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.10.2'
 
     implementation "com.aayushatharva.brotli4j:brotli4j:$brotli4jVersion"
     api "com.aayushatharva.brotli4j:native-$brotli4jArchitecture:$brotli4jVersion"
