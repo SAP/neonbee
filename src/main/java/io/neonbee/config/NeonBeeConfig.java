@@ -100,6 +100,8 @@ public class NeonBeeConfig {
 
     private int jsonMaxStringSize;
 
+    private int eventBusLargePayloadThreshold;
+
     /**
      * Are the metrics enabled?
      *
@@ -533,6 +535,32 @@ public class NeonBeeConfig {
      * @return the maximum string length (in chars or bytes, depending on input context)
      */
     public int getJsonMaxStringSize() {
+        return jsonMaxStringSize;
+    }
+
+    /**
+     * Set the threshold (in bytes) for event bus payload size above which serialization is offloaded to a worker thread
+     * to avoid blocking the event loop.
+     *
+     * @param eventBusLargePayloadThreshold the threshold in bytes (0 or negative disables offloading)
+     * @return a reference to this, so the API can be used fluently
+     */
+    @Fluent
+    public NeonBeeConfig setEventBusLargePayloadThreshold(int eventBusLargePayloadThreshold) {
+        this.eventBusLargePayloadThreshold = eventBusLargePayloadThreshold;
+        return this;
+    }
+
+    /**
+     * Get the threshold (in bytes) for event bus payload size above which serialization is offloaded to a worker
+     * thread. Defaults to {@link #getJsonMaxStringSize()} if set, otherwise 0 (disabled).
+     *
+     * @return the threshold in bytes
+     */
+    public int getEventBusLargePayloadThreshold() {
+        if (eventBusLargePayloadThreshold > 0) {
+            return eventBusLargePayloadThreshold;
+        }
         return jsonMaxStringSize;
     }
 }
