@@ -66,13 +66,14 @@ public class SharedRegistry<T> implements Registry<T> {
                 .compose(valueArray -> {
                     if (!valueArray.contains(value)) {
                         valueArray.add(value);
-                    }
 
-                    if (logger.isInfoEnabled()) {
-                        logger.info("Registered verticle {} in shared map.", value);
-                    }
+                        if (logger.isInfoEnabled()) {
+                            logger.info("Registered verticle {} in shared map.", value);
+                        }
 
-                    return sharedMap.compose(map -> map.put(sharedMapKey, valueArray));
+                        return sharedMap.compose(map -> map.put(sharedMapKey, valueArray));
+                    }
+                    return succeededFuture();
                 });
     }
 

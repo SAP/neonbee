@@ -240,6 +240,8 @@ class UnregisterEntitiesTest {
 
                 // 2. verify the content of ClusterEntityRegistry#clusteringInformation and
                 // ClusterEntityRegistry#entityRegistry
+                .compose(unused -> waitForEntityRegistry(node1.getVertx(), n1Registry,
+                        Set.of(erpSales, makedSales)))
                 .compose(unused -> {
                     Future<Map<String, Object>> clusterInfoEntries =
                             n1Registry.clusteringInformation.getSharedMap().compose(AsyncMap::entries);
@@ -248,53 +250,12 @@ class UnregisterEntitiesTest {
 
                     return Future.all(clusterInfoEntries, entityRegistryEntries)
                             .onSuccess(compositeFuture -> testContext.verify(() -> {
-                                // The clustering information map should look like this:
-                                //
-                                // 6dbe2f47-8e2a-4b41-b019-007b16157f87 ->
-                                // [{
-                                // "qualifiedName":"unregisterentitiestest/_ErpSalesEntityVerticle-644622197",
-                                // "entityName":"entityVerticles[Sales.Orders]"
-                                // },{
-                                // "qualifiedName":"unregisterentitiestest/_ErpSalesEntityVerticle-644622197",
-                                // "entityName":"entityVerticles[ERP.Customers]"
-                                // },{
-                                // "qualifiedName":"unregisterentitiestest/_MarketSalesEntityVerticle-133064210",
-                                // "entityName":"entityVerticles[Sales.Orders]"
-                                // },{
-                                // "qualifiedName":"unregisterentitiestest/_MarketSalesEntityVerticle-133064210",
-                                // "entityName":"entityVerticles[Market.Products]"
-                                // }]
-                                //
-                                // d4f78582-14d4-493f-8a74-03d0e49c566b ->
-                                // [{
-                                // "qualifiedName":"unregisterentitiestest/_ErpSalesEntityVerticle-644622197",
-                                // "entityName":"entityVerticles[Sales.Orders]"
-                                // },{
-                                // "qualifiedName":"unregisterentitiestest/_ErpSalesEntityVerticle-644622197",
-                                // "entityName":"entityVerticles[ERP.Customers]"
-                                // }]
                                 verifyClusterInformation(
                                         clusterInfoEntries.result(),
                                         Map.of(
                                                 clusterNode1Id, List.of(erpSales, makedSales),
                                                 clusterNode2Id, List.of(erpSales)));
 
-                                // The entity registry map should look like this:
-                                //
-                                // entityVerticles[Sales.Orders] ->
-                                // [
-                                // "unregisterentitiestest/_ErpSalesEntityVerticle-644622197",
-                                // "unregisterentitiestest/_MarketSalesEntityVerticle-133064210"
-                                // ]
-                                //
-                                // entityVerticles[Market.Products] ->
-                                // [
-                                // "unregisterentitiestest/_MarketSalesEntityVerticle-133064210"
-                                // ]
-                                // entityVerticles[ERP.Customers] ->
-                                // [
-                                // "unregisterentitiestest/_ErpSalesEntityVerticle-644622197"
-                                // ]
                                 verifyEntityRegistry(entityRegistryEntries.result(), Set.of(erpSales, makedSales));
                                 checkpoint.flag();
                             }));
@@ -460,6 +421,39 @@ class UnregisterEntitiesTest {
                 assertThat(entityNames).containsExactly(entry.getValue().toArray());
             }
         }
+    }
+
+    private Future<Void> waitForEntityRegistry(Vertx vertx, ClusterEntityRegistry registry,
+            Set<EntityVerticle> expectedVerticles) {
+        Set<String> expectedQualifiedNames = new HashSet<>();
+        for (EntityVerticle entityVerticle : expectedVerticles) {
+            expectedQualifiedNames.add(DataVerticle.createQualifiedName(
+                    TEST_NAMESPACE, EntityVerticle.getName(entityVerticle.getClass())));
+        }
+
+        Promise<Void> promise = Promise.promise();
+        vertx.setPeriodic(100, id -> {
+            registry.entityRegistry.getSharedMap().compose(AsyncMap::entries).onSuccess(entries -> {
+                Set<String> registeredNames = entries.values().stream()
+                        .map(JsonArray.class::cast)
+                        .flatMap(JsonArray::stream)
+                        .map(String.class::cast)
+                        .collect(Collectors.toSet());
+                if (registeredNames.containsAll(expectedQualifiedNames)) {
+                    vertx.cancelTimer(id);
+                    promise.tryComplete();
+                }
+            });
+        });
+
+        Timer timer = vertx.timer(10, TimeUnit.SECONDS);
+        timer.onSuccess(unused -> {
+            if (!promise.future().isComplete()) {
+                promise.tryFail("Entity registry did not converge within 10 seconds");
+            }
+        });
+
+        return promise.future();
     }
 
     static String sharedEntityMapName(FullQualifiedName entityTypeName) {
