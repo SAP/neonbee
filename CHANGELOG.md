@@ -1,5 +1,69 @@
 # Changelog
 
+## 0.37.29 (2026-06-12)
+
+### Bug Fixes
+
+- issues with resources ([a0620540](https://github.com/SAP/neonbee/commit/a062054053b5814bfb62f36e4e8d1ae36d834b9c))
+- skips registration when collectClusteredResults false ([786f0eff](https://github.com/SAP/neonbee/commit/786f0effd2e5752da0fbf4d2e18bf7583a133aba))
+- ignore empty catch ([b4cec72d](https://github.com/SAP/neonbee/commit/b4cec72d7fbbad8d85781caa85f890a76bc0bed4))
+- ignore empty catch ([8ef60afa](https://github.com/SAP/neonbee/commit/8ef60afa9e32cea43becf41e09b34df2ef306e6a))
+- refactoring classpath scanning ([66c2aa07](https://github.com/SAP/neonbee/commit/66c2aa0780b907878de4f54d628078c6b37c14cd))
+- ignore empty catch ([463bf7fe](https://github.com/SAP/neonbee/commit/463bf7fe4873d10b22109da69374d48cd38c2760))
+- bump coverage ([b3c0d250](https://github.com/SAP/neonbee/commit/b3c0d2509061e806047f65baf1bb874ce87c1408))
+- coverage ([4f10d165](https://github.com/SAP/neonbee/commit/4f10d1658b24e0882199269bf2f37c5acb1324e8))
+- session counter ([7f077ec9](https://github.com/SAP/neonbee/commit/7f077ec9167b19b347a7bb1a48e549a410856fb7))
+- refactor ViolationsTask configuration to use setters as per the new requirements ([bb66b1c5](https://github.com/SAP/neonbee/commit/bb66b1c598c86fbe5894db930320c30f5ca63d02))
+- refactor ViolationsTask configuration to use setters as per the new requirements ([34897bfb](https://github.com/SAP/neonbee/commit/34897bfb6c979801de969fe90939708e03139392))
+- pin the version of all GitHub actions ([d26eda0c](https://github.com/SAP/neonbee/commit/d26eda0c1dbecd2eaca5c14cf34a436a61d846e3))
+- pin the version of all GitHub actions ([82f75600](https://github.com/SAP/neonbee/commit/82f756006ca9f2f56ae53a97c809b3e617ff0e22))
+- resolve race condition in WriteSafeRegistry lock release ([4e96f92c](https://github.com/SAP/neonbee/commit/4e96f92c40f60138b6f12bf34d587338360ec9e8))
+
+
+### Features
+
+- migrate vertx 4 to 5 ([8b0ac05f](https://github.com/SAP/neonbee/commit/8b0ac05f7de8ab4b53ea374be417f9af140eeda8))
+- lazy session ([2f3ea2a8](https://github.com/SAP/neonbee/commit/2f3ea2a8a019e5e7c88f08effc69766020d2336b))
+- add dependabot configuration for GitHub Actions ([8f24aecd](https://github.com/SAP/neonbee/commit/8f24aecd74473a2471943a5e9149b0ce8378f300))
+
+
+### Chores
+
+- **deps**: bump actions/cache from 4 to 5 in /.github/workflows ([abcacd9b](https://github.com/SAP/neonbee/commit/abcacd9b74ceefb967d0e91da424de0df6d94e42))
+- **deps**: bump docker/login-action in /.github/workflows ([bb6af348](https://github.com/SAP/neonbee/commit/bb6af348e58543da0575397291bb76cf4980eb88))
+- **deps**: bump docker/metadata-action in /.github/workflows ([e0e9df54](https://github.com/SAP/neonbee/commit/e0e9df542521670f8b84c1575640c5e6959739f4))
+- **deps**: bump ad-m/github-push-action in /.github/workflows ([2ee6504e](https://github.com/SAP/neonbee/commit/2ee6504e6f4fe9d733cf286045ab3b12f7e6c2f5))
+- **deps**: bump docker/build-push-action in /.github/workflows ([d7603478](https://github.com/SAP/neonbee/commit/d7603478a0b2da9decff8d8aa2c610862feaffbb))
+- **deps**: bump org.slf4j:slf4j-api from 2.0.13 to 2.0.18 ([da26fe32](https://github.com/SAP/neonbee/commit/da26fe3251e8fa35f9f2ea363f11016a3f63fee8))
+- **deps**: bump ch.qos.logback:logback-classic from 1.5.19 to 1.5.33 ([e3357f99](https://github.com/SAP/neonbee/commit/e3357f998690aa476a3a30dedeebe01395e091c4))
+- **deps**: bump org.ajoberstar.grgit from 5.2.2 to 5.3.3 ([6ced7f9a](https://github.com/SAP/neonbee/commit/6ced7f9ac32df61d59f76e468a7c40895028ff0e))
+- **deps**: bump com.github.spotbugs from 6.0.19 to 6.5.5 ([77e58e64](https://github.com/SAP/neonbee/commit/77e58e64edc9c25a1d20dc7a0772b9a1d8be6dc0))
+- **deps**: bump sapmachine from 17.0.12 to 17.0.19 ([a8e17bfc](https://github.com/SAP/neonbee/commit/a8e17bfc4a73e0862175553c352e4f6307a374d0))
+- **deps**: bump org.ow2.asm:asm from 9.7 to 9.10.1 ([4e76a54c](https://github.com/SAP/neonbee/commit/4e76a54c3f807f4c830dfbb6aeba392a21b841ba))
+- **deps**: bump net.ltgt.errorprone from 4.0.1 to 5.1.0 ([e0861c53](https://github.com/SAP/neonbee/commit/e0861c531d35267f14d230124ba9ada84571623e))
+- **deps**: bump net.bytebuddy:byte-buddy from 1.14.18 to 1.18.8 ([02a03052](https://github.com/SAP/neonbee/commit/02a030522d4fd1f21ad280c2ba8b9111dccb93cd))
+- **deps**: bump se.bjurr.violations.violations-gradle-plugin ([66ddfbc1](https://github.com/SAP/neonbee/commit/66ddfbc171eebae76922a7fa5afd34d377e30231))
+- **deps**: bump com.sap.cds:cds4j-core from 3.0.0 to 4.9.0 ([2a092e23](https://github.com/SAP/neonbee/commit/2a092e236ac524761f628f929413c84fdc07ce1b))
+- **deps**: bump com.sap.cds:cds4j-core from 3.0.0 to 4.9.0 ([06889114](https://github.com/SAP/neonbee/commit/06889114160c71c88e985c94540d4cac44c85c1e))
+- **deps**: bump net.bytebuddy:byte-buddy from 1.18.8 to 1.18.9 ([8ee2fd09](https://github.com/SAP/neonbee/commit/8ee2fd094ea305e596c7198f1de79990bd200a1c))
+- **deps**: bump ch.qos.logback:logback-classic from 1.5.33 to 1.5.34 ([7a8ed647](https://github.com/SAP/neonbee/commit/7a8ed647fa9fc554115f2d22aac54487fcdb3d4c))
+- **deps**: bump com.aayushatharva.brotli4j:brotli4j ([8bc995ca](https://github.com/SAP/neonbee/commit/8bc995ca5b47242a60ae675ae739bc1aa3fb0ba5))
+- **deps**: bump actions/checkout in /.github/workflows ([c9912a36](https://github.com/SAP/neonbee/commit/c9912a365d4006b3e17a1026bb6160aa3c140786))
+- **deps**: bump fsfe/reuse-action in /.github/workflows ([4ace1df3](https://github.com/SAP/neonbee/commit/4ace1df3062c10aa3334726a2446b5ec8f79b094))
+- **deps**: bump peter-evans/create-pull-request in /.github/workflows ([c6974eed](https://github.com/SAP/neonbee/commit/c6974eedc96f65a1ae3f3596cc0191440b869c27))
+- **deps**: bump wagoid/commitlint-github-action in /.github/workflows ([4fd5c5e3](https://github.com/SAP/neonbee/commit/4fd5c5e3c076c307e25ad9516777c179f1487ac9))
+- **deps**: bump actions/setup-java in /.github/workflows ([adbd7040](https://github.com/SAP/neonbee/commit/adbd7040a2ee76426b6f8a72cad88b86ae133a59))
+- **deps**: bump github/codeql-action in /.github/workflows ([6d58ec6c](https://github.com/SAP/neonbee/commit/6d58ec6c96e3cef8cf40e149b1dd7096951d1aab))
+- **deps**: bump com.diffplug.spotless from 6.25.0 to 8.6.0 ([928a1de2](https://github.com/SAP/neonbee/commit/928a1de257b0cded1f8f041b79d5ef8d46b4891d))
+- **deps**: bump commons-io:commons-io from 2.14.0 to 2.22.0 ([3887465e](https://github.com/SAP/neonbee/commit/3887465eeb0dccda846ff11f42349c035b4bded9))
+- **deps**: bump github/codeql-action in /.github/workflows ([e524b80f](https://github.com/SAP/neonbee/commit/e524b80fd451b29ea0294784848570d01cf92a2b))
+- **deps**: bump org.sonarqube from 5.1.0.4882 to 7.3.1.8318 ([fd3f28d6](https://github.com/SAP/neonbee/commit/fd3f28d69b031bd7cc6c7c3a6da1e20f307a8a10))
+- **deps**: bump com.github.spotbugs:spotbugs-annotations ([12dd941e](https://github.com/SAP/neonbee/commit/12dd941e954f380b3a5dca9509c9166a339bda6d))
+- **deps**: bump com.github.spotbugs:spotbugs-annotations ([f8654fe1](https://github.com/SAP/neonbee/commit/f8654fe1cd1d8097a2cef726679d55b426d078fc))
+- **deps**: bump net.bytebuddy:byte-buddy from 1.18.9 to 1.18.10 ([8afa89a1](https://github.com/SAP/neonbee/commit/8afa89a13ab7d1fc3f02965499b867da62ce9733))
+- reduce the unit test threshold ([fd354c5e](https://github.com/SAP/neonbee/commit/fd354c5e9f0adc182b0e0c85eb6732f7e0998daf))
+
+
 ## 0.37.27 (2026-03-19)
 
 ### Features
