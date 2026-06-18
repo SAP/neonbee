@@ -1,6 +1,20 @@
 # Changelog
 
-## 0.37.29 (2026-06-12)
+## 0.37.30 (2026-06-17)
+
+### Bug Fixes
+
+- release(snapshot) 0.37.30-SNAPSHOT ([adc1a794](https://github.com/SAP/neonbee/commit/adc1a794f9dce2834f3f4d04b62de35ad43dc99e))
+- token fixes ([e12a78cc](https://github.com/SAP/neonbee/commit/e12a78ccc92404e5a1c37a136d50c53a49ec73a0))
+
+
+### Chores
+
+- **deps**: bump actions/setup-java in /.github/workflows ([405ae678](https://github.com/SAP/neonbee/commit/405ae678b0ad4dea9b6e9f37b680c596578b8f5c))
+- **deps**: bump com.github.spotbugs:spotbugs-annotations ([ff74dce0](https://github.com/SAP/neonbee/commit/ff74dce0066b1e464eb8d34cfcb141779244286b))
+
+
+## 0.37.29 (2026-06-16)
 
 ### Bug Fixes
 
