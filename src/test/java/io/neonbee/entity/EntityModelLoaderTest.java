@@ -16,7 +16,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
-import com.sap.cds.reflect.CdsModel;
+import com.sap.cds.reflect.CdsEntity;
+import com.sap.cds.reflect.CdsService;
 
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.test.base.NeonBeeTestBase;
@@ -120,12 +121,14 @@ class EntityModelLoaderTest extends NeonBeeTestBase {
     @DisplayName("check if getting CSN Model works")
     void getCSNModelTest(Vertx vertx, VertxTestContext testContext) {
         EntityModelLoader loader = new EntityModelLoader(vertx);
-        Future<CdsModel> csnModelFuture = loader.readCsnModel(TEST_SERVICE_1_MODEL_PATH);
-        csnModelFuture.compose(v -> loader.loadModel(TEST_SERVICE_1_MODEL_PATH))
-                .onComplete(testContext.succeeding(result -> testContext.verify(() -> {
-                    CdsModel expectedCsnModel = csnModelFuture.result();
-                    EntityModel model = loader.models.get("io.neonbee.test1");
-                    assertThat(model.getCsnModel()).isEqualTo(expectedCsnModel);
+        loader.loadModel(TEST_SERVICE_1_MODEL_PATH)
+                .onComplete(testContext.succeeding(v -> testContext.verify(() -> {
+                    var csnModel = loader.models.get("io.neonbee.test1").getCsnModel();
+                    assertThat(csnModel.services().map(CdsService::getQualifiedName).toList())
+                            .containsExactly("io.neonbee.test1.TestService1");
+                    assertThat(csnModel.entities().map(CdsEntity::getQualifiedName).toList())
+                            .containsExactly("io.neonbee.test1.TestService1.AllPropertiesNullable",
+                                    "io.neonbee.test.TestService1.TestProducts");
                     testContext.completeNow();
                 })));
     }
