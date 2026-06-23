@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,6 +22,7 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.shareddata.Shareable;
 
+@SuppressWarnings("PMD.GodClass")
 public final class CollectionHelper {
 
     /**
@@ -51,12 +53,21 @@ public final class CollectionHelper {
      * @return a mutable deep copy of the given list
      */
     public static <T> List<T> mutableCopyOf(List<T> list) {
+        return mutableCopyOf(list, new IdentityHashMap<>());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> List<T> mutableCopyOf(List<T> list, IdentityHashMap<Object, Object> visited) {
         if (list == null) {
             return new ArrayList<>();
         }
+        if (visited.containsKey(list)) {
+            return (List<T>) visited.get(list);
+        }
         List<T> copy = new ArrayList<>(list.size());
+        visited.put(list, copy);
         for (T item : list) {
-            copy.add(copyOf(item));
+            copy.add(copyOf(item, visited));
         }
         return copy;
     }
@@ -69,15 +80,24 @@ public final class CollectionHelper {
      * @return a mutable deep copy of the given set
      */
     public static <T> Set<T> mutableCopyOf(Set<T> set) {
+        return mutableCopyOf(set, new IdentityHashMap<>());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> Set<T> mutableCopyOf(Set<T> set, IdentityHashMap<Object, Object> visited) {
         if (set == null) {
             return new HashSet<>();
+        }
+        if (visited.containsKey(set)) {
+            return (Set<T>) visited.get(set);
         }
 
         int initialCapacity = Math.max((int) (set.size() / LOAD_FACTOR) + 1, DEFAULT_CAPACITY);
 
         Set<T> copy = new HashSet<>(initialCapacity);
+        visited.put(set, copy);
         for (T item : set) {
-            copy.add(copyOf(item));
+            copy.add(copyOf(item, visited));
         }
         return copy;
     }
@@ -93,12 +113,22 @@ public final class CollectionHelper {
      * @return a mutable deep copy of the given collection
      */
     public static <T, C extends Collection<T>> C mutableCopyOf(C collection, Supplier<C> collectionFactory) {
+        return mutableCopyOf(collection, collectionFactory, new IdentityHashMap<>());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T, C extends Collection<T>> C mutableCopyOf(C collection, Supplier<C> collectionFactory,
+            IdentityHashMap<Object, Object> visited) {
         C copy = collectionFactory.get();
         if (collection == null) {
             return copy;
         }
+        if (visited.containsKey(collection)) {
+            return (C) visited.get(collection);
+        }
+        visited.put(collection, copy);
         for (T item : collection) {
-            copy.add(copyOf(item));
+            copy.add(copyOf(item, visited));
         }
         return copy;
     }
@@ -112,13 +142,22 @@ public final class CollectionHelper {
      * @return a mutable deep copy of the given map
      */
     public static <K, V> Map<K, V> mutableCopyOf(Map<K, V> map) {
+        return mutableCopyOf(map, new IdentityHashMap<>());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <K, V> Map<K, V> mutableCopyOf(Map<K, V> map, IdentityHashMap<Object, Object> visited) {
         Map<K, V> copy = new NullLiberalMergingHashMap<>();
         if (map == null) {
             return copy;
         }
+        if (visited.containsKey(map)) {
+            return (Map<K, V>) visited.get(map);
+        }
+        visited.put(map, copy);
         for (Map.Entry<K, V> entry : map.entrySet()) {
-            K keyCopy = copyOf(entry.getKey());
-            V valueCopy = copyOf(entry.getValue());
+            K keyCopy = copyOf(entry.getKey(), visited);
+            V valueCopy = copyOf(entry.getValue(), visited);
             copy.put(keyCopy, valueCopy);
         }
         return copy;
@@ -141,41 +180,57 @@ public final class CollectionHelper {
      * @param object the object to copy
      * @return either a new mutable copy of the object, or the object itself
      */
-    @SuppressWarnings("unchecked")
     public static <T> T copyOf(T object) {
+        return copyOf(object, new IdentityHashMap<>());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T copyOf(T object, IdentityHashMap<Object, Object> visited) {
         if (Objects.isNull(object)) {
             return null;
-        } else if (object instanceof Buffer buffer) {
-            return (T) buffer.copy();
+        }
+        if (visited.containsKey(object)) {
+            return (T) visited.get(object);
+        }
+        if (object instanceof Buffer buffer) {
+            Buffer copy = buffer.copy();
+            visited.put(object, copy);
+            return (T) copy;
         } else if (object instanceof List<?> list) {
-            return (T) mutableCopyOf(list);
+            return (T) mutableCopyOf(list, visited);
         } else if (object instanceof Set<?> set) {
-            return (T) mutableCopyOf(set);
+            return (T) mutableCopyOf(set, visited);
         } else if (object instanceof Map<?, ?> map) {
-            return (T) mutableCopyOf(map);
+            return (T) mutableCopyOf(map, visited);
         } else if (object.getClass().isArray()) {
+            Object arrayCopy;
             if (object instanceof byte[] byteArr) {
-                return (T) Arrays.copyOf(byteArr, byteArr.length);
+                arrayCopy = Arrays.copyOf(byteArr, byteArr.length);
             } else if (object instanceof short[] shortArr) {
-                return (T) Arrays.copyOf(shortArr, shortArr.length);
+                arrayCopy = Arrays.copyOf(shortArr, shortArr.length);
             } else if (object instanceof int[] intArr) {
-                return (T) Arrays.copyOf(intArr, intArr.length);
+                arrayCopy = Arrays.copyOf(intArr, intArr.length);
             } else if (object instanceof char[] charArr) {
-                return (T) Arrays.copyOf(charArr, charArr.length);
+                arrayCopy = Arrays.copyOf(charArr, charArr.length);
             } else if (object instanceof float[] floatArr) {
-                return (T) Arrays.copyOf(floatArr, floatArr.length);
+                arrayCopy = Arrays.copyOf(floatArr, floatArr.length);
             } else if (object instanceof double[] doubleArr) {
-                return (T) Arrays.copyOf(doubleArr, doubleArr.length);
+                arrayCopy = Arrays.copyOf(doubleArr, doubleArr.length);
             } else if (object instanceof boolean[] booleanArr) {
-                return (T) Arrays.copyOf(booleanArr, booleanArr.length);
+                arrayCopy = Arrays.copyOf(booleanArr, booleanArr.length);
             } else {
                 Class<?> componentType = object.getClass().getComponentType();
                 Object[] array = (Object[]) Array.newInstance(componentType, ((Object[]) object).length);
-                Arrays.setAll(array, index -> copyOf(((Object[]) object)[index]));
+                visited.put(object, array);
+                Arrays.setAll(array, index -> copyOf(((Object[]) object)[index], visited));
                 return (T) array;
             }
+            visited.put(object, arrayCopy);
+            return (T) arrayCopy;
         } else if (object instanceof Shareable) {
-            return (T) ((Shareable) object).copy();
+            Object copy = ((Shareable) object).copy();
+            visited.put(object, copy);
+            return (T) copy;
         } else {
             return object;
         }
@@ -190,14 +245,17 @@ public final class CollectionHelper {
      * @param map the map to copy
      * @return a new case-insensitive treemap as mutable deep copy of the given map
      */
+    @SuppressWarnings("unchecked")
     public static <K extends String, V> Map<K, V> mapToCaseInsensitiveTreeMap(Map<K, V> map) {
         Map<K, V> copy = new NullLiberalMergingTreeMap<>(String.CASE_INSENSITIVE_ORDER);
         if (map == null) {
             return copy;
         }
+        IdentityHashMap<Object, Object> visited = new IdentityHashMap<>();
+        visited.put(map, copy);
         for (Map.Entry<K, V> entry : map.entrySet()) {
-            K keyCopy = copyOf(entry.getKey());
-            V valueCopy = copyOf(entry.getValue());
+            K keyCopy = copyOf(entry.getKey(), visited);
+            V valueCopy = copyOf(entry.getValue(), visited);
             copy.put(keyCopy, valueCopy);
         }
         return copy;
