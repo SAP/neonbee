@@ -127,7 +127,7 @@ dependencies {
     implementation group: 'org.ow2.asm', name: 'asm', version: '9.10.1'
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.18'
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.5.34'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.5.37'
     def guava_version = '33.2.1-jre'
     implementation group: 'com.google.guava', name: 'guava', version: guava_version
     implementation group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: '4.10.2'
