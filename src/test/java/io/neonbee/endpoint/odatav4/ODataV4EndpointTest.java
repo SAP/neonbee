@@ -69,7 +69,8 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
     @Override
     protected List<Path> provideEntityModels() {
         return List.of(TEST_RESOURCES.resolveRelated("TestService1.csn"),
-                TEST_RESOURCES.resolveRelated("TestService2.csn"), TEST_RESOURCES.resolveRelated("TestService3.csn"));
+                TEST_RESOURCES.resolveRelated("TestService2.csn"), TEST_RESOURCES.resolveRelated("TestService3.csn"),
+                TEST_RESOURCES.resolveRelated("EmptyContainerService.csn"));
     }
 
     @Override
@@ -99,6 +100,23 @@ class ODataV4EndpointTest extends ODataEndpointTestBase {
         assertOData(requestMetadata("io.neonbee.handler.TestService"),
                 body -> assertThat(body.toString()).contains("<edmx:Edmx"), testContext)
                         .onComplete(testContext.succeedingThenComplete());
+    }
+
+    @Test
+    @DisplayName("service with empty EntityContainer is skipped, other services still registered")
+    void testEmptyEntityContainerServiceIsSkipped(VertxTestContext testContext) {
+        requestMetadata("io.neonbee.handler.empty.EmptyContainerService")
+                .compose(emptyResp -> {
+                    testContext.verify(() -> assertThat(emptyResp.statusCode()).isEqualTo(HTTP_NOT_FOUND));
+                    return requestMetadata("io.neonbee.handler.TestService");
+                })
+                .onComplete(testContext.succeeding(validResp -> {
+                    testContext.verify(() -> {
+                        assertThat(validResp.statusCode()).isEqualTo(200);
+                        assertThat(validResp.body().toString()).contains("<edmx:Edmx");
+                    });
+                    testContext.completeNow();
+                }));
     }
 
     @Test

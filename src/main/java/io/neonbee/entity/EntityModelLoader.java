@@ -216,7 +216,12 @@ class EntityModelLoader {
             return Future.all(EntityModelDefinition.resolveEdmxPaths(Path.of(csnFile), cdsModel).stream()
                     .map(Path::toString).map(path -> {
                         // we do not know if the path uses windows / unix path separators, try both!
-                        return FileSystemHelper.getPathFromMap(associatedModels, path);
+                        byte[] payload = FileSystemHelper.getPathFromMap(associatedModels, path);
+                        if (payload == null) {
+                            LOGGER.warn("Associated model {} not found in associatedModels map (keys={})", path,
+                                    associatedModels.keySet());
+                        }
+                        return payload;
                     }).map(this::parseEdmxModel).toList()).onComplete(result -> {
                         if (LOGGER.isTraceEnabled()) {
                             LOGGER.trace("Parsing associated models of {} {}", csnFile,
@@ -244,6 +249,7 @@ class EntityModelLoader {
         }
 
         Map<String, ServiceMetadata> edmxMap = edmxModels.stream()
+                .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toMap(EntityModelLoader::getSchemaNamespace, Function.identity()));
         if (models.put(namespace, EntityModel.of(cdsModel, edmxMap)) != null) {
             LOGGER.warn("Model with schema namespace {} replaced an existing model in the model map", namespace);
