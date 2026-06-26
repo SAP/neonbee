@@ -268,6 +268,14 @@ public class ODataV4Endpoint implements Endpoint {
             models.values().stream()
                     .filter(this::filterModels)
                     .flatMap(entityModel -> entityModel.getAllEdmxMetadata().entrySet().stream())
+                    .filter(entry -> {
+                        if (entry.getValue().getEdm().getEntityContainer() == null) {
+                            LOGGER.error("Skipping OData service endpoint for {} — EntityContainer is null",
+                                    entry.getKey());
+                            return false;
+                        }
+                        return true;
+                    })
                     .map(entryFunction(
                             (schemaNamespace, edmxModel) -> Map.entry(uriConversion.apply(schemaNamespace), edmxModel)))
                     .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(String::length).reversed()))

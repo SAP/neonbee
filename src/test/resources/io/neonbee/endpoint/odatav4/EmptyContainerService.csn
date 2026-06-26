@@ -1,0 +1,12 @@
+{
+  "namespace": "io.neonbee.handler.empty",
+  "definitions": {
+    "io.neonbee.handler.empty.EmptyContainerService": {
+      "kind": "service"
+    }
+  },
+  "meta": {
+    "creator": "CDS Compiler v1.26.2"
+  },
+  "$version": "1.0"
+}
