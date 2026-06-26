@@ -270,8 +270,10 @@ public class ODataV4Endpoint implements Endpoint {
                     .flatMap(entityModel -> entityModel.getAllEdmxMetadata().entrySet().stream())
                     .filter(entry -> {
                         if (entry.getValue().getEdm().getEntityContainer() == null) {
-                            LOGGER.error("Skipping OData service endpoint for {} — EntityContainer is null",
-                                    entry.getKey());
+                            if (LOGGER.isErrorEnabled()) {
+                                LOGGER.error("Skipping OData service endpoint for {} — EntityContainer is null",
+                                        entry.getKey());
+                            }
                             return false;
                         }
                         return true;

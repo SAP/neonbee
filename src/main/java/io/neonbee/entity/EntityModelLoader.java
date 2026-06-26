@@ -217,7 +217,7 @@ class EntityModelLoader {
                     .map(Path::toString).map(path -> {
                         // we do not know if the path uses windows / unix path separators, try both!
                         byte[] payload = FileSystemHelper.getPathFromMap(associatedModels, path);
-                        if (payload == null) {
+                        if (payload == null && LOGGER.isWarnEnabled()) {
                             LOGGER.warn("Associated model {} not found in associatedModels map (keys={})", path,
                                     associatedModels.keySet());
                         }
