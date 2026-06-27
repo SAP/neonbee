@@ -100,6 +100,11 @@ public class NeonBeeConfigConverter {
                     obj.setJsonMaxStringSize(((Number) member.getValue()).intValue());
                 }
                 break;
+            case "eventBusLargePayloadThreshold":
+                if (member.getValue() instanceof Number) {
+                    obj.setEventBusLargePayloadThreshold(((Number) member.getValue()).intValue());
+                }
+                break;
             }
         }
     }
@@ -151,5 +156,6 @@ public class NeonBeeConfigConverter {
             json.put("micrometerRegistries", array);
         }
         json.put("jsonMaxStringSize", obj.getJsonMaxStringSize());
+        json.put("eventBusLargePayloadThreshold", obj.getEventBusLargePayloadThreshold());
     }
 }
