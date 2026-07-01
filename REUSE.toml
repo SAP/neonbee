@@ -1,0 +1,46 @@
+version = 1
+SPDX-PackageName = "NeonBee"
+SPDX-PackageSupplier = "NeonBee <info@neonbee.io>"
+SPDX-PackageDownloadLocation = "https://github.com/SAP/NeonBee"
+
+[[annotations]]
+path = "src/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2019 SAP SE or an SAP affiliate company and NeonBee contributors"
+SPDX-License-Identifier = "EPL-2.0"
+
+[[annotations]]
+path = "docs/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2019 SAP SE or an SAP affiliate company and NeonBee contributors"
+SPDX-License-Identifier = "EPL-2.0"
+
+[[annotations]]
+path = "**.md"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2019 SAP SE or an SAP affiliate company and NeonBee contributors"
+SPDX-License-Identifier = "EPL-2.0"
+
+[[annotations]]
+path = ["Dockerfile", "gradle.properties", "**.gradle", "gradle/spotless/**", "gradle/pmd/**", "gradle/checkstyle/**", "gradle/findbugs/**", "gradle/gitlog/**", "gradle/release.sh", ".github/**", "publishToMaven.sh", "CHANGELOG.**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2019 SAP SE or an SAP affiliate company and NeonBee contributors"
+SPDX-License-Identifier = "EPL-2.0"
+
+[[annotations]]
+path = ["gradle/wrapper/**", "gradlew", "gradlew.bat"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Gradle Inc. 2020"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "resources/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2019 SAP SE or an SAP affiliate company and NeonBee contributors"
+SPDX-License-Identifier = "EPL-2.0"
+
+[[annotations]]
+path = [".editorconfig", ".gitignore", ".gitattributes", ".dockerignore", ".vscode/settings.json"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2019 SAP SE or an SAP affiliate company and NeonBee contributors"
+SPDX-License-Identifier = "CC0-1.0"
