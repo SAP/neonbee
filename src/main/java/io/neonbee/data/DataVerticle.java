@@ -23,7 +23,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,6 +54,8 @@ import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.JsonObject;
@@ -80,6 +84,12 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
     static final String RESOLUTION_STRATEGY_HEADER = "resolutionStrategy";
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
+
+    /**
+     * Private verticles are those verticles not being exposed over the cluster event bus. To denounce a verticle as
+     * "private" the name of the verticle has to start with a hash sign # after the namespace part
+     */
+    private static final Predicate<String> IS_PRIVATE_VERTICLE = Pattern.compile("(?:^|/)(?!.*/)#").asMatchPredicate();
 
     private static final String SUCCEEDED_RESPONSE_COUNT = "succeeded response count";
 
@@ -398,74 +408,13 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
     public void start(Promise<Void> promise) {
         Promise<Void> registerDataVerticlePromise = Promise.promise();
 
+        EventBus eventBus = vertx.eventBus();
         String address = getAddress();
-        /*
-         * Event bus inbound message handling.
-         */
-        vertx.eventBus().<DataQuery>consumer(address, message -> {
-            ResolutionRoutine routine;
-            MultiMap headers = message.headers();
-            try {
-                // important: this is the first time message.body() is called and thus, in case it is a clustered
-                // message, Vert.x will try to decode the message from wire. we need to catch exceptions here!
-                routine = message.body().getAction() == READ
-                        ? resolutionRoutineForStrategy(Optional.ofNullable(headers.get(RESOLUTION_STRATEGY_HEADER))
-                                .map(ResolutionStrategy::valueOf).orElse(RECURSIVE))
-                        : new ManipulationRoutine();
-            } catch (IllegalArgumentException e) {
-                message.fail(FAILURE_CODE_UNKNOWN_STRATEGY, "Unknown data resolution strategy");
-                return;
-            } catch (Exception e) {
-                message.fail(FAILURE_CODE_DECODE_EXCEPTION, "Decoding of message body failed. " + e.getMessage());
-                return;
-            }
 
-            DataContext context = decodeContextFromString(headers.get(CONTEXT_HEADER));
-            if (context instanceof DataContextImpl) {
-                // the sender of the message can't know the deployment ID of the receiving verticle, so add it here!
-                ((DataContextImpl) context).amendTopVerticleCoordinate(deploymentID());
-            }
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.correlateWith(context).debug(
-                        "Data verticle {} received event bus message from {}, using resolution routine {}",
-                        getQualifiedName(), message.replyAddress(), routine.getClass().getSimpleName());
-            }
-
-            try {
-                routine.execute(message.body(), context).onComplete(asyncResult -> {
-                    try {
-                        if (asyncResult.succeeded()) {
-                            message.reply(asyncResult.result(), deliveryOptions(vertx, getMessageCodec(), context));
-
-                        } else {
-                            Throwable cause = asyncResult.cause();
-                            if (LOGGER.isWarnEnabled()) {
-                                LOGGER.correlateWith(context).warn("Data verticle {} routine execution failed",
-                                        getQualifiedName(), cause instanceof DataException ? cause.toString() : EMPTY,
-                                        cause);
-                            }
-
-                            if (cause instanceof DataException) {
-                                message.reply(cause);
-                            } else {
-                                message.fail(FAILURE_CODE_PROCESSING_FAILED,
-                                        "Processing of message failed. " + cause.getMessage());
-                            }
-                        }
-                    } catch (Exception e) {
-                        LOGGER.correlateWith(context).error("Processing of message failed", e);
-                        message.fail(FAILURE_CODE_PROCESSING_FAILED, e.getMessage());
-                    }
-                });
-            } catch (IllegalArgumentException e) {
-                LOGGER.correlateWith(context).error("Missing message codec", e);
-                message.fail(FAILURE_CODE_MISSING_MESSAGE_CODEC, e.getMessage());
-            } catch (DataException e) {
-                // the routine can either fail the future, or throw the DataException, if so propagate the failure
-                LOGGER.correlateWith(context).error("Processing of message failed", e);
-                message.fail(e.failureCode(), e.getMessage());
-            }
-        }).completion().onComplete(registerDataVerticlePromise);
+        // event bus inbound message handling
+        (IS_PRIVATE_VERTICLE.test(getQualifiedName()) ? eventBus.<DataQuery>localConsumer(address, this::handleMessage)
+                : eventBus.<DataQuery>consumer(address, this::handleMessage)).completion()
+                        .onComplete(registerDataVerticlePromise);
 
         registerDataVerticlePromise.future().compose(v -> {
             try {
@@ -476,6 +425,76 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
                 return failedFuture(e);
             }
         }).onComplete(promise);
+    }
+
+    /**
+     * Event bus inbound message handling.
+     *
+     * @param message the data query received via the event bus
+     */
+    private void handleMessage(Message<DataQuery> message) {
+        ResolutionRoutine routine;
+        MultiMap headers = message.headers();
+        try {
+            // important: this is the first time message.body() is called and thus, in case it is a clustered
+            // message, Vert.x will try to decode the message from wire. we need to catch exceptions here!
+            routine = message.body().getAction() == READ
+                    ? resolutionRoutineForStrategy(Optional.ofNullable(headers.get(RESOLUTION_STRATEGY_HEADER))
+                            .map(ResolutionStrategy::valueOf).orElse(RECURSIVE))
+                    : new ManipulationRoutine();
+        } catch (IllegalArgumentException e) {
+            message.fail(FAILURE_CODE_UNKNOWN_STRATEGY, "Unknown data resolution strategy");
+            return;
+        } catch (Exception e) {
+            message.fail(FAILURE_CODE_DECODE_EXCEPTION, "Decoding of message body failed. " + e.getMessage());
+            return;
+        }
+
+        DataContext context = decodeContextFromString(headers.get(CONTEXT_HEADER));
+        if (context instanceof DataContextImpl) {
+            // the sender of the message can't know the deployment ID of the receiving verticle, so add it here!
+            ((DataContextImpl) context).amendTopVerticleCoordinate(deploymentID());
+        }
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.correlateWith(context).debug(
+                    "Data verticle {} received event bus message from {}, using resolution routine {}",
+                    getQualifiedName(), message.replyAddress(), routine.getClass().getSimpleName());
+        }
+
+        try {
+            routine.execute(message.body(), context).onComplete(asyncResult -> {
+                try {
+                    if (asyncResult.succeeded()) {
+                        message.reply(asyncResult.result(), deliveryOptions(vertx, getMessageCodec(), context));
+
+                    } else {
+                        Throwable cause = asyncResult.cause();
+                        if (LOGGER.isWarnEnabled()) {
+                            LOGGER.correlateWith(context).warn("Data verticle {} routine execution failed",
+                                    getQualifiedName(), cause instanceof DataException ? cause.toString() : EMPTY,
+                                    cause);
+                        }
+
+                        if (cause instanceof DataException) {
+                            message.reply(cause);
+                        } else {
+                            message.fail(FAILURE_CODE_PROCESSING_FAILED,
+                                    "Processing of message failed. " + cause.getMessage());
+                        }
+                    }
+                } catch (Exception e) {
+                    LOGGER.correlateWith(context).error("Processing of message failed", e);
+                    message.fail(FAILURE_CODE_PROCESSING_FAILED, e.getMessage());
+                }
+            });
+        } catch (IllegalArgumentException e) {
+            LOGGER.correlateWith(context).error("Missing message codec", e);
+            message.fail(FAILURE_CODE_MISSING_MESSAGE_CODEC, e.getMessage());
+        } catch (DataException e) {
+            // the routine can either fail the future, or throw the DataException, if so propagate the failure
+            LOGGER.correlateWith(context).error("Processing of message failed", e);
+            message.fail(e.failureCode(), e.getMessage());
+        }
     }
 
     @Override
