@@ -89,7 +89,7 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
      * Private verticles are those verticles not being exposed over the cluster event bus. To denounce a verticle as
      * "private" the name of the verticle has to start with a hash sign # after the namespace part
      */
-    private static final Predicate<String> IS_PRIVATE_VERTICLE = Pattern.compile("(?:^|/)(?!.*/)#").asMatchPredicate();
+    private static final Predicate<String> IS_PRIVATE_VERTICLE = Pattern.compile("(?:^|/)(?!.*/)#").asPredicate();
 
     private static final String SUCCEEDED_RESPONSE_COUNT = "succeeded response count";
 
