@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -62,7 +63,7 @@ public class RawEndpoint implements Endpoint {
      * the name of the verticle has to start with an underscore _ after the namespace part. In the default configuration
      * of the raw endpoint the "exposeHiddenVerticles" parameter is set to {@code false}.
      */
-    private static final Pattern HIDDEN_VERTICLES_PATTERN = Pattern.compile("(?:^|/)(?!.*/)_");
+    private static final Predicate<String> IS_HIDDEN_VERTICLE = Pattern.compile("(?:^|/)(?!.*/)_").asPredicate();
 
     @Override
     public EndpointConfig getDefaultConfig() {
@@ -117,7 +118,7 @@ public class RawEndpoint implements Endpoint {
                 routingContext.fail(BAD_REQUEST.code(),
                         new IllegalArgumentException("Missing the full qualified verticle name"));
                 return;
-            } else if ((!exposeHiddenVerticles && HIDDEN_VERTICLES_PATTERN.matcher(qualifiedName).find())
+            } else if ((!exposeHiddenVerticles && IS_HIDDEN_VERTICLE.test(qualifiedName))
                     || !exposedVerticles.isAllowed(qualifiedName)) {
                 // do not even start looking for a verticle, as the vert as _ verticle are not exposed publicly!
                 routingContext.fail(NOT_FOUND.code());
