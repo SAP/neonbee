@@ -18,6 +18,12 @@ public class NeonBeeConfigConverter {
                             new io.neonbee.config.MetricsConfig((io.vertx.core.json.JsonObject) member.getValue()));
                 }
                 break;
+            case "tracingConfig":
+                if (member.getValue() instanceof JsonObject) {
+                    obj.setTracingConfig(
+                            new io.neonbee.config.TracingConfig((io.vertx.core.json.JsonObject) member.getValue()));
+                }
+                break;
             case "healthConfig":
                 if (member.getValue() instanceof JsonObject) {
                     obj.setHealthConfig(
@@ -111,6 +117,9 @@ public class NeonBeeConfigConverter {
     static void toJson(NeonBeeConfig obj, java.util.Map<String, Object> json) {
         if (obj.getMetricsConfig() != null) {
             json.put("metricsConfig", obj.getMetricsConfig().toJson());
+        }
+        if (obj.getTracingConfig() != null) {
+            json.put("tracingConfig", obj.getTracingConfig().toJson());
         }
         if (obj.getHealthConfig() != null) {
             json.put("healthConfig", obj.getHealthConfig().toJson());

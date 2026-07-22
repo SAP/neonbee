@@ -70,7 +70,7 @@ public class NeonBeeConfig {
     public static final String DEFAULT_TIME_ZONE = "UTC";
 
     private static final ImmutableBiMap<String, String> REPHRASE_MAP =
-            ImmutableBiMap.of("healthConfig", "health", "metricsConfig", "metrics");
+            ImmutableBiMap.of("healthConfig", "health", "metricsConfig", "metrics", "tracingConfig", "tracing");
 
     private int eventBusTimeout = DEFAULT_EVENT_BUS_TIMEOUT;
 
@@ -98,6 +98,8 @@ public class NeonBeeConfig {
 
     private MetricsConfig metricsConfig = new MetricsConfig();
 
+    private TracingConfig tracingConfig = new TracingConfig();
+
     private int jsonMaxStringSize;
 
     /**
@@ -118,6 +120,27 @@ public class NeonBeeConfig {
     @Fluent
     public NeonBeeConfig setMetricsConfig(MetricsConfig metricsConfig) {
         this.metricsConfig = metricsConfig;
+        return this;
+    }
+
+    /**
+     * Gets the tracing config.
+     *
+     * @return the {@link TracingConfig}
+     */
+    public TracingConfig getTracingConfig() {
+        return tracingConfig;
+    }
+
+    /**
+     * Sets the tracing config.
+     *
+     * @param tracingConfig the tracing config to set
+     * @return the {@linkplain NeonBeeConfig} for fluent use
+     */
+    @Fluent
+    public NeonBeeConfig setTracingConfig(TracingConfig tracingConfig) {
+        this.tracingConfig = tracingConfig;
         return this;
     }
 

@@ -179,6 +179,30 @@ class NeonBeeConfigTest extends NeonBeeTestBase {
     }
 
     @Test
+    @DisplayName("should read the tracing config correctly")
+    void testReadTracingConfig() {
+        NeonBeeConfig config =
+                new NeonBeeConfig(new JsonObject().put("tracing", new JsonObject().put("enabled", true)));
+        assertThat(config.getTracingConfig().isEnabled()).isTrue();
+    }
+
+    @Test
+    @DisplayName("should create the tracing config JSON correctly")
+    void testTracingConfigToJson() {
+        NeonBeeConfig config = new NeonBeeConfig();
+        config.getTracingConfig().setEnabled(true).setOtlpEndpoint("http://localhost:4317");
+        JsonObject actual = config.toJson();
+        assertThat(actual.getJsonObject("tracing").getBoolean("enabled")).isTrue();
+        assertThat(actual.getJsonObject("tracing").getString("otlpEndpoint")).isEqualTo("http://localhost:4317");
+    }
+
+    @Test
+    @DisplayName("tracing should be disabled by default")
+    void testTracingDefaultDisabled() {
+        assertThat(new NeonBeeConfig().getTracingConfig().isEnabled()).isFalse();
+    }
+
+    @Test
     @DisplayName("should have the correct default values")
     void testDefaultValues() {
         NeonBeeConfig defaultConfig = new NeonBeeConfig();
