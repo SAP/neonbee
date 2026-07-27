@@ -1,6 +1,5 @@
 package io.neonbee.entity;
 
-import static io.neonbee.entity.EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS;
 import static io.neonbee.entity.EntityModelManager.getBufferedOData;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.internal.verticle.ConsolidationVerticle.ENTITY_TYPE_NAME_HEADER;
@@ -8,7 +7,6 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,14 +22,12 @@ import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
-import io.neonbee.internal.Registry;
-import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
+import io.vertx.core.eventbus.DeliveryOptions;
 
 /**
  * This verticle is an intermediary layer between {@link DataVerticle} and {@link EntityVerticle}, which supports
@@ -45,12 +41,16 @@ import io.vertx.core.json.JsonArray;
 public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
 
     /**
-     * Name for the {@link WriteSafeRegistry}.
+     * Name for the entity verticle registry.
+     *
+     * @deprecated The entity verticle registry is no longer used. Entity verticles register themselves as standard
+     *             Vert.x event bus consumers at {@code EntityVerticle[<FQN>]} on startup.
      */
+    @Deprecated
     public static final String REGISTRY_NAME = "EntityVerticleRegistry";
 
     @VisibleForTesting
-    static final String SHARED_ENTITY_MAP_NAME = "entityVerticles[%s]";
+    static final String SHARED_ENTITY_MAP_NAME = "EntityVerticle[%s]";
 
     @VisibleForTesting
     static final int SERVICE_NAMESPACE_GROUP = 1;
@@ -175,12 +175,7 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
      * @return A list of all (entity) verticle names as qualified names
      */
     public static Future<List<String>> getVerticlesForEntityType(Vertx vertx, FullQualifiedName entityTypeName) {
-        return Future
-                .future(asyncGet -> getRegistry(vertx).get(sharedEntityMapName(entityTypeName))
-                        .onSuccess(asyncGet::complete).onFailure(asyncGet::fail))
-                .map(qualifiedNames -> ((List<?>) Optional.ofNullable((JsonArray) qualifiedNames)
-                        .orElseGet(JsonArray::new).getList()).stream().map(Object::toString).distinct()
-                                .toList());
+        return succeededFuture(List.of(sharedEntityMapName(entityTypeName)));
     }
 
     /**
@@ -224,14 +219,8 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
      */
     @Override
     public void start(Promise<Void> promise) {
-        vertx.eventBus().consumer(EVENT_BUS_MODELS_LOADED_ADDRESS,
-                message -> announceEntityVerticle(vertx).onFailure(throwable -> {
-                    if (LOGGER.isErrorEnabled()) {
-                        LOGGER.error("Updating announcements of entity verticle {} failed", getQualifiedName(),
-                                throwable);
-                    }
-                }));
-        announceEntityVerticle(vertx).compose(nothing -> Future.<Void>future(super::start))
+        Future.<Void>future(super::start)
+                .compose(nothing -> registerEntityTypeConsumers())
                 .onSuccess(nothing -> {
                     if (LOGGER.isInfoEnabled()) {
                         LOGGER.info("Entity verticle {} is listening on event bus address {}",
@@ -240,26 +229,24 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
                 }).onComplete(promise);
     }
 
-    /**
-     * Announces that this EntityVerticle is handling certain {@link #entityTypeNames()} to the rest of the cluster by
-     * adding the EntityTypes to a shared map in a secure and cluster-wide thread safe manner.
-     */
-    private Future<Void> announceEntityVerticle(Vertx vertx) {
-        // in case this entity verticle does not listen to any entityTypeNames, do not add it to the shared map
+    private Future<Void> registerEntityTypeConsumers() {
         return entityTypeNames()
-                .map(entityTypeNames -> entityTypeNames != null ? entityTypeNames : Set.<FullQualifiedName>of())
-                .compose(entityTypeNames -> {
-                    List<Future<Void>> announceFutures =
-                            entityTypeNames.stream().map(AbstractEntityVerticle::sharedEntityMapName).map(name -> {
-                                String qualifiedName = getQualifiedName();
-                                return getRegistry(vertx).register(name, qualifiedName);
-                            }).toList();
-                    return Future.all(announceFutures).mapEmpty();
+                .map(names -> names != null ? names : Set.<FullQualifiedName>of())
+                .compose(names -> {
+                    String ownAddress = getAddress();
+                    List<Future<Void>> registrations = names.stream().map(fqn -> {
+                        String fqnAddress = sharedEntityMapName(fqn);
+                        return vertx.eventBus().<DataQuery>consumer(fqnAddress,
+                                msg -> vertx.eventBus().request(ownAddress, msg.body(),
+                                        new DeliveryOptions().setHeaders(msg.headers()))
+                                        .onSuccess(reply -> msg.reply(reply.body(),
+                                                new DeliveryOptions().setHeaders(reply.headers())))
+                                        .onFailure(err -> msg.fail(0, err.getMessage())))
+                                .completion()
+                                .<Void>mapEmpty();
+                    }).toList();
+                    return Future.all(registrations).mapEmpty();
                 });
-    }
-
-    private static Registry<String> getRegistry(Vertx vertx) {
-        return NeonBee.get(vertx).getEntityRegistry();
     }
 
     /**

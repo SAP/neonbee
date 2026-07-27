@@ -13,6 +13,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
+@SuppressWarnings("deprecation")
 class ClusterEntityRegistryTest {
 
     private static final String REGISTRY_NAME = "CLUSTER_REGISTRY_NAME";

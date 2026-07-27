@@ -226,6 +226,9 @@ public abstract class DataVerticle<T> extends AbstractVerticle implements DataAd
      * @return A unique event bus address
      */
     protected static String getAddress(String qualifiedName) {
+        if (qualifiedName != null && qualifiedName.matches("^.+\\[.+\\]$")) {
+            return qualifiedName;
+        }
         return String.format("%s[%s]", DataVerticle.class.getSimpleName(), qualifiedName);
     }
 

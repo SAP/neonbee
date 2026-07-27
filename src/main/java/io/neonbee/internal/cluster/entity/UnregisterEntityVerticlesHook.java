@@ -18,7 +18,11 @@ import io.vertx.core.Vertx;
 
 /**
  * Hooks for unregistering verticle models.
+ *
+ * @deprecated Entity verticles now register themselves as standard Vert.x event bus consumers. Cleanup on pod death is
+ *             handled natively by the Vert.x cluster event bus, making this hook obsolete.
  */
+@Deprecated
 public class UnregisterEntityVerticlesHook {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(

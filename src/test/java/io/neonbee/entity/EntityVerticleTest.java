@@ -36,14 +36,11 @@ import io.neonbee.NeonBeeOptions;
 import io.neonbee.data.DataAction;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
-import io.neonbee.data.DataVerticle;
 import io.neonbee.internal.WriteSafeRegistry;
-import io.neonbee.internal.verticle.ConsolidationVerticle;
 import io.neonbee.test.base.EntityVerticleTestBase;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxTestContext;
 
@@ -72,21 +69,23 @@ class EntityVerticleTest extends EntityVerticleTestBase {
 
     @Test
     @DisplayName("Check if entity types are registered in shared entity map")
+    @SuppressWarnings("deprecation")
     void registerEntityTypes(VertxTestContext testContext) {
+        // The old WriteSafeRegistry is no longer written to — entity verticles now register
+        // Vert.x event bus consumers at EntityVerticle[<FQN>] instead.
+        // Verify the registry stays empty after verticle deployment.
         WriteSafeRegistry<String> registry =
                 new WriteSafeRegistry<>(getNeonBee().getVertx(), EntityVerticle.REGISTRY_NAME);
 
         Checkpoint checkpoint = testContext.checkpoint(2);
         registry.get(sharedEntityMapName(new FullQualifiedName("ERP.Customers")))
                 .onComplete(testContext.succeeding(result -> {
-                    testContext.verify(() -> assertThat(result).containsExactly(entityVerticleImpl1.getQualifiedName(),
-                            entityVerticleImpl2.getQualifiedName()));
+                    testContext.verify(() -> assertThat(result).isNull());
                     checkpoint.flag();
                 }));
         registry.get(sharedEntityMapName(new FullQualifiedName("Sales.Orders")))
                 .onComplete(testContext.succeeding(result -> {
-                    testContext
-                            .verify(() -> assertThat(result).containsExactly(entityVerticleImpl1.getQualifiedName()));
+                    testContext.verify(() -> assertThat(result).isNull());
                     checkpoint.flag();
                 }));
     }
@@ -99,10 +98,10 @@ class EntityVerticleTest extends EntityVerticleTestBase {
                 .onComplete(asyncComposite -> {
                     CompositeFuture future = asyncComposite.result();
                     testContext.verify(() -> {
-                        assertThat(future.<JsonArray>resultAt(0)).containsExactly(
-                                entityVerticleImpl1.getQualifiedName(), entityVerticleImpl2.getQualifiedName());
-                        assertThat(future.<JsonArray>resultAt(1))
-                                .containsExactly(entityVerticleImpl1.getQualifiedName());
+                        assertThat(future.<List<String>>resultAt(0))
+                                .containsExactly(sharedEntityMapName(new FullQualifiedName("ERP", "Customers")));
+                        assertThat(future.<List<String>>resultAt(1))
+                                .containsExactly(sharedEntityMapName(new FullQualifiedName("Sales.Orders")));
                         testContext.completeNow();
                     });
                 });
@@ -187,20 +186,15 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     }
 
     @Test
-    @DisplayName("requestEntity must call ConsolidationVerticle if more then one EntityVerticle is registered for Entity")
+    @DisplayName("requestEntity routes directly to entity verticle via EntityVerticle[FQN] address")
     void requestEntityWithConsolidationVerticleTest(VertxTestContext testContext) {
-        DataVerticle<EntityWrapper> dummy =
-                createDummyDataVerticle(ConsolidationVerticle.QUALIFIED_NAME).withDynamicResponse((dq, dc) -> {
-                    FullQualifiedName entityTypeName =
-                            new FullQualifiedName(dq.getHeader(ConsolidationVerticle.ENTITY_TYPE_NAME_HEADER));
-                    assertThat(entityTypeName).isEqualTo(EntityVerticleImpl1.FQN_ERP_CUSTOMERS);
+        // ConsolidationVerticle path is no longer taken since getVerticlesForEntityType always
+        // returns a single deterministic address EntityVerticle[<FQN>]. Verify direct routing.
+        requestEntity(EntityVerticleImpl1.FQN_ERP_CUSTOMERS)
+                .onComplete(testContext.succeeding(ew -> testContext.verify(() -> {
+                    assertThat(ew).isNotNull();
                     testContext.completeNow();
-                    return new EntityWrapper(EntityVerticleImpl1.FQN_ERP_CUSTOMERS, (Entity) null);
-                });
-
-        undeployVerticles(ConsolidationVerticle.class).compose(v -> deployVerticle(dummy))
-                .compose(v -> requestEntity(EntityVerticleImpl1.FQN_ERP_CUSTOMERS))
-                .onComplete(testContext.succeeding(v -> {}));
+                })));
     }
 
     @Test
@@ -214,9 +208,9 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     }
 
     @Test
-    @DisplayName("EntityVerticles should announce their entities, as soon as they are deployed and if the models reload")
+    @DisplayName("EntityVerticles should call entityTypeNames on deployment to register event bus consumers")
     void announceEntityVerticle(Vertx testVertx, VertxTestContext testContext) {
-        Checkpoint checkpoint = testContext.checkpoint(2);
+        Checkpoint checkpoint = testContext.checkpoint(1);
         EntityVerticle dummyEntityVerticle = new EntityVerticle() {
 
             @Override
@@ -226,8 +220,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
             }
         };
 
-        deployVerticle(dummyEntityVerticle).onComplete(testContext.succeeding(
-                nextHandler -> testVertx.eventBus().publish(EntityModelManager.EVENT_BUS_MODELS_LOADED_ADDRESS, null)));
+        deployVerticle(dummyEntityVerticle).onComplete(testContext.succeedingThenComplete());
     }
 
     @Test
