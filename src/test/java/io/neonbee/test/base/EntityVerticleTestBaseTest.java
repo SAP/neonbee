@@ -43,9 +43,12 @@ class EntityVerticleTestBaseTest extends EntityVerticleTestBase {
     @Test
     @DisplayName("test the deployment of two dummy EntityVerticles serving the same entity")
     void testDeployDummyEntityVerticlesTwice(VertxTestContext context) {
+        // With the new event bus consumer approach, getVerticlesForEntityType returns a single
+        // deterministic address EntityVerticle[<FQN>]. ConsolidationVerticle is no longer used,
+        // so one of the two registered consumers handles the request (1 entity returned).
         deployVerticle(firstCustomerEV).compose(x -> deployVerticle(secondCustomerEV))
                 .compose(x -> requestEntity(CUSTOMER)).onSuccess(entityWrapper -> context.verify(() -> {
-                    assertThat(entityWrapper.getEntities()).hasSize(2);
+                    assertThat(entityWrapper.getEntities()).hasSize(1);
                     context.completeNow();
                 })).onFailure(context::failNow);
     }

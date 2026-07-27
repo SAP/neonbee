@@ -29,7 +29,12 @@ import io.vertx.core.shareddata.AsyncMap;
  *     "entityName": "key"
  * }
  * </pre>
+ *
+ * @deprecated Entity verticles now register themselves as standard Vert.x event bus consumers at
+ *             {@code EntityVerticle[<FQN>]}, making this registry obsolete. Cluster-wide consumer discovery and cleanup
+ *             on pod death is handled natively by the Vert.x cluster event bus.
  */
+@Deprecated
 public class ClusterEntityRegistry implements Registry<String> {
 
     /**

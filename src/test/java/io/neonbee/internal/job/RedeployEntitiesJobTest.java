@@ -1,6 +1,5 @@
 package io.neonbee.internal.job;
 
-import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.NeonBeeInstanceConfiguration.ClusterManager.INFINISPAN;
 import static io.neonbee.NeonBeeProfile.ALL;
 import static io.vertx.core.Future.succeededFuture;
@@ -10,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
@@ -33,19 +31,15 @@ import io.neonbee.data.DataContext;
 import io.neonbee.data.DataQuery;
 import io.neonbee.entity.EntityVerticle;
 import io.neonbee.entity.EntityWrapper;
-import io.neonbee.internal.Registry;
-import io.neonbee.internal.cluster.ClusterHelper;
-import io.neonbee.internal.cluster.entity.ClusterEntityRegistry;
 import io.neonbee.test.helper.FileSystemHelper;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
-import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(NeonBeeExtension.class)
 @Isolated
+@SuppressWarnings("deprecation")
 class RedeployEntitiesJobTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(RedeployEntitiesJobTest.class);
 
@@ -103,6 +97,8 @@ class RedeployEntitiesJobTest {
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = { ALL },
                     clusterManager = INFINISPAN) NeonBee node2,
             VertxTestContext testContext) {
+        // RedeployEntitiesJob is deprecated — the ClusterEntityRegistry is never written to,
+        // so the job always skips reconciliation. Verify it completes successfully as a no-op.
         ((NeonBeeOptions.Mutable) node1.getOptions()).setDisableJobScheduling(false);
 
         class RedeployEntitiesTestJob extends RedeployEntitiesJob {
@@ -110,26 +106,7 @@ class RedeployEntitiesJobTest {
             @Override
             public Future<?> execute(DataContext context) {
                 return super.execute(context)
-                        .compose(o -> {
-                            Registry<String> entityRegistry = node1.getEntityRegistry();
-                            ClusterEntityRegistry clusterEntityRegistry = ((ClusterEntityRegistry) entityRegistry);
-                            return clusterEntityRegistry
-                                    .getClusteringInformation(ClusterHelper.getClusterNodeId(vertx));
-                        })
-                        .onSuccess(clusteringInformation -> testContext.verify(() -> {
-                            assertThat(clusteringInformation).isNotNull();
-                            assertThat(clusteringInformation.size()).isEqualTo(6);
-                            Set<String> deployedSet = clusteringInformation.stream()
-                                    .map(o -> (JsonObject) o)
-                                    .map(jo -> jo.getString(ClusterEntityRegistry.QUALIFIED_NAME_KEY))
-                                    .map(s -> s.replaceAll("-\\d*", ""))
-                                    .collect(Collectors.toSet());
-                            assertThat(deployedSet).containsExactly(
-                                    "neonbee/_" + TestEntityVerticle1.class.getSimpleName(),
-                                    "neonbee/_" + TestEntityVerticle2.class.getSimpleName(),
-                                    "neonbee/_" + TestEntityVerticle3.class.getSimpleName());
-                            testContext.completeNow();
-                        }))
+                        .onSuccess(o -> testContext.completeNow())
                         .onFailure(testContext::failNow);
             }
 
@@ -145,13 +122,7 @@ class RedeployEntitiesJobTest {
         }
 
         node1.getVertx()
-                .deployVerticle(new TestEntityVerticle1(), new DeploymentOptions())
-                .compose(s -> {
-                    Promise<Object> promise = Promise.promise();
-                    node1.getVertx().setTimer(1000, event -> promise.complete());
-                    return promise.future();
-                })
-                .compose(s -> node1.getVertx().deployVerticle(new RedeployEntitiesTestJob(), new DeploymentOptions()))
+                .deployVerticle(new RedeployEntitiesTestJob(), new DeploymentOptions())
                 .onFailure(testContext::failNow);
     }
 }

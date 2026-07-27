@@ -36,7 +36,12 @@ import io.vertx.core.json.JsonObject;
 
 /**
  * A job that redeploys all entity verticles that are not deployed in the cluster.
+ *
+ * @deprecated Entity verticles now register themselves as standard Vert.x event bus consumers at
+ *             {@code EntityVerticle[<FQN>]} on startup. The {@link ClusterEntityRegistry} is no longer written to, so
+ *             this job always finds no missing entities and is a no-op.
  */
+@Deprecated
 @NeonBeeDeployable(namespace = NeonBeeDeployable.NEONBEE_NAMESPACE, autoDeploy = false)
 public class RedeployEntitiesJob extends JobVerticle {
 

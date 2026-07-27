@@ -190,6 +190,7 @@ public class NeonBee {
 
     private final EntityModelManager modelManager;
 
+    @Deprecated
     private final Registry<String> entityRegistry;
 
     private final CompositeMeterRegistry compositeMeterRegistry;
@@ -612,15 +613,12 @@ public class NeonBee {
         });
     }
 
-    private Future<Optional<? extends Deployable>> deployableRedeployEntitiesJobVerticle(NeonBeeOptions options) {
-        if (!options.shouldRedeployEntities()) {
-            return succeededFuture(Optional.empty());
-        }
-
-        return ConfigHelper.readConfig(vertx, RedeployEntitiesJob.class.getName())
-                .compose(config -> fromVerticle(vertx, RedeployEntitiesJob.create(config)))
-                .recover(notFound(() -> fromVerticle(vertx, new RedeployEntitiesJob())))
-                .map(Optional::of);
+    @SuppressWarnings("deprecation")
+    private Future<Optional<? extends Deployable>> deployableRedeployEntitiesJobVerticle(
+            @SuppressWarnings("unused") NeonBeeOptions options) {
+        // RedeployEntitiesJob is deprecated — entity verticles register themselves as Vert.x event bus
+        // consumers on startup and no longer use ClusterEntityRegistry. The job is always a no-op.
+        return succeededFuture(Optional.empty());
     }
 
     /**
@@ -679,6 +677,7 @@ public class NeonBee {
     }
 
     @VisibleForTesting
+    @SuppressWarnings("deprecation")
     NeonBee(Vertx vertx, NeonBeeOptions options, NeonBeeConfig config, CompositeMeterRegistry compositeMeterRegistry) {
         this.vertx = vertx;
         this.options = options;
@@ -854,7 +853,10 @@ public class NeonBee {
      * Get the {@link WriteSafeRegistry} for {@link EntityVerticle}.
      *
      * @return the entity verticle {@link WriteSafeRegistry}
+     * @deprecated Entity verticles now register themselves as standard Vert.x event bus consumers. This registry is no
+     *             longer written to and will be removed in a future release.
      */
+    @Deprecated
     public Registry<String> getEntityRegistry() {
         return entityRegistry;
     }
