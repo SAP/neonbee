@@ -47,8 +47,6 @@ import io.vertx.junit5.VertxTestContext;
 class EntityVerticleTest extends EntityVerticleTestBase {
     private EntityVerticle entityVerticleImpl1;
 
-    private EntityVerticle entityVerticleImpl2;
-
     @Override
     protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
         options.addActiveProfile(NO_WEB);
@@ -62,8 +60,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     @BeforeEach
     void deployEntityVerticles(VertxTestContext testContext) {
         entityVerticleImpl1 = new EntityVerticleImpl1();
-        entityVerticleImpl2 = new EntityVerticleImpl2();
-        Future.all(deployVerticle(entityVerticleImpl1), deployVerticle(entityVerticleImpl2),
+        Future.all(deployVerticle(entityVerticleImpl1), deployVerticle(new EntityVerticleImpl2()),
                 deployVerticle(new EntityVerticleImpl3())).onComplete(testContext.succeedingThenComplete());
     }
 
