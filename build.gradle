@@ -392,8 +392,8 @@ test {
 sonarqube {
     properties {
         property 'sonar.sourceEncoding', 'UTF-8'
-        property "sonar.projectKey", "neonbee_key"
-        property "sonar.organization", "neonbee"
+        property 'sonar.organization', 'sap-1'
+        property 'sonar.projectKey', 'SAP_neonbee'
         property "sonar.host.url", "https://sonarcloud.io"
         property 'sonar.coverage.jacoco.xmlReportPaths', "${buildDir}/reports/jacoco/xml/jacoco.xml"
         property 'sonar.junit.reportPaths', "${buildDir}/reports/junit/xml"
