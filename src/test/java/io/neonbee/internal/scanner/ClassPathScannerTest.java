@@ -119,6 +119,22 @@ class ClassPathScannerTest {
     }
 
     @Test
+    @DisplayName("Should skip non-NeonBee JARs during annotation scanning")
+    void scanForAnnotationSkipsNonNeonBeeJars(Vertx vertx, VertxTestContext testContext) throws IOException {
+        BasicJar nonNeonBeeJar = new BasicJar(
+                Map.of(BasicJar.getJarEntryName("some.ThirdPartyClass"),
+                        new AnnotatedClassTemplate("ThirdPartyClass", "some")
+                                .setTypeAnnotation("@Deprecated").compileToByteCode()));
+
+        URLClassLoader urlc = new URLClassLoader(nonNeonBeeJar.writeToTempURL(), null);
+        new ClassPathScanner(urlc).scanForAnnotation(vertx, Deprecated.class)
+                .onComplete(testContext.succeeding(list -> testContext.verify(() -> {
+                    assertThat(list).isEmpty();
+                    testContext.completeNow();
+                })));
+    }
+
+    @Test
     @DisplayName("Should find classes which the class or any field or method within is annotated with a given annotation")
     void scanForAnnotation(Vertx vertx, VertxTestContext testContext) throws IOException {
         BasicJar jarWithTypeAnnotatedClass =
