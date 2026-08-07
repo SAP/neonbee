@@ -1,17 +1,46 @@
 # Changelog
 
-## 0.37.30 (2026-06-17)
+## 0.37.31 (2026-08-03)
 
 ### Bug Fixes
 
 - release(snapshot) 0.37.30-SNAPSHOT ([adc1a794](https://github.com/SAP/neonbee/commit/adc1a794f9dce2834f3f4d04b62de35ad43dc99e))
 - token fixes ([e12a78cc](https://github.com/SAP/neonbee/commit/e12a78ccc92404e5a1c37a136d50c53a49ec73a0))
+- skip OData services with null EntityContainer to prevent NPE ([fe2f0944](https://github.com/SAP/neonbee/commit/fe2f094476cb0d52b159100ce8afaef7f16b6298))
+- wrap logger calls in level guards to satisfy PMD GuardLogStatement ([9026fab0](https://github.com/SAP/neonbee/commit/9026fab05c45e8e28f3d5f8e380146bdd6fe3259))
+- update getCSNModelTest to assert on model content instead of object identity ([011bce49](https://github.com/SAP/neonbee/commit/011bce4937c7d3e3dde7a425fd841b58ac1f3187))
+- private data verticle + add test ([fe71968a](https://github.com/SAP/neonbee/commit/fe71968a68fbab8dc0fced53e95690e89485cbbf))
+- pmd ([3ce55343](https://github.com/SAP/neonbee/commit/3ce5534371e356d543e869bc856a73331e73b813))
+- sonarcloud.io fixes ([19ae8f5e](https://github.com/SAP/neonbee/commit/19ae8f5e85b6644276a5dda858b320b9fcc3595a))
+
+
+### Features
+
+- private data verticles ([951c5e4f](https://github.com/SAP/neonbee/commit/951c5e4f7ad1627dec09641d9bdd819a5d4a31ca))
+- deprecate entity verticles registry ([e761cccf](https://github.com/SAP/neonbee/commit/e761cccf9a18c208853c63d108099fe2efccc110))
+- deprecate entity verticles registry ([1515d57e](https://github.com/SAP/neonbee/commit/1515d57ef86b597283ccec2687d1ecbf5c52f473))
 
 
 ### Chores
 
 - **deps**: bump actions/setup-java in /.github/workflows ([405ae678](https://github.com/SAP/neonbee/commit/405ae678b0ad4dea9b6e9f37b680c596578b8f5c))
 - **deps**: bump com.github.spotbugs:spotbugs-annotations ([ff74dce0](https://github.com/SAP/neonbee/commit/ff74dce0066b1e464eb8d34cfcb141779244286b))
+- **deps**: bump com.diffplug.spotless from 8.6.0 to 8.8.0 ([5a55fd63](https://github.com/SAP/neonbee/commit/5a55fd638ec4a438c33fe206e125f0552e0f79da))
+- **deps**: bump sapmachine from 17.0.19 to 17.0.20 ([4110a8ac](https://github.com/SAP/neonbee/commit/4110a8ac01301fccddcc6833ae60fecb74170fc5))
+- **deps**: bump actions/checkout in /.github/workflows ([6e577bba](https://github.com/SAP/neonbee/commit/6e577bbad971202843ec90a4f4a1f289c5658574))
+- **deps**: bump net.bytebuddy:byte-buddy from 1.18.10 to 1.18.11 ([35cc466c](https://github.com/SAP/neonbee/commit/35cc466c967309cb62ff9bcc9d6f947a9e207cc1))
+- **deps**: bump com.github.spotbugs from 6.5.5 to 6.5.9 ([faa1dd58](https://github.com/SAP/neonbee/commit/faa1dd5879ae458a0964423bbba71501bd7e0698))
+- **deps**: bump com.github.spotbugs:spotbugs-annotations ([44946a03](https://github.com/SAP/neonbee/commit/44946a03ab6455efe3367891ab31174c15067ca9))
+- **deps**: bump ch.qos.logback:logback-classic from 1.5.34 to 1.6.0 ([83797036](https://github.com/SAP/neonbee/commit/8379703683c147b80d50001122650a1ee229c897))
+- **deps**: bump docker/login-action in /.github/workflows ([d69db349](https://github.com/SAP/neonbee/commit/d69db3492cba9d7a45961476b87b51f275589584))
+- **deps**: bump docker/build-push-action in /.github/workflows ([6dff8944](https://github.com/SAP/neonbee/commit/6dff894447512275fec5afbc8db9afb26ffb4e9d))
+- **deps**: bump actions/cache in /.github/workflows ([8282d912](https://github.com/SAP/neonbee/commit/8282d912cdc9c1c3723186d3b8f3f5355a054abd))
+- **deps**: bump actions/setup-java in /.github/workflows ([423b7522](https://github.com/SAP/neonbee/commit/423b75223f65c280a7194f919474dfc683e3592e))
+
+
+### Continuous Integration
+
+- remove auto-upgrader workflow ([6efddc50](https://github.com/SAP/neonbee/commit/6efddc5061d5324111aecedb2aef89aa545f7e24)), closes [#558](https://github.com/SAP/neonbee/issues/558)
 
 
 ## 0.37.29 (2026-06-16)
