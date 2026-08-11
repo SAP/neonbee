@@ -11,6 +11,7 @@ import static io.neonbee.entity.EntityVerticle.SERVICE_NAMESPACE_GROUP;
 import static io.neonbee.entity.EntityVerticle.URI_PATH_PATTERN;
 import static io.neonbee.entity.EntityVerticle.sharedEntityMapName;
 import static io.neonbee.test.helper.ResourceHelper.TEST_RESOURCES;
+import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
 import java.nio.file.Path;
@@ -30,11 +31,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.neonbee.NeonBeeDeployable;
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.data.DataAction;
 import io.neonbee.data.DataContext;
+import io.neonbee.data.DataException;
 import io.neonbee.data.DataQuery;
 import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.test.base.EntityVerticleTestBase;
@@ -233,6 +237,21 @@ class EntityVerticleTest extends EntityVerticleTestBase {
             testContext.completeNow();
         }).onFailure(testContext::failNow);
     }
+
+    @ParameterizedTest(name = "failure code {0} is propagated to caller")
+    @ValueSource(ints = { 404, 500 })
+    @DisplayName("FQN consumer propagates failure code to caller")
+    void fqnConsumerPropagatesFailureCode(int failureCode, VertxTestContext testContext) {
+        deployVerticle(new FailingEntityVerticle(failureCode))
+                .compose(ignored -> requestEntity(FailingEntityVerticle.FQN))
+                .onFailure(err -> testContext.verify(() -> {
+                    assertThat(err).isInstanceOf(DataException.class);
+                    assertThat(((DataException) err).failureCode()).isEqualTo(failureCode);
+                    testContext.completeNow();
+                }))
+                .onSuccess(ignored -> testContext.failNow("expected failure"));
+    }
+
 }
 
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
@@ -292,5 +311,27 @@ class EntityVerticleImpl3 extends EntityVerticle {
     @Override
     public Future<EntityWrapper> retrieveData(DataQuery query, DataContext context) {
         return succeededFuture(new EntityWrapper(FQN_TEST_PRODUCTS, TEST_PRODUCTS));
+    }
+}
+
+@SuppressWarnings("PMD.TestClassWithoutTestCases")
+class FailingEntityVerticle extends EntityVerticle {
+    static final FullQualifiedName FQN = new FullQualifiedName("Failing", "Entity");
+
+    private final int failureCode;
+
+    FailingEntityVerticle(int failureCode) {
+        super();
+        this.failureCode = failureCode;
+    }
+
+    @Override
+    public Future<Set<FullQualifiedName>> entityTypeNames() {
+        return succeededFuture(Set.of(FQN));
+    }
+
+    @Override
+    public Future<EntityWrapper> retrieveData(DataQuery query, DataContext context) {
+        return failedFuture(new DataException(failureCode, "simulated failure"));
     }
 }
