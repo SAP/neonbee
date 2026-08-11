@@ -2,26 +2,131 @@
   "nextVersion" : {
     "major" : 0,
     "minor" : 37,
+    "patch" : 33,
+    "preReleaseParts" : [ ],
+    "buildMetaDataParts" : [ ],
+    "preRelease" : "",
+    "stable" : true,
+    "initialDevelopment" : true,
+    "buildMetaData" : ""
+  },
+  "lastVersion" : {
+    "major" : 0,
+    "minor" : 37,
     "patch" : 32,
     "preReleaseParts" : [ ],
     "buildMetaDataParts" : [ ],
     "preRelease" : "",
     "stable" : true,
-    "buildMetaData" : "",
-    "initialDevelopment" : true
-  },
-  "lastVersion" : {
-    "major" : 0,
-    "minor" : 37,
-    "patch" : 31,
-    "preReleaseParts" : [ ],
-    "buildMetaDataParts" : [ ],
-    "preRelease" : "",
-    "stable" : true,
-    "buildMetaData" : "",
-    "initialDevelopment" : true
+    "initialDevelopment" : true,
+    "buildMetaData" : ""
   },
   "tags" : [ {
+    "version" : {
+      "major" : 0,
+      "minor" : 37,
+      "patch" : 32,
+      "preReleaseParts" : [ ],
+      "buildMetaDataParts" : [ ],
+      "preRelease" : "",
+      "stable" : true,
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
+    },
+    "releaseDate" : "2026-08-11 11:01:57.000 +0300",
+    "sections" : [ {
+      "title" : "Bug Fixes",
+      "commits" : [ {
+        "hashFull" : "16c9416ef803d7bb88aac9bf43ec7c30e5bdef23",
+        "hash" : "16c9416ef803d7b",
+        "hash7" : "16c9416",
+        "hash8" : "16c9416e",
+        "commitTime" : "2026-08-07 18:05:41.000 +0300",
+        "commitTimeLong" : 1786115141,
+        "message" : "fix: github publishing token\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2026-08-07 17:57:31.000 +0300",
+          "name" : "Martin Todorov",
+          "email" : "martin.steve.todorov@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2026-08-07 18:05:41.000 +0300",
+          "name" : "ikalachy",
+          "email" : "ivan.kalachyev@sap.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/16c9416ef803d7bb88aac9bf43ec7c30e5bdef23",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "github publishing token",
+        "commitBody" : null,
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "github publishing token",
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "messageBody" : "",
+        "messageTitle" : "fix: github publishing token"
+      }, {
+        "hashFull" : "c8b8bdfc60ef4bd5187dd0e2e4a4b7bf5834b1aa",
+        "hash" : "c8b8bdfc60ef4bd",
+        "hash7" : "c8b8bdf",
+        "hash8" : "c8b8bdfc",
+        "commitTime" : "2026-08-11 10:46:36.000 +0300",
+        "commitTimeLong" : 1786434396,
+        "message" : "fix: propagate ReplyException failure code in FQN consumer proxy\n\nThe FQN address consumer in AbstractEntityVerticle was calling\nmsg.fail(0, ...) on any error, losing the original failure code.\nNow forwards the failureCode from ReplyException, falling back to\nINTERNAL_SERVER_ERROR (500) for non-ReplyException errors.\n",
+        "merge" : false,
+        "authorIdent" : {
+          "when" : "2026-08-11 10:27:06.000 +0300",
+          "name" : "C5371248",
+          "email" : "ivan.kalachyev@sap.com"
+        },
+        "committerIdent" : {
+          "when" : "2026-08-11 10:46:36.000 +0300",
+          "name" : "ikalachy",
+          "email" : "ivan.kalachyev@sap.com"
+        },
+        "quickActions" : { },
+        "closeIssues" : [ ],
+        "subjectIssues" : [ ],
+        "bodyIssues" : [ ],
+        "mentions" : [ ],
+        "locales" : [ ],
+        "defaultLang" : "en",
+        "commitUrl" : "https://github.com/SAP/neonbee/commit/c8b8bdfc60ef4bd5187dd0e2e4a4b7bf5834b1aa",
+        "commitType" : "fix",
+        "commitPackage" : null,
+        "commitScope" : null,
+        "commitSubject" : "propagate ReplyException failure code in FQN consumer proxy",
+        "commitBody" : "The FQN address consumer in AbstractEntityVerticle was calling\nmsg.fail(0, ...) on any error, losing the original failure code.\nNow forwards the failureCode from ReplyException, falling back to\nINTERNAL_SERVER_ERROR (500) for non-ReplyException errors.",
+        "attention" : false,
+        "breakingChange" : false,
+        "deprecated" : false,
+        "commitIssue" : null,
+        "localeMap" : null,
+        "rawCommitType" : "fix",
+        "rawCommitScope" : null,
+        "rawCommitSubject" : "propagate ReplyException failure code in FQN consumer proxy",
+        "firstLocaleCommitType" : null,
+        "firstLocaleCommitScope" : null,
+        "messageBody" : "The FQN address consumer in AbstractEntityVerticle was calling\nmsg.fail(0, ...) on any error, losing the original failure code.\nNow forwards the failureCode from ReplyException, falling back to\nINTERNAL_SERVER_ERROR (500) for non-ReplyException errors.",
+        "messageTitle" : "fix: propagate ReplyException failure code in FQN consumer proxy"
+      } ]
+    } ]
+  }, {
     "version" : {
       "major" : 0,
       "minor" : 37,
@@ -30,10 +135,10 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
-    "releaseDate" : "2026-08-03 15:39:33.000 +0300",
+    "releaseDate" : "2026-08-07 11:37:35.000 +0300",
     "sections" : [ {
       "title" : "Bug Fixes",
       "commits" : [ {
@@ -1168,8 +1273,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2026-06-16 11:06:11.000 +0300",
     "sections" : [ {
@@ -3391,8 +3496,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2026-03-19 16:53:43.000 +0200",
     "sections" : [ {
@@ -3452,8 +3557,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2026-03-04 10:03:40.000 +0200",
     "sections" : [ {
@@ -3648,8 +3753,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2026-01-23 09:45:35.000 +0200",
     "sections" : [ {
@@ -3753,8 +3858,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-12-19 15:53:09.000 +0200",
     "sections" : [ {
@@ -3814,8 +3919,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-12-01 13:04:40.000 +0200",
     "sections" : [ {
@@ -3875,8 +3980,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-12-01 12:33:50.000 +0200",
     "sections" : [ {
@@ -3980,8 +4085,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-11-25 13:14:21.000 +0200",
     "sections" : [ {
@@ -4085,8 +4190,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-11-25 08:19:32.000 +0200",
     "sections" : [ {
@@ -4284,8 +4389,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-11-17 13:07:56.000 +0200",
     "sections" : null
@@ -4298,8 +4403,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-11-17 10:27:22.000 +0200",
     "sections" : [ {
@@ -4447,8 +4552,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-11-06 09:56:28.000 +0200",
     "sections" : [ {
@@ -6403,8 +6508,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-09-03 15:14:03.000 +0300",
     "sections" : [ {
@@ -6464,8 +6569,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-09-02 13:15:26.000 +0300",
     "sections" : [ {
@@ -6525,8 +6630,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-09-02 10:33:14.000 +0300",
     "sections" : [ {
@@ -6894,8 +6999,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-06-18 13:21:36.000 +0300",
     "sections" : [ {
@@ -7043,8 +7148,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-06-17 10:31:09.000 +0300",
     "sections" : [ {
@@ -8034,8 +8139,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-01-24 18:14:56.000 +0200",
     "sections" : [ {
@@ -8139,8 +8244,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-01-24 15:30:56.000 +0200",
     "sections" : [ {
@@ -8244,8 +8349,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2025-01-21 11:36:24.000 +0200",
     "sections" : [ {
@@ -8660,8 +8765,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-10-31 15:21:10.000 +0200",
     "sections" : [ {
@@ -8768,8 +8873,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-08-21 15:18:38.000 +0300",
     "sections" : [ {
@@ -8873,8 +8978,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-08-05 12:39:56.000 +0300",
     "sections" : [ {
@@ -9377,8 +9482,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-06-06 19:05:12.000 +0300",
     "sections" : [ {
@@ -9661,8 +9766,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-05-03 15:48:39.000 +0300",
     "sections" : [ {
@@ -10564,8 +10669,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-03-27 13:47:05.000 +0200",
     "sections" : [ {
@@ -10889,8 +10994,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-03-13 17:29:41.000 +0200",
     "sections" : [ {
@@ -11261,8 +11366,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-02-14 13:11:30.000 +0200",
     "sections" : [ {
@@ -11724,8 +11829,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2024-01-22 16:39:10.000 +0200",
     "sections" : [ {
@@ -12739,8 +12844,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-11-20 15:56:39.000 +0200",
     "sections" : [ {
@@ -12979,8 +13084,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-11-16 14:48:28.000 +0200",
     "sections" : [ {
@@ -13084,8 +13189,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-11-14 16:09:14.000 +0200",
     "sections" : [ {
@@ -13767,8 +13872,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-10-02 15:24:16.000 +0300",
     "sections" : [ {
@@ -14139,8 +14244,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-09-05 10:51:06.000 +0300",
     "sections" : [ {
@@ -14426,8 +14531,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-07-25 17:38:30.000 +0300",
     "sections" : [ {
@@ -14767,8 +14872,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-06-29 16:11:48.000 +0300",
     "sections" : [ {
@@ -14828,8 +14933,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-06-27 17:06:58.000 +0300",
     "sections" : [ {
@@ -15021,8 +15126,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-06-19 14:07:52.000 +0300",
     "sections" : [ {
@@ -15082,8 +15187,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-06-14 10:00:41.000 +0300",
     "sections" : [ {
@@ -15941,8 +16046,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-05-12 16:57:08.000 +0300",
     "sections" : [ {
@@ -16536,8 +16641,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-03-27 13:13:21.000 +0300",
     "sections" : [ {
@@ -16914,8 +17019,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-03-07 17:13:57.000 +0200",
     "sections" : [ {
@@ -18366,8 +18471,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2023-01-19 18:00:06.000 +0200",
     "sections" : [ {
@@ -19239,8 +19344,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-11-15 14:57:10.000 +0200",
     "sections" : [ {
@@ -19575,8 +19680,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-10-24 11:44:48.000 +0300",
     "sections" : [ {
@@ -19865,8 +19970,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-10-12 18:43:37.000 +0300",
     "sections" : [ {
@@ -19926,8 +20031,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-10-11 12:31:42.000 +0300",
     "sections" : [ {
@@ -20213,8 +20318,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-10-05 12:46:05.000 +0300",
     "sections" : [ {
@@ -20685,8 +20790,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-08-30 14:15:07.000 +0300",
     "sections" : [ {
@@ -20881,8 +20986,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-08-10 10:09:11.000 +0300",
     "sections" : [ {
@@ -21127,8 +21232,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-07-14 17:23:19.000 +0300",
     "sections" : [ {
@@ -21367,8 +21472,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-07-13 09:29:40.000 +0300",
     "sections" : [ {
@@ -21707,8 +21812,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-06-06 17:06:00.000 +0300",
     "sections" : [ {
@@ -21768,8 +21873,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-06-03 13:13:06.000 +0300",
     "sections" : [ {
@@ -22381,8 +22486,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-03-07 23:17:58.000 +0200",
     "sections" : [ {
@@ -22715,8 +22820,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-02-17 18:52:27.000 +0200",
     "sections" : [ {
@@ -22776,8 +22881,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-02-15 18:58:20.000 +0200",
     "sections" : [ {
@@ -22928,8 +23033,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2022-01-27 12:41:02.000 +0200",
     "sections" : [ {
@@ -23536,8 +23641,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-12-15 16:08:44.000 +0200",
     "sections" : [ {
@@ -23779,8 +23884,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-11-23 13:25:14.000 +0200",
     "sections" : [ {
@@ -23887,8 +23992,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-10-05 14:44:34.000 +0300",
     "sections" : [ {
@@ -23948,8 +24053,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-10-04 16:47:42.000 +0300",
     "sections" : [ {
@@ -25435,8 +25540,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-07-27 10:22:26.000 +0300",
     "sections" : [ {
@@ -25769,8 +25874,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-06-07 08:52:14.000 +0300",
     "sections" : [ {
@@ -27344,8 +27449,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-03-18 15:45:15.000 +0200",
     "sections" : [ {
@@ -27728,8 +27833,8 @@
       "buildMetaDataParts" : [ ],
       "preRelease" : "",
       "stable" : true,
-      "buildMetaData" : "",
-      "initialDevelopment" : true
+      "initialDevelopment" : true,
+      "buildMetaData" : ""
     },
     "releaseDate" : "2021-03-10 17:24:12.000 +0200",
     "sections" : [ {
