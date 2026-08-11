@@ -3,6 +3,7 @@ package io.neonbee.entity;
 import static io.neonbee.entity.EntityModelManager.getBufferedOData;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static io.neonbee.internal.verticle.ConsolidationVerticle.ENTITY_TYPE_NAME_HEADER;
+import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
@@ -28,6 +29,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.eventbus.ReplyException;
 
 /**
  * This verticle is an intermediary layer between {@link DataVerticle} and {@link EntityVerticle}, which supports
@@ -241,7 +243,10 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
                                         new DeliveryOptions().setHeaders(msg.headers()))
                                         .onSuccess(reply -> msg.reply(reply.body(),
                                                 new DeliveryOptions().setHeaders(reply.headers())))
-                                        .onFailure(err -> msg.fail(0, err.getMessage())))
+                                        .onFailure(err -> msg.fail(
+                                                err instanceof ReplyException re ? re.failureCode()
+                                                        : INTERNAL_SERVER_ERROR.code(),
+                                                err.getMessage())))
                                 .completion()
                                 .<Void>mapEmpty();
                     }).toList();
