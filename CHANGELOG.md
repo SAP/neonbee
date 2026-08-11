@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.37.31 (2026-08-03)
+## 0.37.32 (2026-08-11)
+
+### Bug Fixes
+
+- github publishing token ([16c9416e](https://github.com/SAP/neonbee/commit/16c9416ef803d7bb88aac9bf43ec7c30e5bdef23))
+- propagate ReplyException failure code in FQN consumer proxy ([c8b8bdfc](https://github.com/SAP/neonbee/commit/c8b8bdfc60ef4bd5187dd0e2e4a4b7bf5834b1aa))
+
+
+## 0.37.31 (2026-08-07)
 
 ### Bug Fixes
 
