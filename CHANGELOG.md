@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.37.33 (2026-08-12)
+
+### Bug Fixes
+
+- keep entity verticle requests local when a local instance exists ([b12652b42](https://github.com/SAP/neonbee/commit/b12652b42fda9b0200cd2c37008ddd6ecdeb05af))
+
+
 ## 0.37.32 (2026-08-11)
 
 ### Bug Fixes
