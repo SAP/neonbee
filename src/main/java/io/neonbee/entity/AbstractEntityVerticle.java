@@ -9,6 +9,7 @@ import static io.vertx.core.Future.succeededFuture;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -101,6 +102,12 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
             Pattern.compile("^/*((?:(.+/?)\\.)?([^/]+))/(([A-Za-z_]\\w+)[^/]*)(?:/(.*))?$");
 
     private static final LoggingFacade LOGGER = LoggingFacade.create();
+
+    /**
+     * The FQN consumer addresses ({@code EntityVerticle[<FQN>]}) this verticle registered, tracked so they can be
+     * registered as local consumers (to keep same-node requests local) and unregistered again on stop.
+     */
+    private final Set<String> registeredEntityAddresses = ConcurrentHashMap.newKeySet();
 
     /**
      * Create a new {@link DataVerticle}.
@@ -236,11 +243,17 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
                 .map(names -> names != null ? names : Set.<FullQualifiedName>of())
                 .compose(names -> {
                     String ownAddress = getAddress();
+                    NeonBee neonBee = NeonBee.get(vertx);
                     List<Future<Void>> registrations = names.stream().map(fqn -> {
                         String fqnAddress = sharedEntityMapName(fqn);
                         return vertx.eventBus().<DataQuery>consumer(fqnAddress,
                                 msg -> vertx.eventBus().request(ownAddress, msg.body(),
-                                        new DeliveryOptions().setHeaders(msg.headers()))
+                                        // The FQN consumer only exists to hand the request to the co-located verticle
+                                        // instance. Force local-only delivery: ownAddress (DataVerticle[<name>]) is
+                                        // registered on every node running this verticle, so without this the inner
+                                        // hop round-robins across the cluster — defeating the whole point of routing to
+                                        // the local FQN consumer and forcing cross-node EntityWrapper serialization.
+                                        new DeliveryOptions().setHeaders(msg.headers()).setLocalOnly(true))
                                         .onSuccess(reply -> msg.reply(reply.body(),
                                                 new DeliveryOptions().setHeaders(reply.headers())))
                                         .onFailure(err -> msg.fail(
@@ -248,10 +261,30 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
                                                         : INTERNAL_SERVER_ERROR.code(),
                                                 err.getMessage())))
                                 .completion()
-                                .<Void>mapEmpty();
+                                .<Void>mapEmpty()
+                                .onSuccess(nothing -> {
+                                    // Mark the FQN address as locally available so that (local-preferred) requests to
+                                    // this entity type resolve to the local instance instead of being round-robined
+                                    // across the cluster, which would force cross-node EntityWrapper serialization.
+                                    if (neonBee != null) {
+                                        neonBee.registerLocalConsumer(fqnAddress);
+                                        registeredEntityAddresses.add(fqnAddress);
+                                    }
+                                });
                     }).toList();
                     return Future.all(registrations).mapEmpty();
                 });
+    }
+
+    @Override
+    public void stop() throws Exception {
+        // Unregister the FQN addresses this verticle marked as local consumers in registerEntityTypeConsumers.
+        NeonBee neonBee = NeonBee.get(vertx);
+        if (neonBee != null) {
+            registeredEntityAddresses.forEach(neonBee::unregisterLocalConsumer);
+        }
+        registeredEntityAddresses.clear();
+        super.stop();
     }
 
     /**
