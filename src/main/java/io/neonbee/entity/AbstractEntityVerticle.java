@@ -6,6 +6,7 @@ import static io.neonbee.internal.verticle.ConsolidationVerticle.ENTITY_TYPE_NAM
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.List;
 import java.util.Set;
@@ -244,6 +245,12 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
                 .compose(names -> {
                     String ownAddress = getAddress();
                     NeonBee neonBee = NeonBee.get(vertx);
+                    // The inner hop must carry the configured event bus timeout; a bare new DeliveryOptions() would
+                    // fall
+                    // back to Vert.x's 30s default and abandon replies that are still within the configured budget.
+                    long sendTimeout = neonBee != null
+                            ? SECONDS.toMillis(neonBee.getConfig().getEventBusTimeout())
+                            : new DeliveryOptions().getSendTimeout();
                     List<Future<Void>> registrations = names.stream().map(fqn -> {
                         String fqnAddress = sharedEntityMapName(fqn);
                         return vertx.eventBus().<DataQuery>consumer(fqnAddress,
@@ -253,7 +260,10 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
                                         // registered on every node running this verticle, so without this the inner
                                         // hop round-robins across the cluster — defeating the whole point of routing to
                                         // the local FQN consumer and forcing cross-node EntityWrapper serialization.
-                                        new DeliveryOptions().setHeaders(msg.headers()).setLocalOnly(true))
+                                        // Propagate the configured send timeout so the inner hop is not capped at the
+                                        // 30s Vert.x default.
+                                        new DeliveryOptions().setHeaders(msg.headers()).setLocalOnly(true)
+                                                .setSendTimeout(sendTimeout))
                                         .onSuccess(reply -> msg.reply(reply.body(),
                                                 new DeliveryOptions().setHeaders(reply.headers())))
                                         .onFailure(err -> msg.fail(
