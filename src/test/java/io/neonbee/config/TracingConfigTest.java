@@ -15,6 +15,9 @@ class TracingConfigTest {
     void testDefaultValues() {
         TracingConfig config = new TracingConfig();
         assertThat(config.isEnabled()).isFalse();
+        assertThat(config.isExportTraces()).isTrue();
+        assertThat(config.isExportMetrics()).isTrue();
+        assertThat(config.getServiceName()).isNull();
         assertThat(config.getOtlpEndpoint()).isNull();
         assertThat(config.getOtlpApiToken()).isNull();
         assertThat(config.getExportIntervalSeconds()).isEqualTo(DEFAULT_EXPORT_INTERVAL_SECONDS);
@@ -25,7 +28,10 @@ class TracingConfigTest {
     void testJsonRoundTrip() {
         TracingConfig original = new TracingConfig()
                 .setEnabled(true)
-                .setOtlpEndpoint("http://localhost:4317")
+                .setExportTraces(false)
+                .setExportMetrics(false)
+                .setServiceName("my-service")
+                .setOtlpEndpoint("http://localhost:4318")
                 .setOtlpApiToken("dt0c01.secret")
                 .setExportIntervalSeconds(30);
 
@@ -33,7 +39,10 @@ class TracingConfigTest {
         TracingConfig restored = new TracingConfig(json);
 
         assertThat(restored.isEnabled()).isTrue();
-        assertThat(restored.getOtlpEndpoint()).isEqualTo("http://localhost:4317");
+        assertThat(restored.isExportTraces()).isFalse();
+        assertThat(restored.isExportMetrics()).isFalse();
+        assertThat(restored.getServiceName()).isEqualTo("my-service");
+        assertThat(restored.getOtlpEndpoint()).isEqualTo("http://localhost:4318");
         assertThat(restored.getOtlpApiToken()).isEqualTo("dt0c01.secret");
         assertThat(restored.getExportIntervalSeconds()).isEqualTo(30);
     }
@@ -81,7 +90,10 @@ class TracingConfigTest {
     void testFluentSetters() {
         TracingConfig config = new TracingConfig();
         assertThat(config.setEnabled(true)).isSameInstanceAs(config);
-        assertThat(config.setOtlpEndpoint("http://localhost:4317")).isSameInstanceAs(config);
+        assertThat(config.setExportTraces(false)).isSameInstanceAs(config);
+        assertThat(config.setExportMetrics(false)).isSameInstanceAs(config);
+        assertThat(config.setServiceName("svc")).isSameInstanceAs(config);
+        assertThat(config.setOtlpEndpoint("http://localhost:4318")).isSameInstanceAs(config);
         assertThat(config.setOtlpApiToken("token")).isSameInstanceAs(config);
         assertThat(config.setExportIntervalSeconds(30)).isSameInstanceAs(config);
     }

@@ -53,6 +53,7 @@ import org.mockito.Mockito;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.neonbee.NeonBeeInstanceConfiguration.ClusterManager;
 import io.neonbee.config.NeonBeeConfig;
+import io.neonbee.config.TracingConfig;
 import io.neonbee.health.DummyHealthCheck;
 import io.neonbee.health.DummyHealthCheckProvider;
 import io.neonbee.health.EventLoopHealthCheck;
@@ -210,6 +211,25 @@ class NeonBeeTest extends NeonBeeTestBase {
                 .onSuccess(newVertx -> vertx = newVertx), ClusterManager.FAKE.factory(), options, null, meterRegistry)
                 .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
                     assertThat(neonBee.getVertx().isClustered()).isFalse();
+                    testContext.completeNow();
+                })));
+    }
+
+    @Test
+    @DisplayName("Vert.x should start with OpenTelemetry tracing enabled")
+    @Tag(DOESNT_REQUIRE_NEONBEE)
+    void testStandaloneInitializationWithTracing(VertxTestContext testContext) {
+        NeonBeeOptions options = defaultOptions().clearActiveProfiles().addActiveProfile(NO_WEB);
+        // enable telemetry with an OTLP endpoint; boot must succeed with the tracer attached
+        ((NeonBeeOptions.Mutable) options).setTracingConfig(
+                new TracingConfig().setEnabled(true).setOtlpEndpoint("http://localhost:4318"));
+        CompositeMeterRegistry meterRegistry = new CompositeMeterRegistry();
+        NeonBee.create((NeonBee.OwnVertxFactory) (vertxOptions, clusterManager) -> NeonBee
+                .newVertx(vertxOptions, clusterManager, options, meterRegistry)
+                .onSuccess(newVertx -> vertx = newVertx), ClusterManager.FAKE.factory(), options, null, meterRegistry)
+                .onComplete(testContext.succeeding(neonBee -> testContext.verify(() -> {
+                    assertThat(neonBee.getVertx().isClustered()).isFalse();
+                    assertThat(neonBee.getOptions().isTracingEnabled()).isTrue();
                     testContext.completeNow();
                 })));
     }

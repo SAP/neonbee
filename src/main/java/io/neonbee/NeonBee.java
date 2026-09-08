@@ -44,6 +44,7 @@ import io.neonbee.cluster.ClusterManagerFactory;
 import io.neonbee.config.HealthConfig;
 import io.neonbee.config.NeonBeeConfig;
 import io.neonbee.config.ServerConfig;
+import io.neonbee.config.TracingConfig;
 import io.neonbee.data.DataException;
 import io.neonbee.data.DataQuery;
 import io.neonbee.endpoint.odatav4.rawbatch.RawBatchResult;
@@ -81,6 +82,8 @@ import io.neonbee.internal.json.ConfigurableJsonFactory.ConfigurableJsonCodec;
 import io.neonbee.internal.json.ImmutableJsonArray;
 import io.neonbee.internal.json.ImmutableJsonObject;
 import io.neonbee.internal.scanner.HookScanner;
+import io.neonbee.internal.tracing.NeonBeeOpenTelemetry;
+import io.neonbee.internal.tracing.OtlpMeterRegistryLoader;
 import io.neonbee.internal.tracking.MessageDirection;
 import io.neonbee.internal.tracking.TrackingDataHandlingStrategy;
 import io.neonbee.internal.tracking.TrackingDataLoggingStrategy;
@@ -91,12 +94,14 @@ import io.neonbee.internal.verticle.HealthCheckVerticle;
 import io.neonbee.internal.verticle.LoggerManagerVerticle;
 import io.neonbee.internal.verticle.ModelRefreshVerticle;
 import io.neonbee.internal.verticle.ServerVerticle;
+import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.vertx.core.Closeable;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxBuilder;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.eventbus.MessageCodec;
@@ -250,6 +255,12 @@ public class NeonBee {
      * @return the future to a new NeonBee instance initialized with default options and a new Vert.x instance
      */
     public static Future<NeonBee> create(NeonBeeOptions options, NeonBeeConfig config) {
+        // The OpenTelemetry tracer has to be attached to the Vert.x builder *before* Vert.x is created (see
+        // NeonBeeOpenTelemetry), so the telemetry configuration is read from the options. When a NeonBeeConfig is
+        // provided (e.g. pre-loaded by the Launcher), bridge its tracing configuration into the options so that both
+        // traces and metrics pick it up. Options already carrying an OTLP endpoint (or a CLI force-enable) win.
+        NeonBeeOpenTelemetry.bridgeConfigToOptions(options, config);
+
         CompositeMeterRegistry meterRegistry = new CompositeMeterRegistry();
         // using the marker interface we signal, that we are responsible of also closing Vert.x if NeonBee shuts down
         return create((OwnVertxFactory) (vertxOptions, clusterManager) -> {
@@ -334,9 +345,12 @@ public class NeonBee {
             CompositeMeterRegistry compositeMeterRegistry) {
 
         if (!options.isClustered()) {
-            return succeededFuture(Vertx.builder().with(vertxOptions)
-                    .withMetrics(new MicrometerMetricsFactory(compositeMeterRegistry))
-                    .build());
+            VertxBuilder builder = Vertx.builder().with(vertxOptions)
+                    .withMetrics(new MicrometerMetricsFactory(compositeMeterRegistry));
+            Optional<OpenTelemetrySdk> sdk = NeonBeeOpenTelemetry.applyTracing(builder, options);
+            Vertx vertx = builder.build();
+            sdk.ifPresent(s -> NeonBeeOpenTelemetry.register(vertx, s));
+            return succeededFuture(vertx);
         }
 
         vertxOptions.getEventBusOptions().setPort(options.getClusterPort());
@@ -344,10 +358,14 @@ public class NeonBee {
                 .ifPresent(currentIp -> vertxOptions.getEventBusOptions().setHost(currentIp));
 
         return applyEncryptionOptions(options, vertxOptions.getEventBusOptions())
-                .compose(v -> Vertx.builder().with(vertxOptions)
-                        .withClusterManager(clusterManager)
-                        .withMetrics(new MicrometerMetricsFactory(compositeMeterRegistry))
-                        .buildClustered())
+                .compose(v -> {
+                    VertxBuilder builder = Vertx.builder().with(vertxOptions)
+                            .withClusterManager(clusterManager)
+                            .withMetrics(new MicrometerMetricsFactory(compositeMeterRegistry));
+                    Optional<OpenTelemetrySdk> sdk = NeonBeeOpenTelemetry.applyTracing(builder, options);
+                    return builder.buildClustered()
+                            .onSuccess(vertx -> sdk.ifPresent(s -> NeonBeeOpenTelemetry.register(vertx, s)));
+                })
                 .onFailure(throwable -> {
                     LOGGER.error("Failed to start clustered Vert.x", throwable); // NOPMD slf4j
                 });
@@ -529,8 +547,35 @@ public class NeonBee {
      */
     @VisibleForTesting
     Future<Void> createMicrometerRegistries() {
-        return all(config.createMicrometerRegistries(vertx).toList())
-                .onSuccess(h -> h.<MeterRegistry>list().forEach(compositeMeterRegistry::add)).mapEmpty();
+        List<Future<MeterRegistry>> registries =
+                new ArrayList<>(config.createMicrometerRegistries(vertx).toList());
+        registries.addAll(createTracingMeterRegistries());
+        return all(registries).onSuccess(h -> h.<MeterRegistry>list().forEach(compositeMeterRegistry::add)).mapEmpty();
+    }
+
+    /**
+     * Creates the OTLP Micrometer registry that forwards NeonBee / Vert.x meters to the configured OTLP endpoint (e.g.
+     * Dynatrace), if telemetry is enabled and {@link TracingConfig#isExportMetrics() metrics export} is requested.
+     *
+     * @return a list holding the OTLP meter registry future, or an empty list if metrics export is disabled / not
+     *         configured
+     */
+    private List<Future<MeterRegistry>> createTracingMeterRegistries() {
+        TracingConfig tracingConfig = options.getTracingConfig();
+        if (tracingConfig == null || !tracingConfig.isEnabled() || !tracingConfig.isExportMetrics()) {
+            return List.of();
+        }
+
+        String endpoint = tracingConfig.getOtlpEndpoint();
+        if (endpoint == null || endpoint.isBlank()) {
+            LOGGER.warn("OpenTelemetry metrics export is enabled but no 'otlpEndpoint' is configured; "
+                    + "metrics will not be exported.");
+            return List.of();
+        }
+
+        LOGGER.info("OpenTelemetry metrics export enabled, forwarding meters to OTLP endpoint {}", endpoint);
+        return List.of(
+                succeededFuture(OtlpMeterRegistryLoader.createRegistry(tracingConfig, options.getInstanceName())));
     }
 
     /**
@@ -739,6 +784,8 @@ public class NeonBee {
 
                     NEONBEE_INSTANCES.remove(vertx);
                     modelManager.close();
+                    // flush and close the OpenTelemetry SDK (if trace export was enabled) so pending spans are exported
+                    NeonBeeOpenTelemetry.close(vertx);
                 }).<Void>mapEmpty().onComplete(completion);
             });
         } catch (Exception e) {
