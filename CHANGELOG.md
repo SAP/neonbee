@@ -1,18 +1,25 @@
 # Changelog
 
-## 0.37.33 (2026-08-12)
+## 0.37.34 (2026-09-08)
 
 ### Bug Fixes
 
-- keep entity verticle requests local when a local instance exists ([b12652b42](https://github.com/SAP/neonbee/commit/b12652b42fda9b0200cd2c37008ddd6ecdeb05af))
+- propagate configured send timeout on entity verticle FQN proxy hop ([a5e53b4a](https://github.com/SAP/neonbee/commit/a5e53b4abd329f30fa296a16698a675edd93c40a))
 
 
-## 0.37.32 (2026-08-11)
+### Documentation
+
+- add 0.37.33 changelog entry ([a79e4850](https://github.com/SAP/neonbee/commit/a79e4850df1cd3c76b24a3410e9775c8eb6e7cb9))
+
+
+## 0.37.33 (2026-08-12)
 
 ### Bug Fixes
 
 - github publishing token ([16c9416e](https://github.com/SAP/neonbee/commit/16c9416ef803d7bb88aac9bf43ec7c30e5bdef23))
 - propagate ReplyException failure code in FQN consumer proxy ([c8b8bdfc](https://github.com/SAP/neonbee/commit/c8b8bdfc60ef4bd5187dd0e2e4a4b7bf5834b1aa))
+- github publishing permission fixes ([82509acc](https://github.com/SAP/neonbee/commit/82509acc18948fa87a5246bfcbaa70c36f018f8b))
+- keep entity verticle requests local when a local instance exists ([b12652b4](https://github.com/SAP/neonbee/commit/b12652b42fda9b0200cd2c37008ddd6ecdeb05af))
 
 
 ## 0.37.31 (2026-08-07)
