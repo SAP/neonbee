@@ -92,6 +92,7 @@ dependencies {
 
     def micrometer_version = '1.15.8'
     implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: micrometer_version
+    implementation group: 'io.micrometer', name: 'micrometer-registry-otlp', version: micrometer_version
 
     // OpenTelemetry
     implementation group: 'io.vertx', name: 'vertx-opentelemetry', version: vertx_version

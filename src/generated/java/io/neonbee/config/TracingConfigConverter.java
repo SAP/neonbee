@@ -16,6 +16,21 @@ public class TracingConfigConverter {
                     obj.setEnabled((Boolean) member.getValue());
                 }
                 break;
+            case "exportTraces":
+                if (member.getValue() instanceof Boolean) {
+                    obj.setExportTraces((Boolean) member.getValue());
+                }
+                break;
+            case "exportMetrics":
+                if (member.getValue() instanceof Boolean) {
+                    obj.setExportMetrics((Boolean) member.getValue());
+                }
+                break;
+            case "serviceName":
+                if (member.getValue() instanceof String) {
+                    obj.setServiceName((String) member.getValue());
+                }
+                break;
             case "otlpEndpoint":
                 if (member.getValue() instanceof String) {
                     obj.setOtlpEndpoint((String) member.getValue());
@@ -41,6 +56,11 @@ public class TracingConfigConverter {
 
     static void toJson(TracingConfig obj, java.util.Map<String, Object> json) {
         json.put("enabled", obj.isEnabled());
+        json.put("exportTraces", obj.isExportTraces());
+        json.put("exportMetrics", obj.isExportMetrics());
+        if (obj.getServiceName() != null) {
+            json.put("serviceName", obj.getServiceName());
+        }
         if (obj.getOtlpEndpoint() != null) {
             json.put("otlpEndpoint", obj.getOtlpEndpoint());
         }
