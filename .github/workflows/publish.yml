@@ -1,7 +1,12 @@
 name: Publish
 
 on:
-  # workflow_dispatch:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Version to release (e.g., 0.37.34). If not provided, will use commit message. Must be a non-SNAPSHOT version.'
+        required: false
+        type: string
   push:
     branches: [main]
 
@@ -88,11 +93,45 @@ jobs:
           java-version: '21.0'
           cache: 'gradle'
 
+      - name: Determine release version
+        id: determineVersion
+        run: |
+          set -euo pipefail
+          # Check if a version was provided via workflow input (priority)
+          if [[ -n "${{ github.event.inputs.release_version }}" ]]; then
+              version="${{ github.event.inputs.release_version }}"
+              echo "Using version from workflow input: ${version}"
+          else
+              # Fall back to commit message
+              version="$(./gradlew properties -q | grep -w "version:" | awk '{print $2}')"
+              echo "Using version from gradle: ${version}"
+          fi
+          
+          # Validate that it's not a SNAPSHOT version
+          if [[ $version == *SNAPSHOT ]]; then
+              echo "Error: provided version is a SNAPSHOT version. Only release versions are allowed."
+              exit 1
+          fi
+          
+          echo ::set-output name=releaseVersion::"${version}"
+          echo "Release version determined: ${version}"
+
+      - name: Update version in build.gradle if needed
+        run: |
+          set -euo pipefail
+          currentVersion="$(./gradlew properties -q | grep -w "version:" | awk '{print $2}')"
+          targetVersion="${{ steps.determineVersion.outputs.releaseVersion }}"
+          
+          if [[ "$currentVersion" != "$targetVersion" ]]; then
+              echo "Updating version from ${currentVersion} to ${targetVersion}"
+              sed -i "s/version = '${currentVersion}'/version = '${targetVersion}'/g" build.gradle
+          fi
+
       - name: Get new version
         id: getVersion
         run: |
           set -euo pipefail
-          version="$(./gradlew properties -q | grep -w "version:" | awk '{print $2}')"
+          version="${{ steps.determineVersion.outputs.releaseVersion }}"
           echo ::set-output name=releaseVersion::"${version}"
           echo "New release version: ${version}"
 
@@ -104,11 +143,7 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
         run: |
           set -euo pipefail
-          if [[ "${{ steps.getVersion.outputs.releaseVersion }}" == *SNAPSHOT ]]; then
-            ./gradlew clean publishAllPublicationsToMavenCentralRepository
-          else
-            ./gradlew clean publishReleaseToMavenCentral
-          fi
+          ./gradlew clean publishReleaseToMavenCentral
 
   publishRelease:
     runs-on: ubuntu-latest
@@ -116,7 +151,12 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    if: startsWith(github.event.head_commit.message, 'release:') && (endsWith(needs.publishToMavenCentral.outputs.releaseVersion, '-SNAPSHOT') == false)
+    if: |
+      (
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.release_version != '') ||
+        (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'release:'))
+      ) &&
+      (endsWith(needs.publishToMavenCentral.outputs.releaseVersion, '-SNAPSHOT') == false)
 
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -131,13 +171,22 @@ jobs:
           java-version: '21.0'
           cache: 'gradle'
 
-      - name: Tag release commit
+      - name: Configure git
         run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+      - name: Tag release commit
+        id: tag
+        run: |
+          set -euo pipefail
           git tag "${{ needs.publishToMavenCentral.outputs.releaseVersion }}"
+          echo ::set-output name=releaseTag::"${{ needs.publishToMavenCentral.outputs.releaseVersion }}"
 
       - name: Set snapshot version
         id: snapshot
         run: |
+          set -euo pipefail
           tagVersion="${{ needs.publishToMavenCentral.outputs.releaseVersion }}"
           rv="${tagVersion%-*}"
           snapshotVersion="${rv:0:-1}$(bc <<< "${rv: -1}+1")-SNAPSHOT"
@@ -148,8 +197,6 @@ jobs:
             >&2 echo "No diff detected in git." ; exit 1
           fi
 
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
           git add -A build.gradle
           git commit -m "release(snapshot): ${snapshotVersion}"
 
@@ -189,7 +236,7 @@ jobs:
           ### {{title}}
 
           {{#commits}}
-          - {{#commitScope}}**{{commitPackage}}{{commitScope}}**: {{/commitScope}}{{& commitSubject}}{{#subjectIssues}} ([#{{id}}]({{url}})){{/subjectIssues}} ([{{hash8}}]({{commitUrl}})){{#hasCloseIssues}}, closes{{#closeIssues}} [#{{id}}]({{url}}){{/closeIssues}}{{/hasCloseIssues}}
+          - {{#commitScope}}**{{commitPackage}}{{commitScope}}**: {{/commitScope}}{{& commitSubject}}{{#subjectIssues}} ([#{{id}}]({{url}})){{/subjectIssues}} ([{{hash8}}]({{commitUrl}})){{#hasCloseIs[...]
           {{/commits}}
           {{/sections}}
           """
@@ -261,3 +308,52 @@ jobs:
           body: ${{ steps.setChangelog.outputs.releaseBody }}
           draft: true
           prerelease: false
+
+      - name: Cleanup on failure
+        if: failure()
+        run: |
+          set +e  # Don't fail on individual commands
+          
+          releaseTag="${{ needs.publishToMavenCentral.outputs.releaseVersion }}"
+          
+          echo "Cleaning up after failure..."
+          
+          # Remove the tag if it was created
+          if git rev-parse "$releaseTag" >/dev/null 2>&1; then
+              echo "Removing tag: $releaseTag"
+              git tag -d "$releaseTag"
+              git push origin ":refs/tags/$releaseTag" || true
+          fi
+          
+          # Revert the snapshot version commit
+          git reset --hard HEAD~1 || true
+          git push origin ${{ github.ref }} --force-with-lease || true
+          
+          echo "Cleanup completed"
+          exit 1
+
+  cleanup-on-publish-failure:
+    runs-on: ubuntu-latest
+    needs: [publishToMavenCentral]
+    if: failure()
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Revert Maven Central publication
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USER }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: |
+          set +e  # Don't fail on individual commands
+          
+          echo "Attempting to drop staging repository..."
+          releaseVersion="${{ needs.publishToMavenCentral.outputs.releaseVersion }}"
+          
+          # Try to find and drop the staging repository
+          # This requires curl and authentication
+          ./gradlew dropSonatypeStagingRepository || true
+          
+          echo "Note: Manual verification on Sonatype OSSRH may be required"
