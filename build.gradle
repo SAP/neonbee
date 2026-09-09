@@ -92,6 +92,16 @@ dependencies {
 
     def micrometer_version = '1.15.8'
     implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: micrometer_version
+    implementation group: 'io.micrometer', name: 'micrometer-registry-otlp', version: micrometer_version
+
+    // OpenTelemetry
+    implementation group: 'io.vertx', name: 'vertx-opentelemetry', version: vertx_version
+    def otel_version = '1.49.0'
+    implementation platform(group: 'io.opentelemetry', name: 'opentelemetry-bom', version: otel_version)
+    implementation group: 'io.opentelemetry', name: 'opentelemetry-api'
+    implementation group: 'io.opentelemetry', name: 'opentelemetry-sdk'
+    implementation group: 'io.opentelemetry', name: 'opentelemetry-sdk-trace'
+    implementation group: 'io.opentelemetry', name: 'opentelemetry-exporter-otlp'
 
     def hazelcast_version = '5.3.8'
     implementation group: 'com.hazelcast', name: 'hazelcast', version: hazelcast_version

@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 import io.neonbee.cluster.ClusterManagerFactory;
+import io.neonbee.config.TracingConfig;
 import io.neonbee.internal.helper.FileSystemHelper;
 import io.neonbee.internal.verticle.WatchVerticle;
 import io.neonbee.job.JobVerticle;
@@ -218,6 +219,28 @@ public interface NeonBeeOptions {
     String getMetricsRegistryName();
 
     /**
+     * Returns the OpenTelemetry telemetry configuration (traces and metrics) to apply during bootstrap.
+     * <p>
+     * As the tracer has to be attached to the Vert.x instance before it is built, the telemetry configuration is
+     * carried on the {@link NeonBeeOptions} (populated from the {@code tracing} block of the {@code NeonBeeConfig}
+     * file, from the {@code --enable-tracing} flag, or programmatically). Defaults to a disabled configuration.
+     *
+     * @return the tracing configuration, never {@code null}
+     */
+    default TracingConfig getTracingConfig() {
+        return new TracingConfig();
+    }
+
+    /**
+     * Convenience method, equivalent to {@code getTracingConfig().isEnabled()}.
+     *
+     * @return true if telemetry (traces and/or metrics) is enabled
+     */
+    default boolean isTracingEnabled() {
+        return getTracingConfig().isEnabled();
+    }
+
+    /**
      * Create a mutable NeonBeeOptions similar to VertxOptions, but as NeonBeeOptions are exposed only the interface
      * shall be used, otherwise configuration changes could cause runtime errors. To initialize a new Vertx instance use
      * this Mutable inner class.
@@ -270,6 +293,8 @@ public interface NeonBeeOptions {
         private List<Path> moduleJarPaths = Collections.emptyList();
 
         private String metricsRegistryName = MicrometerMetricsOptions.DEFAULT_REGISTRY_NAME;
+
+        private TracingConfig tracingConfig = new TracingConfig();
 
         /**
          * Instantiates a mutable {@link NeonBeeOptions} instance.
@@ -739,6 +764,38 @@ public interface NeonBeeOptions {
          */
         public Mutable setMetricsRegistryName(String registryName) {
             this.metricsRegistryName = registryName;
+            return this;
+        }
+
+        @Override
+        public TracingConfig getTracingConfig() {
+            return tracingConfig;
+        }
+
+        /**
+         * Sets the OpenTelemetry telemetry configuration (traces and metrics).
+         *
+         * @param tracingConfig the tracing configuration; if {@code null} a disabled default is used
+         * @return this instance for chaining
+         */
+        public Mutable setTracingConfig(TracingConfig tracingConfig) {
+            this.tracingConfig = tracingConfig != null ? tracingConfig : new TracingConfig();
+            return this;
+        }
+
+        /**
+         * Enables or disables OpenTelemetry telemetry (traces and metrics). This is a convenience flag that toggles
+         * {@link TracingConfig#setEnabled(boolean)} on the {@link #getTracingConfig() tracing configuration}; the
+         * endpoint and token are configured via the {@code tracing} block of the {@code NeonBeeConfig} file (or
+         * programmatically) as they are considered secrets and are therefore not exposed as command line options.
+         *
+         * @param tracingEnabled whether telemetry should be enabled
+         * @return this instance for chaining
+         */
+        @Option(longName = "enable-tracing", shortName = "tracing", flag = true)
+        @Description("Enable OpenTelemetry telemetry (traces and metrics) export (opt-in)")
+        public Mutable setTracingEnabled(boolean tracingEnabled) {
+            this.tracingConfig.setEnabled(tracingEnabled);
             return this;
         }
 

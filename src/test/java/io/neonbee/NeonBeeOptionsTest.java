@@ -20,6 +20,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import io.neonbee.NeonBeeOptions.Mutable;
+import io.neonbee.config.TracingConfig;
 import io.neonbee.test.helper.FileSystemHelper;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.eventbus.EventBusOptions;
@@ -243,5 +244,37 @@ class NeonBeeOptionsTest {
         assertThat(mutable.setModuleJarPaths("g" + File.pathSeparator + "h",
                 "i" + File.pathSeparator + "j" + File.separator + "k").getModuleJarPaths())
                         .containsExactly(Path.of("g"), Path.of("h"), Path.of("i"), Path.of("j" + File.separator + "k"));
+    }
+
+    @Test
+    @DisplayName("tracing should be disabled by default")
+    void testTracingDisabledByDefault() {
+        Mutable mutable = new NeonBeeOptions.Mutable();
+        assertThat(mutable.getTracingConfig()).isNotNull();
+        assertThat(mutable.getTracingConfig().isEnabled()).isFalse();
+        assertThat(mutable.isTracingEnabled()).isFalse();
+    }
+
+    @Test
+    @DisplayName("setTracingEnabled should enable tracing on the tracing config")
+    void testSetTracingEnabled() {
+        Mutable mutable = new NeonBeeOptions.Mutable();
+        assertThat(mutable.setTracingEnabled(true)).isSameInstanceAs(mutable);
+        assertThat(mutable.isTracingEnabled()).isTrue();
+        assertThat(mutable.getTracingConfig().isEnabled()).isTrue();
+    }
+
+    @Test
+    @DisplayName("setTracingConfig should replace the config and be null-safe")
+    void testSetTracingConfig() {
+        Mutable mutable = new NeonBeeOptions.Mutable();
+        TracingConfig config = new TracingConfig().setEnabled(true).setOtlpEndpoint("http://localhost:4318");
+        assertThat(mutable.setTracingConfig(config)).isSameInstanceAs(mutable);
+        assertThat(mutable.getTracingConfig()).isSameInstanceAs(config);
+
+        // null resets to a fresh disabled configuration rather than storing null
+        mutable.setTracingConfig(null);
+        assertThat(mutable.getTracingConfig()).isNotNull();
+        assertThat(mutable.getTracingConfig().isEnabled()).isFalse();
     }
 }
