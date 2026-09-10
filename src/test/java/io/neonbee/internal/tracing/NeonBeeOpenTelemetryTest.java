@@ -135,6 +135,28 @@ class NeonBeeOpenTelemetryTest {
     }
 
     @Test
+    @DisplayName("bridgeConfigToOptions should keep fields set on the options when adopting the file endpoint")
+    void testBridgePreservesOptionsFields() {
+        // options carry programmatic values but no endpoint (the endpoint is expected to come from the file)
+        NeonBeeOptions.Mutable options = new NeonBeeOptions.Mutable().setInstanceName("test-instance")
+                .setTracingConfig(new TracingConfig().setServiceName("programmatic-service")
+                        .setOtlpApiToken("programmatic-token").setExportIntervalSeconds(10));
+        NeonBeeConfig config = new NeonBeeConfig().setTracingConfig(new TracingConfig().setEnabled(true)
+                .setOtlpEndpoint("http://file:4318").setServiceName("file-service")
+                .setOtlpApiToken("file-token").setExportIntervalSeconds(60));
+
+        NeonBeeOpenTelemetry.bridgeConfigToOptions(options, config);
+
+        TracingConfig result = options.getTracingConfig();
+        assertThat(result.isEnabled()).isTrue();
+        assertThat(result.getOtlpEndpoint()).isEqualTo("http://file:4318");
+        // values explicitly set on the options win over the file
+        assertThat(result.getServiceName()).isEqualTo("programmatic-service");
+        assertThat(result.getOtlpApiToken()).isEqualTo("programmatic-token");
+        assertThat(result.getExportIntervalSeconds()).isEqualTo(10);
+    }
+
+    @Test
     @DisplayName("ensureContextStorageProvider should set the Vert.x provider when unset")
     void testEnsureContextStorageProvider() {
         String previous = System.getProperty(NeonBeeOpenTelemetry.CONTEXT_STORAGE_PROVIDER_PROPERTY);

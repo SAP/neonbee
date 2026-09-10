@@ -151,7 +151,8 @@ public final class NeonBeeOpenTelemetry {
     /**
      * Bridges the {@link TracingConfig} of a (pre-loaded) {@link NeonBeeConfig} into the {@link NeonBeeOptions}, so it
      * is available before Vert.x is created. The file configuration is applied only if the options do not already carry
-     * an explicit OTLP endpoint; a CLI {@code --enable-tracing} force-enable is always preserved.
+     * an explicit OTLP endpoint; a CLI {@code --enable-tracing} force-enable is always preserved, and values set
+     * explicitly on the options (service name, API token, export interval) take precedence over the file.
      *
      * @param options the NeonBee options to enrich (only {@link NeonBeeOptions.Mutable} instances can be modified)
      * @param config  the (pre-loaded) NeonBee configuration, or {@code null}
@@ -173,9 +174,23 @@ public final class NeonBeeOpenTelemetry {
             return;
         }
 
+        // use the file configuration as the base and overlay the values that were set explicitly on the options, so
+        // programmatically configured fields (e.g. serviceName) are not lost when the endpoint comes from the file
+        TracingConfig merged = new TracingConfig(fromConfig.toJson());
         // preserve a CLI force-enable (e.g. --enable-tracing) even if the file config disables telemetry
-        boolean enabled = fromConfig.isEnabled() || (fromOptions != null && fromOptions.isEnabled());
-        mutableOptions.setTracingConfig(new TracingConfig(fromConfig.toJson()).setEnabled(enabled));
+        merged.setEnabled(fromConfig.isEnabled() || (fromOptions != null && fromOptions.isEnabled()));
+        if (fromOptions != null) {
+            if (fromOptions.getServiceName() != null && !fromOptions.getServiceName().isBlank()) {
+                merged.setServiceName(fromOptions.getServiceName());
+            }
+            if (fromOptions.getOtlpApiToken() != null && !fromOptions.getOtlpApiToken().isBlank()) {
+                merged.setOtlpApiToken(fromOptions.getOtlpApiToken());
+            }
+            if (fromOptions.getExportIntervalSeconds() != TracingConfig.DEFAULT_EXPORT_INTERVAL_SECONDS) {
+                merged.setExportIntervalSeconds(fromOptions.getExportIntervalSeconds());
+            }
+        }
+        mutableOptions.setTracingConfig(merged);
     }
 
     /**
