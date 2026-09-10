@@ -364,7 +364,9 @@ public class NeonBee {
                             .withMetrics(new MicrometerMetricsFactory(compositeMeterRegistry));
                     Optional<OpenTelemetrySdk> sdk = NeonBeeOpenTelemetry.applyTracing(builder, options);
                     return builder.buildClustered()
-                            .onSuccess(vertx -> sdk.ifPresent(s -> NeonBeeOpenTelemetry.register(vertx, s)));
+                            .onSuccess(vertx -> sdk.ifPresent(s -> NeonBeeOpenTelemetry.register(vertx, s)))
+                            // close the SDK (stopping its exporter threads) if the clustered Vert.x never comes up
+                            .onFailure(throwable -> sdk.ifPresent(OpenTelemetrySdk::close));
                 })
                 .onFailure(throwable -> {
                     LOGGER.error("Failed to start clustered Vert.x", throwable); // NOPMD slf4j

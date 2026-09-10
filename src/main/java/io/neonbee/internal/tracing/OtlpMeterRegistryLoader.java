@@ -48,7 +48,8 @@ public class OtlpMeterRegistryLoader implements MicrometerRegistryLoader {
         JsonObject registryConfig = config != null ? config : new JsonObject();
         return createRegistry(registryConfig.getString(CONFIG_ENDPOINT), registryConfig.getString(CONFIG_API_TOKEN),
                 registryConfig.getInteger(CONFIG_INTERVAL, TracingConfig.DEFAULT_EXPORT_INTERVAL_SECONDS),
-                registryConfig.getString(CONFIG_SERVICE_NAME));
+                // resolve the same way traces / the TracingConfig path do, so OTEL_SERVICE_NAME is honoured
+                NeonBeeOpenTelemetry.resolveServiceName(registryConfig.getString(CONFIG_SERVICE_NAME), null));
     }
 
     /**
