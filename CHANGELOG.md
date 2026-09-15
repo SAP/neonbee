@@ -1,10 +1,17 @@
 # Changelog
 
-## 0.37.34 (2026-09-08)
+## 0.37.35 (2026-09-15)
 
 ### Bug Fixes
 
+- **tracing**: address code-review findings in OTel export path ([c241fa6c](https://github.com/SAP/neonbee/commit/c241fa6c88a697494e2c2474e304db985b5fdcb0))
 - propagate configured send timeout on entity verticle FQN proxy hop ([a5e53b4a](https://github.com/SAP/neonbee/commit/a5e53b4abd329f30fa296a16698a675edd93c40a))
+
+
+### Features
+
+- **tracing**: wire OpenTelemetry trace & metric export (Phase 2) ([8148b1d0](https://github.com/SAP/neonbee/commit/8148b1d0e6e30e5f41d373b0d2271c76d28b2d02))
+- **tracing**: add OpenTelemetry configuration model (Phase 1) ([2d4adde6](https://github.com/SAP/neonbee/commit/2d4adde681eb12eedf6cfba9a02a4031c3157222))
 
 
 ### Documentation
