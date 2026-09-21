@@ -1,6 +1,39 @@
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
+// Detects platform/BOM dependencies (declared via platform(...) / enforcedPlatform(...)).
+// These must not be emitted as regular <dependency> entries in the published POM.
+ext.isPlatformDependency = { dep ->
+    try {
+        def category = dep.attributes?.getAttribute(org.gradle.api.attributes.Category.CATEGORY_ATTRIBUTE)
+        if (category == null) {
+            return false
+        }
+        def categoryName = (category instanceof CharSequence) ? category.toString() : category.name
+        return categoryName == org.gradle.api.attributes.Category.REGULAR_PLATFORM ||
+                categoryName == org.gradle.api.attributes.Category.ENFORCED_PLATFORM
+    } catch (Exception ignored) {
+        return false
+    }
+}
+
+// Builds a "group:name" -> resolved version map from a resolvable configuration, so that
+// dependencies declared without an explicit version (e.g. managed by a BOM) can be pinned
+// to the version actually selected during resolution when writing the POM.
+ext.resolvedVersionsOf = { String configurationName ->
+    def versions = [:]
+    try {
+        configurations.getByName(configurationName).incoming.resolutionResult.allComponents.each { component ->
+            def moduleVersion = component.moduleVersion
+            if (moduleVersion != null && moduleVersion.version) {
+                versions["${moduleVersion.group}:${moduleVersion.name}".toString()] = moduleVersion.version
+            }
+        }
+    } catch (Exception ignored) {
+    }
+    return versions
+}
+
 publishing {
     publications {
         // NeonBee Core Jar
@@ -70,19 +103,28 @@ publishing {
                             dependencyExclusions.put(String.valueOf("${dep.group}:${dep.name}"), rules)
                         }
 
+                def resolvedVersions = resolvedVersionsOf('runtimeClasspath')
+
                 // Iterate over implementation dependencies
                 configurations.implementation.allDependencies.each { dependency ->
-                    def dependencyKey = "${dependency.group}:${dependency.name}"
-                    logger.lifecycle("Dependency key class map: ${dependencyKey.getClass()}")
+                    // Skip platform/BOM dependencies (e.g. opentelemetry-bom); they must not be
+                    // emitted as regular compile dependencies in the published POM.
+                    if (isPlatformDependency(dependency)) {
+                        return
+                    }
 
+                    def dependencyKey = "${dependency.group}:${dependency.name}".toString()
                     def exclusions = dependencyExclusions[dependencyKey]
-                    logger.lifecycle("Looking for exclusion: ${dependencyKey}")
+
+                    // Fall back to the version selected during resolution (e.g. via a BOM) when the
+                    // dependency was declared without an explicit version.
+                    def resolvedVersion = dependency.version ?: resolvedVersions[dependencyKey]
 
                     // Add the dependency to the POM
                     def dependencyNode = dependenciesNode.appendNode('dependency')
                     dependencyNode.appendNode('groupId', dependency.group ?: 'unknown-group')
                     dependencyNode.appendNode('artifactId', dependency.name ?: 'unknown-artifact')
-                    dependencyNode.appendNode('version', dependency.version ?: 'unspecified-version')
+                    dependencyNode.appendNode('version', resolvedVersion ?: 'unspecified-version')
 
                     if (exclusions) {
                         // Add exclusions to the current dependency if applicable
@@ -201,20 +243,24 @@ publishing {
 
             pom.withXml {
                 def dependenciesNode = asNode().appendNode('dependencies')
+                def resolvedVersions = resolvedVersionsOf('testRuntimeClasspath')
+
+                def appendDependency = { dep ->
+                    // Skip platform/BOM dependencies; they must not be emitted as regular dependencies.
+                    if (isPlatformDependency(dep)) {
+                        return
+                    }
+                    def resolvedVersion = dep.version ?: resolvedVersions["${dep.group}:${dep.name}".toString()]
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', dep.group ?: 'unknown-group')
+                    dependencyNode.appendNode('artifactId', dep.name ?: 'unknown-artifact')
+                    dependencyNode.appendNode('version', resolvedVersion ?: 'unspecified-version')
+                }
+
                 // Iterate over the implementation dependencies and add them to the pom.xml
-                configurations.implementation.allDependencies.each {
-                    def dependencyNode = dependenciesNode.appendNode('dependency')
-                    dependencyNode.appendNode('groupId', it.group)
-                    dependencyNode.appendNode('artifactId', it.name)
-                    dependencyNode.appendNode('version', it.version)
-                }
+                configurations.implementation.allDependencies.each { appendDependency(it) }
                 // Iterate over the testImplementation dependencies and add them to the pom.xml
-                configurations.testImplementation.allDependencies.each {
-                    def dependencyNode = dependenciesNode.appendNode('dependency')
-                    dependencyNode.appendNode('groupId', it.group)
-                    dependencyNode.appendNode('artifactId', it.name)
-                    dependencyNode.appendNode('version', it.version)
-                }
+                configurations.testImplementation.allDependencies.each { appendDependency(it) }
 
                 // At NeonBee core as dependency
                 def dependencyNode = dependenciesNode.appendNode('dependency')
