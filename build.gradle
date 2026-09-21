@@ -97,11 +97,10 @@ dependencies {
     // OpenTelemetry
     implementation group: 'io.vertx', name: 'vertx-opentelemetry', version: vertx_version
     def otel_version = '1.49.0'
-    implementation platform(group: 'io.opentelemetry', name: 'opentelemetry-bom', version: otel_version)
-    implementation group: 'io.opentelemetry', name: 'opentelemetry-api'
-    implementation group: 'io.opentelemetry', name: 'opentelemetry-sdk'
-    implementation group: 'io.opentelemetry', name: 'opentelemetry-sdk-trace'
-    implementation group: 'io.opentelemetry', name: 'opentelemetry-exporter-otlp'
+    implementation group: 'io.opentelemetry', name: 'opentelemetry-api', version: otel_version
+    implementation group: 'io.opentelemetry', name: 'opentelemetry-sdk', version: otel_version
+    implementation group: 'io.opentelemetry', name: 'opentelemetry-sdk-trace', version: otel_version
+    implementation group: 'io.opentelemetry', name: 'opentelemetry-exporter-otlp', version: otel_version
 
     def hazelcast_version = '5.3.8'
     implementation group: 'com.hazelcast', name: 'hazelcast', version: hazelcast_version
