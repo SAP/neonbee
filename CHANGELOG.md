@@ -1,9 +1,10 @@
 # Changelog
 
-## 0.37.35 (2026-09-15)
+## 0.37.36 (2026-09-21)
 
 ### Bug Fixes
 
+- **publishing**: declare explicit OpenTelemetry dependency versions ([ba5a8533](https://github.com/SAP/neonbee/commit/ba5a85336a770b544a48728b309fa831ca53b6a9))
 - **tracing**: address code-review findings in OTel export path ([c241fa6c](https://github.com/SAP/neonbee/commit/c241fa6c88a697494e2c2474e304db985b5fdcb0))
 - propagate configured send timeout on entity verticle FQN proxy hop ([a5e53b4a](https://github.com/SAP/neonbee/commit/a5e53b4abd329f30fa296a16698a675edd93c40a))
 
