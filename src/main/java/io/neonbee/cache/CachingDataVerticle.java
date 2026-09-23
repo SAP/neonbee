@@ -348,8 +348,8 @@ public abstract class CachingDataVerticle<T> extends DataVerticle<T> {
                         if (lock != null) {
                             lock.release(); // safety-safe, or if data was cached in the meantime!
                         }
-                    })).compose(data -> filterDataFromCache(query, data, context));
-        });
+                    }));
+        }).compose(data -> filterDataFromCache(query, data, context));
     }
 
     /**
