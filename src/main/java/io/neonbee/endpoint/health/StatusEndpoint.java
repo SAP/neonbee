@@ -29,7 +29,7 @@ public class StatusEndpoint implements Endpoint {
     /**
      * The default path that is used by NeonBee to expose the health endpoint.
      */
-    private static final String DEFAULT_BASE_PATH = "/status/";
+    public static final String DEFAULT_BASE_PATH = "/status/";
 
     @Override
     public EndpointConfig getDefaultConfig() {
