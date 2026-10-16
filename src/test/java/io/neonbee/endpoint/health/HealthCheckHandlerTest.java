@@ -9,9 +9,9 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,9 +28,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
 
+import io.neonbee.NeonBee;
 import io.neonbee.data.DataContext;
 import io.neonbee.health.HealthCheckRegistry;
+import io.neonbee.hook.HookRegistry;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.FileSystem;
@@ -52,6 +57,8 @@ class HealthCheckHandlerTest {
 
     HttpServerRequest serverRequest;
 
+    MockedStatic<NeonBee> staticNeonBeeMock;
+
     @BeforeEach
     void setUp() {
         registry = mock(HealthCheckRegistry.class);
@@ -73,6 +80,23 @@ class HealthCheckHandlerTest {
         serverRequest = mock(HttpServerRequest.class);
         when(serverRequest.path()).thenReturn("/health");
         when(routingContext.request()).thenReturn(serverRequest);
+        when(routingContext.vertx()).thenReturn(mock(Vertx.class));
+
+        // the HealthCheckHandler ends the response via Endpoint.beforeEnd, which resolves the NeonBee instance from the
+        // RoutingContext in order to execute the BEFORE_RESPONSE_END hooks, thus mock these to succeed without any
+        // hooks
+        NeonBee neonBeeMock = mock(NeonBee.class);
+        HookRegistry hookRegistryMock = mock(HookRegistry.class);
+        when(neonBeeMock.getHookRegistry()).thenReturn(hookRegistryMock);
+        when(hookRegistryMock.executeHooks(any(), any()))
+                .thenReturn(Future.all(succeededFuture(), succeededFuture()));
+        staticNeonBeeMock = mockStatic(NeonBee.class);
+        staticNeonBeeMock.when(() -> NeonBee.get(any(Vertx.class))).thenReturn(neonBeeMock);
+    }
+
+    @AfterEach
+    void tearDown() {
+        staticNeonBeeMock.close();
     }
 
     private static JsonObject buildExpectedJson(String status, String outcome, JsonObject... checks) {
@@ -124,13 +148,13 @@ class HealthCheckHandlerTest {
     @Test
     @DisplayName("should return internal server error, if retrieving data fails")
     void testHandleFailure() {
+        Throwable cause = new Throwable("oops");
         when(registry.collectHealthCheckResults(any(DataContext.class), anyString()))
-                .thenReturn(failedFuture(new Throwable("oops")));
+                .thenReturn(failedFuture(cause));
 
         new HealthCheckHandler(registry, null).handle(routingContext);
 
-        verify(httpServerResponse).setStatusCode(eq(500));
-        verify(httpServerResponse).setStatusMessage(matches("Could not request any health data."));
+        verify(routingContext).fail(eq(500), eq(cause));
     }
 
     @Test

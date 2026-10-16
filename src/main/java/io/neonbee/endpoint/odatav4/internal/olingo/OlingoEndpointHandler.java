@@ -1,5 +1,6 @@
 package io.neonbee.endpoint.odatav4.internal.olingo;
 
+import static io.neonbee.endpoint.Endpoint.beforeEnd;
 import static io.neonbee.endpoint.odatav4.ODataV4Endpoint.normalizeUri;
 import static io.neonbee.internal.helper.BufferHelper.inputStreamToBuffer;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
@@ -98,7 +99,7 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
 
                 try {
                     // map the odataResponse to the routingContext.response
-                    mapODataResponse(odataResponse, routingContext.response());
+                    mapODataResponse(odataResponse, routingContext);
                 } catch (IOException | ODataRuntimeException e) {
                     routingContext.fail(-1, e);
                 }
@@ -223,12 +224,13 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
     /**
      * Maps a ODataResponse to a existing Vert.x HttpServerResponse.
      *
-     * @param odataResponse The ODataResponse to map
-     * @param response      The HttpServerResponse to map to
+     * @param odataResponse  The ODataResponse to map
+     * @param routingContext The routing context containing the HttpServerResponse to map to
      * @throws IOException IOException
      */
-    public static void mapODataResponse(ODataResponse odataResponse, HttpServerResponse response) throws IOException {
+    public static void mapODataResponse(ODataResponse odataResponse, RoutingContext routingContext) throws IOException {
         // status code and headers
+        HttpServerResponse response = routingContext.response();
         response.setStatusCode(odataResponse.getStatusCode());
         for (Map.Entry<String, List<String>> entry : odataResponse.getAllHeaders().entrySet()) {
             for (String headerValue : entry.getValue()) {
@@ -238,14 +240,15 @@ public final class OlingoEndpointHandler implements Handler<RoutingContext> {
         // OData response content
         if (odataResponse.getContent() != null) {
             try (InputStream content = odataResponse.getContent()) {
-                response.end(inputStreamToBuffer(content));
+                beforeEnd(routingContext, inputStreamToBuffer(content)).onSuccess(response::end);
             }
         } else if (odataResponse.getODataContent() != null) {
             ByteArrayOutputStream byteArrayOutput = new ByteArrayOutputStream();
             odataResponse.getODataContent().write(byteArrayOutput);
-            response.end(Buffer.buffer(byteArrayOutput.toByteArray()));
+            beforeEnd(routingContext, Buffer.buffer(byteArrayOutput.toByteArray())).onSuccess(response::end);
         } else {
-            response.end(); // no content (e.g. for update / delete requests)
+            // no content (e.g. for update / delete requests)
+            beforeEnd(routingContext, null).onSuccess(nothing -> response.end());
         }
     }
 }

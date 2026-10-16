@@ -4,6 +4,7 @@ import static io.neonbee.data.DataAction.CREATE;
 import static io.neonbee.data.DataException.FAILURE_CODE_NO_HANDLERS;
 import static io.neonbee.data.DataException.FAILURE_CODE_TIMEOUT;
 import static io.neonbee.data.DataVerticle.requestData;
+import static io.neonbee.endpoint.Endpoint.beforeEnd;
 import static io.neonbee.endpoint.Endpoint.createRouter;
 import static io.neonbee.endpoint.HttpMethodToDataActionMapper.mapMethodToAction;
 import static io.neonbee.internal.helper.CollectionHelper.multiMapToMap;
@@ -163,13 +164,12 @@ public class RawEndpoint implements Endpoint {
                         }
 
                         Object result = asyncResult.result();
+                        HttpServerResponse response = routingContext.response();
                         if (result == null) {
-                            routingContext.response().setStatusCode((action == CREATE ? CREATED : NO_CONTENT).code())
-                                    .end();
+                            response.setStatusCode((action == CREATE ? CREATED : NO_CONTENT).code());
+                            beforeEnd(routingContext, null).onSuccess(nothing -> response.end());
                             return;
                         }
-
-                        HttpServerResponse response = routingContext.response();
 
                         Optional.ofNullable(context.responseData())
                                 .map(map -> map.get(RESPONSE_HEADERS_HINT))
@@ -198,7 +198,7 @@ public class RawEndpoint implements Endpoint {
                                             .map(String.class::cast).orElse("text/plain"));
                         }
 
-                        response.end((Buffer) result);
+                        beforeEnd(routingContext, (Buffer) result).onSuccess(response::end);
                     });
         }
 

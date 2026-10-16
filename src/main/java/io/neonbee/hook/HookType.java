@@ -1,5 +1,7 @@
 package io.neonbee.hook;
 
+import io.vertx.core.http.HttpServerResponse;
+
 public enum HookType {
     /**
      * The bootstrap hook is called when a new NeonBee instance was created, even before the NeonBee configuration is
@@ -28,6 +30,24 @@ public enum HookType {
      * {@link #ROUTING_CONTEXT}: {@linkplain io.vertx.ext.web.RoutingContext}
      */
     ONCE_PER_REQUEST,
+
+    /**
+     * This hook is called for each web request just before the response is about to be sent to the client /
+     * {@link io.vertx.core.http.HttpServerResponse#end(io.vertx.core.buffer.Buffer)} /
+     * {@link io.vertx.core.http.HttpServerResponse#end(String)} / {@link io.vertx.core.http.HttpServerResponse#end()}
+     * is about to be called.
+     * <p>
+     * Note: This hook is intended for the implementation of cross-cutting concerns (for example logging or adding a
+     * final header to the response, etc.). In case this hook handles the provided {@linkplain #ROUTING_CONTEXT} in the
+     * {@linkplain HookContext} it may not call the {@code hookPromise}, to break the chain.
+     * <p>
+     * Available parameters in the {@linkplain HookContext}:
+     * <p>
+     * {@link #ROUTING_CONTEXT}: {@linkplain io.vertx.ext.web.RoutingContext}
+     * <p>
+     * {@link #LAST_CHUNK}: the last chunk that is about to be sent in the response, or {@code null}.
+     */
+    BEFORE_RESPONSE_END,
 
     /**
      * This hook is called for each incoming web request before any other handler gets executed, which guarantees the
@@ -69,6 +89,17 @@ public enum HookType {
      * Name for the routing context parameter of HookType {@link #ONCE_PER_REQUEST}.
      */
     public static final String ROUTING_CONTEXT = "routingContext";
+
+    /**
+     * Name for the last chunk parameter of HookType {@link #BEFORE_RESPONSE_END}.
+     *
+     * Last chunk is the {@link io.vertx.core.buffer.Buffer}, {@link String}, or yet unencoded {@link Object} that is
+     * about to be passed to the last call to {@link HttpServerResponse#send(io.vertx.core.buffer.Buffer)} /
+     * {@link HttpServerResponse#send(String)}, or the {@link HttpServerResponse#end(io.vertx.core.buffer.Buffer)} /
+     * {@link HttpServerResponse#end(String)} method. In case {@link HttpServerResponse#send()} /
+     * {@link HttpServerResponse#end()} is about to be called last, this parameter will not be present in the context.
+     */
+    public static final String LAST_CHUNK = "lastChunk";
 
     /**
      * Name for the node ID parameter of the cluster node for {@link #NODE_LEFT} and {@link #NODE_ADDED}.
