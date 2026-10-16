@@ -29,23 +29,30 @@ public class HooksHandler implements Handler<RoutingContext> {
         this.hookType = hookType;
     }
 
+    /**
+     * Create a failure handler to call in case the hook execution fails, failing the routing context accordingly.
+     *
+     * @param hookType       the HookType for which the failure handler is created
+     * @param routingContext the RoutingContext to fail in case of an error
+     * @return a Handler that handles failures during hook execution
+     */
+    public static Handler<? super Throwable> hookFailureHandler(HookType hookType, RoutingContext routingContext) {
+        return throwable -> {
+            LOGGER.error("An error has occurred while executing the request hook of type {}", hookType,
+                    throwable);
+            if (throwable instanceof DataException dataException) {
+                routingContext.fail(dataException.failureCode());
+            } else {
+                routingContext.fail(throwable);
+            }
+        };
+    }
+
     @Override
     public void handle(RoutingContext routingContext) {
         NeonBee.get(routingContext.vertx()).getHookRegistry()
                 .executeHooks(hookType, Map.of(ROUTING_CONTEXT, routingContext))
-                .onComplete(asyncResult -> {
-                    if (asyncResult.failed()) {
-                        Throwable cause = asyncResult.cause();
-                        LOGGER.error("An error has occurred while executing the request hook of type {}", hookType,
-                                cause);
-                        if (cause instanceof DataException dataException) {
-                            routingContext.fail(dataException.failureCode());
-                        } else {
-                            routingContext.fail(cause);
-                        }
-                    } else {
-                        routingContext.next();
-                    }
-                });
+                .onFailure(hookFailureHandler(hookType, routingContext))
+                .onSuccess(anything -> routingContext.next());
     }
 }

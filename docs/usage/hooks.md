@@ -57,6 +57,7 @@ hooks.
   endpoint for handling. Note: This hook is intended for the implementation of cross-cutting concerns (for example,
   logging or global authorization checks). In case this hook handles the provided routing context in the HookContext,
   it may not call the hookPromise, to break the chain.
+* `BEFORE_RESPONSE_END`: This hook is called for each web request just before the response is about to be sent to the client. Note: This hook is intended for the implementation of cross-cutting concerns (for example logging or adding a final header to the response, etc.). In case this hook handles the provided routing context in the HookContext, it may not call the hookPromise, to break the chain.
 * `BEFORE_REQUEST`: This hook is called for each incoming web request before any other handler gets executed, which
   guarantees the execution of this hook. In case this hook handles the provided routing context in the HookContext, it
   may not call the hookPromise, to break the chain.

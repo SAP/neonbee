@@ -1,5 +1,6 @@
 package io.neonbee.endpoint.openapi;
 
+import static io.neonbee.endpoint.Endpoint.beforeEnd;
 import static io.vertx.ext.web.openapi.router.RequestExtractor.withBodyHandler;
 import static io.vertx.ext.web.openapi.router.RouterBuilder.KEY_META_DATA_OPERATION;
 import static io.vertx.ext.web.openapi.router.RouterBuilder.KEY_META_DATA_VALIDATED_REQUEST;
@@ -99,6 +100,7 @@ public abstract class AbstractOpenAPIEndpoint implements Endpoint {
 
             requestProcessor.apply(validatedRequest, routingContext)
                     .compose(validatableResponse -> responseValidator.validate(validatableResponse, operationId))
+                    .compose(validatedResponse -> beforeEnd(routingContext, validatedResponse))
                     .compose(validatedResponse -> validatedResponse.send(routingContext.response()))
                     .onFailure(e -> {
                         if (e instanceof ValidatorException) {

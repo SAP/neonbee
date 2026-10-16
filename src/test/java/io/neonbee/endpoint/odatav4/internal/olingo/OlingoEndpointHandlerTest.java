@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,10 +21,15 @@ import org.apache.olingo.server.api.ODataResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 import org.mockito.stubbing.Answer;
 
+import io.neonbee.NeonBee;
+import io.neonbee.hook.HookRegistry;
 import io.neonbee.internal.handler.CorrelationIdHandler;
+import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
@@ -33,6 +39,22 @@ import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 
 class OlingoEndpointHandlerTest {
+    /**
+     * Mocks a {@link RoutingContext} whose response is the given mock and whose associated NeonBee instance executes
+     * all {@code BEFORE_RESPONSE_END} hooks successfully, so that {@link OlingoEndpointHandler#mapODataResponse} can
+     * end the response.
+     *
+     * @param responseMock the {@link HttpServerResponse} mock to return from {@link RoutingContext#response()}
+     * @return the mocked {@link RoutingContext}
+     */
+    private static RoutingContext mockRoutingContext(HttpServerResponse responseMock) {
+        Vertx vertxMock = mock(Vertx.class);
+        RoutingContext routingContextMock = mock(RoutingContext.class);
+        when(routingContextMock.response()).thenReturn(responseMock);
+        when(routingContextMock.vertx()).thenReturn(vertxMock);
+        return routingContextMock;
+    }
+
     @Test
     @DisplayName("map generic response")
     void checkGenericResponseMapping() {
@@ -43,7 +65,18 @@ class OlingoEndpointHandlerTest {
         odataResponse.setContent(new ByteArrayInputStream("expected data".getBytes(StandardCharsets.UTF_8)));
 
         HttpServerResponse responseMock = mock(HttpServerResponse.class);
-        assertDoesNotThrow(() -> mapODataResponse(odataResponse, responseMock));
+        RoutingContext routingContextMock = mockRoutingContext(responseMock);
+
+        try (MockedStatic<NeonBee> staticNeonBeeMock = mockStatic(NeonBee.class)) {
+            NeonBee neonBeeMock = mock(NeonBee.class);
+            HookRegistry hookRegistryMock = mock(HookRegistry.class);
+            when(neonBeeMock.getHookRegistry()).thenReturn(hookRegistryMock);
+            when(hookRegistryMock.executeHooks(any(), any()))
+                    .thenReturn(Future.all(Future.succeededFuture(), Future.succeededFuture()));
+            staticNeonBeeMock.when(() -> NeonBee.get(any(Vertx.class))).thenReturn(neonBeeMock);
+
+            assertDoesNotThrow(() -> mapODataResponse(odataResponse, routingContextMock));
+        }
 
         verify(responseMock).setStatusCode(200);
         verify(responseMock).putHeader("expected1", "value1");
@@ -66,7 +99,18 @@ class OlingoEndpointHandlerTest {
         odataResponse.setODataContent(odataContentMock);
 
         HttpServerResponse responseMock = mock(HttpServerResponse.class);
-        assertDoesNotThrow(() -> mapODataResponse(odataResponse, responseMock));
+        RoutingContext routingContextMock = mockRoutingContext(responseMock);
+
+        try (MockedStatic<NeonBee> staticNeonBeeMock = mockStatic(NeonBee.class)) {
+            NeonBee neonBeeMock = mock(NeonBee.class);
+            HookRegistry hookRegistryMock = mock(HookRegistry.class);
+            when(neonBeeMock.getHookRegistry()).thenReturn(hookRegistryMock);
+            when(hookRegistryMock.executeHooks(any(), any()))
+                    .thenReturn(Future.all(Future.succeededFuture(), Future.succeededFuture()));
+            staticNeonBeeMock.when(() -> NeonBee.get(any(Vertx.class))).thenReturn(neonBeeMock);
+
+            assertDoesNotThrow(() -> mapODataResponse(odataResponse, routingContextMock));
+        }
 
         ArgumentCaptor<Buffer> endBuffer = ArgumentCaptor.forClass(Buffer.class);
         verify(responseMock).end(endBuffer.capture());

@@ -1,5 +1,15 @@
 package io.neonbee.endpoint;
 
+import static io.neonbee.hook.HookType.BEFORE_RESPONSE_END;
+import static io.neonbee.hook.HookType.LAST_CHUNK;
+import static io.neonbee.hook.HookType.ROUTING_CONTEXT;
+import static io.neonbee.internal.handler.HooksHandler.hookFailureHandler;
+
+import java.util.Map;
+
+import javax.annotation.Nullable;
+
+import io.neonbee.NeonBee;
 import io.neonbee.config.EndpointConfig;
 import io.neonbee.data.DataContext;
 import io.vertx.core.Future;
@@ -62,5 +72,25 @@ public interface Endpoint {
         Router router = Router.router(vertx);
         router.route().handler(handler);
         return router;
+    }
+
+    /**
+     * To be called by any endpoints before ending the HTTP response / routing context, in order for the
+     * {@link io.neonbee.hook.HookType#ONCE_PER_REQUEST} hooks to be executed.
+     *
+     * @param routingContext the current {@link RoutingContext} for the request
+     * @param lastChunk      the last chunk that is about to be passed to the HTTP response or {@code null} if there is
+     *                       no last chunk to end the response
+     * @param <T>            the type of the last chunk that is about to be passed to the HTTP response
+     * @return a {@link Future} that completes with the last chunk once all
+     *         {@link io.neonbee.hook.HookType#BEFORE_RESPONSE_END} hooks have been executed
+     */
+    static <T> Future<T> beforeEnd(RoutingContext routingContext, @Nullable T lastChunk) {
+        return NeonBee.get(routingContext.vertx()).getHookRegistry()
+                .executeHooks(BEFORE_RESPONSE_END,
+                        lastChunk == null ? Map.of(ROUTING_CONTEXT, routingContext)
+                                : Map.of(ROUTING_CONTEXT, routingContext, LAST_CHUNK, lastChunk))
+                .onFailure(hookFailureHandler(BEFORE_RESPONSE_END, routingContext))
+                .map(lastChunk); // map to the last chunk, for the callee to end the HTTP response
     }
 }

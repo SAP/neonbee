@@ -1,5 +1,7 @@
 package io.neonbee.endpoint.metrics;
 
+import static io.neonbee.endpoint.Endpoint.beforeEnd;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
@@ -48,12 +50,12 @@ public class PrometheusScrapingHandler extends PrometheusScrapingHandlerImpl {
 
     private static void noPrometheusMeterRegistryPresent(RoutingContext rc) {
         LOGGER.warn("Could not find a PrometheusMeterRegistry in the CompositeMeterRegistry");
-        rc.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
-                .setStatusMessage("Could not find a PrometheusMeterRegistry").end();
+        rc.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
     }
 
     private static void handleWithPrometheusMeterRegistry(RoutingContext rc, PrometheusMeterRegistry pmr) {
-        rc.response().putHeader(HttpHeaders.CONTENT_TYPE, PROMETHEUS_TEXT_FORMAT_CONTENT_TYPE).end(pmr.scrape());
+        rc.response().putHeader(HttpHeaders.CONTENT_TYPE, PROMETHEUS_TEXT_FORMAT_CONTENT_TYPE);
+        beforeEnd(rc, pmr.scrape()).onSuccess(rc::end);
     }
 
     @Override

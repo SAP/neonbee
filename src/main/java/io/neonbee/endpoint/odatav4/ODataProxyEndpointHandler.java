@@ -1,6 +1,7 @@
 package io.neonbee.endpoint.odatav4;
 
 import static io.neonbee.data.DataVerticle.requestData;
+import static io.neonbee.endpoint.Endpoint.beforeEnd;
 import static io.neonbee.endpoint.HttpMethodToDataActionMapper.mapMethodToAction;
 import static io.neonbee.endpoint.odatav4.internal.olingo.OlingoEndpointHandler.mapToODataRequest;
 import static io.neonbee.internal.helper.BufferHelper.inputStreamToBuffer;
@@ -274,7 +275,7 @@ public final class ODataProxyEndpointHandler implements Handler<RoutingContext> 
             setHeaderValues(context.responseData(), response::putHeader);
             response.putHeader("OData-Version", "4.0");
             response.setStatusCode(getStatusCode(context.responseData(), HttpStatusCode.OK.getStatusCode()));
-            response.end(buffer);
+            beforeEnd(ctx, buffer).onSuccess(response::end);
         }).onFailure(cause -> {
             LOGGER.correlateWith(ctx).error("Error processing OData request", cause);
             ctx.fail(getStatusCode(cause), cause);

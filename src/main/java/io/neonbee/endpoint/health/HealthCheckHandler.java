@@ -1,5 +1,6 @@
 package io.neonbee.endpoint.health;
 
+import static io.neonbee.endpoint.Endpoint.beforeEnd;
 import static io.neonbee.internal.helper.StringHelper.EMPTY;
 import static java.util.Objects.requireNonNull;
 
@@ -16,7 +17,6 @@ import io.neonbee.data.internal.DataContextImpl;
 import io.neonbee.health.HealthCheckRegistry;
 import io.neonbee.logging.LoggingFacade;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -86,7 +86,7 @@ public class HealthCheckHandler implements Handler<RoutingContext> {
         String checkName = parseCheck(rc);
         registry.collectHealthCheckResults(new DataContextImpl(rc), checkName)
                 .onFailure(t -> handleFailure(rc, t))
-                .compose(resp -> handleRequest(rc, resp, verbose));
+                .onSuccess(resp -> handleRequest(rc, resp, verbose));
     }
 
     /**
@@ -126,9 +126,8 @@ public class HealthCheckHandler implements Handler<RoutingContext> {
      * @param rc      the current {@link RoutingContext}
      * @param json    all consolidated health checks
      * @param verbose if response should be verbose or not
-     * @return a succeeded Future if handling the requests is successful, a failed Future otherwise.
      */
-    private Future<Void> handleRequest(RoutingContext rc, JsonObject json, boolean verbose) {
+    private void handleRequest(RoutingContext rc, JsonObject json, boolean verbose) {
         requireNonNull(json);
 
         HttpServerResponse response = rc.response().putHeader(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON_CHARSET_UTF_8);
@@ -139,21 +138,20 @@ public class HealthCheckHandler implements Handler<RoutingContext> {
                 response.setStatusCode(HttpResponseStatus.SERVICE_UNAVAILABLE.code());
             }
         } else if (isNoCheckAvailable(json)) {
-            return response.setStatusCode(HttpStatusCode.NO_CONTENT.getStatusCode()).end()
-                    .recover(t -> Future.succeededFuture());
+            response.setStatusCode(HttpStatusCode.NO_CONTENT.getStatusCode());
+            beforeEnd(rc, null).onSuccess(nothing -> response.end());
         } else {
             response.setStatusCode(HttpResponseStatus.OK.code());
         }
 
         if (verbose) {
-            return response.end(json.encode()).recover(t -> Future.succeededFuture());
+            beforeEnd(rc, json.encode()).onSuccess(response::end);
+            return;
         }
 
-        return Future.succeededFuture(version.get()).compose(cachedVersion -> {
-            if (cachedVersion != null) {
-                return Future.succeededFuture(cachedVersion);
-            }
-            return vertx.fileSystem().readFile(VERSION_FILE).map(Buffer::toString).onComplete(ar -> {
+        String cachedVersion = version.get();
+        if (cachedVersion == null) {
+            vertx.fileSystem().readFile(VERSION_FILE).map(Buffer::toString).onComplete(ar -> {
                 if (ar.succeeded()) {
                     version.set(ar.result());
                 } else {
@@ -162,16 +160,18 @@ public class HealthCheckHandler implements Handler<RoutingContext> {
                         LOGGER.error("Failed to read version file: " + VERSION_FILE, ar.cause());
                     }
                 }
-            }).recover(t -> Future.succeededFuture(version.get()));
-        }).compose(neonbeeVersion -> response
-                .end(new JsonObject().put("status", json.getString("status")).put("version", neonbeeVersion).encode()))
-                .mapEmpty();
+                beforeEnd(rc, new JsonObject().put("status", json.getString("status"))
+                        .put("version", version.get()).encode()).onSuccess(response::end);
+            });
+        } else {
+            beforeEnd(rc, new JsonObject().put("status", json.getString("status"))
+                    .put("version", cachedVersion).encode()).onSuccess(response::end);
+        }
     }
 
     private static void handleFailure(RoutingContext rc, Throwable throwable) {
         LOGGER.correlateWith(rc).error("Failed to request data from health check registry.", throwable);
-        rc.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
-                .setStatusMessage("Internal Server Error: Could not request any health data.").end();
+        rc.fail(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), throwable);
     }
 
     /**
