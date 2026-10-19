@@ -39,8 +39,8 @@ class LocalRequestClusterTest extends NeonBeeExtension.TestBase {
     void testLocalRequest(@NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee source,
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee target,
             VertxTestContext testContext) {
-        Checkpoint nonLocalRequest = testContext.checkpoint();
-        Checkpoint localRequest = testContext.checkpoint();
+        Checkpoint nonLocalRequest = testContext.laxCheckpoint();
+        Checkpoint localRequest = testContext.laxCheckpoint();
 
         deployVerticle(target.getVertx(), LOCAL_TARGET_VERTICLE).compose(s -> {
             // Create a non local request

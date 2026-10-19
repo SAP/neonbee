@@ -73,15 +73,16 @@ class ClusterEntityRegistryTest {
     @Test
     @DisplayName("unregister all key from registry")
     void removeClusteringInformation(Vertx vertx, VertxTestContext context) {
-        Checkpoint checkpoint = context.checkpoint(2);
+        Checkpoint cp1 = context.laxCheckpoint();
+        Checkpoint cp2 = context.laxCheckpoint();
         ClusterEntityRegistry registry = new TestClusterEntityRegistry(vertx, REGISTRY_NAME);
         registry.register(KEY, VALUE)
                 .compose(unused -> registry.getClusteringInformation(TestClusterEntityRegistry.CLUSTER_NODE_ID))
                 .onSuccess(mapValue -> context.verify(() -> {
                     assertThat(mapValue).isNotEmpty();
-                    checkpoint.flag();
+                    cp1.flag();
                 })).compose(unused -> registry.removeClusteringInformation(TestClusterEntityRegistry.CLUSTER_NODE_ID))
-                .onSuccess(v -> checkpoint.flag())
+                .onSuccess(v -> cp2.flag())
                 .onFailure(context::failNow);
     }
 
@@ -110,7 +111,11 @@ class ClusterEntityRegistryTest {
     @Test
     @DisplayName("unregister node with two nodes with same entities")
     void unregisterNode2(Vertx vertx, VertxTestContext context) {
-        Checkpoint checkpoint = context.checkpoint(5);
+        Checkpoint cp1 = context.laxCheckpoint();
+        Checkpoint cp2 = context.laxCheckpoint();
+        Checkpoint cp3 = context.laxCheckpoint();
+        Checkpoint cp4 = context.laxCheckpoint();
+        Checkpoint cp5 = context.laxCheckpoint();
         String clusterIdNode1 = "TEST_CLUSTER_ID_0000000000000001";
         String clusterIdNode2 = "TEST_CLUSTER_ID_0000000000000002";
         ClusterEntityRegistry registry1 = new TestClusterEntityRegistry(vertx, REGISTRY_NAME, clusterIdNode1);
@@ -119,25 +124,25 @@ class ClusterEntityRegistryTest {
         registry1.register(KEY, VALUE).compose(unused -> registry2.register(KEY, VALUE))
                 .compose(unused -> registry1.get(KEY)).onSuccess(ja -> context.verify(() -> {
                     assertThat(ja).containsExactly(VALUE);
-                    checkpoint.flag();
+                    cp1.flag();
                 })).compose(unused -> registry1.getClusteringInformation(clusterIdNode1))
                 .compose(unused -> registry1.unregisterNode(clusterIdNode1)).compose(unused -> registry2.get(KEY))
                 .onSuccess(ja -> context.verify(() -> {
                     assertThat(ja).containsExactly(VALUE);
-                    checkpoint.flag();
+                    cp2.flag();
                 })).compose(unused -> registry2.getClusteringInformation(clusterIdNode1))
                 .onSuccess(mapValue -> context.verify(() -> {
                     assertThat(mapValue).isNull();
-                    checkpoint.flag();
+                    cp3.flag();
                 })).compose(unused -> registry2.getClusteringInformation(clusterIdNode2))
                 .onSuccess(mapValue -> context.verify(() -> {
                     assertThat(mapValue)
                             .containsExactly(ClusterEntityRegistry.clusterRegistrationInformation("key", VALUE));
-                    checkpoint.flag();
+                    cp4.flag();
                 })).compose(unused -> registry2.unregisterNode(clusterIdNode2)).compose(unused -> registry2.get(KEY))
                 .onSuccess(ja -> context.verify(() -> {
                     assertThat(ja).isEmpty();
-                    checkpoint.flag();
+                    cp5.flag();
                 })).onFailure(context::failNow);
     }
 

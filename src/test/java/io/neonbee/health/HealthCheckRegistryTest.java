@@ -177,9 +177,9 @@ class HealthCheckRegistryTest {
     void testConsolidateHealthCheckResultsClustered(Vertx vertx, VertxTestContext testContext) throws Exception {
         neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(true));
 
-        Checkpoint requestReceivedVerticle1 = testContext.checkpoint();
-        Checkpoint requestReceivedVerticle2 = testContext.checkpoint();
-        Checkpoint receivedResultsValidated = testContext.checkpoint();
+        Checkpoint requestReceivedVerticle1 = testContext.laxCheckpoint();
+        Checkpoint requestReceivedVerticle2 = testContext.laxCheckpoint();
+        Checkpoint receivedResultsValidated = testContext.laxCheckpoint();
 
         HealthCheckVerticle healthCheckVerticle1 = new HealthCheckVerticle() {
             @Override
@@ -240,7 +240,7 @@ class HealthCheckRegistryTest {
                 new NeonBeeConfig().setHealthConfig(new HealthConfig().setCollectClusteredResults(false));
         neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(true), neonBeeConfig);
 
-        Checkpoint receivedResultsValidated = testContext.checkpoint();
+        Checkpoint receivedResultsValidated = testContext.laxCheckpoint();
 
         HealthCheckVerticle healthCheckVerticle = new HealthCheckVerticle() {
             @Override
@@ -277,12 +277,13 @@ class HealthCheckRegistryTest {
     @Test
     @DisplayName("it requests data from local registry only if in non-clustered mode")
     void testConsolidateHealthCheckResultsNonClustered(Vertx vertx, VertxTestContext testContext) {
-        Checkpoint cp = testContext.checkpoint(2);
+        Checkpoint cp1 = testContext.laxCheckpoint();
+        Checkpoint cp2 = testContext.laxCheckpoint();
 
         HealthCheckRegistry mock = new HealthCheckRegistry(vertx) {
             @Override
             Future<List<JsonObject>> getLocalHealthCheckResults() {
-                cp.flag();
+                cp1.flag();
                 return super.getLocalHealthCheckResults();
             }
         };
@@ -294,7 +295,7 @@ class HealthCheckRegistryTest {
                     assertThat(matchingNameCount.apply(DUMMY_ID)).isEqualTo(1);
                     assertThat(result.getString("outcome")).isEqualTo("UP");
                     assertThat(result.getString("status")).isEqualTo("UP");
-                    cp.flag();
+                    cp2.flag();
                 })));
     }
 

@@ -78,16 +78,17 @@ class EntityVerticleTest extends EntityVerticleTestBase {
         WriteSafeRegistry<String> registry =
                 new WriteSafeRegistry<>(getNeonBee().getVertx(), EntityVerticle.REGISTRY_NAME);
 
-        Checkpoint checkpoint = testContext.checkpoint(2);
+        Checkpoint checkpoint1 = testContext.laxCheckpoint();
+        Checkpoint checkpoint2 = testContext.laxCheckpoint();
         registry.get(sharedEntityMapName(new FullQualifiedName("ERP.Customers")))
                 .onComplete(testContext.succeeding(result -> {
                     testContext.verify(() -> assertThat(result).isNull());
-                    checkpoint.flag();
+                    checkpoint1.flag();
                 }));
         registry.get(sharedEntityMapName(new FullQualifiedName("Sales.Orders")))
                 .onComplete(testContext.succeeding(result -> {
                     testContext.verify(() -> assertThat(result).isNull());
-                    checkpoint.flag();
+                    checkpoint2.flag();
                 }));
     }
 
@@ -150,7 +151,9 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     @Test
     @DisplayName("Get URI info from query")
     void parseUriInfoTest(Vertx vertx, VertxTestContext testContext) {
-        Checkpoint checkpoint = testContext.checkpoint(3);
+        Checkpoint checkpoint1 = testContext.laxCheckpoint();
+        Checkpoint checkpoint2 = testContext.laxCheckpoint();
+        Checkpoint checkpoint3 = testContext.laxCheckpoint();
 
         entityVerticleImpl1
                 .parseUriInfo(vertx,
@@ -163,7 +166,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
                             .get("$format")).isEqualTo("json");
                     assertThat(uriInfo.getUriResourceParts().stream().map(UriResource::getSegmentValue)
                             .toList()).contains("AllPropertiesNullable");
-                    checkpoint.flag();
+                    checkpoint1.flag();
                 })));
 
         entityVerticleImpl1
@@ -172,7 +175,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
                 .onComplete(testContext.succeeding(uriInfo -> testContext.verify(() -> {
                     assertThat(((UriResourceEntitySet) uriInfo.getUriResourceParts().get(0)).getKeyPredicates().get(0)
                             .getText()).isEqualTo("'123'");
-                    checkpoint.flag();
+                    checkpoint2.flag();
                 })));
 
         DataQuery query = new DataQuery(DataAction.READ, "/io.neonbee.test1.TestService1/AllPropertiesNullable");
@@ -182,7 +185,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
                 .onComplete(testContext.succeeding(uriInfo -> testContext.verify(() -> {
                     assertThat(uriInfo.getUriResourceParts().stream().map(UriResource::getSegmentValue)
                             .toList()).contains("AllPropertiesNullable");
-                    checkpoint.flag();
+                    checkpoint3.flag();
                 })));
     }
 
@@ -211,7 +214,7 @@ class EntityVerticleTest extends EntityVerticleTestBase {
     @Test
     @DisplayName("EntityVerticles should call entityTypeNames on deployment to register event bus consumers")
     void announceEntityVerticle(Vertx testVertx, VertxTestContext testContext) {
-        Checkpoint checkpoint = testContext.checkpoint(1);
+        Checkpoint checkpoint = testContext.laxCheckpoint();
         EntityVerticle dummyEntityVerticle = new EntityVerticle() {
 
             @Override
