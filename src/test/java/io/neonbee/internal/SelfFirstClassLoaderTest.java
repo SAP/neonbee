@@ -146,7 +146,8 @@ class SelfFirstClassLoaderTest {
     @Test
     @DisplayName("Deployments must be able to load a different versions of a class, even if platform already uses this class")
     void loadClassesIsolatedTest(Vertx vertx, VertxTestContext testContext) throws ClassNotFoundException, IOException {
-        Checkpoint cp = testContext.checkpoint(2);
+        Checkpoint cp1 = testContext.laxCheckpoint();
+        Checkpoint cp2 = testContext.laxCheckpoint();
 
         // Create fake system classLoader which represents the class inside the platform
         IsoVerticleTemplate platformVerticleTemplate = new IsoVerticleTemplate(CLASS_NAME, ADDRESS_PLATFORM);
@@ -169,7 +170,7 @@ class SelfFirstClassLoaderTest {
                         assertThat(resourceContent)
                                 .isEqualTo(new String(RESOURCE_CONTENT_PLATFORM, StandardCharsets.UTF_8));
                     });
-                    cp.flag();
+                    cp1.flag();
                 }));
 
         // Create other classLoader which represents the other class
@@ -193,7 +194,7 @@ class SelfFirstClassLoaderTest {
                     testContext.verify(() -> {
                         assertThat(resourceContent).isEqualTo(new String(resourceContentOther, StandardCharsets.UTF_8));
                     });
-                    cp.flag();
+                    cp2.flag();
                 }));
     }
 

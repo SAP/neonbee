@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -36,6 +37,7 @@ import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.backends.BackendRegistries;
 
 @SuppressWarnings("PMD.AvoidUnnecessaryTestClassesModifier")
+@Isolated
 public class NeonBeeMetricsTest extends NeonBeeTestBase {
     private static final String TEST_ENDPOINT_URI = "/testendpoint/";
 

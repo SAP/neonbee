@@ -292,7 +292,7 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
      * Encapsulation of the supplier(creator) and consumer(cleaner) of an object.
      *
      */
-    private static class ScopedObject<T> implements Supplier<T>, ExtensionContext.Store.CloseableResource {
+    private static class ScopedObject<T> implements Supplier<T>, AutoCloseable {
         private final T object;
 
         private final ThrowingConsumer<T> cleaner;
@@ -303,7 +303,7 @@ public class NeonBeeExtension implements ParameterResolver, BeforeTestExecutionC
         }
 
         @Override
-        public void close() throws Throwable {
+        public void close() throws Exception {
             cleaner.accept(object);
         }
 

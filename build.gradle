@@ -73,7 +73,7 @@ repositories {
 
 dependencies {
     // Framework dependencies
-    def vertx_version = '5.0.7'
+    def vertx_version = '5.2.1'
     implementation group: 'io.vertx', name: 'vertx-core', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-launcher-legacy-cli', version: vertx_version
     implementation group: 'io.vertx', name: 'vertx-web', version: vertx_version
@@ -110,9 +110,9 @@ dependencies {
         exclude group: 'org.infinispan', module: 'infinispan-commons'
         exclude group: 'org.infinispan', module: 'infinispan-multimap'
     }
-    def infinispan_version = '14.0.29.Final'
-    implementation group: 'org.infinispan', name: 'infinispan-multimap-jakarta', version: infinispan_version
-    implementation group: 'org.infinispan', name: 'infinispan-core-jakarta', version: infinispan_version
+    def infinispan_version = '16.2.1'
+    implementation group: 'org.infinispan', name: 'infinispan-multimap', version: infinispan_version
+    implementation group: 'org.infinispan', name: 'infinispan-core', version: infinispan_version
     implementation(group: 'org.infinispan', name: 'infinispan-clustered-lock', version: infinispan_version) {
         exclude group: 'org.infinispan', module: 'infinispan-core'
     }

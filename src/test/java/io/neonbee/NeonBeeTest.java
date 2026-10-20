@@ -79,9 +79,9 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryContext;
-import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.http.ClientAuth;
+import io.vertx.core.internal.eventbus.EventBusInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.junit5.VertxTestContext;
@@ -347,7 +347,7 @@ class NeonBeeTest extends NeonBeeTestBase {
         Vertx vertx = defaultVertxMock();
         NeonBee neonBee = registerNeonBeeMock(vertx,
                 new NeonBeeConfig(new JsonObject().put("trackingDataHandlingStrategy", "wrongvalue")));
-        EventBus eventBus = mock(EventBus.class);
+        EventBusInternal eventBus = mock(EventBusInternal.class);
         when(vertx.eventBus()).thenReturn(eventBus);
         when(eventBus.addInboundInterceptor(Mockito.any(Handler.class))).thenReturn(eventBus);
         when(eventBus.addOutboundInterceptor(Mockito.any(Handler.class))).thenReturn(eventBus);

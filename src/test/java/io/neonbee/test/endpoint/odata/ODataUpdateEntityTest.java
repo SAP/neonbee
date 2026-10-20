@@ -104,7 +104,7 @@ class ODataUpdateEntityTest extends ODataEndpointTestBase {
     void updateEntityTest(HttpMethod method, JsonObject body, VertxTestContext testContext) {
         oDataRequest.setMethod(method).setBody(body.toBuffer()).setKey("id-1");
 
-        Checkpoint cp = testContext.checkpoint();
+        Checkpoint cp = testContext.laxCheckpoint();
         Verticle dummy = getDummyEntityVerticle(TestService1EntityVerticle.TEST_ENTITY_SET_FQN, ew -> {
             if (HttpMethod.PUT.equals(method)) {
                 EntityHelper.compareLazy(EntityHelper.createEntity(body), ew.getEntity(), testContext,
@@ -171,7 +171,7 @@ class ODataUpdateEntityTest extends ODataEndpointTestBase {
                 TestServiceCompoundKeyEntityVerticle.createEntityData(0, "2020-02-02", updatedName, null);
         Entity expectedEntity = EntityHelper.createEntity(expectedContent);
 
-        Checkpoint cp = testContext.checkpoint();
+        Checkpoint cp = testContext.laxCheckpoint();
         Verticle verticle = getDummyEntityVerticle(TestServiceCompoundKeyEntityVerticle.TEST_ENTITY_SET_FQN,
                 ew -> EntityHelper.compareLazy(expectedEntity, ew.getEntity(), testContext, "date"), testContext);
 
@@ -191,7 +191,7 @@ class ODataUpdateEntityTest extends ODataEndpointTestBase {
 
     private EntityVerticle getDummyEntityVerticle(FullQualifiedName fqn, Consumer<EntityWrapper> verifyPayload,
             VertxTestContext testContext) {
-        Checkpoint dummyWasCalled = testContext.checkpoint();
+        Checkpoint dummyWasCalled = testContext.laxCheckpoint();
         return createDummyEntityVerticle(fqn).withDataAdapter(new DataAdapter<EntityWrapper>() {
 
             @Override

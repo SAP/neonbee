@@ -259,7 +259,7 @@ class JobVerticleTest extends NeonBeeTestBase {
     @Test
     @DisplayName("Do start JobVerticles with a valid JobSchedule")
     void testStartSucceeding(VertxTestContext testConetxt) {
-        Checkpoint cp = testConetxt.checkpoint();
+        Checkpoint cp = testConetxt.laxCheckpoint();
         class DummyJobVerticle extends JobVerticle {
 
             DummyJobVerticle(JobSchedule schedule) {

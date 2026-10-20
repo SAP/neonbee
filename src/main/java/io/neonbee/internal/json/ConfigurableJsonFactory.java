@@ -72,7 +72,7 @@ public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
 
         @Override
         public <T> T fromString(String json, Class<T> clazz) {
-            if (JacksonFactory.CODEC instanceof DatabindCodec) {
+            if (JacksonFactory.INSTANCE.codec() instanceof DatabindCodec) {
                 return DatabindCodec.fromParser(createParser(json), clazz);
             } else {
                 return JacksonCodec.fromParser(createParser(json), clazz);
@@ -81,7 +81,7 @@ public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
 
         @Override
         public <T> T fromBuffer(Buffer json, Class<T> clazz) {
-            if (JacksonFactory.CODEC instanceof DatabindCodec) {
+            if (JacksonFactory.INSTANCE.codec() instanceof DatabindCodec) {
                 return DatabindCodec.fromParser(createParser(json), clazz);
             } else {
                 return JacksonCodec.fromParser(createParser(json), clazz);
@@ -90,17 +90,17 @@ public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
 
         @Override
         public <T> T fromValue(Object json, Class<T> toValueType) {
-            return JacksonFactory.CODEC.fromValue(json, toValueType);
+            return JacksonFactory.INSTANCE.codec().fromValue(json, toValueType);
         }
 
         @Override
         public String toString(Object object, boolean pretty) {
-            return JacksonFactory.CODEC.toString(object, pretty);
+            return JacksonFactory.INSTANCE.codec().toString(object, pretty);
         }
 
         @Override
         public Buffer toBuffer(Object object, boolean pretty) {
-            return JacksonFactory.CODEC.toBuffer(object, pretty);
+            return JacksonFactory.INSTANCE.codec().toBuffer(object, pretty);
         }
 
         /**
@@ -114,7 +114,7 @@ public class ConfigurableJsonFactory implements io.vertx.core.spi.JsonFactory {
          * @return the {@linkplain ConfigurableJsonCodec} for fluent use
          */
         public ConfigurableJsonCodec registerSerializationModule(Module module) {
-            if (JacksonFactory.CODEC instanceof DatabindCodec) {
+            if (JacksonFactory.INSTANCE.codec() instanceof DatabindCodec) {
                 DatabindCodec.mapper().registerModule(module);
             } else {
                 LOGGER.warn(

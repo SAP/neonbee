@@ -27,10 +27,10 @@ import io.vertx.core.Handler;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.VertxInternal;
+import io.vertx.core.internal.eventbus.EventBusInternal;
 import io.vertx.core.shareddata.Lock;
 import io.vertx.core.shareddata.SharedData;
 import io.vertx.micrometer.MicrometerMetricsFactory;
@@ -108,7 +108,7 @@ public final class NeonBeeMockHelper {
         when(fileSystemMock.readDirBlocking(any())).thenReturn(List.of());
 
         // mock event bus
-        EventBus eventBusMock = mock(EventBus.class);
+        EventBusInternal eventBusMock = mock(EventBusInternal.class);
         when(vertxMock.eventBus()).thenReturn(eventBusMock);
 
         // mock timers by handling them immediately, just that code in timers gets executed
