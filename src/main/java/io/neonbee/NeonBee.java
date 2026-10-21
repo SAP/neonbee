@@ -292,6 +292,7 @@ public class NeonBee {
         VertxOptions vertxOptions = new VertxOptions()
                 .setEventLoopPoolSize(options.getEventLoopPoolSize())
                 .setWorkerPoolSize(options.getWorkerPoolSize())
+                .setInternalBlockingPoolSize(options.getInternalBlockingPoolSize())
                 .setMetricsOptions(
                         new MicrometerMetricsOptions().setRegistryName(options.getMetricsRegistryName())
                                 .setEnabled(true));
