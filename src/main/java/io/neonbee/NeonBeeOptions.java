@@ -56,6 +56,15 @@ public interface NeonBeeOptions {
     int getWorkerPoolSize();
 
     /**
+     * Get the maximum number of internal blocking threads to be used by the NeonBee instance.
+     * <p>
+     * Internal blocking threads are used for blocking file I/O operations within Vert.x itself.
+     *
+     * @return the maximum number of internal blocking threads
+     */
+    int getInternalBlockingPoolSize();
+
+    /**
      * Returns the name of the NeonBee instance.
      *
      * @return the name of the NeonBee instance
@@ -258,6 +267,8 @@ public interface NeonBeeOptions {
 
         private int workerPoolSize = VertxOptions.DEFAULT_WORKER_POOL_SIZE;
 
+        private int internalBlockingPoolSize = VertxOptions.DEFAULT_INTERNAL_BLOCKING_POOL_SIZE;
+
         private int clusterPort = DEFAULT_CLUSTER_PORT;
 
         private boolean clustered;
@@ -344,6 +355,26 @@ public interface NeonBeeOptions {
                 throw new IllegalArgumentException("workerPoolSize must be > 0");
             }
             this.workerPoolSize = workerPoolSize;
+            return this;
+        }
+
+        @Override
+        public int getInternalBlockingPoolSize() {
+            return internalBlockingPoolSize;
+        }
+
+        /**
+         * Set the maximum number of internal blocking threads to be used by the NeonBee instance. The number of threads
+         * must be larger than 0.
+         *
+         * @param internalBlockingPoolSize the number of threads
+         * @return a reference to this, so the API can be used fluently
+         */
+        public Mutable setInternalBlockingPoolSize(int internalBlockingPoolSize) {
+            if (internalBlockingPoolSize < 1) {
+                throw new IllegalArgumentException("internalBlockingPoolSize must be > 0");
+            }
+            this.internalBlockingPoolSize = internalBlockingPoolSize;
             return this;
         }
 

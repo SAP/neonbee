@@ -27,6 +27,8 @@ public @interface NeonBeeInstanceConfiguration {
 
     int workerPoolSize() default 1;
 
+    int internalBlockingPoolSize() default 1;
+
     int clusterPort() default 0;
 
     boolean clustered() default false;
