@@ -324,12 +324,18 @@ public abstract class AbstractEntityVerticle<T> extends DataVerticle<T> {
                 return failedFuture("No verticle registered listening to entity type name "
                         + entityTypeName.getFullQualifiedNameAsString());
             } else if (qualifiedNames.size() == 1) {
-                return requestData(vertx, new DataRequest(qualifiedNames.get(0), request.getQuery()), context);
+                return requestData(vertx,
+                        new DataRequest(qualifiedNames.get(0), request.getQuery())
+                                .setSendTimeout(request.getSendTimeout()),
+                        context);
             } else {
                 DataQuery query = request.getQuery().copy().setHeader(ENTITY_TYPE_NAME_HEADER,
                         entityTypeName.getFullQualifiedNameAsString());
                 return requestData(vertx,
-                        new DataRequest(ConsolidationVerticle.QUALIFIED_NAME, query).setLocalOnly(true), context);
+                        new DataRequest(ConsolidationVerticle.QUALIFIED_NAME, query)
+                                .setLocalOnly(true)
+                                .setSendTimeout(request.getSendTimeout()),
+                        context);
             }
         }).compose(entity -> {
             if (type.isInstance(entity)) {
