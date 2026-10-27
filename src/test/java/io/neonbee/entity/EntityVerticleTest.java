@@ -17,6 +17,8 @@ import static io.vertx.core.Future.succeededFuture;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
@@ -40,12 +42,15 @@ import io.neonbee.data.DataAction;
 import io.neonbee.data.DataContext;
 import io.neonbee.data.DataException;
 import io.neonbee.data.DataQuery;
+import io.neonbee.data.DataRequest;
 import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.test.base.EntityVerticleTestBase;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.Checkpoint;
+import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 
 class EntityVerticleTest extends EntityVerticleTestBase {
@@ -238,6 +243,42 @@ class EntityVerticleTest extends EntityVerticleTestBase {
         }).onFailure(testContext::failNow);
     }
 
+    @Test
+    @Timeout(value = 15, timeUnit = TimeUnit.SECONDS)
+    @DisplayName("DataRequest.setSendTimeout is respected for entity requests, not overridden by global eventBusTimeout")
+    void requestEntityRespectsPerRequestSendTimeout(VertxTestContext testContext) {
+        // Raise global timeout well above the per-request value so only per-request fires first.
+        getNeonBee().getConfig().setEventBusTimeout(60);
+
+        AtomicLong startMs = new AtomicLong();
+        deployVerticle(new HangingEntityVerticle())
+                .compose(ignored -> {
+                    startMs.set(System.currentTimeMillis());
+                    return requestEntity(
+                            new DataRequest(HangingEntityVerticle.FQN, new DataQuery()).setSendTimeout(2_000));
+                })
+                .onComplete(testContext.failing(err -> testContext.verify(() -> {
+                    long elapsed = System.currentTimeMillis() - startMs.get();
+                    assertThat(err).isInstanceOf(DataException.class);
+                    assertThat(((DataException) err).failureCode()).isEqualTo(DataException.FAILURE_CODE_TIMEOUT);
+                    // Must time out after ~2s, not after the 60s global timeout.
+                    assertThat(elapsed).isLessThan(10_000L);
+                    testContext.completeNow();
+                })));
+    }
+
+    @Test
+    @DisplayName("DataRequest without setSendTimeout still uses global eventBusTimeout (no regression)")
+    void requestEntityWithoutSendTimeoutUsesGlobalTimeout(VertxTestContext testContext) {
+        // Verify that omitting setSendTimeout does not accidentally apply a zero/negative timeout.
+        // A verticle that responds immediately must succeed regardless of the global timeout value.
+        requestEntity(EntityVerticleImpl1.FQN_ERP_CUSTOMERS)
+                .onComplete(testContext.succeeding(ew -> testContext.verify(() -> {
+                    assertThat(ew).isNotNull();
+                    testContext.completeNow();
+                })));
+    }
+
     @ParameterizedTest(name = "failure code {0} is propagated to caller")
     @ValueSource(ints = { 404, 500 })
     @DisplayName("FQN consumer propagates failure code to caller")
@@ -333,5 +374,21 @@ class FailingEntityVerticle extends EntityVerticle {
     @Override
     public Future<EntityWrapper> retrieveData(DataQuery query, DataContext context) {
         return failedFuture(new DataException(failureCode, "simulated failure"));
+    }
+}
+
+/** Never replies — used to verify that a per-request sendTimeout fires before the global eventBusTimeout. */
+@SuppressWarnings("PMD.TestClassWithoutTestCases")
+class HangingEntityVerticle extends EntityVerticle {
+    static final FullQualifiedName FQN = new FullQualifiedName("Hanging", "Entity");
+
+    @Override
+    public Future<Set<FullQualifiedName>> entityTypeNames() {
+        return succeededFuture(Set.of(FQN));
+    }
+
+    @Override
+    public Future<EntityWrapper> retrieveData(DataQuery query, DataContext context) {
+        return Promise.<EntityWrapper>promise().future(); // never completes
     }
 }
