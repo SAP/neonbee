@@ -33,8 +33,8 @@ The Gradle **build** task is responsible for building the project, including run
 - javadoc - generates HTML API documentation for Java classes
 
 ## Gradle Release Tasks
-- changelog - generates the changelog containing all the commit messages
-- release - requires a project parameter, *-PnextVersion=<nextVersion>* and updates the NeonBee version in *build.gradle* to *nextVersion*, as well as the *Changelog*. The task creates a commit with the changed files for release.
+- changelog - Generates the changelog containing all the commit messages
+- publishAndReleaseToMavenCentral - Signs the publications, uploads them to the Maven Central Portal and waits until they are published. Requires a non-SNAPSHOT version and the project properties *signingKey*, *signingPassword*, *mavenCentralUsername* and *mavenCentralPassword*. Releases are created by the Publish workflow, see [How to release NeonBee](../internal/howto_release_neonbee.md), do not run this task locally.
 
 ## Gradle Verification Tasks
 - **jacocoTestReport** - provides code coverage report for the project. The task requires the tests to run before generating the report. When the test task executes the `unitTest` and `longRunningTest` tasks, the jacocoTestReport task will read both of the two `*.exec` files as input
