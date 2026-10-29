@@ -53,12 +53,12 @@ In case of multiple proposed solutions consensus is always preferable, but if co
 
 ### Changelog and Artifacts
 
-Releases are generally published in the [releases section](https://github.com/SAP/neonbee/releases) of the project. Each new release contains a stable version of the source code, a [description of the changes](../../CHANGELOG.md) and offers [compiled artifacts](release_artifacts.md) of NeonBee.
+Releases are generally published in the [releases section](https://github.com/SAP/neonbee/releases) of the project. Each new release contains a stable version of the source code, a description of the changes and offers [compiled artifacts](release_artifacts.md) of NeonBee.
 
 ### Breaking changes
 
 Breaking changes are any changes that might require action from users of NeonBee's API. Although the project strives to provide a stable API by keeping the number of breaking changes as small as possible, sometimes it is inevitable to break existing APIs.
 
-In order to make breaking changes as transparent as possible, they will be indicated by a major version increment and announced via the [changelog](CHANGELOG.md) with a brief description and upgrade instructions.
+In order to make breaking changes as transparent as possible, they will be indicated by a major version increment and announced in the [release notes](https://github.com/SAP/neonbee/releases) with a brief description and upgrade instructions.
 
 **Notice:** Before the first major version is released, minor versions can contain breaking changes.

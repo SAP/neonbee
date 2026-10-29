@@ -3,7 +3,7 @@ plugins {
     id 'java'
     id 'application'
     id 'eclipse'
-    id 'maven-publish' // mandatory plugin, to publish on Nexus with dependencies. the plugin needs the configuration block "publishing" (see publishing.gradle)
+    id 'maven-publish' // the plugin needs the configuration block "publishing" (see publishing.gradle)
     id 'jacoco'
     id 'pmd'
     id 'checkstyle'
@@ -15,25 +15,24 @@ plugins {
     id 'com.diffplug.spotless' version '8.10.4'
     id 'net.ltgt.errorprone' version '5.1.1'
     id 'com.github.spotbugs' version '6.5.13'
-    id 'org.ajoberstar.grgit' version '5.3.3'
     id 'com.github.ksoichiro.console.reporter' version '0.6.3'
     id 'se.bjurr.violations.violations-gradle-plugin' version '4.5.1'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
     id 'org.sonarqube' version '7.5.0.8588'
     id 'team.yi.semantic-gitlog' version '0.6.12'
-    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
+    // only the base plugin, the full plugin would add a publication of its own (see publishing.gradle)
+    id 'com.vanniktech.maven.publish.base' version '0.35.0'
 }
 
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 group = 'io.neonbee'
-version = '0.37.37'
+// the version is maintained in gradle.properties
 mainClassName = 'io.neonbee.Launcher'
 archivesBaseName = 'neonbee-core'
 sourceCompatibility = 17
 
 project.ext {
-    isReleaseVersion = !version.endsWith('-SNAPSHOT')
     distributionDir = file("${buildDir}/dist")
     distributionLibsDir = file("${distributionDir}/libs")
     generatedTrustStorePassword = UUID.randomUUID().toString()
@@ -209,37 +208,8 @@ sourceSets {
 apply from: 'gradle/distribution.gradle'
 apply from: 'gradle/publishing.gradle'
 apply from: 'gradle/codeCoverage.gradle'
-apply from: 'gradle/release.gradle'
 apply from: 'gradle/staticCodeCheck.gradle'
 apply from: 'gradle/changelog.gradle'
-
-// See: https://github.com/gradle-nexus/publish-plugin
-nexusPublishing {
-    repositories {
-        sonatype {
-            // Align with the URLs used in gradle/publishing.gradle
-            nexusUrl.set(uri('https://ossrh-staging-api.central.sonatype.com/service/local/'))
-            snapshotRepositoryUrl.set(uri('https://central.sonatype.com/repository/maven-snapshots/'))
-            username.set(findProperty('mavenCentralUsername')?.toString())
-            password.set(findProperty('mavenCentralPassword')?.toString())
-        }
-    }
-}
-
-tasks.register('publishReleaseToMavenCentral') {
-    group = 'publishing'
-    description = 'Publish a release build to Sonatype and close+release the staging repository (Maven Central).'
-
-    doLast {
-        if (String.valueOf(project.version).endsWith('-SNAPSHOT')) {
-            throw new GradleException('publishReleaseToMavenCentral must be run with a non-SNAPSHOT version')
-        }
-    }
-}
-
-publishReleaseToMavenCentral.dependsOn('publishToSonatype')
-publishReleaseToMavenCentral.dependsOn('closeAndReleaseSonatypeStagingRepository')
-
 
 task annotationProcessing(type: JavaCompile, group: 'build') {
     options.annotationProcessorPath = configurations.annotationProcessor
@@ -487,21 +457,6 @@ tasks.withType(Javadoc) {
     doLast {
         if (exceptions.size() > 0) {
             throw new GradleException(String.join('\n', exceptions))
-        }
-    }
-}
-
-// ############ Release
-
-task release(type: Exec) {
-    workingDir projectDir
-    if (project.hasProperty('nextVersion')) {
-        def nextVersion = project.getProperty('nextVersion')
-        println 'Releasing next version ' + nextVersion
-        if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')) {
-            commandLine 'cmd', '/c', 'gradle/release.sh', nextVersion
-        } else {
-            commandLine 'sh', '-c', "./gradle/release.sh ${nextVersion}"
         }
     }
 }

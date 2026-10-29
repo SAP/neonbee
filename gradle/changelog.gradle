@@ -3,11 +3,11 @@ changelog {
     isUnstable = true
     strategy = 'slow'
 
-    jsonFile = file("${project.rootDir}/CHANGELOG.json")
     fileSets = [
         {
             template = file("${project.rootDir}/gradle/gitlog/CHANGELOG.mustache")
-            target = file("${project.rootDir}/CHANGELOG.md")
+            // generated for the GitHub release notes only, see .github/scripts/release-notes.sh
+            target = layout.buildDirectory.file("changelog/CHANGELOG.md").get().asFile
         }
     ]
     issueUrlTemplate = 'https://github.com/SAP/neonbee/issues/:issueId'

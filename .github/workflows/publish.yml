@@ -1,41 +1,301 @@
 name: Publish
 
+# The version is maintained in gradle.properties and is always a -SNAPSHOT version on main.
+#
+# - push to main:         publishes the SNAPSHOT version to the Maven Central snapshot repository and the Docker image
+#                         as "main"
+# - manual run from main: releases the version without -SNAPSHOT (or the version entered) to Maven Central, ghcr.io and
+#                         GitHub Releases, then opens a pull request that bumps main to the next SNAPSHOT version
+#
+# A release never pushes to the protected main branch: the release version is passed to Gradle with -Pversion and the
+# tested commit is tagged. It is uploaded to Maven Central only after the Gradle and the Docker build succeeded. If
+# anything fails before Maven Central published the release, the tag and the GitHub release are deleted and no Docker
+# image is pushed.
+#
+# Required secrets:
+#   SIGNING_KEY_ARMOR, SIGNING_PASSWORD               GPG key to sign the release artifacts
+#   MAVEN_CENTRAL_USER, MAVEN_CENTRAL_PASSWORD        Central Portal user token
+
 on:
-  # workflow_dispatch:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, e.g. 0.38.0. Defaults to the version in gradle.properties without -SNAPSHOT.'
+        required: false
+        type: string
+
+# never run two publications for the same branch at the same time and never cancel a running one
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-
-permissions:
-  contents: write
+  JAVA_VERSION: '17.0'
 
 jobs:
 
-  publishImageToGhcr:
+  prepare:
+    name: Determine version
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
+    outputs:
+      mode: ${{ steps.version.outputs.mode }}
+      version: ${{ steps.version.outputs.version }}
+      next-version: ${{ steps.version.outputs.next-version }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Get new version
-        id: getVersion
+      - name: Determine version
+        id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          version="$(./gradlew properties -q | grep -w "version:" | awk '{print $2}')"
-          echo ::set-output name=releaseVersion::"${version}"
-          if [[ $version == *SNAPSHOT ]]; then
-              echo ::set-output name=dockerTag::"{{branch}}"
-          else
-              echo ::set-output name=dockerTag::"${version}"
+          current="$(sed -n 's/^version=//p' gradle.properties)"
+          if [[ ! "${current}" =~ ^[0-9]+\.[0-9]+\.[0-9]+-SNAPSHOT$ ]]; then
+            echo "::error::gradle.properties must contain a <major>.<minor>.<patch>-SNAPSHOT version, not '${current}'"
+            exit 1
           fi
-          echo "New release version: ${version}"
+
+          if [[ "${EVENT_NAME}" == push ]]; then
+            # after a release, main keeps the released SNAPSHOT version until the version bump is merged
+            if git ls-remote --exit-code --tags origin "refs/tags/${current%-SNAPSHOT}" > /dev/null; then
+              echo "::warning::${current%-SNAPSHOT} is already released, merge the version bump pull request to publish snapshots again"
+              echo "mode=skip" >> "${GITHUB_OUTPUT}"
+              exit 0
+            fi
+            echo "mode=snapshot" >> "${GITHUB_OUTPUT}"
+            echo "version=${current}" >> "${GITHUB_OUTPUT}"
+            echo "Publishing snapshot ${current}"
+            exit 0
+          fi
+
+          if [[ "${REF}" != refs/heads/main ]]; then
+            echo "::error::Releases can only be created from main, not from ${REF}"
+            exit 1
+          fi
+
+          version="${INPUT_VERSION:-${current%-SNAPSHOT}}"
+          if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid release version '${version}', expected <major>.<minor>.<patch>"
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/${version}" > /dev/null; then
+            echo "::error::Tag ${version} already exists"
+            exit 1
+          fi
+          pom="https://repo1.maven.org/maven2/io/neonbee/neonbee-core/${version}/neonbee-core-${version}.pom"
+          status="$(curl --silent --output /dev/null --write-out '%{http_code}' "${pom}")"
+          if [[ "${status}" != 404 ]]; then
+            echo "::error::Cannot release ${version}, it is already on Maven Central or Maven Central could not be checked (HTTP ${status})"
+            exit 1
+          fi
+
+          IFS=. read -r major minor patch <<< "${version}"
+          nextVersion="${major}.${minor}.$((patch + 1))-SNAPSHOT"
+
+          {
+            echo "mode=release"
+            echo "version=${version}"
+            echo "next-version=${nextVersion}"
+          } >> "${GITHUB_OUTPUT}"
+          echo "Releasing ${version}, next version ${nextVersion}"
+
+  build:
+    name: Build ${{ needs.prepare.outputs.version }}
+    needs: prepare
+    if: needs.prepare.outputs.mode != 'skip'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'gradle'
+
+      - name: Build and test
+        run: >-
+          ./gradlew --no-daemon clean build -Pversion=${{ needs.prepare.outputs.version }}
+          -PtestPlan=withGlobalTimeout -PunitTestTimeout=30s
+
+      # https://central.sonatype.com/repository/maven-snapshots/, which keeps snapshots for 90 days
+      - name: Publish snapshot to the Maven Central snapshot repository
+        if: needs.prepare.outputs.mode == 'snapshot'
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USER }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: ./gradlew --no-daemon publishToMavenCentral -Pversion=${{ needs.prepare.outputs.version }}
+
+      - name: Upload jar for the Docker build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shadow-jar
+          path: build/neonbee-core-*-shadow.jar
+          if-no-files-found: error
+          retention-days: 1
+
+  docker:
+    name: Docker image ${{ needs.prepare.outputs.version }}
+    # runs only after a successful Gradle build, a failed Gradle build fails the workflow without building an image
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download jar
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: shadow-jar
+          path: build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ needs.prepare.outputs.version }},enable=${{ needs.prepare.outputs.mode == 'release' }}
+            type=ref,event=branch,enable=${{ needs.prepare.outputs.mode == 'snapshot' }}
+          flavor: |
+            latest=${{ needs.prepare.outputs.mode == 'release' }}
+
+      - name: Log in to the Container registry
+        if: needs.prepare.outputs.mode == 'snapshot'
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # 4.7.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # snapshot images are pushed right away, release images only once the release is published
+      - name: Build Docker image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
+        with:
+          context: .
+          platforms: linux/amd64
+          build-args: |
+            JAR_SOURCE=prebuilt
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          push: ${{ needs.prepare.outputs.mode == 'snapshot' }}
+          outputs: ${{ needs.prepare.outputs.mode == 'release' && format('type=docker,dest={0}/image.tar', runner.temp) || '' }}
+
+      - name: Upload release image
+        if: needs.prepare.outputs.mode == 'release'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: docker-image
+          path: ${{ runner.temp }}/image.tar
+          if-no-files-found: error
+          retention-days: 1
+
+  release:
+    name: Release ${{ needs.prepare.outputs.version }}
+    needs: [prepare, build, docker]
+    if: needs.prepare.outputs.mode == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      NEXT_VERSION: ${{ needs.prepare.outputs.next-version }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      # the commit that was built and tested is tagged, main may have moved on in the meantime
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'gradle'
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Generate release notes
+        run: |
+          set -euo pipefail
+          # the changelog plugin derives the version of the newest section from the tags
+          git tag "${VERSION}"
+          ./gradlew --no-daemon changelog
+          git tag -d "${VERSION}"
+          .github/scripts/release-notes.sh "${VERSION}" > "${RUNNER_TEMP}/release-notes.md"
+
+      - name: Tag and create GitHub release
+        id: github-release
+        uses: carlspring/release-action@eeb05bf36d487f8970e5ccfa1ba996f69138adde # 1.0.4
+        with:
+          tag: ${{ env.VERSION }}
+          target: ${{ github.sha }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update release notes
+        run: gh release edit "${VERSION}" --title "${VERSION}" --notes-file "${RUNNER_TEMP}/release-notes.md"
+
+      # uploads all publications as one deployment at the end of the build and waits until Maven Central validated and
+      # published it. A deployment that fails validation is never published. Nothing after this step is rolled back,
+      # a published Maven Central release cannot be removed.
+      - name: Publish release to Maven Central
+        id: central-publish
+        env:
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY_ARMOR }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USER }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          # publishing on Maven Central regularly takes longer than the default of 15 minutes
+          ORG_GRADLE_PROJECT_SONATYPE_CLOSE_TIMEOUT_SECONDS: '3600'
+        run: ./gradlew --no-daemon publishAndReleaseToMavenCentral -Pversion="${VERSION}"
+
+      - name: Download Docker image
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: docker-image
+          path: ${{ runner.temp }}
 
       - name: Log in to the Container registry
         uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # 4.7.0
@@ -44,220 +304,48 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels)
+      - name: Push Docker image
         env:
-          LATEST_TAG: ${{ startsWith(github.event.head_commit.message, 'release:') && (endsWith(needs.publishToMavenCentral.outputs.releaseVersion, '-SNAPSHOT') == false) }}
-        id: meta
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=${{ steps.getVersion.outputs.dockerTag }}
-          flavor: |
-            latest=${{ env.LATEST_TAG }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64
-          build-args: |
-            BUILDTIME=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
-            VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
-            REVISION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.revision'] }}
-
-  publishToMavenCentral:
-    runs-on: ubuntu-latest
-
-    outputs:
-      releaseVersion: ${{ steps.getVersion.outputs.releaseVersion }}
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
-        with:
-          distribution: 'temurin'
-          java-version: '21.0'
-          cache: 'gradle'
-
-      - name: Get new version
-        id: getVersion
+          TAGS: ${{ needs.docker.outputs.tags }}
         run: |
           set -euo pipefail
-          version="$(./gradlew properties -q | grep -w "version:" | awk '{print $2}')"
-          echo ::set-output name=releaseVersion::"${version}"
-          echo "New release version: ${version}"
+          docker load --input "${RUNNER_TEMP}/image.tar"
+          while read -r tag; do
+            [[ -n "${tag}" ]] && docker push "${tag}"
+          done <<< "${TAGS}"
 
-      - name: Publish to maven central
+      # main is protected, so the next SNAPSHOT version is proposed in a pull request. Pull requests created with the
+      # GITHUB_TOKEN do not trigger other workflows, and creating them requires the repository setting "Allow GitHub
+      # Actions to create and approve pull requests". Without it, the run summary links to the pushed branch instead.
+      - name: Open pull request for the next snapshot version
         env:
-          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY_ARMOR }}
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USER }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          BRANCH: release/bump-${{ needs.prepare.outputs.next-version }}
         run: |
           set -euo pipefail
-          if [[ "${{ steps.getVersion.outputs.releaseVersion }}" == *SNAPSHOT ]]; then
-            ./gradlew clean publishAllPublicationsToMavenCentralRepository
+          git fetch origin main
+          git switch --create "${BRANCH}" origin/main
+          .github/scripts/set-version.sh "${NEXT_VERSION}"
+          git add gradle.properties
+          git commit -m "release(snapshot): ${NEXT_VERSION}"
+          git push origin "${BRANCH}"
+
+          title="release(snapshot): ${NEXT_VERSION}"
+          body="Bumps the version to ${NEXT_VERSION} after the release of ${VERSION}. Snapshots are published again once this is merged."
+          if url="$(gh pr create --base main --head "${BRANCH}" --title "${title}" --body "${body}")"; then
+            echo "Opened ${url}" >> "${GITHUB_STEP_SUMMARY}"
           else
-            ./gradlew clean publishReleaseToMavenCentral
+            compare="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/compare/main...${BRANCH}?expand=1"
+            echo "::warning::Could not open the pull request, create it from ${compare}"
+            echo "Create the pull request for the next snapshot version: ${compare}" >> "${GITHUB_STEP_SUMMARY}"
           fi
 
-  publishRelease:
-    runs-on: ubuntu-latest
-    needs: [publishImageToGhcr, publishToMavenCentral]
-    permissions:
-      contents: write
-      pull-requests: write
-    if: startsWith(github.event.head_commit.message, 'release:') && (endsWith(needs.publishToMavenCentral.outputs.releaseVersion, '-SNAPSHOT') == false)
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
-        with:
-          distribution: 'temurin'
-          java-version: '21.0'
-          cache: 'gradle'
-
-      - name: Tag release commit
+      - name: Roll back
+        if: (failure() || cancelled()) && steps.central-publish.outcome != 'success'
+        env:
+          RELEASE_OUTCOME: ${{ steps.github-release.outcome }}
         run: |
-          git tag "${{ needs.publishToMavenCentral.outputs.releaseVersion }}"
-
-      - name: Set snapshot version
-        id: snapshot
-        run: |
-          tagVersion="${{ needs.publishToMavenCentral.outputs.releaseVersion }}"
-          rv="${tagVersion%-*}"
-          snapshotVersion="${rv:0:-1}$(bc <<< "${rv: -1}+1")-SNAPSHOT"
-          echo ::set-output name=snapshotVersion::"${snapshotVersion}"
-          ./gradlew setNewVersion -P newVersion=${snapshotVersion}
-
-          if git diff --no-ext-diff --quiet --exit-code; then
-            >&2 echo "No diff detected in git." ; exit 1
+          # the release action rolls back after its own failures, this covers failures of the later steps
+          if [[ "${RELEASE_OUTCOME}" == success ]]; then
+            echo "Deleting GitHub release and tag ${VERSION}"
+            gh release delete "${VERSION}" --cleanup-tag --yes
           fi
-
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add -A build.gradle
-          git commit -m "release(snapshot): ${snapshotVersion}"
-
-      - name: Install chevron
-        run: |
-          pip install chevron
-
-      - name: Get changelog
-        shell: python
-        run: |
-          import os
-          import json
-          import chevron
-
-          file = "CHANGELOG.json"
-          if not os.path.isfile(file):
-              raise "file {} not found".format(file)
-          with open(file, "r") as stream:
-              changelog_json = json.load(stream)
-
-          version = "${{ needs.publishToMavenCentral.outputs.releaseVersion }}"
-          target_version = version.split("-")[0].split(".")
-          current_tag = None
-          for tag in changelog_json["tags"]:
-              if (
-                  tag["version"]["major"] == int(target_version[0])
-                  and tag["version"]["minor"] == int(target_version[1])
-                  and tag["version"]["patch"] == int(target_version[2])
-              ):
-                  current_tag = tag
-                  break
-
-          tmpl = """
-          ## Changelog
-          {{#sections}}
-
-          ### {{title}}
-
-          {{#commits}}
-          - {{#commitScope}}**{{commitPackage}}{{commitScope}}**: {{/commitScope}}{{& commitSubject}}{{#subjectIssues}} ([#{{id}}]({{url}})){{/subjectIssues}} ([{{hash8}}]({{commitUrl}})){{#hasCloseIssues}}, closes{{#closeIssues}} [#{{id}}]({{url}}){{/closeIssues}}{{/hasCloseIssues}}
-          {{/commits}}
-          {{/sections}}
-          """
-          args = {
-              "template": tmpl,
-              "data": current_tag,
-          }
-          rendered=chevron.render(**args)
-          print(rendered)
-          with open('release_changelog.md', 'w') as f:
-            f.write(rendered)
-
-      - name: Set Changelog
-        id: setChangelog
-        run: |
-          releaseVersion="${{ needs.publishToMavenCentral.outputs.releaseVersion }}"
-          cat <<EOF > body.md
-          ## Artifacts
-
-          Maven Central: [neonbee-core-${releaseVersion}](https://mvnrepository.com/artifact/io.neonbee/neonbee-core/${releaseVersion})
-
-          ### Maven
-
-          \`\`\`xml
-          <!-- https://mvnrepository.com/artifact/io.neonbee/neonbee-core -->
-          <dependency>
-            <groupId>io.neonbee</groupId>
-            <artifactId>neonbee-core</artifactId>
-            <version>${releaseVersion}</version>
-          </dependency>
-          \`\`\`
-
-          ### Gradle
-
-          \`\`\`groovy
-          // https://mvnrepository.com/artifact/io.neonbee/neonbee-core
-          implementation group: 'io.neonbee', name: 'neonbee-core', version: '${releaseVersion}'
-          \`\`\`
-          EOF
-          echo "" >> body.md
-          cat release_changelog.md >> body.md
-
-          echo ::set-output name=releaseBody::"$( jq -rRs 'gsub("\r";"%0D")|gsub("\n";"%0A")' < ./body.md )"
-
-      - name: Push changes
-        uses: ad-m/github-push-action@881a6320fdb16eb5318c5054f31c218aec2b324c # master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
-          tags: true
-
-      - name: Publish snapshot to maven central
-        env:
-          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY_ARMOR }}
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USER }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-        run: |
-          ./gradlew clean publishAllPublicationsToMavenCentralRepository
-
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@89e8dc236279a907f495cdc4ebff2056b7036b3d # master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ needs.publishToMavenCentral.outputs.releaseVersion }}
-          release_name: Release ${{ needs.publishToMavenCentral.outputs.releaseVersion }}
-          body: ${{ steps.setChangelog.outputs.releaseBody }}
-          draft: true
-          prerelease: false
