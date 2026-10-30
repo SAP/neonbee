@@ -24,7 +24,7 @@ COPY resources/config /app/resources/config
 
 FROM ${JAR_SOURCE} AS jars
 
-FROM sapmachine:17.0.21.0.2
+FROM sapmachine:17.0.21.0.3
 
 # Creates app working directory and a system user (r) with
 # no password, no home directory, no shell.
