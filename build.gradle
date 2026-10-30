@@ -21,7 +21,7 @@ plugins {
     id 'org.sonarqube' version '7.5.0.8588'
     id 'team.yi.semantic-gitlog' version '0.6.12'
     // only the base plugin, the full plugin would add a publication of its own (see publishing.gradle)
-    id 'com.vanniktech.maven.publish.base' version '0.35.0'
+    id 'com.vanniktech.maven.publish.base' version '0.37.0'
 }
 
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
