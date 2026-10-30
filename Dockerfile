@@ -2,7 +2,7 @@
 # existing ./build directory (used by the publish workflow, which has already built and tested them).
 ARG JAR_SOURCE=builder
 
-FROM gradle:8.14.3-jdk17 AS builder
+FROM gradle:8.14.5-jdk17 AS builder
 
 RUN mkdir app
 WORKDIR /app
