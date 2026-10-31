@@ -1,4 +1,5 @@
 {
     "eventLoopPoolSize": 1,
-    "workerPoolSize": 1
+    "workerPoolSize": 1,
+    "internalBlockingPoolSize": 1
 }

@@ -58,6 +58,7 @@ public final class OptionsHelper {
                 .setDoNotWatchFiles(config.doNotWatchFiles()).setEventLoopPoolSize(config.eventLoopPoolSize())
                 .setIgnoreClassPath(config.ignoreClassPath()).setServerPort(port)
                 .setWorkerPoolSize(config.workerPoolSize())
+                .setInternalBlockingPoolSize(config.internalBlockingPoolSize())
                 .setWorkingDirectory(Paths.get(config.workingDirectoryPath()));
         if (!Strings.isNullOrEmpty(config.instanceName())) {
             options.setInstanceName(config.instanceName());
