@@ -70,7 +70,8 @@ class AnnotationClassVisitor extends ClassVisitor {
 
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-        if (includeTypes && ((this.access & Opcodes.ACC_PUBLIC) != 0) && annotationClassDescriptor.equals(desc)) {
+        if (includeTypes && ((this.access & Opcodes.ACC_PUBLIC) != 0) && (this.access & Opcodes.ACC_ABSTRACT) == 0
+                && annotationClassDescriptor.equals(desc)) {
             classNames.add(className);
         }
 
