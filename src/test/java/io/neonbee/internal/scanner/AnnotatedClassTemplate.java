@@ -111,6 +111,7 @@ public class AnnotatedClassTemplate implements ClassTemplate {
     }
 
     public BasicJar asJar() throws IOException {
-        return new BasicJar(Map.of(BasicJar.getJarEntryName(getClassName()), compileToByteCode()));
+        return new BasicJar(Map.of("NeonBee-Module", "test"),
+                Map.of(BasicJar.getJarEntryName(getClassName()), compileToByteCode()));
     }
 }
