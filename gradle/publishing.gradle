@@ -1,6 +1,9 @@
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
+/*
+ * Releases and snapshots are published to Maven Central with the com.vanniktech.maven.publish.base plugin.
+ */
 publishing {
     publications {
         // NeonBee Core Jar
@@ -13,53 +16,13 @@ publishing {
 
             pom {
                 name = 'NeonBee Core'
-                description = 'NeonBee is an open source reactive dataflow engine, a data stream processing framework using Vert.x.'
-                url = 'https://neonbee.io/'
-
-                licenses {
-                    license {
-                        name = 'Eclipse Public License version 2.0'
-                        url = 'https://opensource.org/licenses/EPL-2.0'
-                    }
-                }
-
-                scm {
-                    connection = 'scm:git:https://github.com/SAP/neonbee.git'
-                    developerConnection = 'scm:git:git@github.com:SAP/neonbee.git'
-                    url = 'https://github.com/sap/neonbee'
-                }
-
-                developers {
-                    developer {
-                        id = 'pascal'
-                        name = 'Pascal'
-                        email = 'pascal@neonbee.io'
-                    }
-                    developer {
-                        id = 'kristian'
-                        name = 'Kristian'
-                        email = 'kristian@neonbee.io'
-                    }
-                    developer {
-                        id = 'sebastian'
-                        name = 'Sebastian'
-                        email = 'sebastian@neonbee.io'
-                    }
-                    developer {
-                        id = 'danilo'
-                        name = 'Danilo'
-                        email = 'danilo@neonbee.io'
-                    }
-                }
             }
 
             pom.withXml {
                 def dependenciesNode = asNode().appendNode('dependencies')
 
-                // Log the start of dependency processing
-                def dependencyExclusions = [:]
-
                 // Create a map of dependencies and their exclusion rules
+                def dependencyExclusions = [:]
                 configurations.implementation.allDependencies
                         .findAll { dep -> !dep.excludeRules?.isEmpty() }
                         .forEach { dep ->
@@ -72,11 +35,7 @@ publishing {
 
                 // Iterate over implementation dependencies
                 configurations.implementation.allDependencies.each { dependency ->
-                    def dependencyKey = "${dependency.group}:${dependency.name}"
-                    logger.lifecycle("Dependency key class map: ${dependencyKey.getClass()}")
-
-                    def exclusions = dependencyExclusions[dependencyKey]
-                    logger.lifecycle("Looking for exclusion: ${dependencyKey}")
+                    def exclusions = dependencyExclusions["${dependency.group}:${dependency.name}"]
 
                     // Add the dependency to the POM
                     def dependencyNode = dependenciesNode.appendNode('dependency')
@@ -93,10 +52,7 @@ publishing {
                             exclusionNode.appendNode('artifactId', exclusion.artifactId)
                         }
 
-                        // Log the added exclusions
-                        logger.lifecycle("Added exclusions for dependency: group='${dependency.group}', name='${dependency.name}', exclusions=${exclusions}")
-                    } else {
-                        logger.lifecycle("No exclusions for dependency: group='${dependency.group}', name='${dependency.name}'")
+                        logger.info("Added exclusions for dependency: group='${dependency.group}', name='${dependency.name}', exclusions=${exclusions}")
                     }
                 }
             }
@@ -109,44 +65,6 @@ publishing {
 
             pom {
                 name = 'NeonBee Core Distribution'
-                description = 'NeonBee is an open source reactive dataflow engine, a data stream processing framework using Vert.x.'
-                url = 'https://neonbee.io/'
-
-                licenses {
-                    license {
-                        name = 'Eclipse Public License version 2.0'
-                        url = 'https://opensource.org/licenses/EPL-2.0'
-                    }
-                }
-
-                scm {
-                    connection = 'scm:git:https://github.com/SAP/neonbee.git'
-                    developerConnection = 'scm:git:git@github.com:SAP/neonbee.git'
-                    url = 'https://github.com/sap/neonbee'
-                }
-
-                developers {
-                    developer {
-                        id = 'pascal'
-                        name = 'Pascal'
-                        email = 'pascal@neonbee.io'
-                    }
-                    developer {
-                        id = 'kristian'
-                        name = 'Kristian'
-                        email = 'kristian@neonbee.io'
-                    }
-                    developer {
-                        id = 'sebastian'
-                        name = 'Sebastian'
-                        email = 'sebastian@neonbee.io'
-                    }
-                    developer {
-                        id = 'danilo'
-                        name = 'Danilo'
-                        email = 'danilo@neonbee.io'
-                    }
-                }
             }
         }
 
@@ -159,44 +77,6 @@ publishing {
 
             pom {
                 name = 'NeonBee Core Test'
-                description = 'NeonBee is an open source reactive dataflow engine, a data stream processing framework using Vert.x.'
-                url = 'https://neonbee.io/'
-
-                licenses {
-                    license {
-                        name = 'Eclipse Public License version 2.0'
-                        url = 'https://opensource.org/licenses/EPL-2.0'
-                    }
-                }
-
-                scm {
-                    connection = 'scm:git:https://github.com/SAP/neonbee.git'
-                    developerConnection = 'scm:git:git@github.com:SAP/neonbee.git'
-                    url = 'https://github.com/sap/neonbee'
-                }
-
-                developers {
-                    developer {
-                        id = 'pascal'
-                        name = 'Pascal'
-                        email = 'pascal@neonbee.io'
-                    }
-                    developer {
-                        id = 'kristian'
-                        name = 'Kristian'
-                        email = 'kristian@neonbee.io'
-                    }
-                    developer {
-                        id = 'sebastian'
-                        name = 'Sebastian'
-                        email = 'sebastian@neonbee.io'
-                    }
-                    developer {
-                        id = 'danilo'
-                        name = 'Danilo'
-                        email = 'danilo@neonbee.io'
-                    }
-                }
             }
 
             pom.withXml {
@@ -225,32 +105,79 @@ publishing {
         }
     }
 
-    repositories {
-        maven {
-            name = 'mavenCentral'
-            credentials(org.gradle.api.artifacts.repositories.PasswordCredentials)
-            def releasesRepoUrl = "https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/"
-            def snapshotsRepoUrl = "https://central.sonatype.com/repository/maven-snapshots/"
-            url = version.endsWith("SNAPSHOT") ? snapshotsRepoUrl : releasesRepoUrl
+    // POM metadata shared by all publications
+    publications.withType(MavenPublication).configureEach {
+        pom {
+            description = 'NeonBee is an open source reactive dataflow engine, a data stream processing framework using Vert.x.'
+            url = 'https://neonbee.io/'
+
+            licenses {
+                license {
+                    name = 'Eclipse Public License version 2.0'
+                    url = 'https://opensource.org/licenses/EPL-2.0'
+                }
+            }
+
+            scm {
+                connection = 'scm:git:https://github.com/SAP/neonbee.git'
+                developerConnection = 'scm:git:git@github.com:SAP/neonbee.git'
+                url = 'https://github.com/sap/neonbee'
+            }
+
+            developers {
+                developer {
+                    id = 'pascal'
+                    name = 'Pascal'
+                    email = 'pascal@neonbee.io'
+                }
+                developer {
+                    id = 'kristian'
+                    name = 'Kristian'
+                    email = 'kristian@neonbee.io'
+                }
+                developer {
+                    id = 'sebastian'
+                    name = 'Sebastian'
+                    email = 'sebastian@neonbee.io'
+                }
+                developer {
+                    id = 'danilo'
+                    name = 'Danilo'
+                    email = 'danilo@neonbee.io'
+                }
+            }
         }
     }
 }
 
+/*
+ * Adds the mavenCentral repository and the publishToMavenCentral / publishAndReleaseToMavenCentral tasks, which use the
+ * Gradle properties mavenCentralUsername and mavenCentralPassword (a Central Portal user token):
+ * - a release is uploaded as one deployment through the Central Portal Publisher API at the end of a successful build.
+ *   publishAndReleaseToMavenCentral waits until Maven Central validated and published the deployment.
+ * - a SNAPSHOT version is published to https://central.sonatype.com/repository/maven-snapshots/ right away, where it
+ *   is kept for 90 days.
+ */
+mavenPublishing {
+    publishToMavenCentral()
+}
+
 signing {
-    def signingKey = findProperty("signingKey")
-    def signingPassword = findProperty("signingPassword")
+    def signingKey = findProperty('signingKey')
+    def signingPassword = findProperty('signingPassword')
 
     if (signingKey != null && signingPassword != null) {
         useInMemoryPgpKeys(signingKey, signingPassword)
-        sign publishing.publications.core
-        sign publishing.publications.dist
-        sign publishing.publications.test
+        sign publishing.publications
     }
 }
 
-task setNewVersion {
-    if (project.hasProperty('newVersion')) {
-        println "Set Project version from $version to $newVersion"
-        buildFile.setText(buildFile.getText().replaceFirst("version = '$version'", "version = '$newVersion'"))
+tasks.withType(PublishToMavenRepository).configureEach { task ->
+    task.doFirst {
+        if (task.repository.name == 'mavenCentral' && !project.version.toString().endsWith('-SNAPSHOT')) {
+            if (findProperty('signingKey') == null || findProperty('signingPassword') == null) {
+                throw new GradleException('Maven Central requires signed artifacts: set signingKey and signingPassword')
+            }
+        }
     }
 }
