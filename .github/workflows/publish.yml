@@ -268,7 +268,7 @@ jobs:
 
       - name: Tag and create GitHub release
         id: github-release
-        uses: carlspring/release-action@eeb05bf36d487f8970e5ccfa1ba996f69138adde # 1.0.4
+        uses: carlspring/release-action@0faba8fe09752647ce39a99589c3c7dc34f146a7 # 1.0.5
         with:
           tag: ${{ env.VERSION }}
           target: ${{ github.sha }}
