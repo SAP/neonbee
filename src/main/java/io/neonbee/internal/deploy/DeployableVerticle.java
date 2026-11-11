@@ -7,10 +7,12 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
 import io.neonbee.NeonBee;
+import io.neonbee.NeonBeeDeployable;
 import io.neonbee.internal.helper.ThreadHelper;
 import io.neonbee.internal.json.ImmutableJsonObject;
 import io.neonbee.internal.scanner.ClassPathScanner;
@@ -70,8 +72,34 @@ public class DeployableVerticle extends Deployable {
             List<Future<DeployableVerticle>> deployables =
                     classNames.stream().map(className -> fromClassName(vertx, className, verticleClassLoader))
                             .toList();
-            return Future.all(deployables).map(CompositeFuture::list);
+            // Honor the NeonBeeDeployable#autoDeploy() flag: a verticle that opts out of auto deployment (e.g. a
+            // stub or an unstable/system verticle) must not be deployed just because it is listed in a module's
+            // NeonBee-Deployables manifest. Without this filter autoDeploy=false has no effect once the verticle is
+            // packaged into a module and that module is loaded by another NeonBee instance, while it is correctly
+            // honored on the class-path deployment route (see NeonBee#filterByAutoDeployAndProfiles).
+            return Future.all(deployables).map((CompositeFuture composite) -> composite.<DeployableVerticle>list()
+                    .stream().filter(DeployableVerticle::shouldAutoDeploy).collect(Collectors.toList()));
         });
+    }
+
+    /**
+     * Whether this deployable should be auto deployed, based on the {@link NeonBeeDeployable#autoDeploy()} flag of the
+     * underlying verticle class. Verticles without a {@link NeonBeeDeployable} annotation are treated as deployable, to
+     * match the annotation's {@code true} default.
+     *
+     * @return {@code true} if the verticle should be auto deployed, {@code false} if it opted out via
+     *         {@code autoDeploy = false}
+     */
+    @VisibleForTesting
+    boolean shouldAutoDeploy() {
+        Class<?> verticleType = verticleClass != null ? verticleClass : verticleInstance.getClass();
+        NeonBeeDeployable annotation = verticleType.getAnnotation(NeonBeeDeployable.class);
+        boolean autoDeploy = annotation == null || annotation.autoDeploy();
+        if (!autoDeploy && LOGGER.isInfoEnabled()) {
+            LOGGER.info("Not deploying {}: its @NeonBeeDeployable annotation sets autoDeploy=false", // NOPMD
+                    verticleType.getName());
+        }
+        return autoDeploy;
     }
 
     /**

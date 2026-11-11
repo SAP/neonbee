@@ -28,9 +28,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
 import io.neonbee.NeonBee;
+import io.neonbee.NeonBeeDeployable;
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.internal.NeonBeeModuleJar;
 import io.neonbee.internal.scanner.ClassPathScanner;
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.ThreadingModel;
@@ -254,6 +256,44 @@ class DeployableVerticleTest {
     }
 
     @Test
+    @DisplayName("test scan class path filters out verticles with autoDeploy=false")
+    @SuppressWarnings("rawtypes")
+    void testScanClassPathFiltersAutoDeployFalse() throws ClassNotFoundException {
+        NeonBee neonBeeMock = newNeonBeeMockForDeployment();
+        Vertx vertxMock = neonBeeMock.getVertx();
+
+        ClassPathScanner classPathScannerMock = mock(ClassPathScanner.class);
+        when(classPathScannerMock.scanManifestFiles(any(), any()))
+                .thenReturn(succeededFuture(List.of("deployable", "optOut", "unannotated")));
+
+        ClassLoader classLoaderMock = mock(ClassLoader.class);
+        when((Class) classLoaderMock.loadClass("deployable")).thenReturn(AutoDeployDefaultVerticle.class);
+        when((Class) classLoaderMock.loadClass("optOut")).thenReturn(AutoDeployFalseVerticle.class);
+        when((Class) classLoaderMock.loadClass("unannotated")).thenReturn(DUMMY_VERTICLE.getClass());
+
+        Future<Collection<DeployableVerticle>> deployable =
+                DeployableVerticle.scanClassPath(vertxMock, classPathScannerMock, classLoaderMock);
+        assertThat(deployable.cause()).isNull();
+        assertThat(deployable.succeeded()).isTrue();
+
+        // the autoDeploy=false verticle is dropped, the default (true) and the unannotated one are kept
+        List<DeployableVerticle> verticles = new ArrayList<>(deployable.result());
+        assertThat(verticles.stream().map(verticle -> verticle.verticleClass))
+                .containsExactly(AutoDeployDefaultVerticle.class, DUMMY_VERTICLE.getClass());
+    }
+
+    @Test
+    @DisplayName("test shouldAutoDeploy reflects the NeonBeeDeployable autoDeploy flag")
+    void testShouldAutoDeploy() {
+        DeploymentOptions options = new DeploymentOptions();
+
+        assertThat(new DeployableVerticle(AutoDeployDefaultVerticle.class, options).shouldAutoDeploy()).isTrue();
+        assertThat(new DeployableVerticle(AutoDeployFalseVerticle.class, options).shouldAutoDeploy()).isFalse();
+        // verticles without a @NeonBeeDeployable annotation default to being deployable
+        assertThat(new DeployableVerticle(DUMMY_VERTICLE, options).shouldAutoDeploy()).isTrue();
+    }
+
+    @Test
     @DisplayName("test from JAR")
     void testFromJar() throws IOException {
         NeonBee neonBeeMock = newNeonBeeMockForDeployment();
@@ -357,5 +397,15 @@ class DeployableVerticleTest {
         assertThat(deployable2.succeeded()).isTrue();
         assertThat(deployable2.result().verticleInstance).isSameInstanceAs(DUMMY_VERTICLE);
         assertThat(deployable2.result().options.getConfig()).isEqualTo(config.getJsonObject("config"));
+    }
+
+    @NeonBeeDeployable(namespace = "test")
+    static class AutoDeployDefaultVerticle extends AbstractVerticle {
+        // autoDeploy defaults to true
+    }
+
+    @NeonBeeDeployable(namespace = "test", autoDeploy = false)
+    static class AutoDeployFalseVerticle extends AbstractVerticle {
+        // opts out of auto deployment
     }
 }
