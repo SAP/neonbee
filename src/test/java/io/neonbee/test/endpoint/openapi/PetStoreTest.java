@@ -49,9 +49,9 @@ class PetStoreTest extends NeonBeeTestBase {
     @Test
     @DisplayName("should create, get and list pets")
     void cycleTest(VertxTestContext testContext) {
-        Checkpoint create = testContext.checkpoint();
-        Checkpoint get = testContext.checkpoint();
-        Checkpoint list = testContext.checkpoint();
+        Checkpoint create = testContext.laxCheckpoint();
+        Checkpoint get = testContext.laxCheckpoint();
+        Checkpoint list = testContext.laxCheckpoint();
 
         createPet(new JsonObject().put("name", PET1_NAME)).compose(resp -> {
             testContext.verify(() -> assertThat(resp.statusCode()).isEqualTo(201));

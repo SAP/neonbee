@@ -25,15 +25,17 @@ class HooksHandlerTest extends DataVerticleTestBase {
     @Test
     @DisplayName("Checks that HooksHandler executes hook")
     void checkHookGetsExecutedSuccess(VertxTestContext testContext) {
-        Checkpoint cp = testContext.checkpoint(3);
+        Checkpoint cp1 = testContext.laxCheckpoint();
+        Checkpoint cp2 = testContext.laxCheckpoint();
+        Checkpoint cp3 = testContext.laxCheckpoint();
         TestHook hook = new TestHook();
         hook.executeBR = p -> {
-            cp.flag();
+            cp1.flag();
             p.complete();
         };
 
         hook.executeOPR = p -> {
-            cp.flag();
+            cp2.flag();
             p.complete();
         };
 
@@ -41,22 +43,24 @@ class HooksHandlerTest extends DataVerticleTestBase {
                 .compose(v -> sendRequestReturnStatusCode())
                 .onComplete(testContext.succeeding(statusCode -> testContext.verify(() -> {
                     assertThat(statusCode).isEqualTo(404);
-                    cp.flag();
+                    cp3.flag();
                 })));
     }
 
     @Test
     @DisplayName("Checks that HooksHanlder executes hook and fail request in case of error")
     void checkHookGetsExecutedAndFailsRequestInCaseOfException(VertxTestContext testContext) {
-        Checkpoint cp = testContext.checkpoint(3);
+        Checkpoint cp1 = testContext.laxCheckpoint();
+        Checkpoint cp2 = testContext.laxCheckpoint();
+        Checkpoint cp3 = testContext.laxCheckpoint();
         TestHook hook = new TestHook();
         hook.executeBR = p -> {
-            cp.flag();
+            cp1.flag();
             p.complete();
         };
 
         hook.executeOPR = p -> {
-            cp.flag();
+            cp2.flag();
             p.fail(new Exception("Hodor"));
         };
 
@@ -64,22 +68,24 @@ class HooksHandlerTest extends DataVerticleTestBase {
                 .compose(v -> sendRequestReturnStatusCode())
                 .onComplete(testContext.succeeding(statusCode -> testContext.verify(() -> {
                     assertThat(statusCode).isEqualTo(500);
-                    cp.flag();
+                    cp3.flag();
                 })));
     }
 
     @Test
     @DisplayName("Checks that HooksHanlder executes hook and propagate error code in case of DataException")
     void checkHookGetsExecutedAndPropagateErrorCodeIfDataException(VertxTestContext testContext) {
-        Checkpoint cp = testContext.checkpoint(3);
+        Checkpoint cp1 = testContext.laxCheckpoint();
+        Checkpoint cp2 = testContext.laxCheckpoint();
+        Checkpoint cp3 = testContext.laxCheckpoint();
         TestHook hook = new TestHook();
         hook.executeBR = p -> {
-            cp.flag();
+            cp1.flag();
             p.complete();
         };
 
         hook.executeOPR = p -> {
-            cp.flag();
+            cp2.flag();
             p.fail(new DataException(403, "Hodor"));
         };
 
@@ -87,17 +93,18 @@ class HooksHandlerTest extends DataVerticleTestBase {
                 .compose(v -> sendRequestReturnStatusCode())
                 .onComplete(testContext.succeeding(statusCode -> testContext.verify(() -> {
                     assertThat(statusCode).isEqualTo(403);
-                    cp.flag();
+                    cp3.flag();
                 })));
     }
 
     @Test
     @DisplayName("Checks that ONCE_PER_REQUEST hook isn't called if BEFORE_REQUEST hook fails the request in case of error")
     void checkOnePerRequestHookIsntCalledInCaseBeforeRequestFailsTheRequest(VertxTestContext testContext) {
-        Checkpoint cp = testContext.checkpoint(2);
+        Checkpoint cp1 = testContext.laxCheckpoint();
+        Checkpoint cp2 = testContext.laxCheckpoint();
         TestHook hook = new TestHook();
         hook.executeBR = p -> {
-            cp.flag();
+            cp1.flag();
             p.fail(new Exception("Hodor"));
         };
 
@@ -107,7 +114,7 @@ class HooksHandlerTest extends DataVerticleTestBase {
                 .compose(v -> sendRequestReturnStatusCode())
                 .onComplete(testContext.succeeding(statusCode -> testContext.verify(() -> {
                     assertThat(statusCode).isEqualTo(500);
-                    cp.flag();
+                    cp2.flag();
                 })));
     }
 

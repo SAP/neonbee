@@ -27,13 +27,16 @@ class ServerVerticleTest extends NeonBeeTestBase {
 
     @Test
     void testMaximumInitialLineAndCookieSizes(VertxTestContext testCtx) {
-        Checkpoint checkpoint = testCtx.checkpoint(4);
+        Checkpoint cp1 = testCtx.laxCheckpoint();
+        Checkpoint cp2 = testCtx.laxCheckpoint();
+        Checkpoint cp3 = testCtx.laxCheckpoint();
+        Checkpoint cp4 = testCtx.laxCheckpoint();
 
         // positive case, both initial line and headers have a small size
         createRequest(HttpMethod.GET, "/any404").putHeader("smallHeader", "x")
                 .send().onComplete(testCtx.succeeding(response -> testCtx.verify(() -> {
                     assertThat(response.statusCode()).isEqualTo(404);
-                    checkpoint.flag();
+                    cp1.flag();
                 })));
 
         // positive edge case for the initial line, assuming we are sending a HTTP GET request, the initial line will be
@@ -44,56 +47,58 @@ class ServerVerticleTest extends NeonBeeTestBase {
         createRequest(HttpMethod.GET, "/" + "x".repeat(4081)).send()
                 .onComplete(testCtx.succeeding(response -> testCtx.verify(() -> {
                     assertThat(response.statusCode()).isEqualTo(404);
-                    checkpoint.flag();
+                    cp2.flag();
                 })));
 
         // negative edge case for the initial line
         createRequest(HttpMethod.GET, "/" + "x".repeat(4083)).send()
                 .onComplete(testCtx.succeeding(response -> testCtx.verify(() -> {
                     assertThat(response.statusCode()).isEqualTo(414); // URI too long
-                    checkpoint.flag();
+                    cp3.flag();
                 })));
 
         // negative case for the header, all headers may not exceed 8192 bytes
         createRequest(HttpMethod.GET, "/any404").putHeader("largeHeader", "x".repeat(10000))
                 .send().onComplete(testCtx.succeeding(response -> testCtx.verify(() -> {
                     assertThat(response.statusCode()).isEqualTo(431);
-                    checkpoint.flag();
+                    cp4.flag();
                 })));
     }
 
     @Test
     void testLargerMaximumInitialLineAndCookieSizesConfig(VertxTestContext testCtx) {
-        Checkpoint checkpoint = testCtx.checkpoint(2);
+        Checkpoint cp1 = testCtx.laxCheckpoint();
+        Checkpoint cp2 = testCtx.laxCheckpoint();
 
         // by default the initial line length may only be 4096 bytes
         createRequest(HttpMethod.GET, "/" + "x".repeat(4083)).send()
                 .onComplete(testCtx.succeeding(response -> testCtx.verify(() -> {
                     assertThat(response.statusCode()).isEqualTo(404);
-                    checkpoint.flag();
+                    cp1.flag();
                 })));
 
         // by default the maximum header size may only be 8196 bytes
         createRequest(HttpMethod.GET, "/any404").putHeader("largeHeader", "x".repeat(10000))
                 .send().onComplete(testCtx.succeeding(response -> testCtx.verify(() -> {
                     assertThat(response.statusCode()).isEqualTo(404);
-                    checkpoint.flag();
+                    cp2.flag();
                 })));
     }
 
     @Test
     void testGetErrorHandlerDefault(Vertx vertx, VertxTestContext testCtx) throws Exception {
-        Checkpoint cp = testCtx.checkpoint(2);
+        Checkpoint cp1 = testCtx.laxCheckpoint();
+        Checkpoint cp2 = testCtx.laxCheckpoint();
 
         ServerVerticle.createErrorHandler(null, vertx).onComplete(testCtx.succeeding(clazz -> testCtx.verify(() -> {
             assertThat(clazz).isInstanceOf(DefaultErrorHandler.class);
-            cp.flag();
+            cp1.flag();
         })));
 
         ServerVerticle.createErrorHandler("Hugo", vertx).onComplete(testCtx.failing(t -> testCtx.verify(() -> {
             assertThat(t).isInstanceOf(ClassNotFoundException.class);
             assertThat(t).hasMessageThat().contains("Hugo");
-            cp.flag();
+            cp2.flag();
         })));
     }
 

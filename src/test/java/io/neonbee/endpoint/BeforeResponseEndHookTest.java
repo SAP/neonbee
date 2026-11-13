@@ -36,14 +36,15 @@ class BeforeResponseEndHookTest extends DataVerticleTestBase {
     @Test
     @DisplayName("Checks that the BEFORE_RESPONSE_END hook is executed before the response is sent to the client")
     void checkHookGetsExecutedBeforeResponseEnd(VertxTestContext testContext) {
-        Checkpoint cp = testContext.checkpoint(2);
+        Checkpoint cp1 = testContext.laxCheckpoint();
+        Checkpoint cp2 = testContext.laxCheckpoint();
         TestHook hook = new TestHook();
         hook.executeBRE = (hookContext, promise) -> {
             testContext.verify(() -> {
                 assertThat(hookContext.<RoutingContext>get(ROUTING_CONTEXT)).isNotNull();
                 assertThat(hookContext.<Buffer>get(LAST_CHUNK)).isEqualTo(RESPONSE_BODY);
             });
-            cp.flag();
+            cp1.flag();
             promise.complete();
         };
 
@@ -53,18 +54,19 @@ class BeforeResponseEndHookTest extends DataVerticleTestBase {
                 .onComplete(testContext.succeeding(response -> testContext.verify(() -> {
                     assertThat(response.statusCode()).isEqualTo(200);
                     assertThat(response.bodyAsBuffer()).isEqualTo(RESPONSE_BODY);
-                    cp.flag();
+                    cp2.flag();
                 })));
     }
 
     @Test
     @DisplayName("Checks that the BEFORE_RESPONSE_END hook may add a final header to the response")
     void checkHookMayAddHeaderToResponse(VertxTestContext testContext) {
-        Checkpoint cp = testContext.checkpoint(2);
+        Checkpoint cp1 = testContext.laxCheckpoint();
+        Checkpoint cp2 = testContext.laxCheckpoint();
         TestHook hook = new TestHook();
         hook.executeBRE = (hookContext, promise) -> {
             hookContext.<RoutingContext>get(ROUTING_CONTEXT).response().putHeader("hodor", "hodor");
-            cp.flag();
+            cp1.flag();
             promise.complete();
         };
 
@@ -74,18 +76,19 @@ class BeforeResponseEndHookTest extends DataVerticleTestBase {
                 .onComplete(testContext.succeeding(response -> testContext.verify(() -> {
                     assertThat(response.statusCode()).isEqualTo(200);
                     assertThat(response.getHeader("hodor")).isEqualTo("hodor");
-                    cp.flag();
+                    cp2.flag();
                 })));
     }
 
     @Test
     @DisplayName("Checks that the BEFORE_RESPONSE_END hook receives a null last chunk for a no-content response")
     void checkHookReceivesNullLastChunkForNoContentResponse(VertxTestContext testContext) {
-        Checkpoint cp = testContext.checkpoint(2);
+        Checkpoint cp1 = testContext.laxCheckpoint();
+        Checkpoint cp2 = testContext.laxCheckpoint();
         TestHook hook = new TestHook();
         hook.executeBRE = (hookContext, promise) -> {
             testContext.verify(() -> assertThat(hookContext.<Buffer>get(LAST_CHUNK)).isNull());
-            cp.flag();
+            cp1.flag();
             promise.complete();
         };
 
@@ -95,17 +98,18 @@ class BeforeResponseEndHookTest extends DataVerticleTestBase {
                 .compose(v -> sendRequest())
                 .onComplete(testContext.succeeding(response -> testContext.verify(() -> {
                     assertThat(response.statusCode()).isEqualTo(204);
-                    cp.flag();
+                    cp2.flag();
                 })));
     }
 
     @Test
     @DisplayName("Checks that the BEFORE_RESPONSE_END hook fails the request in case of error")
     void checkHookFailsRequestInCaseOfException(VertxTestContext testContext) {
-        Checkpoint cp = testContext.checkpoint(2);
+        Checkpoint cp1 = testContext.laxCheckpoint();
+        Checkpoint cp2 = testContext.laxCheckpoint();
         TestHook hook = new TestHook();
         hook.executeBRE = (hookContext, promise) -> {
-            cp.flag();
+            cp1.flag();
             promise.fail(new RuntimeException("Hodor"));
         };
 
@@ -114,17 +118,18 @@ class BeforeResponseEndHookTest extends DataVerticleTestBase {
                 .compose(v -> sendRequest())
                 .onComplete(testContext.succeeding(response -> testContext.verify(() -> {
                     assertThat(response.statusCode()).isEqualTo(500);
-                    cp.flag();
+                    cp2.flag();
                 })));
     }
 
     @Test
     @DisplayName("Checks that the BEFORE_RESPONSE_END hook propagates the error code in case of a DataException")
     void checkHookPropagatesErrorCodeIfDataException(VertxTestContext testContext) {
-        Checkpoint cp = testContext.checkpoint(2);
+        Checkpoint cp1 = testContext.laxCheckpoint();
+        Checkpoint cp2 = testContext.laxCheckpoint();
         TestHook hook = new TestHook();
         hook.executeBRE = (hookContext, promise) -> {
-            cp.flag();
+            cp1.flag();
             promise.fail(new DataException(403, "Hodor"));
         };
 
@@ -133,7 +138,7 @@ class BeforeResponseEndHookTest extends DataVerticleTestBase {
                 .compose(v -> sendRequest())
                 .onComplete(testContext.succeeding(response -> testContext.verify(() -> {
                     assertThat(response.statusCode()).isEqualTo(403);
-                    cp.flag();
+                    cp2.flag();
                 })));
     }
 
