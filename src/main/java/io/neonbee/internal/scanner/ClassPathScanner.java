@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -69,6 +70,8 @@ public class ClassPathScanner {
      * The pattern which is used to separate values in the manifest.ml.
      */
     public static final Pattern SEPARATOR_PATTERN = Pattern.compile(";");
+
+    private static final String NEONBEE_MANIFEST_PREFIX = "NeonBee-";
 
     private final ClassLoader classLoader;
 
@@ -195,14 +198,15 @@ public class ClassPathScanner {
             ElementType... elementTypes) {
 
         Future<List<String>> classesFromDirectories = scanWithPredicate(vertx, ClassPathScanner::isClassFile);
-        Future<List<String>> classesFromJars = scanJarFilesWithPredicate(vertx, ClassPathScanner::isClassFile)
-                .map(uris -> {
-                    List<String> result = new ArrayList<>(uris.size());
-                    for (URI uri : uris) {
-                        result.add(JarHelper.extractFilePath(uri));
-                    }
-                    return result;
-                });
+        Future<List<String>> classesFromJars =
+                scanJarFilesWithPredicate(vertx, ClassPathScanner::isClassFile, ClassPathScanner::isNeonBeeJar)
+                        .map(uris -> {
+                            List<String> result = new ArrayList<>(uris.size());
+                            for (URI uri : uris) {
+                                result.add(JarHelper.extractFilePath(uri));
+                            }
+                            return result;
+                        });
 
         return Future.all(classesFromDirectories, classesFromJars).compose(v -> vertx.executeBlocking(() -> {
             List<AnnotationClassVisitor> classVisitors = new ArrayList<>(annotationClasses.size());
@@ -282,12 +286,16 @@ public class ClassPathScanner {
      * @return a future to a list of URIs representing the files which matches the given predicate
      */
     public Future<List<URI>> scanJarFilesWithPredicate(Vertx vertx, Predicate<String> predicate) {
+        return scanJarFilesWithPredicate(vertx, predicate, url -> true);
+    }
+
+    private Future<List<URI>> scanJarFilesWithPredicate(Vertx vertx, Predicate<String> predicate,
+            Predicate<URL> jarFilter) {
         return vertx.executeBlocking(() -> {
             List<URI> resources = new ArrayList<>();
             for (URL manifestResource : getManifestResourceURLs()) {
                 URI uri = manifestResource.toURI();
-                // filter for manifest files inside of jar files
-                if ("jar".equals(uri.getScheme())) {
+                if ("jar".equals(uri.getScheme()) && jarFilter.test(manifestResource)) {
                     try (FileSystem fileSystem = FileSystems.newFileSystem(uri, Map.of())) {
                         Path rootPath = fileSystem.getPath("/");
                         scanDirectoryWithPredicateRecursive(rootPath, predicate)
@@ -297,6 +305,21 @@ public class ClassPathScanner {
             }
             return resources;
         });
+    }
+
+    @SuppressWarnings("PMD.EmptyCatchBlock")
+    private static boolean isNeonBeeJar(URL manifestUrl) {
+        try (InputStream is = manifestUrl.openStream()) {
+            Manifest manifest = new Manifest(is);
+            Attributes attributes = manifest.getMainAttributes();
+            for (Object key : attributes.keySet()) {
+                if (key.toString().startsWith(NEONBEE_MANIFEST_PREFIX)) {
+                    return true;
+                }
+            }
+        } catch (IOException e) { // NOPMD
+        }
+        return false;
     }
 
     /**
