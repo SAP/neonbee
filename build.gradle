@@ -18,7 +18,7 @@ plugins {
     id 'com.github.ksoichiro.console.reporter' version '0.6.3'
     id 'se.bjurr.violations.violations-gradle-plugin' version '4.5.1'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id 'org.sonarqube' version '7.5.0.8588'
+    id 'org.sonarqube' version '7.6.0.18749'
     id 'team.yi.semantic-gitlog' version '0.6.12'
     // only the base plugin, the full plugin would add a publication of its own (see publishing.gradle)
     id 'com.vanniktech.maven.publish.base' version '0.37.0'
