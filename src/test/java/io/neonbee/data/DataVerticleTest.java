@@ -44,13 +44,15 @@ class DataVerticleTest extends DataVerticleTestBase {
 
     @BeforeEach
     void deployEntityVerticles(VertxTestContext testContext) {
-        Checkpoint checkpoint = testContext.checkpoint(3);
+        Checkpoint cp1 = testContext.laxCheckpoint();
+        Checkpoint cp2 = testContext.laxCheckpoint();
+        Checkpoint cp3 = testContext.laxCheckpoint();
         deployVerticle(this.dataVerticleImpl0 = new DataVerticleImpl0())
-                .onComplete(testContext.succeeding(result -> checkpoint.flag()));
+                .onComplete(testContext.succeeding(result -> cp1.flag()));
         deployVerticle(this.dataVerticleImpl1 = new DataVerticleImpl1())
-                .onComplete(testContext.succeeding(result -> checkpoint.flag()));
+                .onComplete(testContext.succeeding(result -> cp2.flag()));
         deployVerticle(this.dataVerticleImpl2 = new DataVerticleImpl2())
-                .onComplete(testContext.succeeding(result -> checkpoint.flag()));
+                .onComplete(testContext.succeeding(result -> cp3.flag()));
     }
 
     @Test
@@ -91,14 +93,16 @@ class DataVerticleTest extends DataVerticleTestBase {
         String addressDVImpl2 = "DataVerticleTestNamespace2".toLowerCase(Locale.ENGLISH) + "/" + DataVerticleImpl2.NAME;
         DataRequest requestDVImpl2 = new DataRequest(addressDVImpl2, new DataQuery().addParameter("ping", ""));
 
-        Checkpoint checkpoint = testContext.checkpoint(3);
+        Checkpoint cp1 = testContext.laxCheckpoint();
+        Checkpoint cp2 = testContext.laxCheckpoint();
+        Checkpoint cp3 = testContext.laxCheckpoint();
 
         assertDataEquals(requestData(DataVerticleImpl0.NAME), DataVerticleImpl0.EXPECTED_RESPONSE, testContext)
-                .onComplete(testContext.succeeding(nothing -> checkpoint.flag()));
+                .onComplete(testContext.succeeding(nothing -> cp1.flag()));
         assertDataEquals(requestData(DataVerticleImpl1.NAME), DataVerticleImpl1.EXPECTED_RESPONSE, testContext)
-                .onComplete(testContext.succeeding(nothing -> checkpoint.flag()));
+                .onComplete(testContext.succeeding(nothing -> cp2.flag()));
         assertDataFailure(requestData(requestDVImpl2), new DataException(400, "Bad Request"), testContext)
-                .onComplete(testContext.succeeding(nothing -> checkpoint.flag()));
+                .onComplete(testContext.succeeding(nothing -> cp3.flag()));
     }
 
     @Test

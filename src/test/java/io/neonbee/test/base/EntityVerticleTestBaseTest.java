@@ -56,17 +56,18 @@ class EntityVerticleTestBaseTest extends EntityVerticleTestBase {
     @Test
     @DisplayName("test that dummy EntityVerticles are deployed correctly")
     void testDeployDummyEntityVerticles(VertxTestContext context) {
-        Checkpoint checkpoint = context.checkpoint(2);
+        Checkpoint checkpoint1 = context.laxCheckpoint();
+        Checkpoint checkpoint2 = context.laxCheckpoint();
 
         deployVerticle(firstCustomerEV).compose(x -> deployVerticle(financeEV)).compose(x -> requestEntity(CUSTOMER))
                 .onSuccess(entityWrapper -> context.verify(() -> {
                     assertThat(entityWrapper.getTypeName().getFullQualifiedNameAsString())
                             .isEqualTo(CUSTOMER.getFullQualifiedNameAsString());
-                    checkpoint.flag();
+                    checkpoint1.flag();
                 })).compose(x -> requestEntity(CUSTOMER)).onSuccess(entityWrapper -> context.verify(() -> {
                     assertThat(entityWrapper.getTypeName().getFullQualifiedNameAsString())
                             .isEqualTo(CUSTOMER.getFullQualifiedNameAsString());
-                    checkpoint.flag();
+                    checkpoint2.flag();
                 })).onFailure(context::failNow);
     }
 }

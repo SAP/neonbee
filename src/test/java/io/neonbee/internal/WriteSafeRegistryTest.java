@@ -73,12 +73,15 @@ class WriteSafeRegistryTest {
     void lock(Vertx vertx, VertxTestContext context) {
         WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, REGISTRY_NAME);
 
-        Checkpoint checkpoints = context.checkpoint(4);
+        Checkpoint cp1 = context.laxCheckpoint();
+        Checkpoint cp2 = context.laxCheckpoint();
+        Checkpoint cp3 = context.laxCheckpoint();
+        Checkpoint cp4 = context.laxCheckpoint();
         String lockedname = "test-lock-key1";
 
         // execute the lockTest twice to make sure that you can acquire the lock multiple times
-        lockTest(lockedname, context, registry, checkpoints)
-                .compose(unused -> lockTest(lockedname, context, registry, checkpoints));
+        lockTest(lockedname, context, registry, cp1, cp2)
+                .compose(unused -> lockTest(lockedname, context, registry, cp3, cp4));
     }
 
     @Test
@@ -92,7 +95,7 @@ class WriteSafeRegistryTest {
 
         List<String> executed = Collections.synchronizedList(new ArrayList<>());
 
-        Checkpoint checkpoint = context.checkpoint();
+        Checkpoint checkpoint = context.laxCheckpoint();
 
         // submit all three locks concurrently (no compose)
         Future<Void> lock1 = registry.lock(key, () -> {
@@ -120,12 +123,12 @@ class WriteSafeRegistryTest {
     }
 
     private static Future<Void> lockTest(String lockName, VertxTestContext context, WriteSafeRegistry<String> registry,
-            Checkpoint checkpoints) {
+            Checkpoint cpInside, Checkpoint cpSuccess) {
         return registry.lock(lockName, () -> {
-            checkpoints.flag();
+            cpInside.flag();
             return Future.succeededFuture();
         })
-                .onSuccess(unused -> checkpoints.flag())
+                .onSuccess(unused -> cpSuccess.flag())
                 .onFailure(context::failNow);
     }
 
@@ -134,15 +137,16 @@ class WriteSafeRegistryTest {
     void lockNPE(Vertx vertx, VertxTestContext context) {
         WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, REGISTRY_NAME);
 
-        Checkpoint checkpoints = context.checkpoint(2);
+        Checkpoint cp1 = context.laxCheckpoint();
+        Checkpoint cp2 = context.laxCheckpoint();
 
         registry.lock("lockNPE", () -> {
-            checkpoints.flag();
+            cp1.flag();
             return null;
         }).onSuccess(unused -> context.failNow("should not be successful"))
                 .onFailure(cause -> context.verify(() -> {
                     assertThat(cause).isInstanceOf(NullPointerException.class);
-                    checkpoints.flag();
+                    cp2.flag();
                 }));
     }
 
@@ -151,15 +155,16 @@ class WriteSafeRegistryTest {
     void lockISE(Vertx vertx, VertxTestContext context) {
         WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, REGISTRY_NAME);
 
-        Checkpoint checkpoints = context.checkpoint(2);
+        Checkpoint cp1 = context.laxCheckpoint();
+        Checkpoint cp2 = context.laxCheckpoint();
 
         registry.lock("lockISE", () -> {
-            checkpoints.flag();
+            cp1.flag();
             throw new IllegalStateException("Illegal state");
         }).onSuccess(unused -> context.failNow("should not be successful"))
                 .onFailure(cause -> context.verify(() -> {
                     assertThat(cause).isInstanceOf(IllegalStateException.class);
-                    checkpoints.flag();
+                    cp2.flag();
                 }));
     }
 }

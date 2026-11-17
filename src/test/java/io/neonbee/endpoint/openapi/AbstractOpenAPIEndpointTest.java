@@ -31,18 +31,19 @@ class AbstractOpenAPIEndpointTest {
     @Test
     @DisplayName("createEndpointRouter should succeed")
     void testCreateEndpointRouter(Vertx vertx, VertxTestContext testContext) {
-        Checkpoint methodsCheckpoint = testContext.checkpoint(2);
-        Checkpoint succeedingCheckpoint = testContext.checkpoint();
+        Checkpoint methodsCheckpoint1 = testContext.laxCheckpoint();
+        Checkpoint methodsCheckpoint2 = testContext.laxCheckpoint();
+        Checkpoint succeedingCheckpoint = testContext.laxCheckpoint();
         DummyOpenAPIEndpoint dummyEndpoint = new DummyOpenAPIEndpoint() {
             @Override
             protected Future<OpenAPIContract> getOpenAPIContract(Vertx vertx, JsonObject config) {
-                methodsCheckpoint.flag();
+                methodsCheckpoint1.flag();
                 return OpenAPIContract.from(vertx, CONTRACT_PATH.toString());
             }
 
             @Override
             protected Future<Router> createRouter(Vertx vertx, RouterBuilder routerBuilder) {
-                methodsCheckpoint.flag();
+                methodsCheckpoint2.flag();
                 return super.createRouter(vertx, routerBuilder);
             }
         };
@@ -54,8 +55,8 @@ class AbstractOpenAPIEndpointTest {
     @Test
     @DisplayName("createEndpointRouter should fail")
     void testCreateEndpointRouterFailed(Vertx vertx, VertxTestContext testContext) {
-        Checkpoint methodCheckpoint = testContext.checkpoint();
-        Checkpoint failingCheckpoint = testContext.checkpoint();
+        Checkpoint methodCheckpoint = testContext.laxCheckpoint();
+        Checkpoint failingCheckpoint = testContext.laxCheckpoint();
         DummyOpenAPIEndpoint dummyEndpoint = new DummyOpenAPIEndpoint() {
             @Override
             protected Future<OpenAPIContract> getOpenAPIContract(Vertx vertx, JsonObject config) {

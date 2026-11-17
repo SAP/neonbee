@@ -137,20 +137,24 @@ class ClassPathScannerTest {
                 .flatMap(Stream::of).toArray(URL[]::new);
         ClassPathScanner cps = new ClassPathScanner(new URLClassLoader(urlc, null));
 
-        Checkpoint annotationsScanned = testContext.checkpoint(5);
+        Checkpoint cp1 = testContext.laxCheckpoint();
+        Checkpoint cp2 = testContext.laxCheckpoint();
+        Checkpoint cp3 = testContext.laxCheckpoint();
+        Checkpoint cp4 = testContext.laxCheckpoint();
+        Checkpoint cp5 = testContext.laxCheckpoint();
 
-        futureContainsExactly(testContext, annotationsScanned, cps.scanForAnnotation(vertx, Deprecated.class, TYPE),
+        futureContainsExactly(testContext, cp1, cps.scanForAnnotation(vertx, Deprecated.class, TYPE),
                 "type.Hodor");
 
-        futureContainsExactly(testContext, annotationsScanned, cps.scanForAnnotation(vertx, Deprecated.class, FIELD),
+        futureContainsExactly(testContext, cp2, cps.scanForAnnotation(vertx, Deprecated.class, FIELD),
                 "field.Hodor");
-        futureContainsExactly(testContext, annotationsScanned, cps.scanForAnnotation(vertx, Deprecated.class, METHOD),
+        futureContainsExactly(testContext, cp3, cps.scanForAnnotation(vertx, Deprecated.class, METHOD),
                 "method.Hodor");
-        futureContainsExactly(testContext, annotationsScanned,
+        futureContainsExactly(testContext, cp4,
                 cps.scanForAnnotation(vertx, Deprecated.class, TYPE, FIELD, METHOD), "type.Hodor", "field.Hodor",
                 "method.Hodor");
 
-        futureContainsExactly(testContext, annotationsScanned,
+        futureContainsExactly(testContext, cp5,
                 cps.scanForAnnotation(vertx, List.of(Transient.class, Deprecated.class), METHOD), "method.Hodor2",
                 "method.Hodor");
     }
