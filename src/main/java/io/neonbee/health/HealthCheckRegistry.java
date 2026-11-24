@@ -19,6 +19,7 @@ import com.google.common.base.Strings;
 
 import io.neonbee.NeonBee;
 import io.neonbee.data.DataContext;
+import io.neonbee.data.DataException;
 import io.neonbee.data.DataRequest;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.data.internal.DataContextImpl;
@@ -230,7 +231,21 @@ public class HealthCheckRegistry {
                         LOGGER.correlateWith(dataContext).error("Could not retrieve health check data from verticle {}",
                                 dr.getQualifiedName(), t.getCause());
                     }
+                }).recover(t -> {
+                    if (t instanceof DataException
+                            && ((DataException) t).failureCode() == DataException.FAILURE_CODE_NO_HANDLERS) {
+                        // nobody listens on the address of this verticle anymore (e.g. its node died), drop the entry
+                        return unregisterStaleVerticle(dr.getQualifiedName())
+                                .transform(unregistered -> Future.<JsonArray>failedFuture(t));
+                    }
+                    return Future.<JsonArray>failedFuture(t);
                 })).collect(toList());
+    }
+
+    private Future<Void> unregisterStaleVerticle(String qualifiedName) {
+        return new WriteSafeRegistry<String>(vertx, REGISTRY_NAME).unregister(SHARED_MAP_KEY, qualifiedName)
+                .onFailure(t -> LOGGER.warn("Could not unregister unreachable health check verticle {}",
+                        qualifiedName, t));
     }
 
     private JsonObject consolidateResults(List<JsonObject> healthCheckResults, String check, DataContext dataContext) {
