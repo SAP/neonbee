@@ -15,6 +15,8 @@ public class AnnotatedClassTemplate implements ClassTemplate {
 
     private static final String PLACEHOLDER_IMPORTS = "<imports>";
 
+    private static final String PLACEHOLDER_VISIBILITY = "<visibility>";
+
     private static final String PLACEHOLDER_CLASS_NAME = "<ClassName>";
 
     private static final String PLACEHOLDER_TYPE_ANNOTATION = "<TypeAnnotation>";
@@ -22,6 +24,8 @@ public class AnnotatedClassTemplate implements ClassTemplate {
     private static final String PLACEHOLDER_FIELD_ANNOTATION = "<FieldAnnotation>";
 
     private static final String PLACEHOLDER_METHOD_ANNOTATION = "<MethodAnnotation>";
+
+    private final String visibility;
 
     private final String packageName;
 
@@ -55,6 +59,19 @@ public class AnnotatedClassTemplate implements ClassTemplate {
      * @throws IOException Template file could not be read
      */
     public AnnotatedClassTemplate(String simpleClassName, String packageName) throws IOException {
+        this(null, simpleClassName, packageName);
+    }
+
+    /**
+     * Creates a dummy annotated class
+     *
+     * @param visibility      The visibility of the class (public, private, protected, default)
+     * @param simpleClassName The simple class name of the new class
+     * @param packageName     The package name of the class. Pass null for default package
+     * @throws IOException Template file could not be read
+     */
+    public AnnotatedClassTemplate(String visibility, String simpleClassName, String packageName) throws IOException {
+        this.visibility = visibility != null ? visibility : "public";
         this.packageName = packageName;
         this.simpleClassName = simpleClassName;
         this.template = TEST_RESOURCES.getRelated("AnnotatedClass.java.template").toString();
@@ -98,7 +115,8 @@ public class AnnotatedClassTemplate implements ClassTemplate {
             packageNameReplacement = "package " + packageName + ";";
         }
 
-        return template.replace(PLACEHOLDER_CLASS_NAME, simpleClassName)
+        return template.replace(PLACEHOLDER_VISIBILITY, visibility)
+                .replace(PLACEHOLDER_CLASS_NAME, simpleClassName)
                 .replace(PLACEHOLDER_IMPORTS, buildImportString()).replace(PLACEHOLDER_PACKAGE, packageNameReplacement)
                 .replace(PLACEHOLDER_TYPE_ANNOTATION, Optional.ofNullable(typeAnnotation).orElse(""))
                 .replace(PLACEHOLDER_FIELD_ANNOTATION, Optional.ofNullable(fieldAnnotation).orElse(""))
