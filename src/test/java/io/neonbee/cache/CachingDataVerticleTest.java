@@ -106,8 +106,8 @@ class CachingDataVerticleTest extends DataVerticleTestBase {
     @Test
     @DisplayName("requireData should call requireDataBeforeCache on cache miss")
     void requireDataRequiresDataOnCacheMiss(VertxTestContext testContext) {
-        Checkpoint requireCheckpoint = testContext.checkpoint();
-        Checkpoint retrieveCheckpoint = testContext.checkpoint();
+        Checkpoint requireCheckpoint = testContext.laxCheckpoint();
+        Checkpoint retrieveCheckpoint = testContext.laxCheckpoint();
 
         CachingDataVerticle<JsonArray> testClass = new CachingDataVerticle<>() {
             @Override

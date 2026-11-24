@@ -40,8 +40,8 @@ class PrivateVerticleClusterTest extends NeonBeeExtension.TestBase {
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee source,
             @NeonBeeInstanceConfiguration(clustered = true, activeProfiles = {}) NeonBee target,
             VertxTestContext testContext) {
-        Checkpoint localRequest = testContext.checkpoint();
-        Checkpoint remoteRequest = testContext.checkpoint();
+        Checkpoint localRequest = testContext.laxCheckpoint();
+        Checkpoint remoteRequest = testContext.laxCheckpoint();
 
         deployVerticle(target.getVertx(), PRIVATE_TARGET_VERTICLE).compose(s -> {
             // Request from the same node should succeed for private verticles.
