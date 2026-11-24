@@ -2,10 +2,13 @@ package io.neonbee.internal.verticle;
 
 import static com.google.common.truth.Truth.assertThat;
 import static io.neonbee.internal.verticle.HealthCheckVerticle.SHARED_MAP_KEY;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,8 +19,10 @@ import io.neonbee.NeonBee;
 import io.neonbee.NeonBeeOptions;
 import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
+import io.neonbee.health.internal.HealthCheck;
 import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.test.base.DataVerticleTestBase;
+import io.neonbee.test.helper.ReflectionHelper;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
@@ -69,6 +74,24 @@ class HealthCheckVerticleTest extends DataVerticleTestBase {
             assertThat(firstCheck.containsKey("id")).isTrue();
             assertThat(firstCheck.containsKey("status")).isTrue();
             assertThat(firstCheck.containsKey("outcome")).isFalse();
+        }, testContext).onComplete(testContext.succeedingThenComplete());
+    }
+
+    @Test
+    @DisplayName("should respond with the results of the other checks if one health check fails")
+    void testRetrieveDataWithFailingCheck(VertxTestContext testContext) throws Exception {
+        Map<String, HealthCheck> checks =
+                ReflectionHelper.getValueOfPrivateField(getNeonBee().getHealthCheckRegistry(), "checks");
+        HealthCheck failingCheck = mock(HealthCheck.class);
+        when(failingCheck.result()).thenReturn(Future.failedFuture(new IllegalStateException("check failed")));
+        checks.put("failing-check", failingCheck);
+
+        DataRequest req = new DataRequest(HealthCheckVerticle.QUALIFIED_NAME, new DataQuery());
+        Future<JsonArray> response = requestData(req);
+
+        assertData(response, resp -> {
+            assertThat(resp).isNotEmpty();
+            assertThat(resp.getJsonObject(0).containsKey("id")).isTrue();
         }, testContext).onComplete(testContext.succeedingThenComplete());
     }
 
