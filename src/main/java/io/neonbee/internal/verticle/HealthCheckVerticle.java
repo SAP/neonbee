@@ -56,8 +56,9 @@ public class HealthCheckVerticle extends DataVerticle<JsonArray> {
     public Future<JsonArray> retrieveData(DataQuery query, DataContext context) {
         List<Future<JsonObject>> checkList = NeonBee.get(vertx).getHealthCheckRegistry().getHealthChecks().values()
                 .stream().map(hc -> hc.result().map(CheckResult::toJson)).collect(toList());
-        return Future.all(checkList).map(v -> new JsonArray(
-                checkList.stream().map(Future::result).peek(r -> r.remove("outcome")).collect(toList())));
+        // wait for all checks, but only respond with those that succeeded, so one failing check does not fail all
+        return Future.join(checkList).transform(v -> Future.succeededFuture(new JsonArray(checkList.stream()
+                .filter(Future::succeeded).map(Future::result).peek(r -> r.remove("outcome")).collect(toList()))));
     }
 
     @Override
