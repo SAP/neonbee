@@ -339,7 +339,7 @@ class HealthCheckRegistryTest {
     }
 
     @Test
-    @DisplayName("it does not fail if some verticle addresses are not reachable")
+    @DisplayName("it does not fail if some verticle addresses are not reachable and removes them from the shared map")
     void test(Vertx vertx, VertxTestContext testContext) {
         neonBee = NeonBeeMockHelper.registerNeonBeeMock(vertx, defaultOptions().setClustered(true));
         String verticleName = "not-existing-verticle-name";
@@ -355,8 +355,8 @@ class HealthCheckRegistryTest {
                 .onSuccess(result -> testContext.verify(() -> assertThat(result.getString("status")).isEqualTo("UP")))
                 .compose(result -> registry.get(SHARED_MAP_KEY)).map(JsonArray.class::cast)
                 .onSuccess(registeredVerticles -> testContext.verify(() -> {
-                    assertThat(registeredVerticles).hasSize(2);
-                    assertThat(registeredVerticles).contains(verticleName);
+                    assertThat(registeredVerticles).hasSize(1);
+                    assertThat(registeredVerticles).doesNotContain(verticleName);
                     testContext.completeNow();
                 })).onFailure(testContext::failNow);
     }

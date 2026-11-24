@@ -18,6 +18,7 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataRequest;
 import io.neonbee.internal.WriteSafeRegistry;
 import io.neonbee.test.base.DataVerticleTestBase;
+import io.neonbee.test.helper.DeploymentHelper;
 import io.neonbee.test.helper.WorkingDirectoryBuilder;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
@@ -30,6 +31,7 @@ class HealthCheckVerticleTest extends DataVerticleTestBase {
     protected void adaptOptions(TestInfo testInfo, NeonBeeOptions.Mutable options) {
         String testName = testInfo.getTestMethod().get().getName();
         if ("testSharedMap".equals(testName)
+                || "testUnregistersFromSharedMapOnUndeploy".equals(testName)
                 || "testSkipsRegistrationWhenCollectClusteredResultsFalse".equals(testName)) {
             options.setClustered(true);
         }
@@ -82,6 +84,24 @@ class HealthCheckVerticleTest extends DataVerticleTestBase {
                 .onComplete(testContext.succeeding(qualifiedNamesOrNull -> testContext.verify(() -> {
                     String expectedName = HealthCheckVerticle.QUALIFIED_NAME;
                     assertThat((JsonArray) qualifiedNamesOrNull).containsExactly(expectedName);
+                    testContext.completeNow();
+                })));
+    }
+
+    @Test
+    @DisplayName("should unregister itself from the shared map when it is undeployed")
+    void testUnregistersFromSharedMapOnUndeploy(VertxTestContext testContext) {
+        WriteSafeRegistry<String> registry =
+                new WriteSafeRegistry<>(getNeonBee().getVertx(), HealthCheckVerticle.REGISTRY_NAME);
+
+        registry.get(SHARED_MAP_KEY)
+                .onSuccess(names -> testContext.verify(
+                        () -> assertThat((JsonArray) names).containsExactly(HealthCheckVerticle.QUALIFIED_NAME)))
+                .compose(v -> DeploymentHelper.undeployAllVerticlesOfClass(getNeonBee().getVertx(),
+                        HealthCheckVerticle.class))
+                .compose(v -> registry.get(SHARED_MAP_KEY))
+                .onComplete(testContext.succeeding(names -> testContext.verify(() -> {
+                    assertThat(names == null || ((JsonArray) names).isEmpty()).isTrue();
                     testContext.completeNow();
                 })));
     }

@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -15,6 +16,7 @@ import io.neonbee.data.DataQuery;
 import io.neonbee.data.DataVerticle;
 import io.neonbee.health.HealthCheckRegistry;
 import io.neonbee.internal.WriteSafeRegistry;
+import io.neonbee.logging.LoggingFacade;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -33,12 +35,16 @@ public class HealthCheckVerticle extends DataVerticle<JsonArray> {
     @VisibleForTesting
     static final String REGISTRY_NAME = HealthCheckRegistry.class.getSimpleName();
 
+    private static final LoggingFacade LOGGER = LoggingFacade.create();
+
     private static final String NAME = "_healthCheckVerticle-" + UUID.randomUUID();
 
     /**
      * The qualified name of the health check verticle.
      */
     public static final String QUALIFIED_NAME = DataVerticle.createQualifiedName(NEONBEE_NAMESPACE, NAME);
+
+    private final AtomicBoolean registered = new AtomicBoolean();
 
     @Override
     public void start(Promise<Void> promise) {
@@ -49,6 +55,22 @@ public class HealthCheckVerticle extends DataVerticle<JsonArray> {
                 return register(vertx);
             }
             return Future.succeededFuture();
+        }).onComplete(promise);
+    }
+
+    @Override
+    public void stop(Promise<Void> promise) {
+        unregister(vertx).transform(ar -> {
+            if (ar.failed() && LOGGER.isWarnEnabled()) {
+                LOGGER.warn("Could not unregister health check verticle {} from the shared map", getQualifiedName(),
+                        ar.cause());
+            }
+            try {
+                super.stop();
+                return Future.<Void>succeededFuture();
+            } catch (Exception e) {
+                return Future.<Void>failedFuture(e);
+            }
         }).onComplete(promise);
     }
 
@@ -67,6 +89,13 @@ public class HealthCheckVerticle extends DataVerticle<JsonArray> {
 
     private Future<Void> register(Vertx vertx) {
         WriteSafeRegistry<String> registry = new WriteSafeRegistry<>(vertx, REGISTRY_NAME);
-        return registry.register(SHARED_MAP_KEY, getQualifiedName());
+        return registry.register(SHARED_MAP_KEY, getQualifiedName()).onSuccess(v -> registered.set(true));
+    }
+
+    private Future<Void> unregister(Vertx vertx) {
+        if (!registered.getAndSet(false)) {
+            return Future.succeededFuture();
+        }
+        return new WriteSafeRegistry<String>(vertx, REGISTRY_NAME).unregister(SHARED_MAP_KEY, getQualifiedName());
     }
 }
